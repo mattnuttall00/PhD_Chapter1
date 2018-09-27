@@ -17,8 +17,17 @@ attach(dat_master)
 dat_for_cov_roc <- data.frame(for_cov_roc_red = for_cov_roc[2:23],
                               econ_PC1_red = econ_PC1[2:23],
                               econ_PC2_red = econ_PC2[2:23],
-                              econ_PC3_red = econ_PC3[2:23])
+                              econ_PC3_red = econ_PC3[2:23],
+                              year_red = year[2:23])
 attach(dat_for_cov_roc)
+
+# Dataframe for agriculture cover rate of change
+dat_agric_roc <- data.frame(agric_roc_red = agric_roc[2:23],
+                              econ_PC1_red = econ_PC1[2:23],
+                              econ_PC2_red = econ_PC2[2:23],
+                              econ_PC3_red = econ_PC3[2:23],
+                              year_red = year[2:23])
+attach(dat_agric_roc)
 
 #===== Detrending & autocorrelation =============================================
  
@@ -287,7 +296,9 @@ acf(residuals(arma.4, type = "normalized"))
 acf(residuals(arma.4, type = "normalized"), type = "p")
 
 
-#===== Linear and non-linear modelling with detrended data==============
+
+
+#===== Generalised Additive Models ==============
 
 #### Forest cover (area) ~ Econ_PC1 ####
 
@@ -585,7 +596,6 @@ plot(year)
 
 
 #### Forest cover (RoC) ~ Econ_PC1 ####
-
   ## Testing autocorrelation structures ####
 
 # remove first observation
@@ -883,3 +893,58 @@ plot_grid(p14,p15)
 
 
 
+
+
+#### Forest cover (RoC) ~ Econ_PC2 ####
+  ## GAMS ####
+
+# default spline is penalised thin plate regression (bs="tp")
+m1.epc2.fcr <- gam(for_cov_roc_red ~ s(econ_PC2_red), data = dat_for_cov_roc)
+summary(m1.epc2.fcr)
+plot(residuals(m1.epc2.fcr, type = "response") ~ year_sub)
+acf(residuals.gam(m1.epc2.fcr, type = "response"))
+pacf(residuals.gam(m1.epc2.fcr, type = "response"))
+plot(m1.epc2.fcr, residuals = T)
+gam.check(m14.epc1.fcr)
+plotGAM(m1.epc2.fcr, smooth.cov = "econ_PC2_red", rawOrFitted = "raw", 
+        plotCI = T)
+
+#### Forest cover (RoC) ~ Econ_PC3 ####
+  ## GAMS ####
+
+# default spline is penalised thin plate regression (bs="tp")
+m1.epc3.fcr <- gam(for_cov_roc_red ~ s(econ_PC3_red), data = dat_for_cov_roc)
+summary(m1.epc3.fcr)
+plot(residuals(m1.epc3.fcr, type = "response") ~ year_sub)
+acf(residuals.gam(m1.epc3.fcr, type = "response"))
+pacf(residuals.gam(m1.epc3.fcr, type = "response"))
+plot(m1.epc3.fcr, residuals = T)
+gam.check(m1.epc3.fcr)
+plotGAM(m1.epc3.fcr, smooth.cov = "econ_PC3_red", rawOrFitted = "raw", 
+        plotCI = T)
+
+
+#### Agriculture cover (RoC) ~ Econ_PC1 ####
+  ## GAMS ####
+
+m1.epc1.aroc <- gam(agric_roc_red ~ s(econ_PC1_red), data = dat_agric_roc)
+summary(m1.epc1.aroc)
+plot(residuals(m1.epc1.aroc, type = "response") ~ year_sub)
+acf(residuals.gam(m1.epc1.aroc, type = "response"))
+pacf(residuals.gam(m1.epc1.aroc, type = "response"))
+plot(m1.epc1.aroc, residuals = T)
+gam.check(m1.epc1.aroc)
+plotGAM(m1.epc1.aroc, smooth.cov = "econ_PC1_red", rawOrFitted = "raw", 
+        plotCI = T)
+
+#### Agriculture cover (RoC) ~ Econ_PC2 ####
+
+m1.epc2.aroc <- gam(agric_roc_red ~ s(econ_PC2_red), data = dat_agric_roc)
+summary(m1.epc2.aroc)
+plot(residuals(m1.epc2.aroc, type = "response") ~ year_sub)
+acf(residuals.gam(m1.epc2.aroc, type = "response"))
+pacf(residuals.gam(m1.epc2.aroc, type = "response"))
+plot(m1.epc2.aroc, residuals = T)
+gam.check(m1.epc2.aroc)
+plotGAM(m1.epc2.aroc, smooth.cov = "econ_PC2_red", rawOrFitted = "raw", 
+        plotCI = T)
