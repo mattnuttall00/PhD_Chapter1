@@ -33,13 +33,13 @@ FCroc.epc1.modcompare <- pn.mod.compare(econ_PC1_sub, for_cov_roc_sub, grp = NA,
                                         pn.options = "myoptions.1")
 
 FCroc.epc1.modstep <- pn.modselect.step(econ_PC1_sub, for_cov_roc_sub, grp = NA, existing = FALSE,
-                                        pn.options = "myoptions.1")
+                                        pn.options = "myoptions1")
 
 # best applicable model
 pn.bestmodel.lis
 
 ### now fit a model using the above model with known best number of parameters 
-FCroc.ecp1.mod1 <- nlsLM(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym, K = K, 
+FCroc.ecp1.mod1 <- nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym, K = K, 
                        Infl = Infl, M = M, RAsym = RAsym, Rk = Rk, Ri = Ri, RM = RM, modno = 1, 
                        pn.options = "myoptions1"),control = nls.control(maxiter = 1000))
 
