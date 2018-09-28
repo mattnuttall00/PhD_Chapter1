@@ -1,0 +1,46 @@
+---
+title: "R Markdown test - non-linear models"
+author: "Matt Nuttall"
+date: "28 September 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## FlexParamCurve
+
+I began by trying to use the FlexParamCurve package.  First I ran the 'modpar()' function to estimate initial parameter estimates and parameter bounds
+
+```{r}
+modpar(econ_PC1_sub, for_cov_roc_sub, grp = NA, pn.options = "myoptions1") 
+```
+
+This produced estimates for 8 parameters.  Next I ran the two model selection tools - 'mod.compare' and 'mod.step'
+
+```{r, results='hide'}
+FCroc.epc1.modcompare <- pn.mod.compare(econ_PC1_sub, for_cov_roc_sub, grp = NA,
+                                        pn.options = "myoptions1")
+
+FCroc.epc1.modstep <- pn.modselect.step(econ_PC1_sub, for_cov_roc_sub, grp = NA, existing = FALSE,
+                                        pn.options = "myoptions1")
+```
+
+The function struggled to fit any models, except model 1 which has 8 parameters (which seems like way too many to me?).  The next step is to use that base model to fit another model with the parameter estimates that 'modpar()' produced:
+
+```{r, results='hide'}
+FCroc.ecp1.mod1 <- nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym, K = K, 
+                       Infl = Infl, M = M, RAsym = RAsym, Rk = Rk, Ri = Ri, RM = RM, modno = 1, 
+                       pn.options = "myoptions1"),control = nls.control(maxiter = 1000))
+```
+
+But this thows up the error 
+'Error in nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym,  : 
+  singular gradient'
+Which I have read is more than likely an issue with the model itself, which is a bit odd seeing as it's an in-built model within FlexParamCurve. 
+
+
+
