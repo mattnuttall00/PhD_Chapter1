@@ -9,15 +9,14 @@ library('cowplot')
 library('minpack.lm')
 
 dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
-attach(dat_master)
 
 ### subset data to deal with NA in for_cov_roc
-econ_PC1_sub <- econ_PC1[2:23]
-econ_PC2_sub <- econ_PC2[2:23]
-econ_PC3_sub <- econ_PC3[2:23]
-for_cov_roc_sub <- for_cov_roc[2:23]
-agric_roc_sub <- agric_roc[2:23]
-year_sub <- year[2:23]
+econ_PC1_sub <- dat_master$econ_PC1[2:23]
+econ_PC2_sub <- dat_master$econ_PC2[2:23]
+econ_PC3_sub <- dat_master$econ_PC3[2:23]
+for_cov_roc_sub <- dat_master$for_cov_roc[2:23]
+agric_roc_sub <- dat_master$agric_roc[2:23]
+year_sub <- dat_master$year[2:23]
 dat_master <- c(econ_PC1_sub,for_cov_roc_sub, econ_PC2_sub, econ_PC3_sub, agric_roc_sub)
 
 #### Forest cover (RoC) ~ EconPC1 ####
@@ -49,15 +48,16 @@ FCroc.ecp1.mod1 <- nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = A
 
 ## Michaelis-Menton y = (a*x)/(1+b*x) ####
 plot(for_cov_roc_sub~econ_PC1_sub)
+identify(econ_PC1_sub,for_cov_roc_sub)
 
 # asymptotic value of y
-a <- 0
+a <- -2
 # value of x where a/2
-b <- -1
+b <- 2
 mod.mm <- nls(for_cov_roc_sub ~ SSmicmen(econ_PC1_sub,a,b))
 summary(mod)
 xv<-seq(-3, 4, 0.1)
-yv<-predict(mod,list(econ_PC1_sub=xv))
+yv<-predict(mod.mm,list(econ_PC1_sub=xv))
 lines(xv,yv)
 
 
@@ -65,32 +65,40 @@ lines(xv,yv)
 ## 3 parameter Asymptotic regression ####
 plot(for_cov_roc_sub~econ_PC1_sub)
 
+# self starting
+mod.assym <- nls(for_cov_roc_sub ~ SSasymp(econ_PC1_sub,Asym,RO,lrc))
+summary(mod.assym)
+curve(predict(mod.assym, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+
+# custom model based on equation from Crawley p662 and using parameter estimates from above self starter
+
 # Parameter representing horizontal asymptote on right hand side
-Asym <- -1
+Asym <- -4.6
 # Parameter representing response when x = 0
-RO <- 2
+RO <- 0.73
 # Parameter b, where b = a - RO
 b <- Asym-RO
 # Parameter representing natural log of rate constant 
 lrc <- (log((Asym - 1.25)/ b))/-2
 
-mod.assym <- nls(for_cov_roc_sub ~ SSasymp(econ_PC1_sub,Asym,RO,lrc))
-summary(mod.assym)
-curve(predict(mod.assym, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
-
-
+mod.assym2 <- nlsLM(for_cov_roc_sub ~ Asym-b*exp(-lrc*econ_PC1_sub), 
+                  start = list(Asym=Asym, b=b, lrc=lrc),
+                  control = nls.control(maxiter = 1000))
+summary(mod.assym2)
+curve(predict(mod.assym2, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 
 ## 2 parameter asymptotic exponential ####
 plot(for_cov_roc_sub~econ_PC1_sub)
 
 # eqn
 # y = a(1 - exp(-b*x))
-
-mod.assym2 <- nlsLM(for_cov_roc_sub ~ Asym*(1-exp(-b*econ_PC1_sub)), start = list(Asym=Asym, b=b))
-summary(mod.assym2)
-xv<-seq(-3,4,0.1)
-yv<-predict(mod.assym2,list(econ_PC1_sub=xv))
-lines(xv,yv)
+Asym <- 0
+b <- 12
+mod.assym3 <- nlsLM(for_cov_roc_sub ~ Asym*(1-exp(-b*econ_PC1_sub)), 
+                    start = list(Asym=Asym, b=b),
+                    control = nls.control(maxiter = 1000))
+summary(mod.assym3)
+curve(predict(mod.assym3, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 
 
 
@@ -121,13 +129,14 @@ plot(for_cov_roc_sub~econ_PC1_sub)
 # y = a*exp(b*x) + c*exp(d*x)
 
 mod.bioex <- nls(for_cov_roc_sub ~ a*exp(b*econ_PC1_sub)+c*exp(d*econ_PC1_sub), 
-                 start = list(a=-0.5, b=-1, c=1, d=-0.5))
+                 start = list(a=-5, b=2.7, c=0.69, d=-1.053),
+                 control = nls.control(maxiter = 1000))
 
 # eqn from ?SSbiexp
 # a*exp(-exp(b)*x)+c*exp(-exp(d)*x)
 # recreating the self starting model with same parameters as estimated in SSbiexp. Same model shape. Now I can tweak the starting values
 mod.bioex2 <- nlsLM(for_cov_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-exp(d)*econ_PC1_sub),
-                  start = list(a=-5.238e-3, b=2.696, c=1.2, d=-1.053))
+                  start = list(a=-5.238e-3, b=2.696, c=0.69, d=-1.053))
 curve(predict(mod.bioex2, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 
 # self starting
@@ -162,6 +171,15 @@ curve(predict(mod.invpol, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 
 
 
+
+#### Forest cover (RoC) ~ EconPC2 ####
+
+plot(econ_PC2_sub, for_cov_roc_sub)
+ln.mod <- lm(for_cov_roc_sub ~ econ_PC2_sub)
+summary(ln.mod)
+plot(ln.mod)
+curve(predict(ln.mod, newdata = data.frame(econ_PC2_sub=x)), add=TRUE)
+
 #### Forest cover (RoC) ~ EconPC3 ####
 
 plot(econ_PC3_sub, for_cov_roc_sub)
@@ -183,7 +201,7 @@ curve(predict(mod.ssbioex, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 plot(resid(mod.ssbioex))
 
 # SS formula but custom starting values
-mod.bioex2.agr <- nls(agric_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-exp(d)*econ_PC1_sub)
+mod.bioex2.agr <- nls(agric_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-exp(d)*econ_PC1_sub),
                     start = list(a=-5.238e-16, b=2.696, c=0.6925, d=-1.053),
                     control = nls.control(maxiter = 1000))
 curve(predict(mod.bioex2.agr, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
@@ -196,3 +214,23 @@ mod.bioex2LM = nlsLM(agric_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-exp(d)*e
                                 d= -1.053),
                      control = nls.control(maxiter = 1000))
 curve(predict(mod.bioex2LM, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+
+#### Agriculture cover (RoC) ~ EconPC2 ####
+
+plot(econ_PC2_sub, agric_roc_sub)
+lm.agroc.epc2 <- lm(agric_roc_sub ~ econ_PC2_sub)
+summary(lm.mod.agroc.epc2)
+par(mfrow=c(2,2))
+plot(lm.mod.agroc.epc2)
+curve(predict(lm.agroc.epc2, newdata = data.frame(econ_PC2_sub=x)), add=TRUE)
+plot(resid(lm.agroc.epc2))
+acf(residuals(lm.agroc.epc2))
+
+#### Agriculture cover (RoC) ~ EconPC3 ####
+
+plot(agric_roc_sub~econ_PC3_sub)
+
+
+
+3 parameter asymptotic
+Nils papaer migration, journal animal ecology
