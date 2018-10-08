@@ -174,6 +174,15 @@ mod.exp <- nls(for_cov_roc_sub ~ a*exp(-b*econ_PC1_sub),
                start = list(a=a, b=b))
 curve(predict(mod.exp, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
 
+# testing without outlier
+econPC1_test <- econ_PC1_sub[2:22]
+for_cov_roc_sub_test <- for_cov_roc_sub[2:22]
+plot(for_cov_roc_sub_test~econPC1_test)
+
+mod.exp <- nls(for_cov_roc_sub_test ~ a*exp(-b*econPC1_test), 
+               start = list(a=a, b=b))
+curve(predict(mod.exp, newdata = data.frame(econPC1_test=x)), add=TRUE)
+
 
 # Inverse polynomials (Crawley, p200) ####
 x <-seq(0,10,0.1)
