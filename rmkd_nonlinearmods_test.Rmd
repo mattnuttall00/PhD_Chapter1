@@ -11,17 +11,40 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## FlexParamCurve
+```{r, echo=FALSE, results='hide', include=FALSE}
+library('FlexParamCurve')
+library('nlme')
+library('ggplot2')
+library('cowplot')
+library('minpack.lm')
+dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
+attach(dat_master)
+econ_PC1_sub <- econ_PC1[2:23]
+econ_PC2_sub <- econ_PC2[2:23]
+econ_PC3_sub <- econ_PC3[2:23]
+for_cov_roc_sub <- for_cov_roc[2:23]
+agric_roc_sub <- agric_roc[2:23]
+year_sub <- year[2:23]
+dat_master <- c(econ_PC1_sub,for_cov_roc_sub, econ_PC2_sub, econ_PC3_sub, agric_roc_sub)
+```
 
-I began by trying to use the FlexParamCurve package.  First I ran the 'modpar()' function to estimate initial parameter estimates and parameter bounds
+# FlexParamCurve
+
+I began by trying to use the FlexParamCurve package.  I began with forest cover rate of change and the first principal component of the economic data.  The plot below shows the data. 
+
+```{r, echo=FALSE}
+plot(for_cov_roc_sub~econ_PC1_sub)
+```
+
+First I ran the ```modpar()``` function to estimate initial parameter estimates and parameter bounds
 
 ```{r}
 modpar(econ_PC1_sub, for_cov_roc_sub, grp = NA, pn.options = "myoptions1") 
 ```
 
-This produced estimates for 8 parameters.  Next I ran the two model selection tools - 'mod.compare' and 'mod.step'
+This produced estimates for 8 parameters.  Next I ran the two model selection tools - ```mod.compare``` and ```mod.step```
 
-```{r, results='hide'}
+```{r, results='hide', include=FALSE}
 FCroc.epc1.modcompare <- pn.mod.compare(econ_PC1_sub, for_cov_roc_sub, grp = NA,
                                         pn.options = "myoptions1")
 
@@ -29,18 +52,225 @@ FCroc.epc1.modstep <- pn.modselect.step(econ_PC1_sub, for_cov_roc_sub, grp = NA,
                                         pn.options = "myoptions1")
 ```
 
-The function struggled to fit any models, except model 1 which has 8 parameters (which seems like way too many to me?).  The next step is to use that base model to fit another model with the parameter estimates that 'modpar()' produced:
+The function struggled to fit any models, except model 1 which has 8 parameters (which seems like too many to me?).  The next step is to use that base model to fit another model with the parameter estimates that ```modpar()``` produced:
 
-```{r, results='hide'}
-FCroc.ecp1.mod1 <- nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym, K = K, 
-                       Infl = Infl, M = M, RAsym = RAsym, Rk = Rk, Ri = Ri, RM = RM, modno = 1, 
-                       pn.options = "myoptions1"),control = nls.control(maxiter = 1000))
+```{r, eval=FALSE}
+FCroc.ecp1.mod1 <- nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, 
+                        Asym = Asym, K = K, Infl = Infl, M = M, 
+                        RAsym = RAsym, Rk = Rk, Ri = Ri, RM = RM, modno = 1, 
+                        pn.options = "myoptions1"),
+                        control = nls.control(maxiter = 1000))
 ```
 
-But this thows up the error 
-'Error in nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym,  : 
-  singular gradient'
-Which I have read is more than likely an issue with the model itself, which is a bit odd seeing as it's an in-built model within FlexParamCurve. 
+But this throws up the error 
+
+```Error in nls(for_cov_roc_sub ~ SSposnegRichards(econ_PC1_sub, Asym = Asym,  : 
+  singular gradient```
+  
+Which I have read is more than likely an issue with the model itself, which is a bit odd seeing as it's an in-built model within FlexParamCurve. I am wondering whether there are too few data points for FlexParamCurve?
+
+# Custom models
+## Forest cover rate of change ~ econ_PC1
+
+As I couldn't get FlexParamCurve to work (and there is a sparcity of online help for trouble shooting with it), I decdided to try and build my own models.  I did quite a lot of reading, particulalry the Crawley book, and based on the shape of my data I had a go with 2 parameter and 3 parameter asymptotic exponential models and a biexponential model.  
+
+### 3 parameter asymptotic exponential
+
+First I used R's self starting model ```SSasymp```, which has the equation
 
 
+$$ y = Asym+(RO-Asym)e^{-e^{lrc}x} $$
+
+
+```{r, echo=TRUE}
+mod.assym <- nls(for_cov_roc_sub ~ SSasymp(econ_PC1_sub,Asym,RO,lrc))
+```
+```{r, echo=FALSE}
+summary(mod.assym)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.assym, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+The shape wasn't what I expected, and so I tried the slightly different equation from Crawley, 
+
+$$ y = a - be^{cx} $$ 
+
+but parameterized the model using the parameter estimates from the above self-starter.
+
+```{r, echo=TRUE}
+Asym <- -4.6
+RO <- 0.73
+b <- Asym-RO
+lrc <- (log((Asym - 1.25)/ b))/-2
+
+mod.assym2 <- nlsLM(for_cov_roc_sub ~ Asym-b*exp(-lrc*econ_PC1_sub), 
+                  start = list(Asym=Asym, b=b, lrc=lrc),
+                  control = nls.control(maxiter = 1000))
+```
+```{r, echo=FALSE}
+summary(mod.assym2)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.assym2, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+This didn't seem to make any difference at all to the fit of the model on the plot, even though the value of ```lrc``` (which is the parameter representing the natural log of the rate parameter) changes from -3.48 in the self starting model to 0.031 in the above model.  I would assume that if the rate parameter changed that much the slope of the model would change.  But perhaps I'm misinterpreting that.  
+
+### 2 parameter asymptotic exponential 
+
+Next I tried a simpler asymptotic exponential, taken from Crawley.  The models equation is
+
+$$ y = a(1 - e^{-bx}) $$ 
+
+Again I estimated the starting value for asymptote to be ~0, and I varied the starting value of b from -2 to 8. 
+
+```{r, echo=TRUE}
+Asym <- 0
+b <- -2
+mod.assym3 <- nlsLM(for_cov_roc_sub ~ Asym*(1-exp(-b*econ_PC1_sub)), 
+                    start = list(Asym=Asym, b=b))
+```
+```{r, echo=FALSE}
+summary(mod.assym3)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.assym3, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+```{r, echo=TRUE}
+Asym <- 0
+b <- 2
+mod.assym3 <- nlsLM(for_cov_roc_sub ~ Asym*(1-exp(-b*econ_PC1_sub)), 
+                    start = list(Asym=Asym, b=b))
+```
+```{r, echo=FALSE}
+summary(mod.assym3)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.assym3, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+```{r, echo=TRUE}
+Asym <- 0
+b <- 8
+mod.assym3 <- nlsLM(for_cov_roc_sub ~ Asym*(1-exp(-b*econ_PC1_sub)), 
+                    start = list(Asym=Asym, b=b))
+```
+```{r,echo=FALSE}
+summary(mod.assym3)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.assym3, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+The above model is getting close to the shape of the data (if the first data point wasn't there), but I tried increasing ```b``` even further and it did not improve the model fit.
+
+### Biexponential 
+
+None of the above asymptotic exponentials fit the data well. The next model I tried was a biexponential model. I used the self-starting model which has the equation:
+
+$$ y = ae^{(-e^{(b)}x)}+ce^{(-e^{(d)}x)} $$
+
+
+
+```{r, echo=TRUE}
+mod.ssbioex <- nls(for_cov_roc_sub ~ SSbiexp(econ_PC1_sub,A1,lrc1,A2,lrc2))
+```
+```{r, echo=FALSE}
+summary(mod.ssbioex)
+plot(for_cov_roc_sub~econ_PC1_sub)
+curve(predict(mod.ssbioex, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+The residual plot of the model:
+
+```{r, echo=FALSE}
+plot(resid(mod.ssbioex))
+```
+
+This model appears to be by far the best fit for the data, and the residuals look good.  It captures the shape of the data at the lower values of econ_PC1.  However I can't help but wonder about the first data point (x=-2.5, y=0), because if that point wasn't there the data would take on a different shape all together.  And that data point seems to be dictating the shape of the curve a lot. That data point alone is very important - if it is correct it suggests that the rate of forest cover loss increases very rapidly as the economy grows at the start, and then this rate of change reaches a threshold after which it starts to decline.  If that data point is an outlier (and not correct), then the shape would tell a different story - that the rate of forest cover loss doesn't increase at all within the bounds of the economic factors in this time period, but in fact starts high but decreases at a decreasing rate as the economy grows.  The trouble is both of those shapes are plausible in reality. 
+
+## Forest cover rate of change ~ econ_PC2 
+
+As can be seen in the below plot, there doesn't really appear to be much of a relationship between forest cover RoC and econ_PC2.  I fitted a GAM to see what it would come up with:
+
+
+```{r, echo=FALSE, results='hide', include=FALSE}
+library('mgcv')
+library('voxel')
+dat_for_cov_roc <- data.frame(for_cov_roc_red = for_cov_roc[2:23],
+                              econ_PC1_red = econ_PC1[2:23],
+                              econ_PC2_red = econ_PC2[2:23],
+                              econ_PC3_red = econ_PC3[2:23],
+                              year_red = year[2:23])
+```
+
+```{r, echo=FALSE}
+m1.epc2.fcr <- gam(for_cov_roc_red ~ s(econ_PC2_red), data = dat_for_cov_roc)
+```
+
+```{r, echo=FALSE}
+plotGAM(m1.epc2.fcr, smooth.cov = "econ_PC2_red", rawOrFitted = "raw", 
+        plotCI = T)
+```
+
+There clearly isn't much of a relationship between the variables. I also fitted a linear model, as I couldn't see much else to do, and the model fit was very poor (r2 = 0.03, p = 0.44).
+
+## Forest cover rate of change ~ econ_PC3
+
+I fitted a GAM to the data to assess the shape, and based on the that I fitted a polynomial model with the equation (from Crawley):
+
+$$ y = a + bx - cx^2 $$ 
+
+
+
+```{r, echo=TRUE}
+mod.poly <- nls(for_cov_roc_sub ~ a+b*econ_PC3_sub-c*econ_PC3_sub^2, 
+                start = list(a=2, b=5, c=0.2))
+```
+```{r, echo=FALSE}
+plot(for_cov_roc_sub~econ_PC3_sub)
+curve(predict(mod.poly, newdata = data.frame(econ_PC3_sub=x)), add=TRUE)
+```
+
+Again, we see that one data point (x=1.9, y=0.1) is having a huge effect on the shape of the curve.  If that data point wasn't there we would probably be looking at an exponential function.  
+
+# Agriculture cover rate of change ~ econ_PC1
+
+Moving on to agricultural cover rate of change, and we see that the relationship is similar to that of forest cover rate of change:
+
+```{r, echo=FALSE}
+plot(econ_PC1_sub, agric_roc_sub)
+```
+
+For that reason I started off with the biexponential model.
+
+### Biexponenial model
+
+For some reason the self starting model struggled to find starting values, but the model ran when I used the self starting model formula, but used custom starting values which I took from the for_cov ~ econ_PC1 biexponential model, as the data are quite similar.
+
+```{r}
+mod.bioex2.agr <- nls(
+  agric_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-exp(d)*econ_PC1_sub),
+  start = list(a=-5.238e-16, b=2.696, c=0.6925, d=-1.053),
+  control = nls.control(maxiter = 1000))
+```
+```{r, echo=FALSE}
+plot(agric_roc_sub~econ_PC1_sub)
+curve(predict(mod.bioex2.agr, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+```
+
+# Agriculture cover rate of change ~ econ_PC2
+
+As with forest cover RoC ~ econ_PC2, the relationship between agriculture RoC and econ_PC2 is fairly weak, however it is stronger than forest cover, as shown by the GAM below:
+
+```{r, echo=FALSE, results='hide'}
+dat_agric_roc <- data.frame(agric_roc_red = agric_roc[2:23],
+                              econ_PC1_red = econ_PC1[2:23],
+                              econ_PC2_red = econ_PC2[2:23],
+                              econ_PC3_red = econ_PC3[2:23],
+                              year_red = year[2:23])
+```
+
+```{r, echo=FALSE}
+m1.epc2.aroc <- gam(agric_roc_red ~ s(econ_PC2_red), data = dat_agric_roc)
+plotGAM(m1.epc2.aroc, smooth.cov = "econ_PC2_red", rawOrFitted = "raw", 
+        plotCI = T)
+```
 
