@@ -14,10 +14,20 @@ dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
 econ_PC1_sub <- dat_master$econ_PC1[2:23]
 econ_PC2_sub <- dat_master$econ_PC2[2:23]
 econ_PC3_sub <- dat_master$econ_PC3[2:23]
+com_PC1_sub  <- dat_master$com_PC1[2:23]
+com_PC2_sub  <- dat_master$com_PC2[2:23]
+com_PC3_sub  <- dat_master$com_PC3[2:23]
+prod_PC1_sub  <- dat_master$prod_PC1[2:23]
+prod_PC2_sub  <- dat_master$prod_PC2[2:23]
+prod_PC3_sub  <- dat_master$prod_PC3[2:23]
 for_cov_roc_sub <- dat_master$for_cov_roc[2:23]
 agric_roc_sub <- dat_master$agric_roc[2:23]
+urban_roc_sub <- dat_master$urban_roc[2:23]
 year_sub <- dat_master$year[2:23]
-dat_master <- c(econ_PC1_sub,for_cov_roc_sub, econ_PC2_sub, econ_PC3_sub, agric_roc_sub)
+dat_master <- c(econ_PC1_sub, econ_PC2_sub, econ_PC3_sub, 
+                com_PC1_sub, com_PC2_sub, com_PC3_sub,
+                prod_PC1_sub, prod_PC2_sub, prod_PC3_sub,
+                for_cov_roc_sub, agric_roc_sub, urban_roc_sub)
 
 #### Forest cover (RoC) ~ EconPC1 ####
 
@@ -153,6 +163,17 @@ mod.bioex2LM.fcroc = nlsLM(for_cov_roc_sub ~ a*exp(-exp(b)*econ_PC1_sub)+c*exp(-
                                 d= -1.053),
                      control = nls.control(maxiter = 1000))
 curve(predict(mod.bioex2LM.fcroc, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+
+## exponential model ####
+
+plot(for_cov_roc_sub~econ_PC1_sub)
+a <- 1.5
+b <- 2*log(2)/a
+
+mod.exp <- nls(for_cov_roc_sub ~ a*exp(-b*econ_PC1_sub), 
+               start = list(a=a, b=b))
+curve(predict(mod.exp, newdata = data.frame(econ_PC1_sub=x)), add=TRUE)
+
 
 # Inverse polynomials (Crawley, p200) ####
 x <-seq(0,10,0.1)
