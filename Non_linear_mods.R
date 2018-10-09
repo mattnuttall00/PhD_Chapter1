@@ -12,22 +12,88 @@ dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
 
 ### subset data to deal with NA in for_cov_roc
 econ_PC1_sub <- dat_master$econ_PC1[2:23]
+econ_PC1_lag1 <- dat_master$econ_PC1[1:22]
+econ_PC1_lag2 <- dat_master$econ_PC1[1:21]
 econ_PC2_sub <- dat_master$econ_PC2[2:23]
+econ_PC2_lag1 <- dat_master$econ_PC2[1:22]
+econ_PC2_lag2 <- dat_master$econ_PC2[1:21]
 econ_PC3_sub <- dat_master$econ_PC3[2:23]
+econ_PC3_lag1 <- dat_master$econ_PC3[1:22]
+econ_PC3_lag2 <- dat_master$econ_PC3[1:21]
+
 com_PC1_sub  <- dat_master$com_PC1[2:23]
+com_PC1_lag1 <- dat_master$com_PC1[1:22]
+com_PC1_lag2 <- dat_master$com_PC1[1:21]
 com_PC2_sub  <- dat_master$com_PC2[2:23]
+com_PC2_lag1 <- dat_master$com_PC2[1:22]
+com_PC2_lag2 <- dat_master$com_PC2[1:21]
 com_PC3_sub  <- dat_master$com_PC3[2:23]
+com_PC3_lag1 <- dat_master$com_PC3[1:22]
+com_PC3_lag2 <- dat_master$com_PC3[1:21]
+
 prod_PC1_sub  <- dat_master$prod_PC1[2:23]
+prod_PC1_lag1 <- dat_master$prod_PC1[1:22]
+prod_PC1_lag2 <- dat_master$prod_PC1[1:21]
 prod_PC2_sub  <- dat_master$prod_PC2[2:23]
+prod_PC2_lag1 <- dat_master$prod_PC2[1:22]
+prod_PC2_lag2 <- dat_master$prod_PC2[1:21]
 prod_PC3_sub  <- dat_master$prod_PC3[2:23]
+prod_PC3_lag1 <- dat_master$prod_PC3[1:22]
+prod_PC3_lag2 <- dat_master$prod_PC3[1:21]
+
+
 for_cov_roc_sub <- dat_master$for_cov_roc[2:23]
+for_cov_roc_lag2 <- dat_master$for_cov_roc[3:23]
 agric_roc_sub <- dat_master$agric_roc[2:23]
 urban_roc_sub <- dat_master$urban_roc[2:23]
 year_sub <- dat_master$year[2:23]
-dat_master <- c(econ_PC1_sub, econ_PC2_sub, econ_PC3_sub, 
-                com_PC1_sub, com_PC2_sub, com_PC3_sub,
-                prod_PC1_sub, prod_PC2_sub, prod_PC3_sub,
-                for_cov_roc_sub, agric_roc_sub, urban_roc_sub)
+
+
+#### Scatter plots with time lags ####
+
+## Econ
+#lag 1
+par(mfrow=c(3,2))
+plot(econ_PC1_sub, for_cov_roc_sub)
+plot(econ_PC1_lag1, for_cov_roc_sub)
+plot(econ_PC2_sub, for_cov_roc_sub)
+plot(econ_PC2_lag1, for_cov_roc_sub)
+plot(econ_PC3_sub, for_cov_roc_sub)
+plot(econ_PC3_lag1, for_cov_roc_sub)
+
+#lag 2
+plot(econ_PC1_sub, for_cov_roc_sub)
+plot(econ_PC1_lag2, for_cov_roc_lag2)
+plot(econ_PC2_sub, for_cov_roc_sub)
+plot(econ_PC2_lag2, for_cov_roc_lag2)
+plot(econ_PC3_sub, for_cov_roc_sub)
+plot(econ_PC3_lag2, for_cov_roc_lag2)
+
+## Comm
+#lag 1 & 2
+par(mfrow=c(3,3))
+plot(com_PC1_sub, for_cov_roc_sub)
+plot(com_PC1_lag1, for_cov_roc_sub)
+plot(com_PC1_lag2, for_cov_roc_lag2)
+plot(com_PC2_sub, for_cov_roc_sub)
+plot(com_PC2_lag1, for_cov_roc_sub)
+plot(com_PC2_lag2, for_cov_roc_lag2)
+plot(com_PC3_sub, for_cov_roc_sub)
+plot(com_PC3_lag1, for_cov_roc_sub)
+plot(com_PC3_lag2, for_cov_roc_lag2)
+
+## Prod
+#lag 1 & 2
+par(mfrow=c(3,3))
+plot(prod_PC1_sub, for_cov_roc_sub)
+plot(prod_PC1_lag1, for_cov_roc_sub)
+plot(prod_PC1_lag2, for_cov_roc_lag2)
+plot(prod_PC2_sub, for_cov_roc_sub)
+plot(prod_PC2_lag1, for_cov_roc_sub)
+plot(prod_PC2_lag2, for_cov_roc_lag2)
+plot(prod_PC3_sub, for_cov_roc_sub)
+plot(prod_PC3_lag1, for_cov_roc_sub)
+plot(prod_PC3_lag2, for_cov_roc_lag2)
 
 #### Forest cover (RoC) ~ EconPC1 ####
 
