@@ -44,14 +44,11 @@ for (i in 1:nrow(dat2)){   # For each row in dat2
   cm <- as.character(dat2$Commune[i])    # What is the commune name?
   pv <- as.character(dat2$Province[i])   # What is the province name?
   cc <- subset(commDat,province==pv & commune==cm)  # Subset the line in commDat that matches these two values
-  #lgth[i] <- length(cc[,1])
-  if (length(cc[,1])>1){
-    dat2$CommCode[i] <- NA
-  }
-  else{
+  lgth[i] <- length(cc[,1])
+  
     dat2$CommCode[i] <- cc[,1]  # Insert the associated commune code into dat2
   }
-}
+
 
 dt <- data.frame(PV=dat2[which(lgth>1),'Province'],CM=dat2[which(lgth>1),'Commune'])
 dt
