@@ -1,8 +1,9 @@
 
 library('robustbase')
 library('xlsx')
+library('xlsReadWrite')
 library('rJava')
-install.packages('rJava')
+library('openxlsx')
 
 dat <- read.csv("Socioeconomic_variables.csv")
 commDat <- read.csv("commGIS.csv")
@@ -70,16 +71,20 @@ for (c in 1:length(commGIS)){      # For each commune ID
     if (cc %in% c(10:13,15,18:28,30:35,37:40,43)){  # If the column number is in this list of numbers...
       dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
     }
-    if (cc==29 & length(is.na(sub[cc]))==length(sub[cc])){  # If the column number is 29...
-        dat3[c,cc] <- NA
-    }
-    if (cc==29 & length(is.na(sub[cc]))!=length(sub[cc])){
-        dat3[c,cc] <- median(sub[cc],na.rm=T)     # Do the median
+    if (cc %in% 29) {
+        dat3[c,cc] <- median(sub[cc] [sub[cc]>0],na.rm=T)     # Do the median
     } 
   }
 }
 
+dat3 <- dat3[,-4]    # Remove column 4 as it should be empty (no villages)
+write.xlsx(dat3, "C://Users/mnn1/Box Sync/Objective 1/Analysis/Data/dat3.xlsx", sheetName="Sheet 1", 
+           col.names = T)
 
+
+
+
+## don not use below code
 commGIS <- unique(dat2$CommCode)    # Unique commune IDs
 dat3 <- dat2[1,]        # Create template for final data frame columns
 for (c in 1:length(commGIS)){      # For each commune ID
@@ -98,6 +103,5 @@ for (c in 1:length(commGIS)){      # For each commune ID
 }
 
 
-dat3 <- dat3[,-4]    # Remove column 4 as it should be empty (no villages)
 
 
