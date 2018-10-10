@@ -92,7 +92,7 @@ for (c in 1:length(commGIS)){      # For each commune ID
       dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
     }
     if (cc==29){                                                 # If the column number is 29...
-      dat3[c,cc] <- apply(x, 1, function(x){median(sub[cc][sub[cc]>0])})     # Do the median
+      dat3[c,cc] <- apply(x, 1, function(x){median(sub[cc][sub[cc]>0],na.rm=TRUE)})     # Do the median
     } 
   }
 }
