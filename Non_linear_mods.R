@@ -10,7 +10,7 @@ library('minpack.lm')
 
 dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
 
-### subset data to deal with NA in for_cov_roc
+### subset data to deal with NA in for_cov_roc and to look at time lags
 econ_PC1_sub <- dat_master$econ_PC1[2:23]
 econ_PC1_lag1 <- dat_master$econ_PC1[1:22]
 econ_PC1_lag2 <- dat_master$econ_PC1[1:21]
