@@ -10,7 +10,7 @@ library('minpack.lm')
 
 dat_master <- read.table("ForCov_LU_econVars_PCs.txt", header=T)
 
-### subset data to deal with NA in for_cov_roc
+### subset data to deal with NA in for_cov_roc and to look at time lags
 econ_PC1_sub <- dat_master$econ_PC1[2:23]
 econ_PC1_lag1 <- dat_master$econ_PC1[1:22]
 econ_PC1_lag2 <- dat_master$econ_PC1[1:21]
@@ -40,7 +40,6 @@ prod_PC2_lag2 <- dat_master$prod_PC2[1:21]
 prod_PC3_sub  <- dat_master$prod_PC3[2:23]
 prod_PC3_lag1 <- dat_master$prod_PC3[1:22]
 prod_PC3_lag2 <- dat_master$prod_PC3[1:21]
-
 
 for_cov_roc_sub <- dat_master$for_cov_roc[2:23]
 for_cov_roc_lag2 <- dat_master$for_cov_roc[3:23]
@@ -249,6 +248,21 @@ mod.exp <- nls(for_cov_roc_sub_test ~ a*exp(-b*econPC1_test),
                start = list(a=a, b=b))
 curve(predict(mod.exp, newdata = data.frame(econPC1_test=x)), add=TRUE)
 
+# autocorrelation plots to assess time lags
+acf(residuals(mod.exp))
+acf(residuals(mod.exp), type="p")
+acf(mod.exp)
+
+# 3 point moving average to assess time lags
+ma3 <- function(x) {
+  y <- numeric(length(x)-2)
+  for (i in 2:(length(x)-1)) {
+    y[i] <- (x[i-1]+x[i]+x[i+1]/3)
+  }
+y}
+
+ma_econPC1 <- ma3(econPC1_test)
+plot(ma_econPC1)
 
 # Inverse polynomials (Crawley, p200) ####
 x <-seq(0,10,0.1)
