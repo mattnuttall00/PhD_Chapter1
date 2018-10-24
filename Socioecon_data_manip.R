@@ -4,6 +4,7 @@ library('xlsx')
 library('xlsReadWrite')
 library('rJava')
 library('openxlsx')
+library('tidyverse')
 
 dat <- read.csv("Socioeconomic_variables.csv")
 commDat <- read.csv("commGIS.csv")
@@ -80,6 +81,18 @@ for (c in 1:length(commGIS)){      # For each commune ID
 dat3 <- dat3[,-4]    # Remove column 4 as it should be empty (no villages)
 write.xlsx(dat3, "C://Users/mnn1/Box Sync/Objective 1/Analysis/Data/dat3.xlsx", sheetName="Sheet 1", 
            col.names = T)
+
+
+# tidyverse
+as.tibble(dat2)
+dat2 %>% 
+  group_by(CommCode) %>% 
+  select(tot_pop:pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,land_confl,Pax_migt_in,Pax_migt_out) %>% 
+  summarise(tot_pop = mean(tot_pop),
+            family = mean(family),
+            male_18_60 = mean(male_18_60),
+            fem_18_60 = mean(fem_18_60),
+            pop_over61 = mean(pop_over61))
 
 
 
