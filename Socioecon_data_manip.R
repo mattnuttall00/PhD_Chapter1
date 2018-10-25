@@ -85,16 +85,25 @@ write.xlsx(dat3, "C://Users/mnn1/Box Sync/Objective 1/Analysis/Data/dat3.xlsx", 
 
 # tidyverse
 as.tibble(dat2)
-dat2 %>% 
+
+dat3 <- dat2 %>% 
+   
+  select(CommCode,tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
+         land_confl,Pax_migt_in,Pax_migt_out) %>%  
+  group_by(CommCode) %>%
+  summarise_all(funs(sum)) %>% 
+  
+  select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
+         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,pig_fam,
+         garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,KM_Heal_cent,inf_mort,
+         U5_mort,Prop_Indigenous) %>% 
+  group_by(CommCode) %>%
+  summarise_all(funs(mean)) %>% 
+
+  select(CommCode, dist_sch) %>% 
   group_by(CommCode) %>% 
-  select(tot_pop:pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,land_confl,Pax_migt_in,Pax_migt_out) %>% 
-  summarise(tot_pop = mean(tot_pop),
-            family = mean(family),
-            male_18_60 = mean(male_18_60),
-            fem_18_60 = mean(fem_18_60),
-            pop_over61 = mean(pop_over61))
-
-
+  summarise_all(funs(median))
+                
 
 
 ## don not use below code
