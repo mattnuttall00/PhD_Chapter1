@@ -52,35 +52,13 @@ for (i in 1:nrow(dat2)){   # For each row in dat2
   }
 
 
-dt <- data.frame(PV=dat2[which(lgth>1),'Province'],CM=dat2[which(lgth>1),'Commune'])
-dt
+dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 
 
+#dt <- data.frame(PV=dat2[which(lgth>1),'Province'],CM=dat2[which(lgth>1),'Commune'])
+#dt
 
-## Edit below code to select by communeGIS not commune
-# To aggregate at the commune level, we can do another loop
 
-commGIS <- unique(dat2$CommCode)    # Unique commune IDs
-commGIS <- commGIS[-which(is.na(commGIS)==T)]
-dat3 <- dat2[1,]        # Create template for final data frame columns
-for (c in 1:length(commGIS)){      # For each commune ID
-  sub <- dat2[dat2$CommCode==commGIS[c],]   # Subset the data frame
-  for (cc in 1:ncol(sub)){                                            # For each column of sub
-    if (cc %in% c(5:9,14,16,17,36,41,42)){   # If column number is in this list of numbers...
-      dat3[c,cc] <- sum(sub[cc],na.rm=T)           # Do the column sum
-    }
-    if (cc %in% c(10:13,15,18:28,30:35,37:40,43)){  # If the column number is in this list of numbers...
-      dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
-    }
-    if (cc %in% 29) {
-        dat3[c,cc] <- median(sub[cc] [sub[cc]>0],na.rm=T)     # Do the median
-    } 
-  }
-}
-
-dat3 <- dat3[,-4]    # Remove column 4 as it should be empty (no villages)
-write.xlsx(dat3, "C://Users/mnn1/Box Sync/Objective 1/Analysis/Data/dat3.xlsx", sheetName="Sheet 1", 
-           col.names = T)
 
 
 # tidyverse
@@ -91,7 +69,7 @@ dat3 <- dat2 %>%
   select(CommCode,tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
          land_confl,Pax_migt_in,Pax_migt_out) %>%  
   group_by(CommCode) %>%
-  summarise_all(funs(sum)) %>% 
+  summarise_all(funs(sum)) 
 
 dat4 <- dat2 %>% 
   select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
@@ -99,7 +77,7 @@ dat4 <- dat2 %>%
          pig_fam, garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,
          KM_Heal_cent,inf_mort,U5_mort,Prop_Indigenous) %>% 
   group_by(CommCode) %>%
-  summarise_all(funs(mean)) %>% 
+  summarise_all(funs(mean)) 
 
 dat5 <- dat2 %>% 
   select(CommCode, dist_sch) %>% 
@@ -111,29 +89,35 @@ dat7 <- left_join(dat6, dat5, by = "CommCode")
 
 admindat <- dat2 %>% 
   select(CommCode,Province, Commune) %>% 
-  group_by(CommCode)
+  group_by(CommCode) %>% 
+  distinct(CommCode, .keep_all=TRUE)
 
 dat_master <- left_join(admindat, dat7, by = "CommCode")
-
-### master
-dat3 <- dat2 %>% 
-  
-  group_by(CommCode) %>% 
-  select(tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
-         land_confl,Pax_migt_in,Pax_migt_out) %>%  
- 
-  summarise_all(funs(sum)) %>% 
-  
-  select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
-         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,
-         pig_fam, garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,
-         KM_Heal_cent,inf_mort,U5_mort,Prop_Indigenous) %>% 
-  group_by(CommCode) %>%
-  summarise_all(funs(mean)) %>% 
-
-  select(CommCode, dist_sch) %>% 
-  group_by(CommCode) %>% 
-  summarise_all(funs(median))
+str(dat_master)
 
 
+
+
+## old code using loops
+
+## Edit below code to select by communeGIS not commune
+# To aggregate at the commune level, we can do another loop
+
+#commGIS <- unique(dat2$CommCode)    # Unique commune IDs
+#commGIS <- commGIS[-which(is.na(commGIS)==T)]
+#dat3 <- dat2[1,]        # Create template for final data frame columns
+#for (c in 1:length(commGIS)){      # For each commune ID
+  #sub <- dat2[dat2$CommCode==commGIS[c],]   # Subset the data frame
+  #for (cc in 1:ncol(sub)){                                            # For each column of sub
+    #if (cc %in% c(5:9,14,16,17,36,41,42)){   # If column number is in this list of numbers...
+      #dat3[c,cc] <- sum(sub[cc],na.rm=T)           # Do the column sum
+   # }
+    #if (cc %in% c(10:13,15,18:28,30:35,37:40,43)){  # If the column number is in this list of numbers...
+      #dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
+   # }
+    #if (cc %in% 29) {
+      #dat3[c,cc] <- median(sub[cc] [sub[cc]>0],na.rm=T)     # Do the median
+    #} 
+ # }
+#}
 
