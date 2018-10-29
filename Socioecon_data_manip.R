@@ -92,38 +92,48 @@ dat3 <- dat2 %>%
          land_confl,Pax_migt_in,Pax_migt_out) %>%  
   group_by(CommCode) %>%
   summarise_all(funs(sum)) %>% 
+
+dat4 <- dat2 %>% 
+  select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
+         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,
+         pig_fam, garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,
+         KM_Heal_cent,inf_mort,U5_mort,Prop_Indigenous) %>% 
+  group_by(CommCode) %>%
+  summarise_all(funs(mean)) %>% 
+
+dat5 <- dat2 %>% 
+  select(CommCode, dist_sch) %>% 
+  group_by(CommCode) %>% 
+  summarise_all(funs(median))
+                
+dat6 <- left_join(dat3,dat4,by = "CommCode")
+dat7 <- left_join(dat6, dat5, by = "CommCode")
+
+admindat <- dat2 %>% 
+  select(CommCode,Province, Commune) %>% 
+  group_by(CommCode)
+
+dat_master <- left_join(admindat, dat7, by = "CommCode")
+
+### master
+dat3 <- dat2 %>% 
+  
+  group_by(CommCode) %>% 
+  select(tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
+         land_confl,Pax_migt_in,Pax_migt_out) %>%  
+ 
+  summarise_all(funs(sum)) %>% 
   
   select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
-         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,pig_fam,
-         garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,KM_Heal_cent,inf_mort,
-         U5_mort,Prop_Indigenous) %>% 
+         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,
+         pig_fam, garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,
+         KM_Heal_cent,inf_mort,U5_mort,Prop_Indigenous) %>% 
   group_by(CommCode) %>%
   summarise_all(funs(mean)) %>% 
 
   select(CommCode, dist_sch) %>% 
   group_by(CommCode) %>% 
   summarise_all(funs(median))
-                
-
-
-## don not use below code
-commGIS <- unique(dat2$CommCode)    # Unique commune IDs
-dat3 <- dat2[1,]        # Create template for final data frame columns
-for (c in 1:length(commGIS)){      # For each commune ID
-  sub <- dat2[dat2$CommCode==commGIS[c],]   # Subset the data frame
-  for (cc in 1:ncol(sub)){                                            # For each column of sub
-    if (cc %in% c(5:9,14,16,17,41,42)){   # If column number is in this list of numbers...
-      dat3[c,cc] <- sum(sub[cc],na.rm=T)           # Do the column sum
-    }
-    if (cc %in% c(10:13,15,18:28,30:35,37:40,43)){     # If the column number is in this list of numbers...
-      dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
-    }
-    if (cc==29){                                                 # If the column number is 29...
-      dat3[c,cc] <- apply(x, 1, function(x){median(sub[cc][sub[cc]>0],na.rm=TRUE)})     # Do the median
-    } 
-  }
-}
-
 
 
 
