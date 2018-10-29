@@ -1,3 +1,5 @@
+#### Load libraries and data ####
+
 
 library('robustbase')
 library('xlsx')
@@ -9,6 +11,8 @@ library('tidyverse')
 dat <- read.csv("Socioeconomic_variables.csv")
 commDat <- read.csv("commGIS.csv")
 
+
+#### Grouping and summarising indigenous group variables ####
 # Subset indigenous group columns
 dat.ig <- dat[,10:73]
 
@@ -37,6 +41,8 @@ dat2 <- dat
 dat2$Prop_Indigenous <- prop.ig
 dat2 <- dat2[,-c(10:73)]
 
+
+#### Adding unique Commune Codes ####
 ## add commGIS codes
 
 dat2$CommCode <- NA   # Create an empty column in dat2 to store codes
@@ -60,10 +66,12 @@ dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 
 
 
+#### Aggregating all variables up to the Commune level ####
 
 # tidyverse
 as.tibble(dat2)
 
+# Variables that need to be summed up to Commune level
 dat3 <- dat2 %>% 
    
   select(CommCode,tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
@@ -71,6 +79,7 @@ dat3 <- dat2 %>%
   group_by(CommCode) %>%
   summarise_all(funs(sum)) 
 
+# Variables that need to be meaned up to the Commune level
 dat4 <- dat2 %>% 
   select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
          ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,
@@ -79,25 +88,36 @@ dat4 <- dat2 %>%
   group_by(CommCode) %>%
   summarise_all(funs(mean)) 
 
+# Variables that need the median taken up to the Commune level
 dat5 <- dat2 %>% 
   select(CommCode, dist_sch) %>% 
   group_by(CommCode) %>% 
   summarise_all(funs(median))
-                
+
+# Join all of the above                
 dat6 <- left_join(dat3,dat4,by = "CommCode")
 dat7 <- left_join(dat6, dat5, by = "CommCode")
 
+# Aggregate the admin variables up to the Commune level
 admindat <- dat2 %>% 
   select(CommCode,Province, Commune) %>% 
   group_by(CommCode) %>% 
   distinct(CommCode, .keep_all=TRUE)
 
+# Join tables
 dat_master <- left_join(admindat, dat7, by = "CommCode")
 str(dat_master)
 
+# Change CommCode to a factor
+dat_master$CommCode <- as.factor(dat_master$CommCode)
+
+# Quality control against raw data
+dat_master %>% 
+  filter(CommCode=="20401") %>% 
+  select(F18_60_ill)
 
 
-
+#### Obsolete code ####
 ## old code using loops
 
 ## Edit below code to select by communeGIS not commune
