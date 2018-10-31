@@ -7,7 +7,7 @@ dat <- read.csv("Socioeconomic_variables.csv")
 commDat <- read.csv("commGIS.csv")
 
 
-#### Grouping and summarising indigenous group variables ####
+## Grouping and summarising indigenous group variables ####
 # Subset indigenous group columns
 dat.ig <- dat[,10:73]
 
@@ -37,7 +37,7 @@ dat2$Prop_Indigenous <- prop.ig
 dat2 <- dat2[,-c(10:73)]
 
 
-#### Adding unique Commune Codes ####
+## Adding unique Commune Codes ####
 ## add commGIS codes
 
 dat2$CommCode <- NA   # Create an empty column in dat2 to store codes
@@ -61,7 +61,7 @@ dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 
 
 
-#### Aggregating all variables up to the Commune level ####
+## Aggregating all variables up to the Commune level ####
 
 # tidyverse
 as.tibble(dat2)
@@ -112,6 +112,7 @@ dat_master %>%
   select(F18_60_ill)
 
 
+##----------------------------------------------------------------------------------------------------------------------
 #### Data exploration ####
 
 ## Subset data by Province ####
@@ -268,27 +269,135 @@ p24 <- qplot(takeo$male_18_60, geom = "histogram")
 plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
           p24)
 
-#### Obsolete code ####
-## old code using loops
+# One value is very high - Phnom Penh. This makes sense when you look at tot_pop. Don't see any problems
+qplot(phnom_penh$male_18_60, geom = "histogram")
 
-## Edit below code to select by communeGIS not commune
-# To aggregate at the commune level, we can do another loop
+## fem_18_60 ####
+qplot(dat_master$fem_18_60, geom = "histogram")
 
-#commGIS <- unique(dat2$CommCode)    # Unique commune IDs
-#commGIS <- commGIS[-which(is.na(commGIS)==T)]
-#dat3 <- dat2[1,]        # Create template for final data frame columns
-#for (c in 1:length(commGIS)){      # For each commune ID
-  #sub <- dat2[dat2$CommCode==commGIS[c],]   # Subset the data frame
-  #for (cc in 1:ncol(sub)){                                            # For each column of sub
-    #if (cc %in% c(5:9,14,16,17,36,41,42)){   # If column number is in this list of numbers...
-      #dat3[c,cc] <- sum(sub[cc],na.rm=T)           # Do the column sum
-   # }
-    #if (cc %in% c(10:13,15,18:28,30:35,37:40,43)){  # If the column number is in this list of numbers...
-      #dat3[c,cc] <- mean(sub[cc],na.rm=T)                   # Do the column mean
-   # }
-    #if (cc %in% 29) {
-      #dat3[c,cc] <- median(sub[cc] [sub[cc]>0],na.rm=T)     # Do the median
-    #} 
- # }
-#}
+# Looks like there is an outlier again
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., fem_18_60 > 40000)
+# Phnom Penh and Paoy Pet again
 
+p1 <- qplot(battambang$fem_18_60, geom = "histogram")
+p2 <- qplot(banteay_meanchey$fem_18_60, geom = "histogram")
+p3 <- qplot(kampong_speu$fem_18_60, geom = "histogram")
+p4 <- qplot(kep$fem_18_60, geom = "histogram")
+p5 <- qplot(otdar_meanchey$fem_18_60, geom = "histogram")
+p6 <- qplot(preah_vihear$fem_18_60, geom = "histogram")
+p7 <- qplot(siem_reap$fem_18_60, geom = "histogram")
+p8 <- qplot(kampong_thom$fem_18_60, geom = "histogram")
+p9 <- qplot(koh_kong$fem_18_60, geom = "histogram")
+p10 <- qplot(pailin$fem_18_60, geom = "histogram")
+p11 <- qplot(prey_veng$fem_18_60, geom = "histogram")
+p12 <- qplot(stung_treng$fem_18_60, geom = "histogram")
+p13 <- qplot(kampong_cham$fem_18_60, geom = "histogram")
+p14 <- qplot(kampot$fem_18_60, geom = "histogram")
+p15 <- qplot(kratie$fem_18_60, geom = "histogram")
+p16 <- qplot(phnom_penh$fem_18_60, geom = "histogram")
+p17 <- qplot(pursat$fem_18_60, geom = "histogram")
+p18 <- qplot(svay_rieng$fem_18_60, geom = "histogram")
+p19 <- qplot(kampong_chhnang$fem_18_60, geom = "histogram")
+p20 <- qplot(kandal$fem_18_60, geom = "histogram")
+p21 <- qplot(mondulkiri$fem_18_60, geom = "histogram")
+p22 <- qplot(preah_sihanouk$fem_18_60, geom = "histogram")
+p23 <- qplot(ratanakiri$fem_18_60, geom = "histogram")
+p24 <- qplot(takeo$fem_18_60, geom = "histogram")
+
+plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+          p24)
+
+## pop_over61 ####
+qplot(dat_master$pop_over61, geom = "histogram")
+
+p1 <- qplot(battambang$pop_over61, geom = "histogram")
+p2 <- qplot(banteay_meanchey$pop_over61, geom = "histogram")
+p3 <- qplot(kampong_speu$pop_over61, geom = "histogram")
+p4 <- qplot(kep$pop_over61, geom = "histogram")
+p5 <- qplot(otdar_meanchey$pop_over61, geom = "histogram")
+p6 <- qplot(preah_vihear$pop_over61, geom = "histogram")
+p7 <- qplot(siem_reap$pop_over61, geom = "histogram")
+p8 <- qplot(kampong_thom$pop_over61, geom = "histogram")
+p9 <- qplot(koh_kong$pop_over61, geom = "histogram")
+p10 <- qplot(pailin$pop_over61, geom = "histogram")
+p11 <- qplot(prey_veng$pop_over61, geom = "histogram")
+p12 <- qplot(stung_treng$pop_over61, geom = "histogram")
+p13 <- qplot(kampong_cham$pop_over61, geom = "histogram")
+p14 <- qplot(kampot$pop_over61, geom = "histogram")
+p15 <- qplot(kratie$pop_over61, geom = "histogram")
+p16 <- qplot(phnom_penh$pop_over61, geom = "histogram")
+p17 <- qplot(pursat$pop_over61, geom = "histogram")
+p18 <- qplot(svay_rieng$pop_over61, geom = "histogram")
+p19 <- qplot(kampong_chhnang$pop_over61, geom = "histogram")
+p20 <- qplot(kandal$pop_over61, geom = "histogram")
+p21 <- qplot(mondulkiri$pop_over61, geom = "histogram")
+p22 <- qplot(preah_sihanouk$pop_over61, geom = "histogram")
+p23 <- qplot(ratanakiri$pop_over61, geom = "histogram")
+p24 <- qplot(takeo$pop_over61, geom = "histogram")
+
+plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+          p24)
+
+## numPrimLivFarm ####
+qplot(dat_master$numPrimLivFarm, geom = "histogram")
+
+# There are a few outliers here, and I'm curious as to where in the country they are. I'm guessing the central lowlands, where rice farming is huge
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., numPrimLivFarm > 4000)
+
+p1 <- qplot(battambang$numPrimLivFarm, geom = "histogram")
+p2 <- qplot(banteay_meanchey$numPrimLivFarm, geom = "histogram")
+p3 <- qplot(kampong_speu$numPrimLivFarm, geom = "histogram")
+p4 <- qplot(kep$numPrimLivFarm, geom = "histogram")
+p5 <- qplot(otdar_meanchey$numPrimLivFarm, geom = "histogram")
+p6 <- qplot(preah_vihear$numPrimLivFarm, geom = "histogram")
+p7 <- qplot(siem_reap$numPrimLivFarm, geom = "histogram")
+p8 <- qplot(kampong_thom$numPrimLivFarm, geom = "histogram")
+p9 <- qplot(koh_kong$numPrimLivFarm, geom = "histogram")
+p10 <- qplot(pailin$numPrimLivFarm, geom = "histogram")
+p11 <- qplot(prey_veng$numPrimLivFarm, geom = "histogram")
+p12 <- qplot(stung_treng$numPrimLivFarm, geom = "histogram")
+p13 <- qplot(kampong_cham$numPrimLivFarm, geom = "histogram")
+p14 <- qplot(kampot$numPrimLivFarm, geom = "histogram")
+p15 <- qplot(kratie$numPrimLivFarm, geom = "histogram")
+p16 <- qplot(phnom_penh$numPrimLivFarm, geom = "histogram")
+p17 <- qplot(pursat$numPrimLivFarm, geom = "histogram")
+p18 <- qplot(svay_rieng$numPrimLivFarm, geom = "histogram")
+p19 <- qplot(kampong_chhnang$numPrimLivFarm, geom = "histogram")
+p20 <- qplot(kandal$numPrimLivFarm, geom = "histogram")
+p21 <- qplot(mondulkiri$numPrimLivFarm, geom = "histogram")
+p22 <- qplot(preah_sihanouk$numPrimLivFarm, geom = "histogram")
+p23 <- qplot(ratanakiri$numPrimLivFarm, geom = "histogram")
+p24 <- qplot(takeo$numPrimLivFarm, geom = "histogram")
+
+plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+          p24)
+
+
+
+histplot <- function(variable) {
+  p1 <- qplot(battambang$variable, geom = "histogram")
+  p2 <- qplot(banteay_meanchey$variable, geom = "histogram")
+  p3 <- qplot(kampong_speu$variable, geom = "histogram")
+  p4 <- qplot(kep$variable, geom = "histogram")
+  p5 <- qplot(otdar_meanchey$variable, geom = "histogram")
+  p6 <- qplot(preah_vihear$variable, geom = "histogram")
+  p7 <- qplot(siem_reap$variable, geom = "histogram")
+  p8 <- qplot(kampong_thom$variable, geom = "histogram")
+  p9 <- qplot(koh_kong$variable, geom = "histogram")
+  p10 <- qplot(pailin$variable, geom = "histogram")
+ q <- plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10)
+ print(q)
+}
+
+histplot(variable = dat_master$numPrimLivFarm)
+
+plotfunc <- function(x){
+  x <- qplot(battambang$numPrimLivFarm, geom = "histogram")
+  print(x)
+}
+ 
+plotfunc(x) 
