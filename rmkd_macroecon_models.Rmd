@@ -1,0 +1,224 @@
+---
+title: "Macroeconomic models"
+author: "Matt Nuttall"
+date: "30 October 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, include=FALSE, echo=FALSE}
+library('tidyverse')
+library('broom')
+library('knitr')
+```
+
+Below are the loadings for the principal components for the economic, commodity price, and producer price variables.  The first two principal components for each set of variables account for over 95% of the total variance, and so there is a fairly strong justification for dropping the other PC's.  Below I have only reported the first two PC's.   
+
+The first PC for the economic variables shows the strong positive covariance between all variables, excluding agricultural proportion of GDP (agr_gdp), which is negatively correlated with all the others. Luc suggested that in this case I could select i) one of the variables with negative loadings to represent the others, in this case probably foreign direct investment (fdi), as it has the strongest loading, and then ii) agricultural proportion of GDP (agr_gdp) as this will reflect the contrasting relationship. For PC2 I could select industrial proportion of GDP (ind_gdp) because it has a strong contrasting loading compared to the others, and normally I would then select agr_gdp to represent the positive loadings but it has already been selected for PC1.  
+
+```{r, include=FALSE, echo=FALSE}
+df_econ_loadings <- data_frame(econvar = c("gdp", "fdi", "ind_gdp", "agr_gdp", "dev_agri", "dev_env"),
+                           PC1 = c(-0.422,-0.446,-0.415,0.394,-0.359,-0.407),
+                           PC2 = c(0.270,0.232,-0.522,0.6,0.461,0.170))
+```
+
+```{r, echo=FALSE, results='asis'}
+kable(df_econ_loadings, caption = "Economic variable principal component loadings")
+```
+
+For the commodity price variables, again the first PC shows that all of the variables contribute equally to the PC.  Therefore I can just select one of the variables to be used as a proxy. In this case I would select Agricultural Raw Materials Index (armi) as it has the strongest loading. For PC2, two variables contribute positively and 3 contribute negatively.  I could select one positive and one negative variable, in this case median rice price (rice_med) and median sugar price (sug_med), as they have the strongest loadings.
+
+```{r, include=FALSE, echo=FALSE}
+df_comm_loadings <- tibble(comvars = c("armi","rice_med","rub_med","corn_med","sug_med"),
+                           PC1 = c(0.461,0.433,0.451,0.443,0.450),
+                           PC2 = c(-0.260,0.66,-0.35,0.43,-0.441))
+```
+
+```{r, echo=FALSE, results='asis'}
+kable(df_comm_loadings, caption = "Commodity variable principal component loadings")
+```
+
+For the producer price variables, the first PC could be represented by sugar producer price (prod_sug) as all but one are positively contributing to the PC and so this variable would be an effective proxy.  Cassava producer price (prod_cass) could be selected to represent PC2 for the same reason.
+
+```{r, include=FALSE, echo=FALSE}
+df_prod_loadings <- tibble(prodvars = c("prod_rice","prod_rub","prod_cass","prod_corn","prod_sug"),
+                           PC1 = c(0.504,0.467,-0.210,0.48,0.51),
+                           PC2 = c(-0.13,-0.13,-0.1,-0.15,-0.02))
+```
+
+```{r, echo=FALSE, results='asis'}
+kable(df_prod_loadings, caption = "Producer price variable principal component loadings")
+```
+
+Below are scatter plots of the selected raw variables with forest cover rate of change
+
+Economic variables:
+
+```{r, include=FALSE, echo=FALSE, results='hide'}
+library('tidyverse')
+library('cowplot')
+dat_econ <- read_csv("macroeconomic_vars.csv")
+dat_econ <- mutate(dat_econ, year = as.character(year))
+dat_resp <- read_csv("ForCov_LU_econVars_PCs.csv")
+dat_work <- dat_resp %>% 
+  mutate(year = as.character(year)) %>% 
+  select(1:13) %>% 
+  left_join(.,dat_econ, by = "year")
+```
+
+```{r, echo=FALSE}
+e1 <- ggplot(dat_work, aes(x=fdi, y=for_cov_roc))+
+       geom_point()
+
+e2 <- ggplot(dat_work, aes(x=agr_gdp, y=for_cov_roc))+
+       geom_point()
+  
+e3 <- ggplot(dat_work, aes(x=ind_gdp, y=for_cov_roc))+
+       geom_point()
+
+plot_grid(e1,e2,e3)
+```
+
+When we log-transform the response variable we get:
+
+```{r,  echo=FALSE}
+e4 <- ggplot(dat_work, aes(x=fdi, y=log(for_cov_roc)))+
+       geom_point()
+
+e5 <- ggplot(dat_work, aes(x=agr_gdp, y=log(for_cov_roc)))+
+       geom_point()
+  
+e6 <- ggplot(dat_work, aes(x=ind_gdp, y=log(for_cov_roc)))+
+       geom_point()
+
+plot_grid(e4,e5,e6)
+```
+
+As we can see there are two data points causing problems - the forest cover rate of change values from 1994 and 2015.  I'm not sure what is going on here, as the values are both identical (which in itself seems odd).  If we remove those two outliers we get:
+
+```{r,  echo=FALSE}
+dat_sub <- dat_work %>% 
+  filter(.,!year %in% c("1993","1994","2015"))
+```
+
+```{r, echo=FALSE}
+
+e7 <- ggplot(dat_sub, aes(x=fdi, y=log(for_cov_roc)))+
+       geom_point()
+
+e8 <- ggplot(dat_sub, aes(x=agr_gdp, y=log(for_cov_roc)))+
+       geom_point()
+  
+e9 <- ggplot(dat_sub, aes(x=ind_gdp, y=log(for_cov_roc)))+
+       geom_point()
+
+plot_grid(e7,e8,e9)
+```
+
+Although I don't necessarily think that those relationships look linear, Luc thought that a linear model would definitely be worth exploring, and then comparing to a more complicated model.
+
+But his advice is that using principal components in the models is conceptually quite complicated, both for me and for the reader. Furthermore he thinks that making predictions using the models will be much more challenging if we use PC's, rather than raw predictor variables.  
+
+I have done a quick bit of modelling as a working example.
+
+### Linear model of forest cover rate of change ~ foreign direct investment:
+
+```{r, echo=FALSE}
+elm1 <- lm(for_cov_roc ~ fdi, data=dat_sub)
+summary(elm1)
+```
+
+```{r, include=FALSE, echo=FALSE}
+newxvars <- seq(84,1873, length = 100)
+newyvars <- predict(elm1, newdata = list(fdi=newxvars), int = "c")
+df.newvars <- data_frame(newx = newxvars,
+                         newy = as.numeric(newyvars[,"fit"]),
+                         newupr = as.numeric(newyvars[,"upr"]),
+                         newlwr = as.numeric(newyvars[,"lwr"]))
+```
+
+```{r, echo=FALSE}
+ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
+  geom_point(data = dat_sub, aes(x = fdi,y = for_cov_roc))+
+  labs(x = "Foreign Direct Investment",
+       y = "Forest cover % change")+
+    theme_bw()+
+  theme(legend.position="none")
+```
+
+### Linear model with log-transformed response
+
+```{r, echo=FALSE}
+elm2 <- lm(log(for_cov_roc) ~ fdi, data = dat_sub)
+summary(elm2)
+```
+
+```{r, echo=FALSE}
+elm2 %>%
+  augment() %>%
+  ggplot(., aes(x = fdi, y = exp(log.for_cov_roc.))) +
+  geom_point(size = 1) +
+  geom_line(aes(x = fdi, y = exp(.fitted))) +
+  geom_ribbon(aes(ymin = exp(.fitted - (1.96*.se.fit)),
+                  ymax = exp(.fitted + (1.96*.se.fit))),
+              alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Foreign Direct Investment",
+       y = "Forest cover % change")
+```
+
+### 2 parameter exponential model
+
+```{r, echo=FALSE}
+a <- 1.1
+b <- -0.0005*log(2)/a
+enlm2 <- nls(for_cov_roc ~ a*exp(-b*fdi), start = list(a=a, b=b), data = dat_sub)
+summary(enlm2)
+```
+
+```{r, echo=FALSE}
+enlm2 %>%
+  augment() %>%
+  ggplot(., aes(x = fdi, y = for_cov_roc)) +
+  geom_point(size = 1) +
+  geom_line(aes(x = fdi, y = .fitted)) +
+  theme_bw() +
+  labs(x = "Foreign Direct Investment",
+       y = "Forest cover % change")
+```
+
+The log linear model performs better than the linear model, but the exponential model performs better than the log linear.  I used AIC to compare the exponential model and log linear (anova doens't work as the response variable is different), but I'm not sure if AIC is an appropriate test.
+
+Below are the scatter plots for the commodity price and producer price variables (with the two outliers removed), and log-transformed response.
+
+Commodity price variables:
+
+```{r, echo=FALSE}
+c1 <- ggplot(dat_sub, aes(x=armi, y=log(for_cov_roc)))+
+       geom_point()
+
+c2 <- ggplot(dat_sub, aes(x=rice_med, y=log(for_cov_roc)))+
+       geom_point()
+  
+c3 <- ggplot(dat_sub, aes(x=sug_med, y=log(for_cov_roc)))+
+       geom_point()
+
+plot_grid(c1,c2,c3)
+```
+
+Producer price variables:
+
+```{r, echo=FALSE}
+p1 <- ggplot(dat_sub, aes(x=prod_sug, y=for_cov_roc))+
+       geom_point()
+
+p2 <- ggplot(dat_sub, aes(x=prod_cass, y=for_cov_roc))+
+       geom_point()
+
+plot_grid(p1,p2)
+```
+
