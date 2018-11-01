@@ -378,26 +378,49 @@ plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
 
 
 
-histplot <- function(variable) {
-  p1 <- qplot(battambang$variable, geom = "histogram")
-  p2 <- qplot(banteay_meanchey$variable, geom = "histogram")
-  p3 <- qplot(kampong_speu$variable, geom = "histogram")
-  p4 <- qplot(kep$variable, geom = "histogram")
-  p5 <- qplot(otdar_meanchey$variable, geom = "histogram")
-  p6 <- qplot(preah_vihear$variable, geom = "histogram")
-  p7 <- qplot(siem_reap$variable, geom = "histogram")
-  p8 <- qplot(kampong_thom$variable, geom = "histogram")
-  p9 <- qplot(koh_kong$variable, geom = "histogram")
-  p10 <- qplot(pailin$variable, geom = "histogram")
- q <- plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10)
+histplot <- function(x) {
+  p1 <- qplot(battambang$x, geom = "histogram")
+  p2 <- qplot(banteay_meanchey$x, geom = "histogram")
+  p3 <- qplot(kampong_speu$x, geom = "histogram")
+ 
+ q <- plot_grid(p1,p2,p3)
  print(q)
 }
 
-histplot(variable = dat_master$numPrimLivFarm)
+histplot(x = 'numPrimLivFarm')
 
 plotfunc <- function(x){
-  x <- qplot(battambang$numPrimLivFarm, geom = "histogram")
-  print(x)
+  p1 <- qplot(battambang$x, geom = "histogram")
+  print(p1)
 }
  
-plotfunc(x) 
+plotfunc(x=battambang$numPrimLivFarm) 
+
+
+histplot <- function(prov,varx){
+
+ t <- dat_master %>% 
+       filter(Province==prov) %>% 
+       select(varx)
+ plotx <- qplot(t$varx, geom="histogram")
+print(plotx)
+}
+ 
+histplot(prov = "Battambang", varx = "numPrimLivFarm")   
+
+
+histplot1 <- function(x){
+  nm <- names(x)
+  for (i in seq_along(nm)){
+    print(ggplot(x, aes_string(x = nm[i])) + geom_histogram())
+  }
+}
+histplot1(x=battambang)
+
+
+test <- dat_master %>%
+         group_by(CommCode) %>% 
+         filter(Province=="Battambang") %>% 
+         select(numPrimLivFarm)
+qplot(test$numPrimLivFarm, geom="histogram")
+
