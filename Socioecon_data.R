@@ -177,168 +177,68 @@ dat_master %>%
 levels(dat_master$Province)
 
 ## histograms for total population by province
-tp1 <- qplot(battambang$tot_pop, geom = "histogram")
-tp2 <- qplot(banteay_meanchey$tot_pop, geom = "histogram")
-tp3 <- qplot(kampong_speu$tot_pop, geom = "histogram")
-tp4 <- qplot(kep$tot_pop, geom = "histogram")
-tp5 <- qplot(otdar_meanchey$tot_pop, geom = "histogram")
-tp6 <- qplot(preah_vihear$tot_pop, geom = "histogram")
-tp7 <- qplot(siem_reap$tot_pop, geom = "histogram")
-tp8 <- qplot(kampong_thom$tot_pop, geom = "histogram")
-tp9 <- qplot(koh_kong$tot_pop, geom = "histogram")
-tp10 <- qplot(pailin$tot_pop, geom = "histogram")
-tp11 <- qplot(prey_veng$tot_pop, geom = "histogram")
-tp12 <- qplot(stung_treng$tot_pop, geom = "histogram")
-tp13 <- qplot(kampong_cham$tot_pop, geom = "histogram")
-tp14 <- qplot(kampot$tot_pop, geom = "histogram")
-tp15 <- qplot(kratie$tot_pop, geom = "histogram")
-tp16 <- qplot(phnom_penh$tot_pop, geom = "histogram")
-tp17 <- qplot(pursat$tot_pop, geom = "histogram")
-tp18 <- qplot(svay_rieng$tot_pop, geom = "histogram")
-tp19 <- qplot(kampong_chhnang$tot_pop, geom = "histogram")
-tp20 <- qplot(kandal$tot_pop, geom = "histogram")
-tp21 <- qplot(mondulkiri$tot_pop, geom = "histogram")
-tp22 <- qplot(preah_sihanouk$tot_pop, geom = "histogram")
-tp23 <- qplot(ratanakiri$tot_pop, geom = "histogram")
-tp24 <- qplot(takeo$tot_pop, geom = "histogram")
-            
-plot_grid(tp1,tp2,tp3,tp4,tp5,tp6,tp7,tp8,tp9,tp10,tp11,tp12,tp13,tp14,tp15,tp16,tp17,tp18,tp19,tp20,tp21,tp22,tp23,
-          tp24)
+ggplot(dat_master, aes(tot_pop))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
 
 ## Family ####
 qplot(dat_master$family, geom = "histogram")
 
-f1 <- qplot(battambang$family, geom = "histogram")
-f2 <- qplot(banteay_meanchey$family, geom = "histogram")
-f3 <- qplot(kampong_speu$family, geom = "histogram")
-f4 <- qplot(kep$family, geom = "histogram")
-f5 <- qplot(otdar_meanchey$family, geom = "histogram")
-f6 <- qplot(preah_vihear$family, geom = "histogram")
-f7 <- qplot(siem_reap$family, geom = "histogram")
-f8 <- qplot(kampong_thom$family, geom = "histogram")
-f9 <- qplot(koh_kong$family, geom = "histogram")
-f10 <- qplot(pailin$family, geom = "histogram")
-f11 <- qplot(prey_veng$family, geom = "histogram")
-f12 <- qplot(stung_treng$family, geom = "histogram")
-f13 <- qplot(kampong_cham$family, geom = "histogram")
-f14 <- qplot(kampot$family, geom = "histogram")
-f15 <- qplot(kratie$family, geom = "histogram")
-f16 <- qplot(phnom_penh$family, geom = "histogram")
-f17 <- qplot(pursat$family, geom = "histogram")
-f18 <- qplot(svay_rieng$family, geom = "histogram")
-f19 <- qplot(kampong_chhnang$family, geom = "histogram")
-f20 <- qplot(kandal$family, geom = "histogram")
-f21 <- qplot(mondulkiri$family, geom = "histogram")
-f22 <- qplot(preah_sihanouk$family, geom = "histogram")
-f23 <- qplot(ratanakiri$family, geom = "histogram")
-f24 <- qplot(takeo$family, geom = "histogram")
+# one outlier which suggests somehwere with more than 15,000 families
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., family > 15000)
+# Paoy Pet again
 
-plot_grid(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,
-          f24)
+# Histograms for number of famililes by province
+ggplot(dat_master, aes(family))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
 ## male_18_60 ####
-
 qplot(dat_master$male_18_60, geom = "histogram")
 
-p1 <- qplot(battambang$male_18_60, geom = "histogram")
-p2 <- qplot(banteay_meanchey$male_18_60, geom = "histogram")
-p3 <- qplot(kampong_speu$male_18_60, geom = "histogram")
-p4 <- qplot(kep$male_18_60, geom = "histogram")
-p5 <- qplot(otdar_meanchey$male_18_60, geom = "histogram")
-p6 <- qplot(preah_vihear$male_18_60, geom = "histogram")
-p7 <- qplot(siem_reap$male_18_60, geom = "histogram")
-p8 <- qplot(kampong_thom$male_18_60, geom = "histogram")
-p9 <- qplot(koh_kong$male_18_60, geom = "histogram")
-p10 <- qplot(pailin$male_18_60, geom = "histogram")
-p11 <- qplot(prey_veng$male_18_60, geom = "histogram")
-p12 <- qplot(stung_treng$male_18_60, geom = "histogram")
-p13 <- qplot(kampong_cham$male_18_60, geom = "histogram")
-p14 <- qplot(kampot$male_18_60, geom = "histogram")
-p15 <- qplot(kratie$male_18_60, geom = "histogram")
-p16 <- qplot(phnom_penh$male_18_60, geom = "histogram")
-p17 <- qplot(pursat$male_18_60, geom = "histogram")
-p18 <- qplot(svay_rieng$male_18_60, geom = "histogram")
-p19 <- qplot(kampong_chhnang$male_18_60, geom = "histogram")
-p20 <- qplot(kandal$male_18_60, geom = "histogram")
-p21 <- qplot(mondulkiri$male_18_60, geom = "histogram")
-p22 <- qplot(preah_sihanouk$male_18_60, geom = "histogram")
-p23 <- qplot(ratanakiri$male_18_60, geom = "histogram")
-p24 <- qplot(takeo$male_18_60, geom = "histogram")
+# Several large outliers
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., male_18_60 > 30000)
+# Paoy Pet and Phnom Penh, which makes sense
 
-plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
-          p24)
-
-# One value is very high - Phnom Penh. This makes sense when you look at tot_pop. Don't see any problems
-qplot(phnom_penh$male_18_60, geom = "histogram")
+# histograms for number of males ages 18-60 by Province
+ggplot(dat_master, aes(male_18_60))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
 ## fem_18_60 ####
 qplot(dat_master$fem_18_60, geom = "histogram")
 
-# Looks like there is an outlier again
+# Looks like there are several outliers again
 dat_master %>% 
   group_by(CommCode) %>% 
-  filter(., fem_18_60 > 40000)
+  filter(., fem_18_60 > 30000)
 # Phnom Penh and Paoy Pet again
 
-p1 <- qplot(battambang$fem_18_60, geom = "histogram")
-p2 <- qplot(banteay_meanchey$fem_18_60, geom = "histogram")
-p3 <- qplot(kampong_speu$fem_18_60, geom = "histogram")
-p4 <- qplot(kep$fem_18_60, geom = "histogram")
-p5 <- qplot(otdar_meanchey$fem_18_60, geom = "histogram")
-p6 <- qplot(preah_vihear$fem_18_60, geom = "histogram")
-p7 <- qplot(siem_reap$fem_18_60, geom = "histogram")
-p8 <- qplot(kampong_thom$fem_18_60, geom = "histogram")
-p9 <- qplot(koh_kong$fem_18_60, geom = "histogram")
-p10 <- qplot(pailin$fem_18_60, geom = "histogram")
-p11 <- qplot(prey_veng$fem_18_60, geom = "histogram")
-p12 <- qplot(stung_treng$fem_18_60, geom = "histogram")
-p13 <- qplot(kampong_cham$fem_18_60, geom = "histogram")
-p14 <- qplot(kampot$fem_18_60, geom = "histogram")
-p15 <- qplot(kratie$fem_18_60, geom = "histogram")
-p16 <- qplot(phnom_penh$fem_18_60, geom = "histogram")
-p17 <- qplot(pursat$fem_18_60, geom = "histogram")
-p18 <- qplot(svay_rieng$fem_18_60, geom = "histogram")
-p19 <- qplot(kampong_chhnang$fem_18_60, geom = "histogram")
-p20 <- qplot(kandal$fem_18_60, geom = "histogram")
-p21 <- qplot(mondulkiri$fem_18_60, geom = "histogram")
-p22 <- qplot(preah_sihanouk$fem_18_60, geom = "histogram")
-p23 <- qplot(ratanakiri$fem_18_60, geom = "histogram")
-p24 <- qplot(takeo$fem_18_60, geom = "histogram")
+# histograms for number of females ages 18-60 by Province
+ggplot(dat_master, aes(fem_18_60))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
-plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
-          p24)
 
 ## pop_over61 ####
 qplot(dat_master$pop_over61, geom = "histogram")
 
-p1 <- qplot(battambang$pop_over61, geom = "histogram")
-p2 <- qplot(banteay_meanchey$pop_over61, geom = "histogram")
-p3 <- qplot(kampong_speu$pop_over61, geom = "histogram")
-p4 <- qplot(kep$pop_over61, geom = "histogram")
-p5 <- qplot(otdar_meanchey$pop_over61, geom = "histogram")
-p6 <- qplot(preah_vihear$pop_over61, geom = "histogram")
-p7 <- qplot(siem_reap$pop_over61, geom = "histogram")
-p8 <- qplot(kampong_thom$pop_over61, geom = "histogram")
-p9 <- qplot(koh_kong$pop_over61, geom = "histogram")
-p10 <- qplot(pailin$pop_over61, geom = "histogram")
-p11 <- qplot(prey_veng$pop_over61, geom = "histogram")
-p12 <- qplot(stung_treng$pop_over61, geom = "histogram")
-p13 <- qplot(kampong_cham$pop_over61, geom = "histogram")
-p14 <- qplot(kampot$pop_over61, geom = "histogram")
-p15 <- qplot(kratie$pop_over61, geom = "histogram")
-p16 <- qplot(phnom_penh$pop_over61, geom = "histogram")
-p17 <- qplot(pursat$pop_over61, geom = "histogram")
-p18 <- qplot(svay_rieng$pop_over61, geom = "histogram")
-p19 <- qplot(kampong_chhnang$pop_over61, geom = "histogram")
-p20 <- qplot(kandal$pop_over61, geom = "histogram")
-p21 <- qplot(mondulkiri$pop_over61, geom = "histogram")
-p22 <- qplot(preah_sihanouk$pop_over61, geom = "histogram")
-p23 <- qplot(ratanakiri$pop_over61, geom = "histogram")
-p24 <- qplot(takeo$pop_over61, geom = "histogram")
+# Several outliers again
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., pop_over61 > 3000)
+# All Phnom Penh
 
-plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
-          p24)
+# histograms for number of people over 61 by Province
+ggplot(dat_master, aes(pop_over61))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
 
 ## numPrimLivFarm ####
 qplot(dat_master$numPrimLivFarm, geom = "histogram")
@@ -347,37 +247,48 @@ qplot(dat_master$numPrimLivFarm, geom = "histogram")
 dat_master %>% 
   group_by(CommCode) %>% 
   filter(., numPrimLivFarm > 4000)
+# Note this is number of families NOT proportion of families
 
-p1 <- qplot(battambang$numPrimLivFarm, geom = "histogram")
-p2 <- qplot(banteay_meanchey$numPrimLivFarm, geom = "histogram")
-p3 <- qplot(kampong_speu$numPrimLivFarm, geom = "histogram")
-p4 <- qplot(kep$numPrimLivFarm, geom = "histogram")
-p5 <- qplot(otdar_meanchey$numPrimLivFarm, geom = "histogram")
-p6 <- qplot(preah_vihear$numPrimLivFarm, geom = "histogram")
-p7 <- qplot(siem_reap$numPrimLivFarm, geom = "histogram")
-p8 <- qplot(kampong_thom$numPrimLivFarm, geom = "histogram")
-p9 <- qplot(koh_kong$numPrimLivFarm, geom = "histogram")
-p10 <- qplot(pailin$numPrimLivFarm, geom = "histogram")
-p11 <- qplot(prey_veng$numPrimLivFarm, geom = "histogram")
-p12 <- qplot(stung_treng$numPrimLivFarm, geom = "histogram")
-p13 <- qplot(kampong_cham$numPrimLivFarm, geom = "histogram")
-p14 <- qplot(kampot$numPrimLivFarm, geom = "histogram")
-p15 <- qplot(kratie$numPrimLivFarm, geom = "histogram")
-p16 <- qplot(phnom_penh$numPrimLivFarm, geom = "histogram")
-p17 <- qplot(pursat$numPrimLivFarm, geom = "histogram")
-p18 <- qplot(svay_rieng$numPrimLivFarm, geom = "histogram")
-p19 <- qplot(kampong_chhnang$numPrimLivFarm, geom = "histogram")
-p20 <- qplot(kandal$numPrimLivFarm, geom = "histogram")
-p21 <- qplot(mondulkiri$numPrimLivFarm, geom = "histogram")
-p22 <- qplot(preah_sihanouk$numPrimLivFarm, geom = "histogram")
-p23 <- qplot(ratanakiri$numPrimLivFarm, geom = "histogram")
-p24 <- qplot(takeo$numPrimLivFarm, geom = "histogram")
+# histograms for number of families whose primary livelihood is farming, by Province
+ggplot(dat_master, aes(numPrimLivFarm))+
+  geom_histogram(binwidth = 300)+
+  facet_wrap(~Province)
 
-plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
-          p24)
+# Big spike in Phnom Penh
+ggplot(phnom_penh, aes(numPrimLivFarm))+
+  geom_histogram(binwidth = 100)
+# This makes sense, as there will be the fewest farmers in the largest city
 
+## Fish_man ####
+qplot(dat_master$Fish_man, geom = "histogram")
 
+# Huge spike around 0 and quite a few large outliers.  This makes sense as the number of places where you can make a living as a fisherman are few
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., Fish_man > 1000)
 
+# histograms for number of families whose primary livelihood is fishing, by Province
+ggplot(dat_master, aes(Fish_man))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## ntfp_fam ####
+qplot(dat_master$ntfp_fam, geom = "histogram")
+
+# Huge spike around 0 and quite a few large outliers.  This makes sense as the number of places where you can make a living collecting NTFPs are few
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., ntfp_fam > 50)
+# I'm surprised Mondulkiri and Ratanakiri and Stung Treng are not listed 
+
+# histograms for number of families whose primary livelihood is NTFP collection, by Province
+ggplot(dat_master, aes(ntfp_fam))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+# Need to check Otdar Meanchey, Preah Sihanouk, as they have outliers
+
+### Plotting functions ####
 histplot <- function(x) {
   p1 <- qplot(battambang$x, geom = "histogram")
   p2 <- qplot(banteay_meanchey$x, geom = "histogram")
@@ -410,7 +321,7 @@ histplot(prov = "Battambang", varx = "numPrimLivFarm")
 
 
 histplot1 <- function(x){
-  nm <- names(x)
+  nm <- levels(dat_master$Province)
   for (i in seq_along(nm)){
     print(ggplot(x, aes_string(x = nm[i])) + geom_histogram())
   }
@@ -423,4 +334,8 @@ test <- dat_master %>%
          filter(Province=="Battambang") %>% 
          select(numPrimLivFarm)
 qplot(test$numPrimLivFarm, geom="histogram")
+
+ggplot(data = dat_master, aes(tot_pop)) +
+geom_histogram() +
+facet_wrap(~Province)
 
