@@ -259,6 +259,15 @@ ggplot(phnom_penh, aes(numPrimLivFarm))+
   geom_histogram(binwidth = 100)
 # This makes sense, as there will be the fewest farmers in the largest city
 
+## propPrimLivFarm ####
+qplot(dat_master$propPrimLivFarm, geom = "histogram")
+
+# This paints a very different picture to numPrimLivFarm above.  This suggests that most communes are made up of mostly farmers.  This fits with Cambodia, and the culture of farming (even when you have other jobs)
+
+ggplot(dat_master, aes(propPrimLivFarm))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
 ## Fish_man ####
 qplot(dat_master$Fish_man, geom = "histogram")
 
@@ -287,55 +296,144 @@ ggplot(dat_master, aes(ntfp_fam))+
   facet_wrap(~Province)
 
 # Need to check Otdar Meanchey, Preah Sihanouk, as they have outliers
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Province == "Otdar Meanchey") %>% 
+  filter(., ntfp_fam > 100) %>% 
+  print.default()
+# One of the communes in Otdar Meanchey with high value for ntfp_fam (Koun Kriel) kind of makes sense as it is the largest commune in the province, and there are still plently of forested areas.  The other commune (Kouk Mon) however doesnt really have any forested areas, so I'm not sure how you can have much NTFP activity.  Although in this census NTFP is probably a pretty loose term.  Could also plausibly be lots of bamboo, rattan etc.  The value is so large as to cause me much concern.
 
-### Plotting functions ####
-histplot <- function(x) {
-  p1 <- qplot(battambang$x, geom = "histogram")
-  p2 <- qplot(banteay_meanchey$x, geom = "histogram")
-  p3 <- qplot(kampong_speu$x, geom = "histogram")
- 
- q <- plot_grid(p1,p2,p3)
- print(q)
-}
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Province == "Preah Sihanouk") %>% 
+  filter(., ntfp_fam > 100) %>% 
+  print.default()
+# The one commune with a value of more than 100 is in a semi forested area and the value is only 103, so I'm not that concerned.
 
-histplot(x = 'numPrimLivFarm')
+## land_confl ####
+qplot(dat_master$land_confl, geom = "histogram")
 
-plotfunc <- function(x){
-  p1 <- qplot(battambang$x, geom = "histogram")
-  print(p1)
-}
- 
-plotfunc(x=battambang$numPrimLivFarm) 
+# couple of outliers
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., land_confl > 150)
+# Interestingly Paoy Pet is one of the outliers.  This is not that surprising as it's one of the largest settlements.  I wonder if the proximity to the border influences this metric, i.e. are there any land conflict with Thailand?
 
+ggplot(dat_master, aes(land_confl))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
-histplot <- function(prov,varx){
+# THere are a few provinces with a handful of outliers, but I am inclined to believe these, as the numbers are not beyond what I would expect.  Provinces are: Banteay Meanchey, Battambang, Kampot, Kracheh, Pailin, Pursat, and Siem Reap.  
 
- t <- dat_master %>% 
-       filter(Province==prov) %>% 
-       select(varx)
- plotx <- qplot(t$varx, geom="histogram")
-print(plotx)
-}
- 
-histplot(prov = "Battambang", varx = "numPrimLivFarm")   
+## Pax_migt_in ####
+qplot(dat_master$Pax_migt_in, geom = "histogram")
 
+# Quite a few outliers. 
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., Pax_migt_in > 1500) %>% 
+  print(width=Inf)
+# Banteay Meanchey (probably people looking for work in Paoy Pet), Kampong Cham (agricultural labour? garment factories?), Phnom Penh, Otdar Meanchey (not sure why this would be), and Pailin (also not sure, but it's on the border with Thailand - so maybe cross border workers)
 
-histplot1 <- function(x){
-  nm <- levels(dat_master$Province)
-  for (i in seq_along(nm)){
-    print(ggplot(x, aes_string(x = nm[i])) + geom_histogram())
-  }
-}
-histplot1(x=battambang)
+ggplot(dat_master, aes(Pax_migt_in))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
+## Pax_migt_out ####
+qplot(dat_master$Pax_migt_out, geom = "histogram")
 
-test <- dat_master %>%
-         group_by(CommCode) %>% 
-         filter(Province=="Battambang") %>% 
-         select(numPrimLivFarm)
-qplot(test$numPrimLivFarm, geom="histogram")
+# One massive outlier
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., Pax_migt_out > 1000) %>% 
+  print(width=Inf)
+# OUtlier is Tonle Basak commune in PP.  Not sure about this.  This is the area where most of the foreigners live...maybe Cambodians sold houses and moved out to make money? 
 
-ggplot(data = dat_master, aes(tot_pop)) +
-geom_histogram() +
-facet_wrap(~Province)
+ggplot(dat_master, aes(Pax_migt_out))+
+  geom_histogram()+
+  facet_wrap(~Province)
 
+## F6_24_sch ####
+qplot(dat_master$F6_24_sch, geom = "histogram")
+
+# There is a stange value of 0
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., F6_24_sch < 0.05) %>% 
+  print(width=Inf)
+# Apparently Kaoh Peak commune in Ratankiri, 0% of their 6-24 year olds (male and female) are in school.  THis sounds like a Null response in the date.  THe total population of the commune is nearly 3000, with over 600 families.  That means there MUST be chldren between6 and 24 years old, and some of them must be in school.  Although....the nearest school is 21km away.  ANd the whole commune is indigenous. More than half of adult women are illiterate and nearly half of men are. All families rely on farming as their primary livelihood.  They are 53km from the nearest market. PErhaps it's true?
+
+ggplot(dat_master, aes(F6_24_sch))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+# Low value for one commune in MDK
+dat_master %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(F6_24_sch < 0.25) %>% 
+  print(width=Inf)
+
+## M6_24_sch ####
+qplot(dat_master$M6_24_sch, geom = "histogram")
+
+# That 0 value will be the commune in Ratankiri as above
+ggplot(dat_master, aes(M6_24_sch))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## F18_60_ill ####
+qplot(dat_master$F18_60_ill, geom = "histogram")
+
+# the shape is as you would expect. I'm curious as to where the highest levels of illiteracy are
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., F18_60_ill > 0.75) %>% 
+  print(width=Inf)
+
+# Poor old Ratanikiri!
+
+ggplot(dat_master, aes(F18_60_ill))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## M18_60_ill ####
+qplot(dat_master$M18_60_ill, geom = "histogram")
+
+# very similar shape and simnilar communes
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., M18_60_ill > 0.75) %>% 
+  print(width=Inf)
+
+ggplot(dat_master, aes(M18_60_ill))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## fam_prod ####
+qplot(dat_master$fam_prod, geom = "histogram")
+
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(fam_prod > 0.05) %>% 
+  print(width=Inf)
+
+ggplot(dat_master, aes(fam_prod))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## Cloth_craft ####
+qplot(dat_master$Cloth_craft, geom = "histogram")
+
+# one big outlier, I wonder if this is where all the textile factories are
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Cloth_craft > 0.8) %>% 
+  print(width=Inf)
+# Kandal - I bet that is because of the textile factories
+
+ggplot(dat_master, aes(Cloth_craft))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## Trader ####
+qplot(dat_master$Trader, geom = "histogram")
