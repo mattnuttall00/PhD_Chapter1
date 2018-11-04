@@ -437,3 +437,43 @@ ggplot(dat_master, aes(Cloth_craft))+
 
 ## Trader ####
 qplot(dat_master$Trader, geom = "histogram")
+
+# outlier
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Trader > 0.5) %>% 
+  print(width=Inf)
+# All in PP which makes sense
+
+ggplot(dat_master, aes(Trader))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## serv_prov ####
+qplot(dat_master$Trader, geom = "histogram")
+
+# outlier
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(serv_prov > 0.5) %>% 
+  print(width=Inf)
+# one in Battambang, Phnom Penh, and loads in Sihanoukville.  Urban centres so makes sense
+
+ggplot(dat_master, aes(serv_prov))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## T18_60_uncjob ####
+qplot(dat_master$T18_60_uncjob, geom = "histogram")
+
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(T18_60_uncjob > 1) %>% 
+  print(width=Inf)
+
+# The values are more than 1, which they shouldnt be as they are proportions...
+dat2 %>% 
+  group_by(Province) %>% 
+  filter(T18_60_uncjob > 1) %>% 
+  filter(Province=="Battambang") %>% 
+  print(width=Inf)
