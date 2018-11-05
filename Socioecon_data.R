@@ -66,6 +66,12 @@ dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 # tidyverse
 as.tibble(dat2)
 
+dat2 %>% 
+  group_by(Province) %>% 
+  group_by(Commune) %>% 
+  filter(KM_Market > 100)
+hist(dat2$KM_Market)
+
 # Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
 dat2 %>% 
   filter(Province == "Kandal") %>% 
@@ -645,7 +651,6 @@ dat_master %>%
 
 #----- Below is after I removed the three outliers #----
 
-dat_master %>% 
-  filter(Province == "Kandal") %>% 
-  filter(Commune == "K'am Samnar") %>% 
-  print(width=Inf)
+ggplot(dat_master, aes(KM_Market))+
+  geom_histogram()+
+  facet_wrap(~Province)
