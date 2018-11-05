@@ -103,6 +103,11 @@ admindat <- dat2 %>%
 dat_master <- left_join(admindat, dat7, by = "CommCode")
 str(dat_master)
 
+# Remove T18_60_uncjob (because very unreliable data. Lots of raw values are greater than the total population)
+
+dat_master <- dat_master %>% 
+  select(-T18_60_uncjob)
+
 # Change CommCode to a factor
 dat_master$CommCode <- as.factor(dat_master$CommCode)
 
@@ -373,6 +378,11 @@ dat_master %>%
   filter(F6_24_sch < 0.25) %>% 
   print(width=Inf)
 
+# double checking there is no value greater than 1
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., F6_24_sch > 1)
+
 ## M6_24_sch ####
 qplot(dat_master$M6_24_sch, geom = "histogram")
 
@@ -380,6 +390,11 @@ qplot(dat_master$M6_24_sch, geom = "histogram")
 ggplot(dat_master, aes(M6_24_sch))+
   geom_histogram()+
   facet_wrap(~Province)
+
+# double checking there is no value greater than 1
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(., M6_24_sch > 1)
 
 ## F18_60_ill ####
 qplot(dat_master$F18_60_ill, geom = "histogram")
@@ -463,17 +478,7 @@ ggplot(dat_master, aes(serv_prov))+
   geom_histogram()+
   facet_wrap(~Province)
 
-## T18_60_uncjob ####
-qplot(dat_master$T18_60_uncjob, geom = "histogram")
+## 
 
-dat_master %>% 
-  group_by(CommCode) %>% 
-  filter(T18_60_uncjob > 1) %>% 
-  print(width=Inf)
-
-# The values are more than 1, which they shouldnt be as they are proportions...
-dat2 %>% 
-  group_by(Province) %>% 
-  filter(T18_60_uncjob > 1) %>% 
-  filter(Province=="Battambang") %>% 
-  print(width=Inf)
+## Les1_R_Land ####
+qplot(dat_master$Les1_R_Land, geom = "histogram")
