@@ -108,6 +108,23 @@ str(dat_master)
 dat_master <- dat_master %>% 
   select(-T18_60_uncjob)
 
+# Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
+dat %>% 
+  filter(Province == "Kandal") %>% 
+  filter(KM_Market < 50) %>% 
+  summarise(mean = mean(KM_Market))
+
+dat <- dat %>% 
+          filter(Province=="Kandal") %>% 
+          mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
+
+# Below was just to test the above code
+#kandal.test <- test %>% filter(Province=="Kandal")  
+#hist(kandal.test$KM_Market)
+#kandal.test %>% 
+  #select(KM_Market) %>% 
+  #filter(KM_Market > 50)
+
 # Change CommCode to a factor
 dat_master$CommCode <- as.factor(dat_master$CommCode)
 
@@ -478,7 +495,127 @@ ggplot(dat_master, aes(serv_prov))+
   geom_histogram()+
   facet_wrap(~Province)
 
-## 
-
 ## Les1_R_Land ####
 qplot(dat_master$Les1_R_Land, geom = "histogram")
+
+ggplot(dat_master, aes(Les1_R_Land))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+# Phnom Penh has a big spike around 0. There are 10 communes in PP where no one has less than 1ha of rice land.  Slightly surprising but not impossible
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Province == "Phnom Penh") %>% 
+  filter(Les1_R_Land == 0) %>% 
+  print(width=Inf)
+
+## No_R_Land ####
+qplot(dat_master$No_R_Land, geom = "histogram")
+ 
+# One outlier
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(No_R_Land > 0.6) %>% 
+  print(width=Inf)
+# Kiri Toen commune in Ratanakiri province - 64% of people have no rice land.  Unusual, especially for a rural province.  Perhaps that is the commune that has the capital town (Ban Lang)?  Urban centre?
+
+ggplot(dat_master, aes(No_R_Land))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## Les1_F_Land ####
+qplot(dat_master$Les1_F_Land, geom = "histogram")
+
+# few outliers
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Les1_F_Land > 0.7)
+# Kandal province
+
+ggplot(dat_master, aes(Les1_F_Land))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## No_F_Land ####
+qplot(dat_master$No_F_Land, geom = "histogram")
+
+# All pretty low, which I expected
+
+ggplot(dat_master, aes(No_F_Land))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## cow_fam ####
+qplot(dat_master$cow_fam, geom = "histogram")
+
+# Spike at 0
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(cow_fam == 0) %>% 
+  print(width=Inf)
+# Not that unexpected as all the urban centres and towns will have low numbers
+
+# Double checking there are no values >1
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(cow_fam > 1) %>% 
+  print(width=Inf)
+
+ggplot(dat_master, aes(cow_fam))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## pig_fam ####
+qplot(dat_master$pig_fam, geom = "histogram")
+
+ggplot(dat_master, aes(pig_fam))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## garbage ####
+qplot(dat_master$garbage, geom = "histogram")
+
+# vast majority of people do not have access to waste collection. Not surprising. Bit surprised that there is a value of 1
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(garbage == 1)
+# Mostly Phnom Penh and other urban centres.  I feel like a value of 1 is slightly over confident but perhaps it's possible
+
+ggplot(dat_master, aes(garbage))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## KM_Market ####
+qplot(dat_master$KM_Market, geom = "histogram")
+
+# Some big distances which I find hard to believe
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(KM_Market > 100) %>% 
+   print(width=Inf)
+
+# There must be data entry errors.  For example, the commune of Khpob Ateav in Kandal province has a KM_Market value of 279 KM.  It is next door to a commune called Sandar, which has a KM_Market value of 6.67 KM.  And the distance from the centre of Khpob Ateav to the centre of Sandar is ~6km, so the maximum the value for Khpob Ateav should be is ~12km.  
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Commune == "Sandar") %>% 
+   print(width=Inf)
+
+# Pralay commune in Koh Kong province has a KM_Market value of 119km.  It's neighbouring communes and their KM_Market values are Ta Tey Leu = 90, Ruessei Chrum = 73.5, Chumnoab = 113.  Neighbouring commune Rokat which is in Pursat Province but next door to Ta Tey Leu has value of 2.5 
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Commune %in% c("Ta Tey Leu", "Ruessei Chrum", "Chumnoab", "Rokat")) %>% 
+   print(width=Inf)
+
+# Need to look at original data
+qplot(dat$KM_Market, type = "histogram")
+
+# There are two giant value which needs to be removed
+dat %>% 
+  filter(KM_Market > 700)
+# Both in Kandal Province: Khpob ateav and Preaek Ambel. I've had a look at the rest of the values for Kandal Province, and it is really just those two that are clearly erroneous.  For the moment I am going to replace the values for Khpob ateav & Preaek Ambel with the mean of the rest of the communes (excl. Khpob ateav & Preaek Ambel).  I will do it at the top of the script
+
+dat %>% 
+  filter(Province == "Kandal") %>% 
+  select(KM_Market) %>% 
+  filter(KM_Market > 30)
+
