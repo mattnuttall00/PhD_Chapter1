@@ -66,6 +66,28 @@ dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 # tidyverse
 as.tibble(dat2)
 
+# Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
+dat2 %>% 
+  filter(Province == "Kandal") %>% 
+  filter(KM_Market < 50) %>% 
+  summarise(mean = mean(KM_Market))
+
+dat2 <- dat2 %>% 
+          filter(Province=="Kandal") %>% 
+          mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
+
+# Below was just to test the above code
+#kandal.test <- test %>% filter(Province=="Kandal")  
+#hist(kandal.test$KM_Market)
+#kandal.test %>% 
+  #select(KM_Market) %>% 
+  #filter(KM_Market > 50)
+
+# Replace final erroneous KM_Market value for K'am Samnar with the mean, as above
+dat2 <- dat2 %>% 
+          filter(Province=="Kandal") %>% 
+          mutate(KM_Market = ifelse(KM_Market >=35, 5.137493, KM_Market))
+
 # Variables that need to be summed up to Commune level
 dat3 <- dat2 %>% 
    
@@ -107,23 +129,6 @@ str(dat_master)
 
 dat_master <- dat_master %>% 
   select(-T18_60_uncjob)
-
-# Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
-dat %>% 
-  filter(Province == "Kandal") %>% 
-  filter(KM_Market < 50) %>% 
-  summarise(mean = mean(KM_Market))
-
-dat <- dat %>% 
-          filter(Province=="Kandal") %>% 
-          mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
-
-# Below was just to test the above code
-#kandal.test <- test %>% filter(Province=="Kandal")  
-#hist(kandal.test$KM_Market)
-#kandal.test %>% 
-  #select(KM_Market) %>% 
-  #filter(KM_Market > 50)
 
 # Change CommCode to a factor
 dat_master$CommCode <- as.factor(dat_master$CommCode)
@@ -588,10 +593,13 @@ ggplot(dat_master, aes(garbage))+
 ## KM_Market ####
 qplot(dat_master$KM_Market, geom = "histogram")
 
+
+#----- Below is the exploration before I removed the outliers #----
+
 # Some big distances which I find hard to believe
 dat_master %>% 
   group_by(CommCode) %>% 
-  filter(KM_Market > 100) %>% 
+  filter(KM_Market > 37) %>% 
    print(width=Inf)
 
 # There must be data entry errors.  For example, the commune of Khpob Ateav in Kandal province has a KM_Market value of 279 KM.  It is next door to a commune called Sandar, which has a KM_Market value of 6.67 KM.  And the distance from the centre of Khpob Ateav to the centre of Sandar is ~6km, so the maximum the value for Khpob Ateav should be is ~12km.  
@@ -619,3 +627,25 @@ dat %>%
   select(KM_Market) %>% 
   filter(KM_Market > 30)
 
+# After removing the two massive outliers...
+
+# Still one outlier (although a more belivable one) of KM_Market = 40
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(KM_Market == 40) %>% 
+  print(width=Inf)
+
+# It's the commune of K'am Samnar in Kandal Province.  It's neighbouring commune is Sandar
+dat_master %>% 
+  group_by(CommCode) %>% 
+  filter(Province == "Kandal") %>% 
+  filter(Commune == "Sandar") %>% 
+  print(width=Inf)
+# Which has a KM_Market = 6.67.  Using GIS I've checked, and there is no concievable way that Sandar can be 6.67km away from a market and K'am Samnar is ~40. I think I am going to replace this value with the mean as well.
+
+#----- Below is after I removed the three outliers #----
+
+dat_master %>% 
+  filter(Province == "Kandal") %>% 
+  filter(Commune == "K'am Samnar") %>% 
+  print(width=Inf)
