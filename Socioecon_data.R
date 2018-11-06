@@ -7,7 +7,7 @@ dat <- read.csv("Socioeconomic_variables.csv")
 commDat <- read.csv("commGIS.csv")
 
 
-## Grouping and summarising indigenous group variables ####
+#### Grouping and summarising indigenous group variables ####
 # Subset indigenous group columns
 dat.ig <- dat[,10:73]
 
@@ -37,7 +37,7 @@ dat2$Prop_Indigenous <- prop.ig
 dat2 <- dat2[,-c(10:73)]
 
 
-## Adding unique Commune Codes ####
+#### Adding unique Commune Codes ####
 ## add commGIS codes
 
 dat2$CommCode <- NA   # Create an empty column in dat2 to store codes
@@ -61,16 +61,71 @@ dat2 <- dat2[,-4]    # Remove column 4 as it should be empty (no villages)
 
 
 
-## Aggregating all variables up to the Commune level ####
+#### Data cleaning and removal of errors ####
 
 # tidyverse
 as.tibble(dat2)
 
+## KM_Comm errors ####
+
+# There is one village in Prey Veng > Preaek Krabau with a KM_Comm = 600.  The other two villages in the Commune have a value of 2 (and the Commune is tiny), and so I am going to replace the 600 with the mean for the commune which is 2. 
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = replace(KM_Comm, KM_Comm == 600, 2))
+
+# There is also a Commune with a mean KM_Comm of 51.  It's Koh Kong > Dang Tong 
 dat2 %>% 
-  group_by(Province) %>% 
-  group_by(Commune) %>% 
-  filter(KM_Market > 100)
-hist(dat2$KM_Market)
+  filter(Commune == "Dang Tong") %>% 
+  filter(KM_Comm < 10) %>% 
+  summarise(mean = mean(KM_Comm))
+# This is being caused by one village with a KM_Comm of 200, when the other village values are tiny.  The mean for the commune (excluding the outlier) is 1.99643.  I will replace the 200km value with the mean for the commune
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = replace(KM_Comm, KM_Comm == 200, 1.99643))
+
+# Checking two communes in Battambang which have values way higher than the rest of the Province
+dat2 %>% 
+  filter(Province == "Battambang") %>% 
+  filter(Commune == "Serei Maen Cheay") %>% 
+  select(KM_Comm) 
+  
+dat2 %>% 
+  filter(Province == "Battambang") %>% 
+  filter(Commune == "Chakrei") %>% 
+  select(KM_Comm) 
+
+
+## Dealing with KM_Market variable ####
+
+# Identifying all potential problem values for KM_Market
+dist_market <- dat2 %>%
+                filter(KM_Market > 50) %>% 
+                select(KM_Market, Province, Commune, Village)
+str(dist_market)
+hist(dist_market$KM_Market)
+
+# Over 800 km are Khpob ateav and Preaek Ambel (Kandal).  
+# 550km is Baray1 (Kampong Cham)
+dist_market %>% filter(KM_Market > 500)
+# 154km is Kampong Sralau Muoy (Preah Vihear)
+# 161km is Kampong Sralau Pir (Preah Vihear)
+# 159km is Kampong Sralau Pir (Preah Vihear) but diff village
+dist_market %>% filter(KM_Market > 150)
+
+dist_market %>% filter(KM_Market > 80) %>% filter(KM_Market < 150)
+# The Communes which I will need to find means (minus the outliers) are: 
+# Battambang > Hab
+# Kampong Cham > Tonlung
+# Kampong Speu > Ta Sal
+# Kampong Thom > Sochet
+# Koh Kong > Pralay
+# Koh Kong > Chumnoab
+# Koh Kong > Chi Phat
+# Kracheh > 
+dat2 %>% filter(Province=="Prey Veng", Commune=="Preaek Krabau")
+
+# testing the replace function
+dist_market %>% 
+  mutate(KM_Market = replace(KM_Market, KM_Market > 800, 5.137493))
+
 
 # Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
 dat2 %>% 
@@ -94,6 +149,7 @@ dat2 <- dat2 %>%
           filter(Province=="Kandal") %>% 
           mutate(KM_Market = ifelse(KM_Market >=35, 5.137493, KM_Market))
 
+#### Aggregating to the Commune level ####
 # Variables that need to be summed up to Commune level
 dat3 <- dat2 %>% 
    
@@ -654,3 +710,30 @@ dat_master %>%
 ggplot(dat_master, aes(KM_Market))+
   geom_histogram()+
   facet_wrap(~Province)
+
+## KM_Comm ####
+qplot(dat_master$KM_Comm, geom = "histogram")
+
+# One outlier (>200)
+dat_master %>% 
+  filter(KM_Comm > 200) %>% 
+  print(width=Inf)
+
+# 600km outlier removed, now need to check one value >50km
+dat_master %>% 
+  filter(KM_Comm > 50) %>% 
+  print(width=Inf)
+# Village with 200km value remived and replaced with mean for the commune (excl. outlier)
+
+ggplot(dat_master, aes(KM_Comm))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+# Need to check some more outliers
+# Battambang 
+dat_master %>% 
+  filter((Province=="Battambang")) %>% 
+  filter(KM_Comm > 20) %>% 
+  print(width=Inf)
+# There are two communes with much higher values than the rest of the Province
+
