@@ -91,7 +91,108 @@ dat2 %>%
   filter(Province == "Battambang") %>% 
   filter(Commune == "Chakrei") %>% 
   select(KM_Comm) 
+# Serei Maen Cheay is a small commune, and there is no way that there can be KM_Comm distances ranging between 0 and 56.  I cannot find Chakrei commune in the GIS layer, so cannot visually assess. But again, there is no way a commune can have a range of 1 - 60 in KM_Comm.  I think the best thing to do here is to use the provincial mean.  So I will take the mean KM_Comm for Battambang 
+dat2 %>% 
+  filter(Province=="Battambang") %>% 
+  filter(!Commune %in% c("Serei Maen Cheay", "Chakrei")) %>%
+  summarise(mean = mean(KM_Comm))
+# which is 4.54, and replace the KM_Comm values with this mean for the above two communes
 
+dat2 <- dat2 %>%
+        mutate(KM_Comm = ifelse(Commune=="Serei Maen Cheay", 
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.54), 
+                                KM_Comm))
+dat2 <- dat2 %>%
+        mutate(KM_Comm = ifelse(Commune=="Chakrei", 
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.54), 
+                                KM_Comm))
+
+# Another set of outliers are in Kampong Cham > Trapeang Pring.  I have found the commune and the 12 villages in GIS, and have double checked the KM_Comm values, which are incorrect.  The village of Trapeang Pring (in the commune Trapeang Pring) has a KM_Comm value of 0, indicating that this is the village which has the commune office.  I will use GIS to get the correct distances from the other villages to Trapeang Pring, and replace them in the data
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040701,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 10),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040702,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.5),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040703,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.3),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040704,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.8),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040706,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.1),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040707,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 11.9),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040708,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 12.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040709,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 13.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040710,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040711,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 10.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040713,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 9.7),
+                                KM_Comm))
+
+# More outliers in Kampong Chhnang > Chhnok Tru and Krang Skear.  I have found Chhnok Tru in GIS, and the 25km value for Kampong Preah village is clearly off.  It should be 1.3.  I will change it
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==4010202,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 1.3),
+                                KM_Comm))
+# I have found Krang Skear in GIS.  The villages with incorrect KM_Comm values are Kdol, Krang Skear Tboung, Anh Chanh, Ou Lpouv, Domnak Ompil, Phnom Taous, Domnak Khlong. I will edit them in dat2
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080606,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080607,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080609,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 5.4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080610,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080611,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.3),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080612,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080613 ,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.2),
+                                KM_Comm))
+
+# I have found the commune Trapeang Chour in GIS, but my village GIS layer doesnt have the same number of villages as in the data.  But based on the size of the commune, there are defnitely villages that have erroneous values for KM_Comm.  
 
 ## Dealing with KM_Market variable ####
 
@@ -729,11 +830,55 @@ ggplot(dat_master, aes(KM_Comm))+
   geom_histogram()+
   facet_wrap(~Province)
 
-# Need to check some more outliers
+## Need to check some more outliers
 # Battambang 
 dat_master %>% 
   filter((Province=="Battambang")) %>% 
   filter(KM_Comm > 20) %>% 
   print(width=Inf)
-# There are two communes with much higher values than the rest of the Province
+# There are two communes with much higher values than the rest of the Province. These have now been dealt with in the data cleaning section at the top
 
+# Kampong Cham
+dat_master %>% 
+  filter((Province=="Kampong Cham")) %>% 
+  filter(KM_Comm > 10) %>% 
+  print(width=Inf)
+# Trapean Pring is the commune that looks like an outlier.
+dat2 %>% 
+  filter(Province=="Kampong Cham") %>% 
+  filter(Commune=="Trapeang Pring") %>% 
+  select(c(VillGis,KM_Comm)) 
+# Dealt with in data cleaning section
+
+# Kampong Chhnang
+dat_master %>% 
+  filter((Province=="Kampong Chhnang")) %>% 
+  filter(KM_Comm > 10) %>% 
+  print(width=Inf)
+# Two outliers
+
+# Chhnok Tru
+dat %>% 
+  filter(Province=="Kampong Chhnang") %>% 
+  filter(Commune=="Chhnok Tru") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
+# Dealt with in data cleaning section
+
+# Krang Skear
+dat %>% 
+  filter(Province=="Kampong Chhnang") %>% 
+  filter(Commune=="Krang Skear") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
+
+# Kampong Speu
+dat_master %>% 
+  filter((Province=="Kampong Speu")) %>% 
+  filter(KM_Comm > 10) %>% 
+  print(width=Inf)
+# Three communes are outliers - Trapeang Chour, Ta Sal, Traeng Trayueng
+
+# Trapeang Chour
+dat %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(Commune=="Trapeang Chour") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
