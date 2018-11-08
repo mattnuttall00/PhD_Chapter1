@@ -192,7 +192,29 @@ dat2 <- dat2 %>%
                                 replace(KM_Comm, KM_Comm==KM_Comm, 8.2),
                                 KM_Comm))
 
-# I have found the commune Trapeang Chour in GIS, but my village GIS layer doesnt have the same number of villages as in the data.  But based on the size of the commune, there are defnitely villages that have erroneous values for KM_Comm.  
+## Kampong Speu
+# I have found the commune Trapeang Chour in GIS, but my village GIS layer doesnt have the same number of villages as in the data.  But based on the size of the commune, there are defnitely villages that have erroneous values for KM_Comm. Because the village GIS layer is incomplete, I am not sure whether taking a mean of the existing villages is appropriate as I am not sure which values are incorrect.  I think I will use the provincial mean (3.17) at the commune level (excluding Trapeang Chour, Ta Sal, Traeng Trayueng).
+
+# Find the mean
+dat2 %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(!Commune %in% c("Trapeang Chour", "Ta Sal", "Traeng Trayueng")) %>% 
+  summarise(mean = mean(KM_Comm))
+# Replace KM_Comm values in Trapeang Chour with the provincial mean
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50403,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+# Ta Sal
+# Again the village GIS layer is missing loads of villages, and the KM_Comm values for the commune are definitely incorrect (lots of values are larger than the maximum distance possible in the commune). I will do the same as above
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50405,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+
+# I have found Traeng Trayueng in GIS, and the commune is actually very large.  And the KM_Comm values are actually within the scale of the commune, and none of them are beyond the realms of possibility.  I think I will leave them as they are.  
+
+
 
 ## Dealing with KM_Market variable ####
 
@@ -881,4 +903,26 @@ dat_master %>%
 dat %>% 
   filter(Province=="Kampong Speu") %>% 
   filter(Commune=="Trapeang Chour") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
+
+# finding the commune code for Trapeang Chour
+dat_master %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(Commune=="Trapeang Chour") 
+
+# Ta Sal
+dat %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(Commune=="Trapeang Chour") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
+
+# finding the commune code for Ta Sal
+dat_master %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(Commune=="Ta Sal") 
+
+# Traeng Trayueng
+dat %>% 
+  filter(Province=="Kampong Speu") %>% 
+  filter(Commune=="Traeng Trayueng") %>% 
   select(c(VillGis,Village,KM_Comm)) 
