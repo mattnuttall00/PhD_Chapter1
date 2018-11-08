@@ -214,6 +214,36 @@ dat_master <- dat_master %>%
 
 # I have found Traeng Trayueng in GIS, and the commune is actually very large.  And the KM_Comm values are actually within the scale of the commune, and none of them are beyond the realms of possibility.  I think I will leave them as they are.  
 
+## Kampong Thom
+
+# Mean Ritth
+# I have found the commune on GIS, and the village layer matches the data.  I can therefore correct the erroneous KM_Comm values
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060404,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 16.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060406,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 27.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060407,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 28.3),
+                                KM_Comm))
+
+# Peam Bang
+# The GIS layer only has 1 village, so I am not sure which values are incorrect. I think I will replace the values with the provincial mean (excluding Peam Bang)
+
+# Find the mean
+dat2 %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(!Commune == ("Peam Bang")) %>% 
+  summarise(mean = mean(KM_Comm))
+# Replace KM_Comm values in Peam Bang with the provincial mean
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==60807,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.3),
+                                      KM_Comm))
 
 
 ## Dealing with KM_Market variable ####
@@ -926,3 +956,22 @@ dat %>%
   filter(Province=="Kampong Speu") %>% 
   filter(Commune=="Traeng Trayueng") %>% 
   select(c(VillGis,Village,KM_Comm)) 
+
+# Kampong Thom
+dat_master %>% 
+  filter((Province=="Kampong Thom")) %>% 
+  filter(KM_Comm > 10) %>% 
+  print(width=Inf)
+# The outlier commune is Mean Ritth
+
+# Mean Ritth
+dat %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(Commune=="Mean Ritth") %>% 
+  select(c(VillGis,Village,KM_Comm)) 
+
+# Peam Bang
+dat %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(Commune=="Peam Bang") %>% 
+  select(c(VillGis,Village,KM_Comm))
