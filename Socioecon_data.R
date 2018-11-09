@@ -200,6 +200,9 @@ dat2 %>%
   filter(Province=="Kampong Speu") %>% 
   filter(!Commune %in% c("Trapeang Chour", "Ta Sal", "Traeng Trayueng")) %>% 
   summarise(mean = mean(KM_Comm))
+
+# RUN ALL dat2 EDITS FOLLOWED BY AGGREGATING TO COMMUNE LEVEL CODE BEFORE RUNNING dat_master CODE
+
 # Replace KM_Comm values in Trapeang Chour with the provincial mean
 dat_master <- dat_master %>% 
               mutate(KM_Comm = ifelse(CommCode==50403,
@@ -423,6 +426,95 @@ dat2 <- dat2 %>%
                                 replace(KM_Comm, KM_Comm==KM_Comm, 6.5),
                                 KM_Comm))
 
+# Roya - One very clear outlier (Kdaoy), and potentially one other (Roveak). The GIS village layer and the data do not match completely, but the Commune centre is Roya which is on one edge of the commune. The commune is very large (~80km) and so actually the values are quite plausible. Therefore I will not make any changes. 
+
+## Ratanak Kiri
+
+#  Pa Tang - Village GIS layer and data almost match.  The obvious outlier (village: Ul) is in both layers so I can update with the correct value. The other outlier is the village of Chang Rea. The value is incorrect because the commune is smaller than the value, and the village isn't in the GIS layer. I will replace it with the mean of the commune (using new Ul value) whihc is 2.6
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 16050501,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 1.3),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 16050504,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 2.6),
+                                KM_Comm))
+
+## Ratanak Kiri
+
+# Slaeng Spean - The village GIS layer is missing a bunch of villages, and they are the villages that are causing the commune to be an outlier. They are clearly incorrect values as they are larger than the commune itself. The rest of the villages are correct.  I will replace the incorrect village values with the mean for the commune (excl. the bad values) which is 4.2
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120609,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120610,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120611,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==  17120612,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120613,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120614,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+
+## Stung Treng
+
+# Kbal Romeas - two possible outlier villages - Srae Sranok & Chrab.  Village GIS layer matches the data so I can correct the values
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010201,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010202,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 16.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010204,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 30.5),
+                                KM_Comm))
+
+# Ta Lat - Village GIS layer matches the data so I can correct the values
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010701,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 5.8),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010703,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 14.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010704,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17.4),
+                                KM_Comm))
+
+# Santepheap - Village GIS layer matches the data so I can correct the values
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030301,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17.9),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030302,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030305,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==  19030306,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 0.5),
+                                KM_Comm))
 
 
 ### Dealing with KM_Market variable ####
@@ -469,8 +561,7 @@ dat2 <- dat2 %>%
           filter(Province=="Kandal") %>% 
           mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
 
-# Roya - One very clear outlier (Kdaoy), and potentially one other (Roveak). The GIS village layer and the data do not match completely, but the Commune centre is Roya which is on one edge of the commune. The commune is very large (~80km) and so actually the values are quite plausible. Therefore I will not make any changes.  
-
+ 
 
 
 
@@ -1255,4 +1346,45 @@ dat_master %>%
 dat %>% 
   filter(Province=="Ratanak Kiri") %>% 
   filter(Commune=="Pa Tang") %>% 
+  select(c(VillGis,Village,KM_Comm))
+
+## Siem Reap
+dat_master %>% 
+  filter((Province=="Siem Reap")) %>% 
+  filter(KM_Comm > 10) %>% 
+  print(width=Inf)
+
+# One potential outlier - Slaeng Spean
+dat %>% 
+  filter(Province=="Siem Reap") %>% 
+  filter(Commune=="Slaeng Spean") %>% 
+  select(c(VillGis,Village,KM_Comm))
+
+ggplot(dat_master, aes(KM_Comm))+
+  geom_histogram()+
+  facet_wrap(~Province)
+
+## Stung Treng
+dat_master %>% 
+  filter((Province=="Stung Treng")) %>% 
+  filter(KM_Comm > 15) %>% 
+  print(width=Inf)
+# Three potential outliers - Kbal Romeas, Ta Lat, Santepheap
+
+# Kbal Romeas
+dat %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune=="Kbal Romeas") %>% 
+  select(c(VillGis,Village,KM_Comm))
+
+# Ta Lat
+dat %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune=="Ta Lat") %>% 
+  select(c(VillGis,Village,KM_Comm))
+
+# Santepheap
+dat %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune=="Santepheap") %>% 
   select(c(VillGis,Village,KM_Comm))
