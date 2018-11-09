@@ -616,6 +616,10 @@ str(dat_master)
 dat_master <- dat_master %>% 
   select(-T18_60_uncjob)
 
+# Remove YR_Pp_well (see explanation below under data exploration section)
+dat_master <- dat_master %>% 
+  select(-YR_Pp_well)
+
 # Change CommCode to a factor
 dat_master$CommCode <- as.factor(dat_master$CommCode)
 
@@ -1388,3 +1392,50 @@ dat %>%
   filter(Province=="Stung Treng") %>% 
   filter(Commune=="Santepheap") %>% 
   select(c(VillGis,Village,KM_Comm))
+
+## Yr_Pp_well ####
+qplot(dat_master$YR_Pp_well, geom = "histogram")
+
+# Check out the 0's and very high values
+dat_master %>% 
+  filter(YR_Pp_well > 200) %>% 
+  select(Province) %>%
+  data.frame() %>% 
+  distinct(., keep_all=FALSE)
+
+dat_master %>% 
+  filter(Province=="Prey Veng") %>% 
+  select(c(Commune,YR_Pp_well)) %>% 
+  print(n=Inf)
+
+dat %>% 
+  filter(Province=="Prey Veng") %>% 
+  select(c(Village,Commune,YR_Pp_well)) 
+
+dat %>% 
+  filter(Province=="Prey Veng") %>%
+  filter(Commune=="Boeng Preah") %>% 
+  filter(Village=="Ta Mau") 
+  
+# I've decided to exclude this variable. The numbers looked implausible, but then I realised the numbers were so high probably becuase of private wells and water pumps, which are common. In which case I'm not sure this is an appropriate variable to represent access to services.  The other water variables (proportion of families with access to clean water & proportion of families with access to piped water) are better.  I will remove it at the top of the script under "aggregating to the commune level"
+## wat_safe ####
+qplot(dat_master$wat_safe, geom = "histogram")
+
+# Spikes at 0 and 1
+dat_master %>% 
+  filter(wat_safe == 1) %>% 
+  select(Province) %>% 
+  print(n=Inf)
+# The 1 values are mostly believable. 
+
+dat_master %>% 
+  filter(wat_safe == 0) %>% 
+  select(Province) %>% 
+  print(n=Inf)
+
+dat %>% 
+  filter(Province=="Siem Reap") %>% 
+  filter(wat_safe == 1) %>% 
+  select(VillGis,Village,Commune,wat_safe)
+
+# I can't think of any reason why the 0's and 1's would not be true or belieable
