@@ -517,7 +517,7 @@ dat2 <- dat2 %>%
                                 KM_Comm))
 
 
-### Dealing with KM_Market variable ####
+## KM_Market errors ####
 
 # Identifying all potential problem values for KM_Market
 dist_market <- dat2 %>%
@@ -572,6 +572,21 @@ dat2 <- dat2 %>%
   #select(KM_Market) %>% 
   #filter(KM_Market > 50)
 
+
+## KM_Heal_cent errors ####
+
+# Outlier is Pursat > Ta Lou
+dat %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Ta Lou") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+
+# There are 2 villages which are causing the problem, with silly values.  I will change the values to the mean of that commune (excl. the outliers) which is 5.8
+
+dat2 <- dat2 %>% 
+        mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 3333333333, 5.8))
+dat2 <- dat2 %>% 
+        mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 700, 5.8))
 
 #### Aggregating to the Commune level ####
 # Variables that need to be summed up to Commune level
@@ -1438,4 +1453,47 @@ dat %>%
   filter(wat_safe == 1) %>% 
   select(VillGis,Village,Commune,wat_safe)
 
-# I can't think of any reason why the 0's and 1's would not be true or belieable
+# I can't think of any reason why the 0's and 1's would not be true or belieable.  There are 113 communes (~7%) where all people have access to safe water, whereas there are 143 (~9%) communes where no one has access to safe water.
+
+## wat_pipe ####
+qplot(dat_master$wat_pipe, geom = "histogram")
+
+# Histogram looks reasonable
+
+## crim_case ####
+qplot(dat_master$crim_case, geom = "histogram")
+
+# Some outliers
+dat_master %>% 
+  filter(crim_case > 0.010) %>% 
+  print(width=Inf)
+# Koh Kong>Chi Phat, Pursat>Krapeu Pir, Preah Sihanouk>Kaoh Rung
+
+dat %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Chi Phat") %>% 
+  select(VillGis,Village,crim_case)
+# There is one village (Sam Lort) that has a crim_case value 10 time greater than the other villages.
+
+dat %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Krapeu Pir") %>% 
+  select(VillGis,Village,crim_case)
+# There is one village (Krapeu Pir Kraom) that has a value 6 times greater than the other villages
+
+dat %>% 
+  filter(Province=="Preah Sihanouk") %>% 
+  filter(Commune == "Kaoh Rung") %>% 
+  select(VillGis,Village,crim_case)
+
+# I am not sure whether to leave the outliers in, or remove them.  I have no prior knowledge about this sort of thing and so don't know whether these are feasible or not.
+
+## KM_Heal_cent ####
+qplot(dat_master$KM_Heal_cent, geom = "histogram")
+
+# Major outlier - Pursat>Ta Lou
+dat_master %>% 
+  filter(KM_Heal_cent > 1.5e+08) %>% 
+  print(width=Inf)
+
+
