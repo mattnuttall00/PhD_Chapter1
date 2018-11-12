@@ -575,7 +575,7 @@ dat2 <- dat2 %>%
 
 ## KM_Heal_cent errors ####
 
-# Outlier is Pursat > Ta Lou
+# Large outlier is Pursat > Ta Lou
 dat %>% 
   filter(Province=="Pursat") %>% 
   filter(Commune == "Ta Lou") %>% 
@@ -587,6 +587,147 @@ dat2 <- dat2 %>%
         mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 3333333333, 5.8))
 dat2 <- dat2 %>% 
         mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 700, 5.8))
+
+# Next outlier is Pursat > Phteah Prey
+dat %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Phteah Prey") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+# There are 4 ludicrous values. One of the other villages has a value of 0 KM, which suggests that village is where the health centre is. I can correct the erroneous values with the correct values using GIS
+
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050401, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.7), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050402, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.6), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050403, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.6), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050409, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.1), 
+                                KM_Heal_cent))
+
+# Next outliers - Kampong Thom > Sralau
+dat %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(Commune == "Sralau") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+# One erroneous value - the village of Serei Sameakki Khang Tboung (1900). I can't find the commune on the GIS layer, and so I will use the mean of the rest of the commune taken from the data
+
+# Finding the mean (1.97)
+dat2 %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(Commune=="Sralau") %>% 
+  filter(!VillGis == 6011501) %>%
+  summarise(mean = mean(KM_Heal_cent))
+
+# replace the value
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==6011501, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 1.97), 
+                                KM_Heal_cent))
+
+# Stung Treng > Ta Lat
+dat %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Sekong") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+# All of the villages have very high values.  The adjacent communes all also have large values, which suggests that the values are accurate. Except Sekong commune which is  directly north. It's values are lower, and the distances from Ta Lat villages to the village in Sekong which has a health centre are less than the recorded values.  Therefore I think the values are incorrect. Safest thing to do is to replace values with the mean for the province
+
+# Have a look at the mean value for the province
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(!Commune == "Ta Lat") %>%
+  summarise(mean = mean(KM_Heal_cent))
+
+# replace values
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(Commune=="Ta Lat", 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 16.12), 
+                                KM_Heal_cent))
+
+# Mondul Kiri > Srae Chhuk
+dat %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(Commune == "Srae Chhuk") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+# There are some very high values, and the neighbouring communes have small values, so I think they are incorrect.  The provincial mean excluding Srae Chhuk is 11.8, suggesting that Srae Chhuk is an outlier. I will change the values to the provincial mean
+
+# Look at the Provincial mean
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(!Commune == "Srae Chhuk") %>%
+  summarise(mean = mean(KM_Heal_cent))
+
+# replace values
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(Commune=="Srae Chhuk", 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 11.82), 
+                                KM_Heal_cent))
+
+# Koh Kong >  Ta Tey Leu
+dat %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Ruessei Chrum") %>% 
+  select(VillGis,Village,KM_Heal_cent)
+
+
+
+## inf_mort errors ####
+
+# Ratanak Kiri > Serei Mongkol
+dat %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(Commune == "Serei Mongkol") %>% 
+  select(VillGis,Village,inf_mort)
+# There is one village (Neang Dei) with a value 3.5 times higher than the other villages.
+
+# Provincial mean
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(!VillGis == 16040103) %>%
+  summarise(mean = mean(inf_mort))
+# The value for Neang Dei is an order of magnitude higher than the rest of the Province.  Therefore I believe its an incorrect outlier.  I will change it to the mean of the commune (0.0049)
+
+# Commune mean
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(Commune=="Serei Mongkol") %>% 
+  filter(!VillGis == 16040103) %>%
+  summarise(mean = mean(inf_mort))
+
+# replace value
+dat2 <- dat2 %>%
+        mutate(inf_mort = ifelse(VillGis==16040103, 
+                                replace(inf_mort, inf_mort==inf_mort, 0.0049), 
+                                inf_mort))
+
+
+## U5_mort errors ####
+dat %>% 
+  filter(Province=="Battambang") %>% 
+  filter(Commune == "Ta Pon") %>% 
+  select(VillGis,Village,U5_mort)
+# There is one village (Svay Sa) which has a value nerly 150 times higher than the next village.  This can't be true, so I will replace that value with the mean for the commune
+
+# Find commune mean (0.00033)
+dat2 %>% 
+  filter(Province=="Battambang") %>%
+  filter(Commune=="Ta Pon") %>%
+  filter(!VillGis==2080302) %>%
+  summarise(mean = mean(U5_mort))
+
+# replace value
+dat2 <- dat2 %>%
+        mutate(U5_mort = ifelse(VillGis==2080302, 
+                                replace(U5_mort, U5_mort==U5_mort, 0.00033), 
+                                U5_mort))
+
 
 #### Aggregating to the Commune level ####
 # Variables that need to be summed up to Commune level
@@ -1491,9 +1632,38 @@ dat %>%
 ## KM_Heal_cent ####
 qplot(dat_master$KM_Heal_cent, geom = "histogram")
 
-# Major outlier - Pursat>Ta Lou
+# Major outlier - Pursat > Ta Lou
 dat_master %>% 
   filter(KM_Heal_cent > 1.5e+08) %>% 
   print(width=Inf)
 
+# Next outlier - Pursat > Phteah Prey
+dat_master %>% 
+  filter(KM_Heal_cent > 300) %>% 
+  print(width=Inf)
 
+# Next outliers - Kampong Thom > Sralau, Stung Treng > Ta Lat
+dat_master %>% 
+  filter(KM_Heal_cent > 100) %>% 
+  print(width=Inf)
+
+# Check if any of the other large commune values are erroneous
+dat_master %>% 
+  filter(KM_Heal_cent > 75) %>% 
+  print(width=Inf)
+
+## inf_mort ####
+qplot(dat_master$inf_mort, geom = "histogram")
+
+# One major outlier - Ratanak Kiri > Serei Mongkol
+dat_master %>% 
+  filter(inf_mort > 0.012) %>% 
+  print(width=Inf)
+
+## U5_mort ####
+qplot(dat_master$U5_mort, geom = "histogram")
+
+# One outlier but it's not outrageous. Battambang > Ta Pon
+dat_master %>% 
+  filter(U5_mort > 0.02) %>% 
+  print(width=Inf)
