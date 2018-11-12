@@ -728,7 +728,79 @@ dat2 <- dat2 %>%
                                 replace(U5_mort, U5_mort==U5_mort, 0.00033), 
                                 U5_mort))
 
+## Prop_Indigenous errors ####
 
+# Three communes with proportions over 1
+
+# Mondul Kiri > Bu Sra
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(Commune == "Bu Sra") %>% 
+  select(VillGis,Prop_Indigenous)
+# One village (VIllGIS = 11040403) has a prop of 3.25
+
+dat %>% 
+  filter(Province=="Mondul Kiri") %>%
+  filter(Commune=="Bu Sra") %>%
+  select()
+  filter(!VillGis==2080302) %>%
+  summarise(mean = mean(U5_mort))
+# The problem is that the number of indigeous people is much higher that the total population. The dodgy number is Phnong females over 18.  I think the fairest way to deal with it is to change the value to the mean of the commune
+
+# Finding the mean (0.89)  
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>%
+  filter(Commune=="Bu Sra") %>%
+  filter(!VillGis==11040403) %>%
+  summarise(mean = mean(Prop_Indigenous))
+  
+# replacing value
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==11040403, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.887), 
+                                Prop_Indigenous))
+
+# Preah Vihear > Prame
+dat2 %>% 
+  filter(Province=="Preah Vihear") %>% 
+  filter(Commune == "Prame") %>% 
+  select(VillGis,Prop_Indigenous)
+# Village 13070102 has proportion of 1.192.  The issue will be the same as above. I will replace it with the mean of the commune
+
+# Finding the mean (0.96)  
+dat2 %>% 
+  filter(Province=="Preah Vihear") %>%
+  filter(Commune=="Prame") %>%
+  filter(!VillGis==13070102) %>%
+  summarise(mean = mean(Prop_Indigenous))
+
+# replacing value
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==13070102, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.96), 
+                                Prop_Indigenous))
+
+# Stung Treng > Santepheap
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Santepheap") %>% 
+  select(VillGis,Prop_Indigenous)
+# One village with prop over 1 - villGIS = 19030304. Will do same as above
+
+# Finding the mean (0.99)  
+dat2 %>% 
+  filter(Province=="Stung Treng") %>%
+  filter(Commune=="Santepheap") %>%
+  filter(!VillGis==19030304) %>%
+  summarise(mean = mean(Prop_Indigenous))
+
+# replacing value
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==19030304, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.99), 
+                                Prop_Indigenous))
+
+#
 #### Aggregating to the Commune level ####
 # Variables that need to be summed up to Commune level
 dat3 <- dat2 %>% 
@@ -1667,3 +1739,12 @@ qplot(dat_master$U5_mort, geom = "histogram")
 dat_master %>% 
   filter(U5_mort > 0.02) %>% 
   print(width=Inf)
+
+## Prop_Indigenous ####
+qplot(dat_master$Prop_Indigenous, geom = "histogram")
+
+# One problem - three commune have proportions over 1
+dat_master %>% 
+  filter(Prop_Indigenous > 1) %>% 
+  print(width=Inf)
+# The communes are Mondul Kiri > Bu Sra, Preah Vihear > Prame, Stung Treng > Santepheap
