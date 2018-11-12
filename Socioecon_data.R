@@ -801,6 +801,277 @@ dat2 <- dat2 %>%
                                 Prop_Indigenous))
 
 #
+## dist_sch errors ####
+
+## Kampong Thom > Peam Bang
+dat2 %>% 
+  filter(Province=="Kampong Thom") %>% 
+  filter(Commune == "Peam Bang") %>% 
+  select(VillGis,dist_sch)
+# The values are all very high, and all of the surrounding communes have low values.  I will replace the values with the provincial mean
+
+# Finding the mean (3.2)
+dat2 %>% 
+  filter(Province=="Kampong Thom") %>%
+  filter(!Commune=="Peam Bang") %>%
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Peam Bang", 
+                                replace(dist_sch, dist_sch==dist_sch, 3.2), 
+                                dist_sch))
+
+## Koh Kong > Ta Tey Leu
+dat2 %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Ta Tey Leu") %>% 
+  select(VillGis,dist_sch)
+# All high anf identical values. Difficulty is that some of the surrounding communes also have some larger values. The commune is large, and so the distances are theoretically believeable. But the provincial mean is a much more realistically low (15.5). And the mean for the other large communes is also much lower. However, the three large communes whihc are all next to each other (Ta Tey Leu, Pralay, and  Ruessei Chrum) all have the high values.  This suggests a pattern, and one which I do not want to alter.  I will leave the values as they are for now
+
+# find the mean
+dat2 %>% 
+  filter(Province=="Koh Kong") %>%
+  filter(!Commune=="Ta Tey Leu") %>%
+  summarise(mean = mean(dist_sch))
+
+# Koh Kong > Pralay
+dat2 %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Pralay") %>% 
+  select(VillGis,dist_sch)
+
+#  Koh Kong > Ruessei Chrum
+dat2 %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Ruessei Chrum") %>% 
+  select(VillGis,dist_sch)
+
+# Mondul Kiri > Chong Phlah 
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(Commune == "Chong Phlah") %>% 
+  select(VillGis,dist_sch)
+# the values are high but not implausible. And some of the communes around it also have quite high values.  I will leave it for now
+
+# Mondul Kiri > Srae Chhuk 
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(Commune == "Srae Chhuk") %>% 
+  select(VillGis,dist_sch)
+# Some very high values, one specifically (villGIS = 11010303). The commune is tiny so there is no way these values are correct. I am going to replace the values with the provincial mean
+
+# find the provincial mean (17.28)
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>%
+  filter(!Commune=="Srae Chhuk") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Srae Chhuk", 
+                                replace(dist_sch, dist_sch==dist_sch, 17.28), 
+                                dist_sch))
+
+# Mondul Kiri > Nang Khi Loek 
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>% 
+  filter(Commune == "Nang Khi Loek") %>% 
+  select(VillGis,dist_sch)
+# The values are too large for a small commune, especially when the adjacent communes have small values.  I am going to replace the values with the new provincial mean
+
+# find the provincial mean (15.53)
+dat2 %>% 
+  filter(Province=="Mondul Kiri") %>%
+  filter(!Commune=="Nang Khi Loek") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Nang Khi Loek", 
+                                replace(dist_sch, dist_sch==dist_sch, 15.53), 
+                                dist_sch))
+
+# Preah Vihear > Yeang 
+dat2 %>% 
+  filter(Province=="Preah Vihear") %>% 
+  filter(Commune == "Yeang") %>% 
+  select(VillGis,dist_sch)
+# The values are way to high, and all of the adjacent communes have small values. I will replace the values with the provincial mean
+
+# find the provincial mean (7.51)
+dat2 %>% 
+  filter(Province=="Preah Vihear") %>%
+  filter(!Commune=="Yeang") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Yeang", 
+                                replace(dist_sch, dist_sch==dist_sch, 7.51), 
+                                dist_sch))
+
+# Pursat > Ou Saom 
+dat2 %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Ou Saom") %>% 
+  select(VillGis,dist_sch)
+# The commune GIS layer doesn't have this commune listed (although there are some communes missing names), so I can't assess the distances. They are significantly higher than the provincial mean. I will change the values to the provincial mean
+
+# Provincial mean (10.42)
+dat2 %>% 
+  filter(Province=="Pursat") %>%
+  filter(!Commune=="Ou Saom") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Ou Saom", 
+                                replace(dist_sch, dist_sch==dist_sch, 10.42), 
+                                dist_sch))
+
+# Pursat > Thma Da 
+dat2 %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Thma Da") %>% 
+  select(VillGis,dist_sch)
+# This commune also can't be found on the GIS layer, and the values are clearly incorrect. I will do the same as above
+
+# Provincial mean (10.6)
+dat2 %>% 
+  filter(Province=="Pursat") %>%
+  filter(!Commune=="Thma Da") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Thma Da", 
+                                replace(dist_sch, dist_sch==dist_sch, 10.6), 
+                                dist_sch))
+
+# Ratanak Kiri > Nhang
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(Commune == "Nhang") %>% 
+  select(VillGis,dist_sch)
+# Large values, but the surrounding communes also have large values. These values are plausible considering the location - remote part of Ratankiri.  I will leave these values as they are for now
+
+# Ratanak Kiri > Seda
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(Commune == "Seda") %>% 
+  select(VillGis,dist_sch)
+# Some very large values. The values in the surrounding communes are smaller, which makes me question the values. The provincial mean seems to reflect the values of the surrounding values, so I will change the values to the provincial mean
+
+# find the provincial mean (22)
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>%
+  filter(!Commune=="Seda") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Seda", 
+                                replace(dist_sch, dist_sch==dist_sch, 22), 
+                                dist_sch))
+
+
+# Ratanak Kiri > Saom Thum
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  filter(Commune == "Saom Thum") %>% 
+  select(VillGis,dist_sch)
+# Clearly two of the values are incorrect. The surrounding communes have reasonable values, which further supports the idea that these values are incorrect. I will replace with the provincial mean
+
+# find the provincial mean (21.6)
+dat2 %>% 
+  filter(Province=="Ratanak Kiri") %>%
+  filter(!Commune=="Saom Thum") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Saom Thum", 
+                                replace(dist_sch, dist_sch==dist_sch, 21.6), 
+                                dist_sch))
+
+# Stung Treng > Srae Kor
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Srae Kor") %>% 
+  select(VillGis,dist_sch)
+# Values are way too high, and all of the surrounding communes are much lower and plausible - closer to the provincial mean.  I will replace the values with the provincial mean
+
+# find the provincial mean (17.5)
+dat2 %>% 
+  filter(Province=="Stung Treng") %>%
+  filter(!Commune=="Srae Kor") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Srae Kor", 
+                                replace(dist_sch, dist_sch==dist_sch, 17.5), 
+                                dist_sch))
+
+# Stung Treng > Anlong Phe
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Anlong Phe") %>% 
+  select(VillGis,dist_sch)
+# Values are way too high, and all of the surrounding communes are much lower and plausible - closer to the provincial mean.  I will replace the values with the provincial mean
+
+# find the provincial mean (16)
+dat2 %>% 
+  filter(Province=="Stung Treng") %>%
+  filter(!Commune=="Anlong Phe") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Anlong Phe", 
+                                replace(dist_sch, dist_sch==dist_sch, 16), 
+                                dist_sch))
+
+# Stung Treng > Ou Svay
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Ou Svay") %>% 
+  select(VillGis,dist_sch)
+# These values don't make sense based on the size of the commune and the values of the surrounding communes. I will replace with the provincial mean 
+
+# find the provincial mean (14.7)
+dat2 %>% 
+  filter(Province=="Stung Treng") %>%
+  filter(!Commune=="Ou Svay") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Ou Svay", 
+                                replace(dist_sch, dist_sch==dist_sch, 14.7), 
+                                dist_sch))
+
+# Stung Treng > Preah Rumkel
+dat2 %>% 
+  filter(Province=="Stung Treng") %>% 
+  filter(Commune == "Preah Rumkel") %>% 
+  select(VillGis,dist_sch)
+# # These values don't make sense based on the size of the commune and the values of the surrounding communes. I will replace with the provincial mean 
+
+# find the provincial mean (11.5)
+dat2 %>% 
+  filter(Province=="Stung Treng") %>%
+  filter(!Commune=="Preah Rumkel") %>%  
+  summarise(mean = mean(dist_sch))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Preah Rumkel", 
+                                replace(dist_sch, dist_sch==dist_sch, 11.5), 
+                                dist_sch))
+
+#
 #### Aggregating to the Commune level ####
 # Variables that need to be summed up to Commune level
 dat3 <- dat2 %>% 
@@ -1748,3 +2019,13 @@ dat_master %>%
   filter(Prop_Indigenous > 1) %>% 
   print(width=Inf)
 # The communes are Mondul Kiri > Bu Sra, Preah Vihear > Prame, Stung Treng > Santepheap
+
+## dist_sch ####
+qplot(dat_master$dist_sch, geom = "histogram")
+
+# Lots of high values
+dat_master %>% 
+  filter(dist_sch > 50) %>% 
+  print(width=Inf)
+
+# still need to finish
