@@ -2007,3 +2007,10 @@ dat_master %>%
   print(width=Inf)
 
 # after running above cleaning there are still a few communes with high values, but in the cleaning stage above I decided to leave them as they are for various reasons. I can always remove or edit later. 
+
+#### Plots ----------------------------------------------------------------------------------
+
+# response variable = forest cover % change?  Or absolute amount lost? Do we look at forest loss from 2009-2010, or 2010-2011? Do we look at multiple years?
+
+# Scale of response = commune
+# If there are more than 1 pixels in a commune - 
