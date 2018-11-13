@@ -519,38 +519,6 @@ dat2 <- dat2 %>%
 
 ## KM_Market errors ####
 
-# Identifying all potential problem values for KM_Market
-dist_market <- dat2 %>%
-                filter(KM_Market > 50) %>% 
-                select(KM_Market, Province, Commune, Village)
-str(dist_market)
-hist(dist_market$KM_Market)
-
-# Over 800 km are Khpob ateav and Preaek Ambel (Kandal).  
-# 550km is Baray1 (Kampong Cham)
-dist_market %>% filter(KM_Market > 500)
-# 154km is Kampong Sralau Muoy (Preah Vihear)
-# 161km is Kampong Sralau Pir (Preah Vihear)
-# 159km is Kampong Sralau Pir (Preah Vihear) but diff village
-dist_market %>% filter(KM_Market > 150)
-
-dist_market %>% filter(KM_Market > 80) %>% filter(KM_Market < 150)
-# The Communes which I will need to find means (minus the outliers) are: 
-# Battambang > Hab
-# Kampong Cham > Tonlung
-# Kampong Speu > Ta Sal
-# Kampong Thom > Sochet
-# Koh Kong > Pralay
-# Koh Kong > Chumnoab
-# Koh Kong > Chi Phat
-# Kracheh > 
-dat2 %>% filter(Province=="Prey Veng", Commune=="Preaek Krabau")
-
-# testing the replace function
-dist_market %>% 
-  mutate(KM_Market = replace(KM_Market, KM_Market > 800, 5.137493))
-
-
 # Replace erroneous KM_Market values for Khpob ateav and Preaek Ambel communes.  See "KM_Market" section below for more details.  Mean KM_Market in Kandal Province (excl. incorrect values) = 5.137493
 dat2 %>% 
   filter(Province == "Kandal") %>% 
@@ -561,8 +529,23 @@ dat2 <- dat2 %>%
           filter(Province=="Kandal") %>% 
           mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
 
- 
+# Kandal > K'am Samnar
+dat2 %>%
+  filter(Province=="Kandal") %>% 
+  filter(Commune=="K'am Samnar") %>% 
+  select(KM_Market)
 
+# find mean (5.04)
+dat2 %>% 
+  filter(Province == "Kandal") %>% 
+  filter(!Commune == "K'am Samnar") %>% 
+  summarise(mean = mean(KM_Market))
+
+# replace values
+dat2 <- dat2 %>%
+        mutate(KM_Market = ifelse(Commune=="K'am Samnar", 
+                                replace(KM_Market, KM_Market==KM_Market, 5.04), 
+                                KM_Market))
 
 
 # Below was just to test the above code
@@ -827,7 +810,7 @@ dat2 %>%
   filter(Province=="Koh Kong") %>% 
   filter(Commune == "Ta Tey Leu") %>% 
   select(VillGis,dist_sch)
-# All high anf identical values. Difficulty is that some of the surrounding communes also have some larger values. The commune is large, and so the distances are theoretically believeable. But the provincial mean is a much more realistically low (15.5). And the mean for the other large communes is also much lower. However, the three large communes whihc are all next to each other (Ta Tey Leu, Pralay, and  Ruessei Chrum) all have the high values.  This suggests a pattern, and one which I do not want to alter.  I will leave the values as they are for now
+# All high and identical values. Difficulty is that some of the surrounding communes also have some larger values. The commune is large, and so the distances are theoretically believeable. But the provincial mean is a much more realistically low (15.5). And the mean for the other large communes is also much lower. However, the three large communes which are all next to each other (Ta Tey Leu, Pralay, and  Ruessei Chrum) all have the high values.  This suggests a pattern, and one which I do not want to alter.  I will leave the values as they are for now
 
 # find the mean
 dat2 %>% 
@@ -1582,13 +1565,10 @@ ggplot(dat_master, aes(garbage))+
 ## KM_Market ####
 qplot(dat_master$KM_Market, geom = "histogram")
 
-
-#----- Below is the exploration before I removed the outliers #----
-
 # Some big distances which I find hard to believe
 dat_master %>% 
   group_by(CommCode) %>% 
-  filter(KM_Market > 37) %>% 
+  filter(KM_Market > 50) %>% 
    print(width=Inf)
 
 # There must be data entry errors.  For example, the commune of Khpob Ateav in Kandal province has a KM_Market value of 279 KM.  It is next door to a commune called Sandar, which has a KM_Market value of 6.67 KM.  And the distance from the centre of Khpob Ateav to the centre of Sandar is ~6km, so the maximum the value for Khpob Ateav should be is ~12km.  
@@ -1631,8 +1611,6 @@ dat_master %>%
   filter(Commune == "Sandar") %>% 
   print(width=Inf)
 # Which has a KM_Market = 6.67.  Using GIS I've checked, and there is no concievable way that Sandar can be 6.67km away from a market and K'am Samnar is ~40. I think I am going to replace this value with the mean as well.
-
-#----- Below is after I removed the three outliers #----
 
 ggplot(dat_master, aes(KM_Market))+
   geom_histogram()+
@@ -2028,4 +2006,4 @@ dat_master %>%
   filter(dist_sch > 50) %>% 
   print(width=Inf)
 
-# still need to finish
+# after running above cleaning there are still a few communes with high values, but in the cleaning stage above I decided to leave them as they are for various reasons. I can always remove or edit later. 
