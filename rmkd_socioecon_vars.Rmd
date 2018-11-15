@@ -1,0 +1,651 @@
+---
+title: "socioeconomic_data"
+date: "14 November 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE, echo=FALSE}
+library('cowplot')
+library('tidyverse')
+library('knitr')
+
+dat <- read.csv("Socioeconomic_variables.csv")
+commDat <- read.csv("commGIS.csv")
+
+dat.ig <- dat[,10:73]
+grp.start <- seq(from=1,to=61,by=4)
+
+dat.ig2 <- as.data.frame(matrix(NA,nrow(dat.ig),ncol=16)) 
+for (g in 1:length(grp.start)){
+  sub <- dat.ig[,grp.start[g]:(grp.start[g]+3)]
+  ag.sum <- apply(sub,1,sum)
+  dat.ig2[,g] <- ag.sum
+}
+
+tot.pop <- dat$tot_pop
+tot.ig <- rowSums(dat.ig2,na.rm=T)
+prop.ig <- tot.ig/tot.pop
+
+dat2 <- dat
+dat2$Prop_Indigenous <- prop.ig
+dat2 <- dat2[,-c(10:73)]
+
+
+dat2$CommCode <- NA   
+lgth <- vector()
+
+for (i in 1:nrow(dat2)){   
+  cm <- as.character(dat2$Commune[i])    
+  pv <- as.character(dat2$Province[i])   
+  cc <- subset(commDat,province==pv & commune==cm)   two values
+  lgth[i] <- length(cc[,1])
+  
+    dat2$CommCode[i] <- cc[,1] 
+  }
+
+dat2 <- dat2[,-4] 
+
+as.tibble(dat2)
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = replace(KM_Comm, KM_Comm == 600, 2))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = replace(KM_Comm, KM_Comm == 200, 1.99643))
+
+
+dat2 <- dat2 %>%
+        mutate(KM_Comm = ifelse(Commune=="Serei Maen Cheay", 
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.54), 
+                                KM_Comm))
+dat2 <- dat2 %>%
+        mutate(KM_Comm = ifelse(Commune=="Chakrei", 
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.54), 
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040701,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 10),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040702,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.5),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040703,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.3),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040704,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.8),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040706,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.1),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040707,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 11.9),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040708,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 12.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040709,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 13.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040710,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040711,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 10.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==3040713,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 9.7),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==4010202,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 1.3),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080606,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080607,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080609,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 5.4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080610,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080611,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.3),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080612,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 4080613 ,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 8.2),
+                                KM_Comm))
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50403,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50405,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060404,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 16.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060406,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 27.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 6060407,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 28.3),
+                                KM_Comm))
+
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==60807,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.3),
+                                      KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010101,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010102,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010104,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 2.4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010105,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010106,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9010107,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.6),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 9020301,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 10),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10010401,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 14),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10010402,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 13.1),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10020802,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 0.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040501,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040502,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040503,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040504,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040505,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040506,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.43),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 10040604,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.33),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010301 ,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010302,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010303,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010304,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010305,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010306,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 3.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010401,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010402,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010403,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010404,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010406,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010407,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.6),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 11010503,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 6.5),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 16050501,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 1.3),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 16050504,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 2.6),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120609,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120610,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120611,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==  17120612,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120613,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 17120614,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010201,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 7.7),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010202,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 16.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010204,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 30.5),
+                                KM_Comm))
+
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010701,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 5.8),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010703,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 14.2),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19010704,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17.4),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030301,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17.9),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030302,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 17),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis== 19030305,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 4.5),
+                                KM_Comm))
+dat2 <- dat2 %>% 
+        mutate(KM_Comm = ifelse(VillGis==  19030306,
+                                replace(KM_Comm, KM_Comm==KM_Comm, 0.5),
+                                KM_Comm))
+
+
+
+
+dat2 <- dat2 %>% 
+          filter(Province=="Kandal") %>% 
+          mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
+
+
+dat2 <- dat2 %>%
+        mutate(KM_Market = ifelse(Commune=="K'am Samnar", 
+                                replace(KM_Market, KM_Market==KM_Market, 5.04), 
+                                KM_Market))
+
+
+dat2 <- dat2 %>% 
+        mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 3333333333, 5.8))
+dat2 <- dat2 %>% 
+        mutate(KM_Heal_cent = replace(KM_Heal_cent, KM_Heal_cent == 700, 5.8))
+
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050401, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.7), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050402, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.6), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050403, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.6), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==15050409, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 3.1), 
+                                KM_Heal_cent))
+
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(VillGis==6011501, 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 1.97), 
+                                KM_Heal_cent))
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(Commune=="Ta Lat", 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 16.12), 
+                                KM_Heal_cent))
+
+dat2 <- dat2 %>%
+        mutate(KM_Heal_cent = ifelse(Commune=="Srae Chhuk", 
+                                replace(KM_Heal_cent, KM_Heal_cent==KM_Heal_cent, 11.82), 
+                                KM_Heal_cent))
+
+
+dat2 <- dat2 %>%
+        mutate(inf_mort = ifelse(VillGis==16040103, 
+                                replace(inf_mort, inf_mort==inf_mort, 0.0049), 
+                                inf_mort))
+dat2 <- dat2 %>%
+        mutate(U5_mort = ifelse(VillGis==2080302, 
+                                replace(U5_mort, U5_mort==U5_mort, 0.00033), 
+                                U5_mort))
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==11040403, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.887), 
+                                Prop_Indigenous))
+
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==13070102, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.96), 
+                                Prop_Indigenous))
+
+dat2 <- dat2 %>%
+        mutate(Prop_Indigenous = ifelse(VillGis==19030304, 
+                                replace(Prop_Indigenous, Prop_Indigenous==Prop_Indigenous, 0.99), 
+                                Prop_Indigenous))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Peam Bang", 
+                                replace(dist_sch, dist_sch==dist_sch, 3.2), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Srae Chhuk", 
+                                replace(dist_sch, dist_sch==dist_sch, 17.28), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Nang Khi Loek", 
+                                replace(dist_sch, dist_sch==dist_sch, 15.53), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Yeang", 
+                                replace(dist_sch, dist_sch==dist_sch, 7.51), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Ou Saom", 
+                                replace(dist_sch, dist_sch==dist_sch, 10.42), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Thma Da", 
+                                replace(dist_sch, dist_sch==dist_sch, 10.6), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Seda", 
+                                replace(dist_sch, dist_sch==dist_sch, 22), 
+                                dist_sch))
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Saom Thum", 
+                                replace(dist_sch, dist_sch==dist_sch, 21.6), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Srae Kor", 
+                                replace(dist_sch, dist_sch==dist_sch, 17.5), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Anlong Phe", 
+                                replace(dist_sch, dist_sch==dist_sch, 16), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Ou Svay", 
+                                replace(dist_sch, dist_sch==dist_sch, 14.7), 
+                                dist_sch))
+
+dat2 <- dat2 %>%
+        mutate(dist_sch = ifelse(Commune=="Preah Rumkel", 
+                                replace(dist_sch, dist_sch==dist_sch, 11.5), 
+                                dist_sch))
+
+dat3 <- dat2 %>% 
+   
+  select(CommCode,tot_pop,family,male_18_60,fem_18_60,pop_over61,numPrimLivFarm,Fish_man,ntfp_fam,
+         land_confl,Pax_migt_in,Pax_migt_out) %>%  
+  group_by(CommCode) %>%
+  summarise_all(funs(sum)) 
+
+
+dat4 <- dat2 %>% 
+  select(CommCode,F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill,propPrimLivFarm,fam_prod,Cloth_craft
+         ,Trader,serv_prov,T18_60_uncjob,Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,cow_fam,
+         pig_fam, garbage,KM_Market,KM_Comm,YR_Pp_well,wat_safe,wat_pipe,crim_case,
+         KM_Heal_cent,inf_mort,U5_mort,Prop_Indigenous) %>% 
+  group_by(CommCode) %>%
+  summarise_all(funs(mean)) 
+
+
+dat5 <- dat2 %>% 
+  select(CommCode, dist_sch) %>% 
+  group_by(CommCode) %>% 
+  summarise_all(funs(median))
+
+                
+dat6 <- left_join(dat3,dat4,by = "CommCode")
+dat7 <- left_join(dat6, dat5, by = "CommCode")
+
+
+admindat <- dat2 %>% 
+  select(CommCode,Province, Commune) %>% 
+  group_by(CommCode) %>% 
+  distinct(CommCode, .keep_all=TRUE)
+
+
+dat_master <- left_join(admindat, dat7, by = "CommCode")
+str(dat_master)
+
+
+dat_master <- dat_master %>% 
+  select(-T18_60_uncjob)
+
+dat_master <- dat_master %>% 
+  select(-YR_Pp_well)
+
+
+dat_master$CommCode <- as.factor(dat_master$CommCode)
+
+battambang <- dat_master %>% 
+  filter(., Province == "Battambang") 
+banteay_meanchey <- dat_master %>% 
+  filter(., Province == "Banteay Meanchey")
+kampong_speu <- dat_master %>% 
+  filter(., Province == "Kampong Speu")
+kep <- dat_master %>% 
+  filter(., Province == "Kep")
+otdar_meanchey <- dat_master %>% 
+  filter(., Province == "Otdar Meanchey")
+preah_vihear <- dat_master %>% 
+  filter(., Province == "Preah Vihear")
+siem_reap <- dat_master %>% 
+  filter(., Province == "Siem Reap")
+kampong_thom <- dat_master %>% 
+  filter(., Province == "Kampong Thom")
+koh_kong <- dat_master %>% 
+  filter(., Province == "Koh Kong")
+pailin <- dat_master %>% 
+  filter(., Province == "Pailin")
+prey_veng <- dat_master %>% 
+  filter(., Province == "Prey Veng")
+stung_treng <- dat_master %>% 
+  filter(., Province == "Stung Treng")
+kampong_cham <- dat_master %>% 
+  filter(., Province == "Kampong Cham")
+kampot <- dat_master %>% 
+  filter(., Province == "Kampot")
+kratie <- dat_master %>% 
+  filter(., Province == "Kracheh")
+phnom_penh <- dat_master %>% 
+  filter(., Province == "Phnom Penh")
+pursat <- dat_master %>% 
+  filter(., Province == "Pursat")
+svay_rieng <- dat_master %>% 
+  filter(., Province == "Svay Rieng")
+kampong_chhnang <- dat_master %>% 
+  filter(., Province == "Kampong Chhnang")
+kandal <- dat_master %>% 
+  filter(., Province == "Kandal")
+mondulkiri <- dat_master %>% 
+  filter(., Province == "Mondul Kiri")
+preah_sihanouk <- dat_master %>% 
+  filter(., Province == "Preah Sihanouk")
+ratanakiri <- dat_master %>% 
+  filter(., Province == "Ratanak Kiri")
+takeo <- dat_master %>% 
+  filter(., Province == "Takeo") 
+```
+
+The socioeconomic variables have been extracted from the Cambodian annual census known as the Commune Database. The commune database exists for the years 2005 - 2016 (excluding 2006 and 2013).  One problem is that the number of questions (and therefore number of variables) in each census has changed over the years.  Earlier censuses have fewer questions than later censuses, and some of the questions which exist across all censuses have changed slilghtly over the years. Another problem is that the number of villages and communes change over the years.  Therefore care must be taken if we want to use census data from different years.  
+
+The raw data come at the village level, but because only point data exist for villages, I have aggregated the data up to the commune level, so that the data are spatially explicit. Below are the variables I have extracted from the 2010 commune database:
+
+```{r table1, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
+tabl <- "
+|Variable                                                |Theme               |Data class|
+|------------------------------------------------------- |--------------------|----------|
+|Total population                                        |Demographics        |Discrete
+|Number of families                                      |Demographics        |Discrete
+|Males aged 18-60                                        |Demographics        |Discrete
+|Females aged 18-60                                      |Demographics        |Discrete
+|Population over 61                                      |Demographics        |Discrete
+|Proportion indigenous                                   |Demographics        |Proportion
+|Males aged 6-24 in school                               |Education           |Discrete
+|Females aged 6-24 in school                             |Education           |Discrete
+|Males aged 18-60 who are illiterate                     |Education           |Discrete
+|Females aged 18-60 who are illiterate                   |Education           |Discrete
+|Families whose primary livelihood activity is farming   |Employment
+|Families whose primary livelihood activity is fishing   |Employment
+|Families whose primary livelihood activity is NTFP      |Employment
+|Families whose primary livelihood activity is production|Employment
+|Families whose primary livelihood activity is textiles  |Employment
+|Families whose primary livelihood activity is trading   |Employment
+|Families whose prim live. activity is service provision |Employment
+|Families with less than 1ha of rice land                |Economic security
+|Families with no rice land                              |Economic security
+|Families with less than 1ha of other farming land       |Economic security
+|Families with no other farming land                     |Economic security
+|Families who have cattle                                |Economic security
+|Families who have pigs                                  |Economic security  
+|Distance to nearest school                              |Access to services
+|Distance to nearest market                              |Access to services
+|Distance to Commune office                              |Access to services
+|Families with access to clean water                     |Access to services
+|Families with access to piped water                     |Access to services
+|Land conflicts in previous year                         |Social justice 
+|Criminal cases in previous year                         |Social justice  
+|Distance to nearest health centre                       |Health
+|Infant mortailty per capita                             |Health
+|Under 5 mortality                                       |Health
+|Number of in-migrants                                   |Migration
+|NUmber of out-migrants                                  |Migration
+           
+
+"
+
+
+
