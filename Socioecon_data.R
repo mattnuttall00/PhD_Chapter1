@@ -1165,7 +1165,7 @@ takeo <- dat_master %>%
   filter(., Province == "Takeo") 
 
 ## Total population ####
-qplot(dat_master$tot_pop, geom = "histogram")
+qplot(dat_master$tot_pop, geom = "histogram", xlab = "total pop")
 
 # Four outliers which suggest populations over 50,000 people
 dat_master %>% 
@@ -1378,7 +1378,7 @@ dat_master %>%
   filter(., F6_24_sch > 1)
 
 ## M6_24_sch ####
-qplot(dat_master$M6_24_sch, geom = "histogram")
+qplot(dat_master$M6_24_sch, geom = "histogram",main = 1, xlab = "", element_text(size=10))
 
 # That 0 value will be the commune in Ratankiri as above
 ggplot(dat_master, aes(M6_24_sch))+
