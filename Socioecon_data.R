@@ -2023,8 +2023,21 @@ library('tidyverse')
 
 LC_dat <- read_csv("CCI_ForCov_Commune.csv")
 str(LC_dat)
+LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
 
-LC_dat <- LC_dat %>% select(year,CODEKHUM, KHUM_NAME,HISTO_50:HISTO_100)
+# remove #DIV/0! and change them to 0's
+LC_dat <- LC_dat %>% 
+          mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0))
 
+# histograms of percent change
+qplot(LC_dat$perc_change, geom = "histogram")
 
-  
+# checking outliers
+LC_dat %>% 
+  filter(perc_change > 90)
+# Kampong Preah Kokir has percent change of 100.
+
+# Find details of above commune
+dat_master %>% 
+  filter(Commune=="Kampong Preah")
+  filter(CommCode==40105)
