@@ -1,3 +1,4 @@
+#### SOCIOECONOMIC DATA------------------------------------------------------------------------------------------------------
 #### Load libraries and data ####
 
 library('cowplot')
@@ -2014,3 +2015,16 @@ dat_master %>%
 
 # Scale of response = commune
 # If there are more than 1 pixels in a commune - 
+
+#### CCI LAND COVER DATA------------------------------------------------------------------------------------------------------
+
+#### Load data ####
+library('tidyverse')
+
+LC_dat <- read_csv("CCI_ForCov_Commune.csv")
+str(LC_dat)
+
+LC_dat <- LC_dat %>% select(year,CODEKHUM, KHUM_NAME,HISTO_50:HISTO_100)
+
+
+  
