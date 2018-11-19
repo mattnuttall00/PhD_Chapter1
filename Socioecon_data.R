@@ -202,19 +202,6 @@ dat2 %>%
   filter(!Commune %in% c("Trapeang Chour", "Ta Sal", "Traeng Trayueng")) %>% 
   summarise(mean = mean(KM_Comm))
 
-# RUN ALL dat2 EDITS FOLLOWED BY AGGREGATING TO COMMUNE LEVEL CODE BEFORE RUNNING dat_master CODE
-
-# Replace KM_Comm values in Trapeang Chour with the provincial mean
-dat_master <- dat_master %>% 
-              mutate(KM_Comm = ifelse(CommCode==50403,
-                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
-                                      KM_Comm))
-# Ta Sal
-# Again the village GIS layer is missing loads of villages, and the KM_Comm values for the commune are definitely incorrect (lots of values are larger than the maximum distance possible in the commune). I will do the same as above
-dat_master <- dat_master %>% 
-              mutate(KM_Comm = ifelse(CommCode==50405,
-                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
-                                      KM_Comm))
 
 # I have found Traeng Trayueng in GIS, and the commune is actually very large.  And the KM_Comm values are actually within the scale of the commune, and none of them are beyond the realms of possibility.  I think I will leave them as they are.  
 
@@ -243,11 +230,7 @@ dat2 %>%
   filter(Province=="Kampong Thom") %>% 
   filter(!Commune == ("Peam Bang")) %>% 
   summarise(mean = mean(KM_Comm))
-# Replace KM_Comm values in Peam Bang with the provincial mean
-dat_master <- dat_master %>% 
-              mutate(KM_Comm = ifelse(CommCode==60807,
-                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.3),
-                                      KM_Comm))
+
 
 ## Koh Kong
 
@@ -527,8 +510,9 @@ dat2 %>%
   summarise(mean = mean(KM_Market))
 
 dat2 <- dat2 %>% 
-          filter(Province=="Kandal") %>% 
-          mutate(KM_Market = ifelse(KM_Market > 50, 5.137493, KM_Market))
+          mutate(KM_Market = ifelse(Province=="Kandal",
+                   ifelse(KM_Market > 50, 5.137493, KM_Market),
+                   KM_Market))
 
 # Kandal > K'am Samnar
 dat2 %>%
@@ -1102,6 +1086,27 @@ dat_master <- dat_master %>%
 # Remove YR_Pp_well (see explanation below under data exploration section)
 dat_master <- dat_master %>% 
   select(-YR_Pp_well)
+
+
+## Dealing with KM_Comm errors, but had to do it here once CommCode existed
+# Replace KM_Comm values in Trapeang Chour with the provincial mean
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50403,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+# Ta Sal
+# Again the village GIS layer is missing loads of villages, and the KM_Comm values for the commune are definitely incorrect (lots of values are larger than the maximum distance possible in the commune). I will do the same as above
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==50405,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.17),
+                                      KM_Comm))
+
+# Replace KM_Comm values in Peam Bang with the provincial mean
+dat_master <- dat_master %>% 
+              mutate(KM_Comm = ifelse(CommCode==60807,
+                                      replace(KM_Comm, KM_Comm==KM_Comm, 3.3),
+                                      KM_Comm))
+
 
 # Change CommCode to a factor
 dat_master$CommCode <- as.factor(dat_master$CommCode)
@@ -2024,20 +2029,35 @@ library('tidyverse')
 LC_dat <- read_csv("CCI_ForCov_Commune.csv")
 str(LC_dat)
 LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
+LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
 
+## Clean data ####
 # remove #DIV/0! and change them to 0's
 LC_dat <- LC_dat %>% 
-          mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0))
+          mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0)) %>% 
+          mutate(perc_change_dir = replace(perc_change_dir, perc_change_dir == "#DIV/0!", 0))
 
 # histograms of percent change
 qplot(LC_dat$perc_change, geom = "histogram")
 
 # checking outliers
 LC_dat %>% 
-  filter(perc_change > 90)
-# Kampong Preah Kokir has percent change of 100.
+  filter(perc_change > 0)
+# Kampong Preah Kokir has percent change of 100. After double checking it is correct.  in 2010 the commune had 4 pixels of forest cover and in 2011 it had 0.  Therefore it has lost 100% of its forest cover.  
 
-# Find details of above commune
-dat_master %>% 
-  filter(Commune=="Kampong Preah")
-  filter(CommCode==40105)
+# See what the histogram looks like with 0's removed
+LC_dat1 <- LC_dat %>% 
+            filter(perc_change != 0)
+
+qplot(LC_dat1$perc_change, geom = "histogram")
+
+# Now remove negative change (i.e. where the commune has gained forest)
+LC_dat1 <- LC_dat1 %>% 
+           filter(!perc_change < 0 )
+
+## Match commune information between data sets ####
+
+length(levels(dat$Commune))
+
+dat_master %>% filter(Province=="Battambang") %>% 
+  filter(Commune=="Kracheh")
