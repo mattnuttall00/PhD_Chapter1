@@ -2028,36 +2028,77 @@ library('tidyverse')
 
 LC_dat <- read_csv("CCI_ForCov_Commune.csv")
 str(LC_dat)
+
+# Change data classes
 LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
 LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
+LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 
 ## Clean data ####
-# remove #DIV/0! and change them to 0's
+# remove #DIV/0! and change them to 0's, and rename variables to match dat_master
 LC_dat <- LC_dat %>% 
           mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0)) %>% 
-          mutate(perc_change_dir = replace(perc_change_dir, perc_change_dir == "#DIV/0!", 0))
-
-# histograms of percent change
-qplot(LC_dat$perc_change, geom = "histogram")
+          mutate(perc_change_dir = replace(perc_change_dir, perc_change_dir == "#DIV/0!", 0)) %>% 
+          rename(CommCode = CODEKHUM) %>% 
+          rename(Commune = KHUM_NAME)
 
 # checking outliers
 LC_dat %>% 
-  filter(perc_change > 0)
+  filter(perc_change == 100)
 # Kampong Preah Kokir has percent change of 100. After double checking it is correct.  in 2010 the commune had 4 pixels of forest cover and in 2011 it had 0.  Therefore it has lost 100% of its forest cover.  
 
 # See what the histogram looks like with 0's removed
 LC_dat1 <- LC_dat %>% 
-            filter(perc_change != 0)
+            filter(perc_change > 0)
 
 qplot(LC_dat1$perc_change, geom = "histogram")
 
-# Now remove negative change (i.e. where the commune has gained forest)
+# Now remove negative change (i.e. where the commune has gained forest) 
 LC_dat1 <- LC_dat1 %>% 
            filter(!perc_change < 0 )
+       
 
 ## Match commune information between data sets ####
 
-length(levels(dat$Commune))
+# There is a difference of 11 communes between the data sets. That means there are 11 communes which we do not have a forest loss value for. These will need to be identified and removed.
+length(levels(dat_master$CommCode))
+length(levels(LC_dat1$CommCode))
 
-dat_master %>% filter(Province=="Battambang") %>% 
-  filter(Commune=="Kracheh")
+## NOTE - by filtering out the 0's and negative values, the data set gets reduced massively to only 140 observations. So need to use LC_dat NOT LC_dat1 when identifying missing communes
+
+# pull out CommCode variables 
+dat_master_temp <- dat_master %>% select(CommCode)
+LC_dat_temp <- LC_dat %>% select(CommCode)
+
+# compare them
+anti_join(dat_master_temp, LC_dat_temp, by="CommCode")
+
+# The commune codes from the GIS layer do not match the commune codes from the commune database very well. There are 90 CommCodes in dat_master that are not in LC_dat. I will try looking at Commune names
+
+# pull out Commune variables
+dat_master_temp <- dat_master %>% select(Commune)
+LC_dat_temp <- LC_dat %>% select(Commune)
+LC_dat1_temp <- LC_dat1 %>% select(Commune)
+
+dat_master_temp$Commune <- as.character(dat_master_temp$Commune)
+LC_dat_temp$Commune <- as.character(LC_dat_temp$Commune)
+LC_dat1_temp$Commune <- as.character(LC_dat1_temp$Commune)
+
+# compare them (with LC_dat1 as x because we only need to match the communes with perc_change > 0)
+comm_mismatch <- anti_join(LC_dat1, dat_master, by="Commune", copy=T)
+comm_mismatch
+
+## fixing commune mismatches ####
+
+# There are 11 communes that are in LC_dat (filtered to remove 0's and negatives, n=140) but not in dat_master.  The ones with no Commune name and whose CommCodes don't match any CommCodes in dat_master will be deleted, because I don't know how to identify them in the commune database.  
+
+# CommCode = 160800, no Commune name
+LC_dat1 <- LC_dat1 %>% 
+            filter(!CommCode==160800)
+
+# Commcode = 160102, Commune = Mai Hie
+dat_master %>% 
+  filter(Province=="Ratanak Kiri") %>% 
+  select(Commune) %>% 
+  print(n=Inf)
+ 
