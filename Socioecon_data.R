@@ -2092,13 +2092,54 @@ comm_mismatch
 
 # There are 11 communes that are in LC_dat (filtered to remove 0's and negatives, n=140) but not in dat_master.  The ones with no Commune name and whose CommCodes don't match any CommCodes in dat_master will be deleted, because I don't know how to identify them in the commune database.  
 
-# CommCode = 160800, no Commune name
+# CommCode = 160800, no Commune name. Missing from dat_master and can't corroborate so will delete
 LC_dat1 <- LC_dat1 %>% 
             filter(!CommCode==160800)
 
-# Commcode = 160102, Commune = Mai Hie
+# Commcode = 160102, Commune = Mai Hie. Missing from dat_master and can't corroborate 
 dat_master %>% 
   filter(Province=="Ratanak Kiri") %>% 
   select(Commune) %>% 
+  arrange(tolower(Commune)) %>% 
   print(n=Inf)
  
+LC_dat1 <- LC_dat1 %>% 
+            filter(!CommCode==160102)
+
+# CommCode = 190401, Commune = Stung Treng
+dat_master %>% 
+  filter(Province=="Stung Treng") %>% 
+  select(Commune) %>% 
+  arrange(tolower(Commune)) %>% 
+  print(n=Inf)
+# THis commune exists, just has different spelling of the name. I will change the name. There is only one commune with that name so I can use the below code
+
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = replace(Commune, Commune=="Steung Traeng", "Stueng Traeng"))
+
+# CommCode = 99, No commune name. Checked in GIS layer and this is actually the Tonle Sap lake. Can delete
+LC_dat1 <- LC_dat1 %>%
+            filter(!CommCode==99)
+
+# CommCode = 20900, no commune name
+dat_master %>% 
+  filter(Province=="Battambang") %>% 
+  select(Commune) %>% 
+  arrange(tolower(Commune)) %>% 
+  print(n=Inf)
+# After much investigations, I have worked out that this is in fact a district, which is made up of 7 Communes. Those communes exist in dat_master (so I have socioeconomic data for them), but I don't have the boundaries in GIS. Therefore I can't be spatially explicit when matching socioeconoimc data to forest data.  And I've looked at the forest cover layers and there is only one discrete place where forest is lost and so it would not be appropriate to allocate forest loss to the entire district. Therefore I will delete the observation from LC_dat1. 
+
+LC_dat1 <- LC_dat1 %>%
+            filter(!CommCode==20900)
+
+# CommCode = 150602, no commune name
+dat_master %>% 
+  filter(Province=="Pursat") %>% 
+  select(Commune) %>% 
+  arrange(tolower(Commune)) %>% 
+  print(n=Inf)
+# Found a mamtching CommCode in dat_master. Will add it to LC_Dat1
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = ifelse(CommCode==150602,
+                            replace(Commune, Commune==Commune, "Krapeu Pir"),
+                            Commune))
