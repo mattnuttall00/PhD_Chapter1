@@ -2182,3 +2182,69 @@ LC_dat1 <- LC_dat1 %>%
 ## double check the mismatches again
 comm_mismatch <- anti_join(LC_dat1, dat_master, by="Commune", copy=T)
 comm_mismatch
+
+
+#### COVARIANCE ANALYSIS SOCIOECONOMIC VARS------------------------------------------------------------------------------------
+
+#### Load libraries & subset data ####
+library('corrplot')
+library('Hmisc')
+
+demogs <- dat_master %>% 
+          select(tot_pop,family,male_18_60, fem_18_60,pop_over61,Prop_Indigenous)
+
+education <- dat_master %>% 
+              select(F6_24_sch,M6_24_sch,F18_60_ill,M18_60_ill)
+
+employ <- dat_master %>% 
+              select(numPrimLivFarm,propPrimLivFarm,Fish_man,ntfp_fam,fam_prod,Cloth_craft,
+                     Trader,serv_prov)
+
+econSec <- dat_master %>% 
+              select(Les1_R_Land,No_R_Land,Les1_F_Land,No_F_Land,pig_fam,cow_fam)
+
+service <- dat_master %>% 
+              select(dist_sch,garbage,KM_Market,KM_Comm,wat_safe,wat_pipe)
+
+justice <- dat_master %>% 
+            select(land_confl,crim_case)
+
+health <- dat_master %>% 
+            select(KM_Heal_cent,inf_mort,U5_mort)
+
+migrate <- dat_master %>% 
+            select(Pax_migt_in,Pax_migt_out)
+
+## correlations ####
+
+# Demographics. As expected, total population, number of families, number of males and females, and number of people over 61 are all correlated. 
+corr_demogs <- rcorr(as.matrix(demogs, type="pearson"))
+corr_demogs
+
+# Education. There is a strong positive correlation between the number of females in school and the number of males in school. This is expected. There is also a fairly decent negative relationship between the number of females and males in school and the number of illiterate adults. There is also a strong positive correlation between number of illiterate males and females which is also expected.  
+corr_education <- rcorr(as.matrix(education, type="pearson"))
+corr_education
+
+# Employment. There is a farily strong negative correlation between the proportion of families who are farmers and the proportion of families who are traders. Similar (but slightly weaker) correlation between farmers and service providers. weak positive correlation between traders and service providers. 
+corr_employ <- rcorr(as.matrix(employ, type="pearson"))
+corr_employ
+
+# Economic security. fairly strong positive correlation between proportion of families with pigs and those with cattle. 
+corr_econSec <- rcorr(as.matrix(econSec, type="pearson"))
+corr_econSec
+
+# Access to services. No major correlations. Slight positive correlation between distance to markets and distance to schools, and access to safe water and access to piped water
+corr_service <- rcorr(as.matrix(service, type="pearson"))
+corr_service 
+
+# Social justice. None
+corr_justice <- rcorr(as.matrix(justice, type="pearson"))
+corr_justice
+
+# Health. None
+corr_health <- rcorr(as.matrix(health, type="pearson"))
+corr_health
+
+# Migration
+corr_migrate <- rcorr(as.matrix(migrate, type="pearson"))
+corr_migrate
