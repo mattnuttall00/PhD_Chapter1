@@ -2138,8 +2138,47 @@ dat_master %>%
   select(Commune) %>% 
   arrange(tolower(Commune)) %>% 
   print(n=Inf)
-# Found a mamtching CommCode in dat_master. Will add it to LC_Dat1
+# Found a matching CommCode in dat_master. Will add it to LC_Dat1
 LC_dat1 <- LC_dat1 %>% 
            mutate(Commune = ifelse(CommCode==150602,
-                            replace(Commune, Commune==Commune, "Krapeu Pir"),
+                            replace(Commune, is.na(Commune), "Krapeu Pir"),
                             Commune))
+
+# Commcode = 150603, no commune name.  Found a matching commune in dat_master
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = ifelse(CommCode==150603,
+                            replace(Commune, is.na(Commune), "Anlong Reab"),
+                            Commune))
+
+# CommCode = 150604, no commune name. Found a matching commune in dat_master
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = ifelse(CommCode==150604,
+                            replace(Commune, is.na(Commune), "Pramaoy"),
+                            Commune))
+
+# CommCOde = 150605, no commune name. Found a matching commune in dat_master
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = ifelse(CommCode==150605,
+                            replace(Commune, is.na(Commune), "Thma Da"),
+                            Commune))
+
+# CommCode = 150601, no commune name. Found a matching commune in dat_master
+LC_dat1 <- LC_dat1 %>% 
+           mutate(Commune = ifelse(CommCode==150601,
+                            replace(Commune, is.na(Commune), "Ou Saom"),
+                            Commune))
+
+# Commcode = 70700, no commune name. It's in Kampot.  
+dat_master %>% 
+  filter(Province=="Kampot") %>% 
+  select(Commune) %>% 
+  arrange(tolower(Commune)) %>% 
+  print(n=Inf)
+# I can't find any missing communes within that district between the two data sets, so I am not able to reconcile the missing data. I will delete it from LC_dat1
+
+LC_dat1 <- LC_dat1 %>%
+            filter(!CommCode==70700)
+
+## double check the mismatches again
+comm_mismatch <- anti_join(LC_dat1, dat_master, by="Commune", copy=T)
+comm_mismatch
