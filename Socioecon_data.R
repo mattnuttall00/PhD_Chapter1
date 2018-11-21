@@ -2026,6 +2026,7 @@ dat_master %>%
 #### Load data ####
 library('tidyverse')
 
+## This is ALL of the data (including communes that start with no forest in 2010)
 LC_dat <- read_csv("CCI_ForCov_Commune.csv")
 str(LC_dat)
 
@@ -2034,20 +2035,46 @@ LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
 LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
 LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 
-## Load raw data
-LC_dat_raw <- read_csv("ForCov_2010_raw.csv")
 
-# Remove all communes that start with no forest (i.e. structural 0's)
-LC_dat_forest <- LC_dat_raw %>% 
-                  filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
+### This section below is a result of talking to Nils about how to deal with all of the 0's in percent change.  I have decided I am not interested in Communes that have no forest cover in 2010 (and therefore cannot physically lose any forest between 2010 and 2011).  However, I AM interested in Communes that start with forest cover, but do not lose any between 2010 and 2011.  I have discussed with Nils the idea of using a zero-inflated model, which will deal with all the 0's.  Therefore what I have done with LC_dat1 below is now not appropriate.  
+
+# Load data that only has forested communes
+LC_dat_forest <- read_csv("CCI_ForCov_Commune_forest.csv")
+LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
+
+### Identifying the communes that have no forest in 2010 ####
+## Load raw data
+LC_dat_raw_2010 <- read_csv("ForCov_2010_raw.csv")
+LC_dat_raw_2011 <- read_csv("ForCov_2011_raw.csv")
+
+# Remove all communes that start with no forest in 2010 (i.e. structural 0's)
+LC_dat_forest_2010 <- LC_dat_raw_2010 %>% 
+                      filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
                             & HISTO_80==0 & HISTO_90==0 & HISTO_100==0))
 
-# remove unwanted columns
-LC_dat_forest <- LC_dat_forest %>% 
-                  select(-c(fid,KHUM50_,KHUM50_ID,PERIMETER,AREA))
+# Remove the same communes in 2011 (I am guessing they will be the same)
+LC_dat_forest_2011 <- LC_dat_raw_2011 %>% 
+                      filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
+                            & HISTO_80==0 & HISTO_90==0 & HISTO_100==0))
 
+# remove unwanted columns & rename CommCode for 2010
+LC_dat_forest_2010 <- LC_dat_forest_2010 %>% 
+                      select(-c(fid,KHUM50_,KHUM50_ID,PERIMETER,AREA)) %>% 
+                      rename(CommCode = CODEKHUM)
 
-## Clean data ####
+# remove unwanted columns & rename CommCode for 2011
+LC_dat_forest_2011 <- LC_dat_forest_2011 %>% 
+                      select(-c(fid,KHUM50_,KHUM50_ID,PERIMETER,AREA)) %>% 
+                      rename(CommCode = CODEKHUM)
+
+# double check that the remaining communes match between 2010 and 2011
+anti_join(LC_dat_forest_2011,LC_dat_forest_2010, by="CommCode")
+
+# There is one commune (Kampong Preah Kokir) that is present (i.e. forested) in 2010 but not 2011. I will sort this in Excel
+write.csv(LC_dat_forest_2010, file="LC_dat_forest_2010.csv")
+write.csv(LC_dat_forest_2011, file="LC_dat_forest_2011.csv")
+
+## Clean data - this is all data including communes with no forest in 2010 ####
 # remove #DIV/0! and change them to 0's, and rename variables to match dat_master
 LC_dat <- LC_dat %>% 
           mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0)) %>% 
@@ -2071,7 +2098,14 @@ LC_dat1 <- LC_dat1 %>%
            filter(!perc_change < 0 )
        
 
-## Match commune information between data sets ####
+## Clean data - this is data that only has communes that were forested in 2010 ####
+
+qplot(perc_change, data=LC_dat_forest, geom="histogram")
+# There is still that outlier at 100% change.  I don't like it because it only had a tiny amount of forest to begin with
+
+LC_dat_forest <- LC_dat_forest %>% filter(!Commune=="Kampong Preah Kokir")
+
+## Match commune information between data sets - Using only perc_change > 0 ####
 
 # There is a difference of 11 communes between the data sets. That means there are 11 communes which we do not have a forest loss value for. These will need to be identified and removed.
 length(levels(dat_master$CommCode))
@@ -2101,7 +2135,7 @@ LC_dat1_temp$Commune <- as.character(LC_dat1_temp$Commune)
 comm_mismatch <- anti_join(LC_dat1, dat_master, by="Commune", copy=T)
 comm_mismatch
 
-## fixing commune mismatches ####
+## fixing commune mismatches - Using only perc_change > 0  ####
 
 # There are 11 communes that are in LC_dat (filtered to remove 0's and negatives, n=140) but not in dat_master.  The ones with no Commune name and whose CommCodes don't match any CommCodes in dat_master will be deleted, because I don't know how to identify them in the commune database.  
 
@@ -2197,6 +2231,188 @@ comm_mismatch <- anti_join(LC_dat1, dat_master, by="Commune", copy=T)
 comm_mismatch
 
 
+## Match Commune info between data sets - Using all perc_change BUT only '10 forested communes ####
+
+# Lets see how badly the data sets match.  I want to know if all of the communes in LC_dat_forest are in dat_master
+anti_join(LC_dat_forest, dat_master, by="CommCode")
+# There are 37 missing communes. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
+
+# Changing CommCode to numeric to make editing the values easier
+dat_master$CommCode <- as.numeric(dat_master$CommCode)
+dat_master$CommCode <- as.factor(dat_master$CommCode)
+dat_master$CommCode <- as.character(dat_master$CommCode)
+LC_dat_forest$CommCode <- as.character(LC_dat_forest$CommCode)
+
+# CommCode 10509, Ou Bei Choan
+dat_master %>% filter(Commune=="Ou Bei Choan")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="10504", "10509"))
+
+# CommCode 10210, Sambuor. There are 5 in dat_master with same name. Checked in GIS and the one I'm looking for is in Banteay Meanchey 
+dat_master %>% filter(Commune=="Sambuor")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = ifelse(Province=="Banteay Meanchey",
+                                replace(CommCode, CommCode=="12", "10210"),
+                                CommCode)) 
+# CommCode 10213, Ta Lam
+dat_master %>% filter(Commune=="Ta Lam")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==15, "10213"))
+
+# CommCode 10301, Nam Tau
+dat_master %>% filter(Commune=="Nam Tau")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==16, "10301"))
+
+# CommCode 10302, Paoy Char
+dat_master %>% filter(Commune=="Paoy Char")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==17, "10302"))
+
+
+# CommCode 20611, Preaek Chik
+dat_master %>% filter(Commune=="Prek Chik")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==21401, "20611"))
+
+# CommCode 20612, Prey Tralach
+dat_master %>% filter(Commune=="Prey Tralach")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==21402, "20612"))
+
+# CommCode 31016, Kokir. There are 3 communes with the same name. Used GIS - its the Kampong Cham commune
+dat_master %>% filter(Commune=="Kokir")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = ifelse(Province=="Kampong Cham",
+                                replace(CommCode, CommCode=="31012", "31016"),
+                                CommCode))
+
+# CommCode 31209, Veal Mlu
+dat_master %>% filter(Commune=="Veal Mlu")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31201, "31209"))
+
+# CommCode 31513, Tuol Preah Khleang
+dat_master %>% filter(Commune=="Tuol Preah Khleang")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31502, "31513"))
+
+# Commcode 31514, Tuol Sambuor
+dat_master %>% filter(Commune=="Tuol Sambuor")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31511, "31514"))
+
+# CommCode 31615, Peam Chileang
+dat_master %>% filter(Commune=="Peam Chileang")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31603, "31615"))
+
+# CommCode 31616, Roka Po Pram
+dat_master %>% filter(Commune=="Roka Po Pram")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31607, "31616"))
+
+# CommCode 31621, Thma Pechr
+dat_master %>% filter(Commune=="Thma Pechr")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31610, "31621"))
+
+# CommCode 31622, Tonle Bet
+dat_master %>% filter(Commune=="Tonle Bet")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==31611, "31622"))
+
+# CommCode 31623, Vihear Luong. There are two. GIS - Kampong Cham
+dat_master %>% filter(Commune=="Vihear Luong")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = ifelse(Province=="Kampong Cham",
+                                replace(CommCode, CommCode=="31702", "31623"),
+                                CommCode))
+
+# CommCode 50613, Traeng Trayueng
+dat_master %>% filter(Commune=="Traeng Trayueng")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==50612, "50613"))
+
+
+# CommCode 50808, Yea Angk
+dat_master %>% filter(Commune=="Yea Angk")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==50803, "50808"))
+
+# CommCode 60310, Srayov
+dat_master %>% filter(Commune=="Srayov")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==60307, "60310"))
+
+# CommCode 60311, Tboung Krapeu
+dat_master %>% filter(Commune=="Tboung Krapeu")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==60710, "60311"))
+
+# CommCode 70615, Svay Tong Khang Cheung
+dat_master %>% filter(Commune=="Svay Tong Khang Cheung")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==70610, "70615"))
+
+# CommCode 70616, Svay Tong Khang Tboung
+dat_master %>% filter(Commune=="Svay Tong Khang Tboung")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==70611, "70616"))
+
+# CommCode 70717, Trapeang Pring. 2 communes - GIS says Kampot
+dat_master %>% filter(Commune=="Trapeang Pring")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = ifelse(Province=="Kampot",
+                                replace(CommCode, CommCode=="70706", "70717"),
+                                CommCode))
+
+# CommCode 80710, Sambuor Meas. 2 communes. GIS says Kandal
+dat_master %>% filter(Commune=="Sambuor Meas")
+dat_master <- dat_master %>% 
+              ungroup() %>% 
+              mutate(CommCode = ifelse(Province=="Kandal",
+                                replace(CommCode, CommCode=="80705", "80710"),
+                                CommCode))
+
+# CommCode 90801, Chamkar Luong
+dat_master %>% filter(Commune=="Chamkar Luong")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==180401, "90801"))
+
+# CommCode 90803, Ou Bak Roteh
+dat_master %>% filter(Commune=="Ou Bak Roteh")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==180403, "90803"))
+
+# CommCode 90804, Stueng Chhay
+dat_master %>% filter(Commune=="Stueng Chhay")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==180404, "90804"))
+
+# CommCode 100211, Roka Kandal
+dat_master %>% filter(Commune=="Roka Kandal")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==100603, "100211"))
+
+# CommCode 100212, Sambok
+dat_master %>% filter(Commune=="Sambok")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==100207, "100212"))
+
+# CommCode 100213, Thma Andaeuk
+dat_master %>% filter(Commune=="Thma Andaeuk")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode==100208, "100213"))
+
+# CommCode 100207, Kraoh Trong
+
+#
 #### COVARIANCE ANALYSIS SOCIOECONOMIC VARS------------------------------------------------------------------------------------
 
 #### Load libraries & subset data ####
