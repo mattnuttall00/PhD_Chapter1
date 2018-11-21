@@ -1,0 +1,799 @@
+CommCode,Commune,perc_change
+99,NA,5.434782609
+10210,Sambuor,0
+10213,Ta Lam,0
+10301,Nam Tau,0
+10302,Paoy Char,0
+10303,Ponley,0
+10305,Srah Chik,0
+10402,Chob Veari,0
+10403,Phnum Lieb,0
+10404,Prasat,0
+10405,Preah Netr Preah,0
+10406,Rohal,0
+10509,Ou Bei Choan,0
+10701,Banteay Chhmar,0
+10704,Thma Puok,0
+10705,Kouk Kakthen,0
+10801,Phkoam,0
+10803,Sla Kram,0
+10804,Svay Chek,0
+10903,Ou Sampor,0
+10905,Tuol Pongro,0
+20102,Kantueu Pir,0
+20104,Chheu Teal,0
+20105,Chaeng Mean Chey,0
+20106,Phnum Sampov,0
+20107,Snoeng,0
+20108,Ta Kream,0
+20201,Ta Pung,0
+20202,Ta Meun,0
+20206,Chrouy Sdau,0
+20207,Boeng Pring,0
+20404,Prey Khpos,0
+20405,Ampil Pram Daeum,0
+20406,Kdol Ta Haen,0
+20501,Preaek Norint,0
+20504,Preaek Luong,0
+20505,Peam Aek,0
+20506,Prey Chas,0
+20507,Kaoh Chiveang,1.470588235
+20604,Ruessei Krang,0
+20605,Chrey,0
+20606,Ta Loas,0
+20607,Kakaoh,0
+20608,Prey Touch,0
+20611,Preaek Chik,0
+20612,Prey Tralach,0
+20701,Sdau,0
+20702,Andaeuk Haeb,0
+20703,Phlov Meas,0
+20704,Traeng,0
+20802,Norea,0
+20803,Ta Pon,0
+20804,Roka,0
+20805,Kampong Preah,0
+20806,Kampong Pring,0
+20900,NA,0.164798945
+21000,NA,0
+21100,NA,0
+21206,NA,0
+21304,Preah Phos,0
+21305,Doun Ba,0
+21306,Chhnal Moan,0.255754476
+30108,Sandaek,0
+30111,Trab,0
+30201,Bos Khnaor,0
+30202,Chamkar Andoung,0
+30203,Cheyyou,0
+30204,Lvea Leu,0
+30205,Spueu,0
+30206,Svay Teab,0
+30207,Ta Ong,0
+30301,Khnaor Dambang,0
+30402,Dambae,0
+30405,Seda,0
+30406,Tuek Chrov,0
+30407,Trapeang Pring,0
+30603,Kien Chrey,0
+30604,Kokor,0
+30605,Kaoh Mitt,0
+30606,Kaoh Roka,0
+30611,Ro'ang,0
+30613,Srak,0
+30614,Trean,0
+30615,Vihear Thum,0
+30701,Angkor Ban,0
+30704,Peam Chi Kang,0
+30706,Preaek Krabau,0
+30709,Roka Koy,0
+30803,Lve,0
+30804,Moha Leaph,0
+30806,Peam Prathnuoh,0
+30807,Pongro,0
+30808,Preaek Ta Nong,0
+30901,Chhuk,0
+30902,Chumnik,0
+30903,Kampong Treas,0
+30905,Krouch Chhmar,0
+30906,Peus Muoy,0
+30907,Peus Pir,0
+30908,Preaek a Chi,0
+30909,Roka Khnaor,0
+30910,Svay Khleang,0
+30911,Trea,0
+30912,Tuol Snuol,0
+31003,Choam Kravien,0
+31004,Choam Ta Mau,0
+31005,Dar,0
+31006,Kampoan,0
+31007,Memong,0
+31011,Rumchek,0
+31014,Tonlung,0
+31016,Kokir,0
+31103,Damrel,0
+31106,Peam Cheang,0
+31107,Preah Theat,0
+31202,Doun Tei,0
+31203,Kak,0
+31204,Kandaol Chrum,0
+31205,Kaong Kang,0
+31206,Kraek,0
+31207,Popel,0
+31208,Trapeang Phlong,0
+31209,Veal Mlu,0
+31413,Svay Sach Phnum,0
+31501,Areaks Tnaot,0
+31503,Dang Kdar,0
+31504,Khpob Ta Nguon,4.545454545
+31506,Ou Mlu,0
+31507,Peam Kaoh Sna,0
+31510,Preaek Kak,0
+31512,Soupheas,0
+31513,Tuol Preah Khleang,0
+31514,Tuol Sambuor,2.272727273
+31602,Boeng Pruol,0
+31605,Chirou Muoy,0
+31606,Chirou Pir,0
+31608,Chob,0
+31612,Kor,0
+31615,Peam Chileang,0
+31616,Roka Po Pram,0
+31621,Thma Pechr,0
+31622,Tonle Bet,0
+31623,Vihear Luong,0
+40101,Anhchanh Rung,0
+40102,Chhnok Tru,0
+40104,Khon Rang,0
+40105,Kampong Preah Kokir,100
+40106,Melum,0
+40107,Phsar,0
+40108,Pech Changvar,0
+40111,Trapeang Chan,0
+40202,Kaoh,0
+40204,Peam Chhkaok,0
+40401,Chranouk,1.818181818
+40402,Dar,0
+40404,Phlov Tuk,29.77099237
+40405,Pou,0
+40406,Pralay Meas,28.57142857
+40406,Pralay Meas,0
+40407,Samraong Saen,59.25925926
+40408,Svay Rumpear,0
+40409,Trangel,0
+40504,Kampong Tralach,0
+40506,Ou Ruessei,0
+40602,Banteay Preal,0
+40603,Cheung Kreav,0
+40604,Chrey Bak,0
+40605,Kouk Banteay,0
+40607,Pongro,0
+40608,Prasneb,0
+40611,Srae Thmei,0
+40612,Svay Chrum,0
+40701,Chhean Laeung,0
+40703,Krang Lvea,0
+40704,Peam,0
+40707,Svay Chuk,0
+40802,Chieb,0
+40803,Chaong Maong,0
+40804,Kbal Tuek,0
+40805,Khlong Popok,0
+40806,Krang Skear,0
+40808,Tuol Khpos,0
+50102,Kat Phluk,0
+50104,Pheakdei,0
+50110,Svay Chacheb,0
+50112,Tuol Sala,0
+50115,Preah Khae,0
+50311,Srang,0
+50401,Haong Samnam,0
+50402,Reaksmei Sameakki,0
+50403,Trapeang Chour,0.022660322
+50404,Sangkae Satob,0
+50405,Ta Sal,0
+50406,NA,0
+50600,NA,0
+50601,Chambak,0
+50602,Choam Sangkae,0
+50603,Dambouk Rung,0
+50604,Kiri Voan,0
+50605,Krang Dei Vay,0
+50606,Moha Sang,0
+50607,Ou,0
+50608,Prey Rumduol,0
+50609,Prey Kmeng,0
+50610,Tang Samraong,0
+50611,Tang Sya,0
+50613,Traeng Trayueng,0
+50704,Krang Ampil,0
+50710,Skuh,0
+50712,Thommoda Ar,0
+50714,Tumpoar Meas,0
+50801,Amleang,0
+50804,Prambei Mom,0
+50806,Toap Mean,0
+50808,Yea Angk,0
+60101,Bak Sna,0
+60102,Ballangk,0
+60103,Baray,0
+60104,Boeng,0
+60105,Chaeung Daeung,0
+60108,Chong Doung,0
+60109,Chrolong,0
+60110,Kokir Thum,0
+60112,Andoung Pou,0
+60113,Pongro,0
+60115,Sralau,1.818181818
+60118,Treal,7.567567568
+60201,Chey,0
+60202,Damrei Slab,0
+60203,Kampong Kou,0
+60205,Ni Pechr,0
+60206,Phat Sanday,25.98425197
+60207,San Kor,0
+60208,Tbaeng,0
+60209,Trapeang Ruessei,0
+60310,Srayov,0
+60311,Tboung Krapeu,0
+60401,Doung,0
+60402,Kraya,0.79006772
+60403,Phan Nheum,0
+60404,Sa Kream,1.28606187
+60405,Sala Visai,0.933908046
+60406,Sameakki,0
+60407,Tuol Kreul,0
+60501,Chhuk,0
+60502,Koul,6.231884058
+60503,Sambour,0
+60504,Sraeung,0
+60505,Tang Krasau,0
+60601,Chheu Teal,0
+60602,Dang Kambet,1.748841129
+60603,Klaeng,0.502512563
+60604,Mean Ritth,0.356076269
+60605,Mean Chey,0
+60606,Ngan,2.644836272
+60607,Sandan,0.706090026
+60608,Sochet,1.034126163
+60609,Tum Ring,4.66007022
+60701,Boeng Lvea,1.881134133
+60702,Chroab,0
+60703,Kampong Thma,0
+60704,Kakaoh,0
+60705,Kraya,8.439432521
+60706,Pnov,0
+60708,Tang Krasang,0
+60709,Ti Pou,0
+60801,Banteay Stoung,0
+60802,Chamnar Kraom,4.851330203
+60804,Kampong Chen Cheung,0
+60806,Msar Krang,49.49494949
+60807,Peam Bang,42.30769231
+60808,Popok,2.769230769
+60809,Pralay,3.125
+60812,Samprouch,24.94004796
+60813,Trea,0
+70102,Angkor Chey,0
+70104,Dambouk Khpos,0
+70105,Dan Koum,0
+70108,Phnum Kong,0
+70111,Tani,0
+70210,Trapeang Sala Khang Kaeu,0
+70213,Tuk Meas Khang Lech,0
+70302,Ta Kaen,0
+70308,Lbaeuk,0
+70309,Trapeang Plang,1.418988648
+70311,Nareay,0
+70401,Chres,0
+70402,Chumpu Voan,0
+70403,Snay Anhchet,0
+70404,Srae Chaeng,0
+70405,Srae Knong,0
+70406,Srae Samraong,0
+70407,Trapeang Reang,0
+70507,Srae Chea Khang Tboung,0
+70510,L'ang,0
+70602,Boeng Sala Khang Tboung,0
+70606,Kampong Trach Khang Lech,0
+70615,Svay Tong Khang Cheung,0
+70616,Svay Tong Khang Tboung,0
+70700,NA,0.060132291
+70701,Boeng Tuk,0
+70703,Kampong Kraeng,0
+70704,Kampong Samraong,0
+70705,Kandal,0
+70707,Kaoh Touch,0
+70708,Koun Satv,0
+70709,Meakprang,0
+70711,Preaek Tnaot,0
+70713,Prey Thnang,0
+70715,Stueng Kaev,0
+70716,Thmei,0
+70717,Trapeang Pring,0
+70804,Andoung Khmaer,0
+70805,Traeuy Kaoh,0
+80101,Ampov Prey,0
+80104,Boeng Khyang,0
+80107,Kandaok,0
+80116,Preaek Slaeng,0
+80202,Chheu Teal,0
+80203,Dei Edth,0
+80205,Kbal Kaoh,0
+80206,Kokir,0
+80207,Kokir Thum,0
+80208,Phum Thum,0
+80210,Preaek Thmei,0
+80211,Samraong Thum,0
+80304,Kaoh Chouram,0
+80306,Preah Prasab,0
+80307,Preaek Ampil,0
+80308,Preaek Luong,0
+80309,Preaek Ta Kov,0
+80403,Kampong Kong,0
+80407,Leuk Daek,0
+80501,Kampong Phnum,0
+80602,Barong,0
+80613,Sarikakaev,0
+80701,Bak Khaeng,0
+80702,Kaoh Dach,0
+80709,Ruessei Chrouy,0
+80710,Sambuor Meas,0
+80812,Ponsang,0
+80904,Kampong Os,0
+80908,Ponhea Pon,0
+80911,Phsar Daek,0
+80912,Samraong,0
+81009,Roka Khpos,0
+81010,S'ang Phnum,0
+81011,Setbou,0
+81013,Svay Rolum,0
+81014,Ta Lon,0
+81015,Traeuy Sla,0
+90101,Andoung Tuek,0
+90102,Kandaol,0
+90103,Ta Nuon,0
+90103,Ta Nuon,0
+90103,Ta Nuon,0
+90104,Thma Sa,0
+90201,Kaoh Sdach,2.301410542
+90201,Kaoh Sdach,0
+90201,Kaoh Sdach,0
+90201,Kaoh Sdach,0
+90202,Phnhi Meas,0
+90203,Preaek Khsach,2.667167543
+90301,Chrouy Pras,0.589390963
+90301,Chrouy Pras,0
+90302,Kaoh Kapi,0
+90303,Ta Tai Kraom,0
+90401,Smach Mean Chey,0
+90403,Stueng Veaeng,0
+90501,Bak Khlang,0.157955198
+90502,Peam Krasaob,0
+90503,Tuol Kokir Leu,0
+90601,Boeng Preav,0
+90602,Chi Kha Kraom,0
+90604,Chrouy Svay,0
+90605,Dang Peaeng,0
+90607,NA,0
+90701,Ta Tey Leu,0
+90702,Pralay,0
+90703,Chumnoab,0
+90703,Chumnoab,0
+90704,Ruessei Chrum,0.152369343
+90801,Chamkar Luong,0
+90803,Ou Bak Roteh,0
+90804,Stueng Chhay,0.381679389
+100101,Chhloung,0
+100102,Damrei Phong,14.85875706
+100103,Han Chey,0
+100104,Kampong Damrei,7.382550336
+100105,Kanhchor,0
+100106,Khsach Andaet,0
+100107,Pongro,0
+100108,Preaek Saman,11.65048544
+100201,Bos Leav,0
+100202,Changkrang,0
+100203,Dar,0
+100204,Kantuot,0
+100205,Kou Loab,0
+100207,Kaoh Trong,0
+100208,Krakor,0
+100211,Roka Kandal,0
+100212,Sambok,0
+100213,Thma Andaeuk,0
+100214,Thma Kreae,0
+100215,Thmei,0
+100301,Chambak,9.058614565
+100302,Chrouy Banteay,0.414078675
+100303,Kampong Kor,0
+100305,Preaek Prasab,8.93970894
+100306,Ruessei Kaev,8.620689655
+100307,Saob,18.92976589
+100308,Ta Mau,13.10160428
+100401,Boeng Char,0
+100402,Kampong Cham,0
+100403,Kbal Damrei,0
+100404,Kaoh Khnhaer,0
+100405,Ou Krieng,3.600705614
+100406,Roluos Mean Chey,3.597831444
+100407,Sambour,0
+100408,Sandan,0
+100409,Srae Chis,0
+100410,Voadthonak,0
+100501,Khsuem,6.093017666
+100502,Pir Thnu,8.523447402
+100503,Snuol,0
+100504,Srae Char,0
+100505,Svay Chreah,1.912803722
+110101,Chong Phlah,0
+110102,Me Mang,0
+110104,Srae Khtum,0.178810907
+110201,Nang Khi Loek,0
+110202,Ou Buon Leu,0
+110203,Roya,0.170419963
+110204,Sokh Sant,0
+110205,Srae Huy,0
+110206,Srae Sangkom,0
+110301,Dak Dam,1.843733883
+110401,Krang Teh,0
+110402,Bu Chri,0
+110403,Srae Ampum,0
+110404,Bu Sra,0.038328862
+110501,Monourom,0
+110502,Sokh Dom,0
+110503,Spean Mean Chey,0
+110504,Romonea,0
+110504,Romonea,0
+120501,Dangkao,0
+120503,Kouk Roka,0
+120515,Cheung Aek,0
+120607,Chak Angrae Kraom,0
+120708,Preaek Lieb,0
+120709,Preaek Ta Sek,0
+130101,S'ang,0
+130102,Tasu,0
+130103,Khyang,0
+130104,Chrach,0
+130105,Yhmea,0
+130106,Putrea,0
+130203,Sangke Muoy,0
+130204,Sangke Pir,0
+130205,Mlu Prey Muoy,0
+130206,Mlu Prey Pir,0
+130207,Kampong Sralau Muoy,0
+130208,Kampong Sralau Pir,0
+130301,Choam Ksant,0
+130302,Tuek Kraham,0
+130303,Pring Thum,0
+130304,Rumdaoh Srae,0
+130305,Yeang,0
+130306,Kantuot,0
+130401,Kuleaen Tboung,0
+130402,Kuleaen Cheung,0
+130403,Thmei,0
+130404,Phnum Penh,0
+130405,Phnum Tbaeng Pir,0
+130406,Srayang,0
+130501,Robieb,0
+130502,Reaksmei,0
+130503,Rohas,0
+130504,Rung Roeang,0.528479154
+130505,Rik Reay,0
+130506,Ruos Roan,0
+130507,Rotanak,6.839186691
+130508,Rieb Roy,0
+130509,Reaksa,0
+130510,Rumdaoh,0
+130511,Romtom,0
+130512,Romoniy,3.023407022
+130601,Chamraeun,0
+130603,Phnum Tbaeng Muoy,0
+130604,Sdau,0
+130605,Ronak Ser,0
+130701,Kampong Pranak,0
+130703,Chhean Mukh,0
+130704,Pou,0
+130705,Prame,0
+130706,Preah Khleang,0
+140108,Spueu Kha,0
+140201,Cheach,0
+140203,Kranhung,0
+140204,Krabau,0
+140205,Seang Khveang,0
+140306,Kou Khchak,0
+140402,Kanhchriech,0
+140404,Kouk Kong Kaeut,0
+140405,Kouk Kong Lech,0
+140406,Preal,0
+140407,Thma Pun,0
+140503,Chi Phok,0
+140504,Prey Khnes,0
+140508,Trapeang Srae,0
+140805,Mesa Prachan,0
+140809,Prey Sralet,0
+141004,Damrei Puon,0
+150101,Boeng Bat Kandaol,56.25
+150104,Me Tuek,15.51724138
+150105,Ou Ta Paong,0
+150107,Snam Preah,11.11111111
+150109,Ta Lou,0
+150203,Kandieng,0
+150204,Kanhchor,0
+150206,Srae Sdok,4.891304348
+150208,Sya,1.34529148
+150208,Sya,0
+150301,Anlong Tnaot,3.902439024
+150302,Ansa Chambak,0
+150304,Chheu Tom,0
+150306,Kampong Pou,3.448275862
+150307,Kbal Trach,2.040816327
+150308,Ou Sandan,1.290322581
+150309,Sna Ansa,7.829181495
+150310,Svay Sa,0
+150311,Tnaot Chum,0
+150402,Leach,0
+150403,Phteah Rung,0
+150404,Prongil,0
+150405,Rokat,0
+150406,Santreae,0
+150407,Samraong,0.06351895
+150501,Chamraeun Phal,0
+150506,Roleab,0
+150601,NA,0.585417775
+150602,NA,0.257400257
+150603,NA,0.881750905
+150604,NA,0.103722485
+150605,NA,0.128444652
+160101,Malik,0
+160102,Mai Hie,5.885815185
+160103,Nhang,6.597479615
+160104,Ta Lav,14.41922563
+160201,Kachanh,0
+160203,Yeak Laom,0
+160301,Kak,0
+160302,Ke Chong,0
+160303,Laming,0
+160304,Lung Khung,0
+160305,Seung,0
+160306,Ting Chak,0
+160401,Serei Mongkol,0
+160402,Srae Angkrong,0
+160403,Ta Ang,0
+160404,Toen,0.160965795
+160405,Trapeang Chres,0
+160406,Trapeang Kraham,0
+160501,Chey Otdam,0
+160502,Ka Laeng,0
+160503,La Bang Muoy,0
+160504,La Bang Pir,0
+160505,Pa Tang,0
+160506,Seda,0
+160601,Cha Ung,0
+160602,Chan,17.64705882
+160603,Aekakpheap,0
+160604,Kalai,4.071246819
+160605,Ou Chum,18.56540084
+160606,Sameakki,3.134796238
+160607,L'ak,15.49295775
+160701,Bar Kham,0
+160702,Lum Choar,0
+160703,Pak Nhai,0
+160704,Pate,0.74906367
+160705,Sesant,0
+160706,Saom Thum,0.896860987
+160707,Ya Tung,0
+160800,NA,2.047167854
+160801,Ta Veaeng Leu,0.211565585
+160802,Ta Veaeng Kraom,0
+160900,NA,0
+160901,Ban Pong,0
+160903,Hat Pak,0
+160904,Ka Choun,0
+160905,Kaoh Pang,0
+160906,Kaoh Peak,2.084884587
+160907,Kok Lak,0
+160908,Pa Kalan,0
+160909,Phnum Kok,10.4137931
+160910,Veun Sai,0
+170102,Doun  Peaeng,0
+170103,Kouk Doung,1.772151899
+170105,Nokor Pheas,0
+170106,Srae Khvav,0
+170201,Chob Ta Trav,0.722021661
+170202,Leang Dai,0
+170203,Peak Snaeng,2.797202797
+170204,Svay Chek,0
+170301,Khnar Sanday,0
+170302,Khun Ream,0.361794501
+170304,Rumchek,0
+170305,Run Ta Aek,0
+170306,Tbaeng,0
+170401,Anlong Samnar,59.16666667
+170402,Chi Kraeng,0
+170404,Khvav,0
+170405,Kouk Thlok Kraom,0
+170406,Kouk Thlok Leu,0
+170407,Lveaeng Ruessei,0
+170408,Pongro Kraom,0
+170409,Pongro Leu,0
+170410,Ruessei Lok,0
+170411,Sangvaeuy,0
+170412,Spean Tnaot,16.66666667
+170606,Sambuor,0
+170609,Sranal,0
+170704,Kaev Poar,0
+170706,Krabei Riel,0
+170707,Lvea,0
+170708,Mukh Paen,0
+170709,Pou Treay,0
+170710,Puok,0
+170711,Prey Chruk,0
+170712,Reul,0
+170713,Samraong Yea,0
+170714,Tuek Vil,0
+170715,Trei Nhoar,0
+170904,Kampong Phluk,0
+170906,Kandaek,0
+170908,Roluos,0
+171002,Svay Dangkum,0
+171003,Kouk Chak,0
+171005,Nokor Thum,0
+171006,Chreav,4.054054054
+171008,Sambuor,0
+171009,Siem Reab,0
+171010,Srangae,0
+171101,Chan Sar,0
+171103,Dan Run,0
+171104,Kampong Khleang,56.96202532
+171106,Khchas,0
+171107,Khnar Pou,0
+171108,Popel,0
+171201,Chrouy Neang Nguon,0
+171203,Tram Sasar,0
+171204,Moung,0
+171205,Prei,0
+171206,Slaeng Spean,0
+171301,Boeng Mealea,0
+171302,Kantuot,0
+171303,Khnang Phnum,0.3125
+171304,Svay Leu,0
+171305,Ta Siem,0
+171401,Prasat,0.574712644
+171402,Lvea Krang,0
+171403,Srae Nouy,0.491668943
+171404,Svay sa,0
+171405,Varin,0
+180101,Sangkat Muoy,0
+180103,Sangkat Bei,0
+180103,Sangkat Bei,0
+180105,Kaoh Rung,0
+180105,Kaoh Rung,0
+180105,Kaoh Rung,0
+180201,Andoung Thma,18.14159292
+180202,Boeng Ta Prum,0
+180203,Bet Trang,0
+180204,Cheung Kou,0
+180205,Ou Chrov,0
+180206,Ou Oknha Heng,11.15702479
+180206,Ou Oknha Heng,0
+180207,Prey Nob,6.25
+180208,Ream,4.545454545
+180208,Ream,0
+180208,Ream,0
+180208,Ream,0
+180208,Ream,0
+180209,Sameakki,0
+180210,Samrong,2.083333333
+180211,Tuek L'ak,0
+180212,Tuek Thla,0
+180213,Tuol Toetueng,13.28125
+180302,Ou Treh,4.680851064
+180303,Tumnob Rolok,15.06024096
+190101,Kampun,5.711206897
+190102,Kbal Romeas,1.713475908
+190103,Phluk,0.595770033
+190104,Samkhuoy,0
+190105,Sdau,0
+190106,Srae Kor,0.024467825
+190107,Ta Lat,0
+190201,Kaoh Preah,0
+190202,Kaoh Sampeay,6.363636364
+190203,Kaoh Sralau,0
+190204,Ou Mreah,0
+190205,Ou Ruessei Kandal,0
+190206,Siem Bouk,0.01770695
+190207,Srae Krasang,27.67295597
+190301,Preaek Meas,0
+190302,Sekong,0
+190303,Santepheap,0.0047524
+190304,Srae Sambour,0
+190305,Thma Kaev,0
+190401,Stung Treng,45.97701149
+190402,Sarh Ruessei,0
+190403,Preah Bat,0
+190404,Sameaki,0
+190501,Anlong Phe,0.037133309
+190502,Chamkar Leu,0
+190503,Kang Cham,0
+190504,Kaoh Snaeng,0.707338638
+190505,Anlong Chrey,0.213642606
+190506,Ou Rai,0.087873462
+190507,Ou Svay,0
+190508,Preah Rumkel,0
+190509,Sam'ang,1.60971477
+190510,Srae Ruessei,2.279005525
+190511,Thala,0
+200101,Bati,0
+200102,Bavet,0
+200103,Chantrea,0
+200104,Chres,0
+200106,Prasat,0
+200108,Prey Kokir,0
+200109,Samraong,0
+200110,Tuol Sdei,0
+200207,Samlei,0
+200310,Thna Thnong,0
+200401,Ampil,0
+200402,Andoung Pou,0
+200403,Andoung Trabaek,0
+200406,Chrey Thum,0
+200407,Doung,0
+200409,Kokir,0
+200412,Mream,0
+200414,Sambatt Mean Chey,0
+200416,Tras,0
+200702,Kokir Saom,0
+200703,Kandieng Reay,0
+200705,Popeaek,0
+200706,Prey Ta Ei,0
+200708,Romeang Thkaol,0
+200709,Sambuor,0
+200711,Svay Rumpea,0
+210207,Krang thnong,0
+210208,Lumpong,0
+210302,Chey Chouk,0
+210304,Kampong Krasang,0
+210406,Kouk Prech,0
+210409,Prey Rumdeng,0
+210410,Ream Andaeuk,0
+210504,Prey Yuthka,0
+210903,Kus,0
+210910,Samraong,0
+210913,Tram Kak,0
+210914,Trapeang Thum Khang Cheu,0
+210915,Trapeang Thum Khang Tbou,0
+220101,Anlong Veaeng,1.124567474
+220104,Trapeang Prei,0
+220105,Thlat,0.695249131
+220106,Lumtong,0.35626199
+220201,Ampil,0
+220202,Beng,0
+220203,Kouk Khpos,0
+220204,Kouk Mon,0
+220301,Cheung Tien,0
+220302,Chong Kal,0.067842605
+220304,Pongro,0
+220304,Pongro,0
+220401,Bansay Reak,0
+220402,Bos Sbov,0
+220403,Kriel,0
+220404,Samraong,0
+220405,Ou Smach,0
+220501,Bak Anlung,0
+220502,Ph'av,1.450068399
+220503,Ou Svay,0
+220504,Preah Pralay,0
+220505,Tumnob Dach,0
+220506,Trapeang Prasat,2.45142003
+230101,Angkaol,0
+230103,Pong Tuek,0
+230201,Kaeb,0
+230202,Prey Thum,0
+240101,Pailin,0.111234705
+240102,Ou Tavau,0.666666667
+240103,Tuol Lvea,0
+240104,Ba Yakha,0
+240202,Stueng Trang,0
+240203,Stueng Kach,0
+240204,Ou Andoung,0
