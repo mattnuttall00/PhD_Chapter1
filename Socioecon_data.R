@@ -2245,6 +2245,56 @@ corr_justice
 corr_health <- rcorr(as.matrix(health, type="pearson"))
 corr_health
 
-# Migration
+# Migration. None
 corr_migrate <- rcorr(as.matrix(migrate, type="pearson"))
 corr_migrate
+
+head(dat_master)
+length(LC_dat1$perc_change)
+head(LC_dat1)
+
+## Joining dataframe ####
+
+# Join tables
+dat_vars_forcov <- left_join(dat_master,LC_dat1, by = "CommCode")
+head(dat_vars_forcov)
+
+# filter out the communes that don't have any forest loss
+dat_vars_forcov %>% select(perc_change) %>% print(n=100)
+dat_vars_forcov <- dat_vars_forcov %>% 
+                    filter(!is.na(perc_change))
+
+# Check the length matches LC_dat1
+length(LC_dat1$CommCode)
+
+# Check data in Excel
+write.csv(dat_vars_forcov, file="dat_vars_forcov.csv")
+write.csv(LC_dat1, file="LC_dat1.csv")
+
+# Length not quite matching
+comm_mismatch1 <- anti_join(LC_dat1, dat_vars_forcov, by="CommCode", copy=T)
+comm_mismatch1
+str(dat_vars_forcov)
+str(LC_dat1)
+
+# There are 3 communes which have differing CommCodes between dat_master and LC_Dat1.  They are the only communes with those names so I am not worried about duplicate communes. I will leave them out for now
+dat_master %>% filter(Commune == "Stueng Chhay")
+
+
+#### Plots ####
+library('cowplot')
+
+p1 <- ggplot(dat_vars_forcov, aes(x=tot_pop, y=perc_change))+
+      geom_point()
+p2 <- ggplot(dat_vars_forcov, aes(x=family, y=perc_change))+
+      geom_point()
+p3 <- ggplot(dat_vars_forcov, aes(x=male_18_60, y=perc_change))+
+      geom_point()
+p4 <- ggplot(dat_vars_forcov, aes(x=fem_18_60, y=perc_change))+
+      geom_point()
+p5 <- ggplot(dat_vars_forcov, aes(x=pop_over61, y=perc_change))+
+      geom_point()
+p6 <- ggplot(dat_vars_forcov, aes(x=Prop_Indigenous, y=perc_change))+
+      geom_point()
+
+plot_grid(p1,p2,p3,p4,p5,p6)
