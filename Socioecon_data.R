@@ -2034,6 +2034,19 @@ LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
 LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
 LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 
+## Load raw data
+LC_dat_raw <- read_csv("ForCov_2010_raw.csv")
+
+# Remove all communes that start with no forest (i.e. structural 0's)
+LC_dat_forest <- LC_dat_raw %>% 
+                  filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
+                            & HISTO_80==0 & HISTO_90==0 & HISTO_100==0))
+
+# remove unwanted columns
+LC_dat_forest <- LC_dat_forest %>% 
+                  select(-c(fid,KHUM50_,KHUM50_ID,PERIMETER,AREA))
+
+
 ## Clean data ####
 # remove #DIV/0! and change them to 0's, and rename variables to match dat_master
 LC_dat <- LC_dat %>% 
@@ -2284,6 +2297,7 @@ dat_master %>% filter(Commune == "Stueng Chhay")
 #### Plots ####
 library('cowplot')
 
+# Demographics
 p1 <- ggplot(dat_vars_forcov, aes(x=tot_pop, y=perc_change))+
       geom_point()
 p2 <- ggplot(dat_vars_forcov, aes(x=family, y=perc_change))+
@@ -2298,3 +2312,94 @@ p6 <- ggplot(dat_vars_forcov, aes(x=Prop_Indigenous, y=perc_change))+
       geom_point()
 
 plot_grid(p1,p2,p3,p4,p5,p6)
+
+# Education
+p7 <- ggplot(dat_vars_forcov, aes(x=F6_24_sch, y=perc_change))+
+      geom_point()
+p8 <- ggplot(dat_vars_forcov, aes(x=M6_24_sch, y=perc_change))+
+      geom_point()
+p9 <- ggplot(dat_vars_forcov, aes(x=F18_60_ill, y=perc_change))+
+      geom_point()
+p10 <- ggplot(dat_vars_forcov, aes(x=M18_60_ill, y=perc_change))+
+      geom_point()
+
+plot_grid(p7,p8,p9,p10)
+
+# Employment
+p11 <- ggplot(dat_vars_forcov, aes(x=numPrimLivFarm, y=perc_change))+
+      geom_point()
+p12 <- ggplot(dat_vars_forcov, aes(x=propPrimLivFarm, y=perc_change))+
+      geom_point()
+p13 <- ggplot(dat_vars_forcov, aes(x=Fish_man, y=perc_change))+
+      geom_point()
+p14 <- ggplot(dat_vars_forcov, aes(x=ntfp_fam, y=perc_change))+
+      geom_point()
+p15 <- ggplot(dat_vars_forcov, aes(x=fam_prod, y=perc_change))+
+      geom_point()
+p16 <- ggplot(dat_vars_forcov, aes(x=Cloth_craft, y=perc_change))+
+      geom_point()
+p17 <- ggplot(dat_vars_forcov, aes(x=Trader, y=perc_change))+
+      geom_point()
+p18 <- ggplot(dat_vars_forcov, aes(x=serv_prov, y=perc_change))+
+      geom_point()
+
+plot_grid(p11,p12,p13,p14,p15,p16,p17,p18)
+
+# Economic security
+p19 <- ggplot(dat_vars_forcov, aes(x=Les1_R_Land, y=perc_change))+
+      geom_point()
+p20 <- ggplot(dat_vars_forcov, aes(x=No_R_Land, y=perc_change))+
+      geom_point()
+p21 <- ggplot(dat_vars_forcov, aes(x=Les1_F_Land, y=perc_change))+
+      geom_point()
+p22 <- ggplot(dat_vars_forcov, aes(x=No_F_Land, y=perc_change))+
+      geom_point()
+p23 <- ggplot(dat_vars_forcov, aes(x=pig_fam, y=perc_change))+
+      geom_point()
+p24 <- ggplot(dat_vars_forcov, aes(x=cow_fam, y=perc_change))+
+      geom_point()
+
+plot_grid(p19,p20,p21,p22,p23,p24)
+
+# Access to services
+p25 <- ggplot(dat_vars_forcov, aes(x=dist_sch, y=perc_change))+
+      geom_point()
+p26 <- ggplot(dat_vars_forcov, aes(x=garbage, y=perc_change))+
+      geom_point()
+p27 <- ggplot(dat_vars_forcov, aes(x=KM_Market, y=perc_change))+
+      geom_point()
+p28 <- ggplot(dat_vars_forcov, aes(x=KM_Comm, y=perc_change))+
+      geom_point()
+p29 <- ggplot(dat_vars_forcov, aes(x=wat_safe, y=perc_change))+
+      geom_point()
+p30 <- ggplot(dat_vars_forcov, aes(x=wat_pipe, y=perc_change))+
+      geom_point()
+
+plot_grid(p25,p26,p27,p28,p29,p30)
+
+# Social justice
+p31 <- ggplot(dat_vars_forcov, aes(x=land_confl, y=perc_change))+
+      geom_point()
+p32 <- ggplot(dat_vars_forcov, aes(x=crim_case, y=perc_change))+
+      geom_point()
+
+plot_grid(p31,p32)
+
+# Health
+p33 <- ggplot(dat_vars_forcov, aes(x=KM_Heal_cent, y=perc_change))+
+      geom_point()
+p34 <- ggplot(dat_vars_forcov, aes(x=inf_mort, y=perc_change))+
+      geom_point()
+p35 <- ggplot(dat_vars_forcov, aes(x=U5_mort, y=perc_change))+
+      geom_point()
+
+plot_grid(p33,p34,p35)
+
+# Migration
+p36 <- ggplot(dat_vars_forcov, aes(x=Pax_migt_in, y=perc_change))+
+      geom_point()
+p37 <- ggplot(dat_vars_forcov, aes(x=Pax_migt_out, y=perc_change))+
+      geom_point()
+
+
+plot_grid(p36,p37)
