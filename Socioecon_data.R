@@ -2044,6 +2044,11 @@ LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
 
 ### Identifying the communes that have no forest in 2010 ####
 ## Load raw data
+
+## This section is not necessary each time. It was used to create the data that can now be read in above as LC_dat_forest
+
+
+
 LC_dat_raw_2010 <- read_csv("ForCov_2010_raw.csv")
 LC_dat_raw_2011 <- read_csv("ForCov_2011_raw.csv")
 
@@ -2052,7 +2057,7 @@ LC_dat_forest_2010 <- LC_dat_raw_2010 %>%
                       filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
                             & HISTO_80==0 & HISTO_90==0 & HISTO_100==0))
 
-# Remove the same communes in 2011 (I am guessing they will be the same)
+# Remove the same communes in 2011 (I assume they will be the same)
 LC_dat_forest_2011 <- LC_dat_raw_2011 %>% 
                       filter(! (HISTO_50==0 & HISTO_60==0 & HISTO_61==0 & HISTO_62==0 & HISTO_70==0 
                             & HISTO_80==0 & HISTO_90==0 & HISTO_100==0))
@@ -2074,7 +2079,7 @@ anti_join(LC_dat_forest_2011,LC_dat_forest_2010, by="CommCode")
 write.csv(LC_dat_forest_2010, file="LC_dat_forest_2010.csv")
 write.csv(LC_dat_forest_2011, file="LC_dat_forest_2011.csv")
 
-## Clean data - this is all data including communes with no forest in 2010 ####
+## Clean data - this is for all data including communes with no forest in 2010 ####
 # remove #DIV/0! and change them to 0's, and rename variables to match dat_master
 LC_dat <- LC_dat %>% 
           mutate(perc_change = replace(perc_change, perc_change == "#DIV/0!", 0)) %>% 
@@ -2098,7 +2103,7 @@ LC_dat1 <- LC_dat1 %>%
            filter(!perc_change < 0 )
        
 
-## Clean data - this is data that only has communes that were forested in 2010 ####
+## Clean data - this is for data that only has communes that were forested in 2010 ####
 
 qplot(perc_change, data=LC_dat_forest, geom="histogram")
 # There is still that outlier at 100% change.  I don't like it because it only had a tiny amount of forest to begin with
@@ -2235,13 +2240,16 @@ comm_mismatch
 
 # Lets see how badly the data sets match.  I want to know if all of the communes in LC_dat_forest are in dat_master
 anti_join(LC_dat_forest, dat_master, by="CommCode")
-# There are 37 missing communes. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
+# There are 37 communes that are in LC_dat_forest but not matched in dat_master.  THis will be because of Commune/CommCode mismatches. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
 
 # Changing CommCode to numeric to make editing the values easier
 dat_master$CommCode <- as.numeric(dat_master$CommCode)
 dat_master$CommCode <- as.factor(dat_master$CommCode)
 dat_master$CommCode <- as.character(dat_master$CommCode)
+LC_dat_forest$CommCode <- as.numeric(LC_dat_forest$CommCode)
+LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
 LC_dat_forest$CommCode <- as.character(LC_dat_forest$CommCode)
+
 
 # CommCode 10509, Ou Bei Choan
 dat_master %>% filter(Commune=="Ou Bei Choan")
@@ -2275,12 +2283,12 @@ dat_master <- dat_master %>%
 # CommCode 20611, Preaek Chik
 dat_master %>% filter(Commune=="Prek Chik")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==21401, "20611"))
+              mutate(CommCode = replace(CommCode, CommCode=="21401", "20611"))
 
 # CommCode 20612, Prey Tralach
 dat_master %>% filter(Commune=="Prey Tralach")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==21402, "20612"))
+              mutate(CommCode = replace(CommCode, CommCode=="21402", "20612"))
 
 # CommCode 31016, Kokir. There are 3 communes with the same name. Used GIS - its the Kampong Cham commune
 dat_master %>% filter(Commune=="Kokir")
@@ -2293,37 +2301,37 @@ dat_master <- dat_master %>%
 # CommCode 31209, Veal Mlu
 dat_master %>% filter(Commune=="Veal Mlu")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31201, "31209"))
+              mutate(CommCode = replace(CommCode, CommCode=="31201", "31209"))
 
 # CommCode 31513, Tuol Preah Khleang
 dat_master %>% filter(Commune=="Tuol Preah Khleang")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31502, "31513"))
+              mutate(CommCode = replace(CommCode, CommCode=="31502", "31513"))
 
 # Commcode 31514, Tuol Sambuor
 dat_master %>% filter(Commune=="Tuol Sambuor")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31511, "31514"))
+              mutate(CommCode = replace(CommCode, CommCode=="31511", "31514"))
 
 # CommCode 31615, Peam Chileang
 dat_master %>% filter(Commune=="Peam Chileang")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31603, "31615"))
+              mutate(CommCode = replace(CommCode, CommCode=="31603", "31615"))
 
 # CommCode 31616, Roka Po Pram
 dat_master %>% filter(Commune=="Roka Po Pram")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31607, "31616"))
+              mutate(CommCode = replace(CommCode, CommCode=="31607", "31616"))
 
 # CommCode 31621, Thma Pechr
 dat_master %>% filter(Commune=="Thma Pechr")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31610, "31621"))
+              mutate(CommCode = replace(CommCode, CommCode=="31610", "31621"))
 
 # CommCode 31622, Tonle Bet
 dat_master %>% filter(Commune=="Tonle Bet")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==31611, "31622"))
+              mutate(CommCode = replace(CommCode, CommCode=="31611", "31622"))
 
 # CommCode 31623, Vihear Luong. There are two. GIS - Kampong Cham
 dat_master %>% filter(Commune=="Vihear Luong")
@@ -2336,33 +2344,33 @@ dat_master <- dat_master %>%
 # CommCode 50613, Traeng Trayueng
 dat_master %>% filter(Commune=="Traeng Trayueng")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==50612, "50613"))
+              mutate(CommCode = replace(CommCode, CommCode=="50612", "50613"))
 
 
 # CommCode 50808, Yea Angk
 dat_master %>% filter(Commune=="Yea Angk")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==50803, "50808"))
+              mutate(CommCode = replace(CommCode, CommCode=="50803", "50808"))
 
 # CommCode 60310, Srayov
 dat_master %>% filter(Commune=="Srayov")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==60307, "60310"))
+              mutate(CommCode = replace(CommCode, CommCode=="60307", "60310"))
 
 # CommCode 60311, Tboung Krapeu
 dat_master %>% filter(Commune=="Tboung Krapeu")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==60710, "60311"))
+              mutate(CommCode = replace(CommCode, CommCode=="60710", "60311"))
 
 # CommCode 70615, Svay Tong Khang Cheung
 dat_master %>% filter(Commune=="Svay Tong Khang Cheung")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==70610, "70615"))
+              mutate(CommCode = replace(CommCode, CommCode=="70610", "70615"))
 
 # CommCode 70616, Svay Tong Khang Tboung
 dat_master %>% filter(Commune=="Svay Tong Khang Tboung")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==70611, "70616"))
+              mutate(CommCode = replace(CommCode, CommCode=="70611", "70616"))
 
 # CommCode 70717, Trapeang Pring. 2 communes - GIS says Kampot
 dat_master %>% filter(Commune=="Trapeang Pring")
@@ -2383,36 +2391,150 @@ dat_master <- dat_master %>%
 # CommCode 90801, Chamkar Luong
 dat_master %>% filter(Commune=="Chamkar Luong")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==180401, "90801"))
+              mutate(CommCode = replace(CommCode, CommCode=="180401", "90801"))
 
 # CommCode 90803, Ou Bak Roteh
 dat_master %>% filter(Commune=="Ou Bak Roteh")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==180403, "90803"))
+              mutate(CommCode = replace(CommCode, CommCode=="180403", "90803"))
 
 # CommCode 90804, Stueng Chhay
 dat_master %>% filter(Commune=="Stueng Chhay")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==180404, "90804"))
+              mutate(CommCode = replace(CommCode, CommCode=="180404", "90804"))
 
 # CommCode 100211, Roka Kandal
 dat_master %>% filter(Commune=="Roka Kandal")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==100603, "100211"))
+              mutate(CommCode = replace(CommCode, CommCode=="100603", "100211"))
 
 # CommCode 100212, Sambok
 dat_master %>% filter(Commune=="Sambok")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==100207, "100212"))
+              mutate(CommCode = replace(CommCode, CommCode=="100207", "100212"))
 
+
+# CommCode 100214, Thma Kreae
+dat_master %>% filter(Commune=="Thma Kreae")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="100209", "100214"))
+
+# CommCode 100215, Thmei - there are 5. GIS - Kracheh
+dat_master %>% filter(Commune=="Thmei")
+dat_master <- dat_master %>% 
+              mutate(CommCode = ifelse(Province=="Kracheh",
+                                replace(CommCode, CommCode=="100210", "100215"),
+                                CommCode))
+# Commcode 130705, Prame
+dat_master %>% filter(Commune=="Prame")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="130701", "130705"))
+
+# Commcode 130706, Preah Khleang
+dat_master %>% filter(Commune=="Preah Khleang")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="130702", "130706"))
+
+# CommCode 160102, Mai Hie. Doesnt exist in dat_master, but it's in Ratanak Kiri in GIS. I've checked all communes in Ratank kiri in dat_master and none of them are similar.  I will just delete it
+dat_master %>% filter(Commune=="Mai Hie")
+LC_dat_forest <- LC_dat_forest %>% filter(!CommCode=="160102")
+
+
+# CommCode 100207, Kraoh Trong. 
+dat_master %>% filter(Commune=="Kaoh Trong")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="100605", "100207"))
+                               
 # CommCode 100213, Thma Andaeuk
 dat_master %>% filter(Commune=="Thma Andaeuk")
 dat_master <- dat_master %>% 
-              mutate(CommCode = replace(CommCode, CommCode==100208, "100213"))
+              mutate(CommCode = replace(CommCode, CommCode=="100208", "100213"))
+                              
 
-# CommCode 100207, Kraoh Trong
+# CommCode 170715, Trei Nhoar
+dat_master %>% filter(Commune=="Trei Nhoar")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="170706", "170715"))
+
+# CommCode 200108, Prey Kokir
+dat_master %>% filter(Commune=="Prey Kokir")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="200101", "200108"))
+
+
+# CommCode 200109, Samraong - there are 9.  GIS - Svay Rieng
+dat_master %>% filter(Commune=="Samraong")
+dat_master <- dat_master %>% 
+              mutate(CommCode = ifelse(Province=="Svay Rieng",
+                                replace(CommCode, CommCode=="200102", "200109"),
+                                CommCode))
+# CommCode 200110, Tuol Sdei
+dat_master %>% filter(Commune=="Tuol Sdei")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="200106", "200110"))
+
+# CommCode 200711, Svay Rumpea. There are 2. GIS - Svay Rieng
+dat_master %>% filter(Commune=="Svay Rumpea")
+dat_master <- dat_master %>% 
+              mutate(CommCode = ifelse(Province=="Svay Rieng",
+                                replace(CommCode, CommCode=="200701", "200711"),
+                                CommCode))
+# CommCode 220106, Lumtong
+dat_master %>% filter(Commune=="Lumtong")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="220102", "220106"))
+
+
+# CommCode 100208, Krakor
+dat_master %>% filter(Commune=="Krakor")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="100601", "100208"))
+
+# CommCode 130701, Kampong Pranak
+dat_master %>% filter(Commune=="Kampong Pranak")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="130801", "130701"))
+
+# CommCode 170706, Krabei Riel
+dat_master %>% filter(Commune=="Krabei Riel")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="171012", "170706"))
+
+# CommCode 200101, Bati
+dat_master %>% filter(Commune=="Bati")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="200804", "200101"))
+
+# CommCode 200102, Bavet
+dat_master %>% filter(Commune=="Bavet")
+dat_master <- dat_master %>% 
+              mutate(CommCode = replace(CommCode, CommCode=="200801", "200102"))
+
+# CommCOde 200106, Prasat. There are 6. GIS - Svay Rieng
+dat_master %>% filter(Commune=="Prasat")
+dat_master <- dat_master %>% 
+              mutate(CommCode = ifelse(Province=="Svay Rieng",
+                                replace(CommCode, CommCode=="200803", "200106"),
+                                CommCode))
 
 #
+
+## Subsetting dat_master to match LC_dat_forest and merging dataframes ####
+
+# Join dataframes
+dat_working <- left_join(dat_master, LC_dat_forest, by = "CommCode") 
+head(dat_working)
+str(dat_working)
+
+# remove NAs (i.e. rows that do not exist in LC_dat_forest)
+dat_working <- dat_working %>% filter(!is.na(perc_change))
+
+# check it worked
+dat_working %>% 
+  filter(Province=="Battambang") %>% 
+  select(CommCode,Commune.x,Commune.y,perc_change) %>% 
+  print(n=Inf)
+
 #### COVARIANCE ANALYSIS SOCIOECONOMIC VARS------------------------------------------------------------------------------------
 
 #### Load libraries & subset data ####
@@ -2482,7 +2604,10 @@ head(dat_master)
 length(LC_dat1$perc_change)
 head(LC_dat1)
 
-## Joining dataframe ####
+
+#### MODELLING----------------------------------------------------------------------------------------------------
+
+## Joining dataframe (for data when percent loss > 0) ####
 
 # Join tables
 dat_vars_forcov <- left_join(dat_master,LC_dat1, by = "CommCode")
@@ -2510,112 +2635,151 @@ str(LC_dat1)
 dat_master %>% filter(Commune == "Stueng Chhay")
 
 
+
+
 #### Plots ####
 library('cowplot')
 
 # Demographics
-p1 <- ggplot(dat_vars_forcov, aes(x=tot_pop, y=perc_change))+
+p1 <- ggplot(dat_working, aes(x=tot_pop, y=perc_change))+
       geom_point()
-p2 <- ggplot(dat_vars_forcov, aes(x=family, y=perc_change))+
+p2 <- ggplot(dat_working, aes(x=family, y=perc_change))+
       geom_point()
-p3 <- ggplot(dat_vars_forcov, aes(x=male_18_60, y=perc_change))+
+p3 <- ggplot(dat_working, aes(x=male_18_60, y=perc_change))+
       geom_point()
-p4 <- ggplot(dat_vars_forcov, aes(x=fem_18_60, y=perc_change))+
+p4 <- ggplot(dat_working, aes(x=fem_18_60, y=perc_change))+
       geom_point()
-p5 <- ggplot(dat_vars_forcov, aes(x=pop_over61, y=perc_change))+
+p5 <- ggplot(dat_working, aes(x=pop_over61, y=perc_change))+
       geom_point()
-p6 <- ggplot(dat_vars_forcov, aes(x=Prop_Indigenous, y=perc_change))+
+p6 <- ggplot(dat_working, aes(x=Prop_Indigenous, y=perc_change))+
       geom_point()
 
 plot_grid(p1,p2,p3,p4,p5,p6)
 
 # Education
-p7 <- ggplot(dat_vars_forcov, aes(x=F6_24_sch, y=perc_change))+
+p7 <- ggplot(dat_working, aes(x=F6_24_sch, y=perc_change))+
       geom_point()
-p8 <- ggplot(dat_vars_forcov, aes(x=M6_24_sch, y=perc_change))+
+p8 <- ggplot(dat_working, aes(x=M6_24_sch, y=perc_change))+
       geom_point()
-p9 <- ggplot(dat_vars_forcov, aes(x=F18_60_ill, y=perc_change))+
+p9 <- ggplot(dat_working, aes(x=F18_60_ill, y=perc_change))+
       geom_point()
-p10 <- ggplot(dat_vars_forcov, aes(x=M18_60_ill, y=perc_change))+
+p10 <- ggplot(dat_working, aes(x=M18_60_ill, y=perc_change))+
       geom_point()
 
 plot_grid(p7,p8,p9,p10)
 
 # Employment
-p11 <- ggplot(dat_vars_forcov, aes(x=numPrimLivFarm, y=perc_change))+
+p11 <- ggplot(dat_working, aes(x=numPrimLivFarm, y=perc_change))+
       geom_point()
-p12 <- ggplot(dat_vars_forcov, aes(x=propPrimLivFarm, y=perc_change))+
+p12 <- ggplot(dat_working, aes(x=propPrimLivFarm, y=perc_change))+
       geom_point()
-p13 <- ggplot(dat_vars_forcov, aes(x=Fish_man, y=perc_change))+
+p13 <- ggplot(dat_working, aes(x=Fish_man, y=perc_change))+
       geom_point()
-p14 <- ggplot(dat_vars_forcov, aes(x=ntfp_fam, y=perc_change))+
+p14 <- ggplot(dat_working, aes(x=ntfp_fam, y=perc_change))+
       geom_point()
-p15 <- ggplot(dat_vars_forcov, aes(x=fam_prod, y=perc_change))+
+p15 <- ggplot(dat_working, aes(x=fam_prod, y=perc_change))+
       geom_point()
-p16 <- ggplot(dat_vars_forcov, aes(x=Cloth_craft, y=perc_change))+
+p16 <- ggplot(dat_working, aes(x=Cloth_craft, y=perc_change))+
       geom_point()
-p17 <- ggplot(dat_vars_forcov, aes(x=Trader, y=perc_change))+
+p17 <- ggplot(dat_working, aes(x=Trader, y=perc_change))+
       geom_point()
-p18 <- ggplot(dat_vars_forcov, aes(x=serv_prov, y=perc_change))+
+p18 <- ggplot(dat_working, aes(x=serv_prov, y=perc_change))+
       geom_point()
 
 plot_grid(p11,p12,p13,p14,p15,p16,p17,p18)
 
 # Economic security
-p19 <- ggplot(dat_vars_forcov, aes(x=Les1_R_Land, y=perc_change))+
+p19 <- ggplot(dat_working, aes(x=Les1_R_Land, y=perc_change))+
       geom_point()
-p20 <- ggplot(dat_vars_forcov, aes(x=No_R_Land, y=perc_change))+
+p20 <- ggplot(dat_working, aes(x=No_R_Land, y=perc_change))+
       geom_point()
-p21 <- ggplot(dat_vars_forcov, aes(x=Les1_F_Land, y=perc_change))+
+p21 <- ggplot(dat_working, aes(x=Les1_F_Land, y=perc_change))+
       geom_point()
-p22 <- ggplot(dat_vars_forcov, aes(x=No_F_Land, y=perc_change))+
+p22 <- ggplot(dat_working, aes(x=No_F_Land, y=perc_change))+
       geom_point()
-p23 <- ggplot(dat_vars_forcov, aes(x=pig_fam, y=perc_change))+
+p23 <- ggplot(dat_working, aes(x=pig_fam, y=perc_change))+
       geom_point()
-p24 <- ggplot(dat_vars_forcov, aes(x=cow_fam, y=perc_change))+
+p24 <- ggplot(dat_working, aes(x=cow_fam, y=perc_change))+
       geom_point()
 
 plot_grid(p19,p20,p21,p22,p23,p24)
 
 # Access to services
-p25 <- ggplot(dat_vars_forcov, aes(x=dist_sch, y=perc_change))+
+p25 <- ggplot(dat_working, aes(x=dist_sch, y=perc_change))+
       geom_point()
-p26 <- ggplot(dat_vars_forcov, aes(x=garbage, y=perc_change))+
+p26 <- ggplot(dat_working, aes(x=garbage, y=perc_change))+
       geom_point()
-p27 <- ggplot(dat_vars_forcov, aes(x=KM_Market, y=perc_change))+
+p27 <- ggplot(dat_working, aes(x=KM_Market, y=perc_change))+
       geom_point()
-p28 <- ggplot(dat_vars_forcov, aes(x=KM_Comm, y=perc_change))+
+p28 <- ggplot(dat_working, aes(x=KM_Comm, y=perc_change))+
       geom_point()
-p29 <- ggplot(dat_vars_forcov, aes(x=wat_safe, y=perc_change))+
+p29 <- ggplot(dat_working, aes(x=wat_safe, y=perc_change))+
       geom_point()
-p30 <- ggplot(dat_vars_forcov, aes(x=wat_pipe, y=perc_change))+
+p30 <- ggplot(dat_working, aes(x=wat_pipe, y=perc_change))+
       geom_point()
 
 plot_grid(p25,p26,p27,p28,p29,p30)
 
 # Social justice
-p31 <- ggplot(dat_vars_forcov, aes(x=land_confl, y=perc_change))+
+p31 <- ggplot(dat_working, aes(x=land_confl, y=perc_change))+
       geom_point()
-p32 <- ggplot(dat_vars_forcov, aes(x=crim_case, y=perc_change))+
+p32 <- ggplot(dat_working, aes(x=crim_case, y=perc_change))+
       geom_point()
 
 plot_grid(p31,p32)
 
 # Health
-p33 <- ggplot(dat_vars_forcov, aes(x=KM_Heal_cent, y=perc_change))+
+p33 <- ggplot(dat_working, aes(x=KM_Heal_cent, y=perc_change))+
       geom_point()
-p34 <- ggplot(dat_vars_forcov, aes(x=inf_mort, y=perc_change))+
+p34 <- ggplot(dat_working, aes(x=inf_mort, y=perc_change))+
       geom_point()
-p35 <- ggplot(dat_vars_forcov, aes(x=U5_mort, y=perc_change))+
+p35 <- ggplot(dat_working, aes(x=U5_mort, y=perc_change))+
       geom_point()
 
 plot_grid(p33,p34,p35)
 
 # Migration
-p36 <- ggplot(dat_vars_forcov, aes(x=Pax_migt_in, y=perc_change))+
+p36 <- ggplot(dat_working, aes(x=Pax_migt_in, y=perc_change))+
       geom_point()
-p37 <- ggplot(dat_vars_forcov, aes(x=Pax_migt_out, y=perc_change))+
+p37 <- ggplot(dat_working, aes(x=Pax_migt_out, y=perc_change))+
       geom_point()
 
 
 plot_grid(p36,p37)
+
+
+#### brms package - Bayesian models
+
+library('brms')
+
+
+brm_mod1 <- brm(perc_change ~ propPrimLivFarm+Trader+Cloth_craft, 
+                data = dat_working, 
+                family = hurdle_gamma(link = "log", link_shape = "log", link_hu = "logit"))
+
+summary(brm_mod1)
+marginal_effects(brm_mod1)
+
+
+brm_mod2 <- brm(perc_change ~ propPrimLivFarm+Trader+Cloth_craft, 
+                data = dat_working, 
+                family = hurdle_gamma(link = "log"))
+
+summary(brm_mod2)
+marginal_effects(brm_mod2)
+
+brm_mod3 <- brm(perc_change ~ numPrimLivFarm+M18_60_ill+male_18_60, 
+                data = dat_working, 
+                family = hurdle_lognormal(link = "identity", link_hu = "logit"))
+
+summary(brm_mod3)
+marginal_effects(brm_mod3)
+
+
+brm_mod4 <- brm(bf(perc_change ~ numPrimLivFarm+M18_60_ill+male_18_60, 
+                hu ~ CommCode),
+                data = dat_working, 
+                family = hurdle_lognormal(link = "identity", link_hu = "logit"))
+
+summary(brm_mod4)
+marginal_effects(brm_mod4)
