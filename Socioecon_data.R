@@ -2748,7 +2748,7 @@ p37 <- ggplot(dat_working, aes(x=Pax_migt_out, y=perc_change))+
 plot_grid(p36,p37)
 
 
-#### brms package - Bayesian models
+#### brms package - Bayesian models ####
 
 library('brms')
 
@@ -2776,6 +2776,7 @@ summary(brm_mod3)
 marginal_effects(brm_mod3)
 
 
+# WARNING takes over 3 hours to run
 brm_mod4 <- brm(bf(perc_change ~ numPrimLivFarm+M18_60_ill+male_18_60, 
                 hu ~ CommCode),
                 data = dat_working, 
