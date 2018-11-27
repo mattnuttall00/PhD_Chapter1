@@ -2584,11 +2584,11 @@ corr_demogs
 corr_education <- rcorr(as.matrix(education, type="pearson"))
 corr_education
 
-# Employment. There is a farily strong negative correlation between the proportion of families who are farmers and the proportion of families who are traders. Similar (but slightly weaker) correlation between farmers and service providers. weak positive correlation between traders and service providers. 
+# Employment. There is a fairly strong negative correlation between the proportion of families who are farmers and the proportion of families who are traders. Similar (but slightly weaker) correlation between farmers and service providers. weak positive correlation between traders and service providers. 
 corr_employ <- rcorr(as.matrix(employ, type="pearson"))
 corr_employ
 
-# Economic security. fairly strong positive correlation between proportion of families with pigs and those with cattle. 
+# Economic security. fairly strong positive correlation between proportion of families with pigs and those with cattle
 corr_econSec <- rcorr(as.matrix(econSec, type="pearson"))
 corr_econSec
 
@@ -2830,7 +2830,7 @@ cens.mod3 <- crch(perc_change ~ tot_pop,
 summary(cens.mod3)
 
 
-## trying normal GLM
+## trying normal GLM ####
 library(boot)
 
 # first need to transform perc_change into 1's and 0's
@@ -2845,3 +2845,71 @@ plot(dat_working$perc_change_bin ~ dat_working$tot_pop)
 glm.mod1 <- glm(perc_change_bin ~ tot_pop, data = dat_working, family = "binomial")
 summary(glm.mod1)
 glm.diag.plots(glm.mod1)
+
+
+## Dormann et al 2007 ####
+
+# first need to create new variable for perc_change with binary response
+dat_working <- dat_working %>% 
+                mutate(perc_change_bin = ifelse(perc_change==0, 
+                                                perc_change,
+                                                1))
+
+# run non-spatial model
+summary(ns_mod1 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous, 
+                       family=binomial,
+                       data=dat_working))
+
+# install / load pacakge
+library('ncf')
+
+model <- ns_mod1 
+correlog1.1 <- correlog(dat_working$easting, dat_working$northing, 
+                        residuals(model),na.rm=T, increment=1, resamp=0)
+
+# now plot only the first 20 distance classes:
+par(mar=c(5,5,0.1, 0.1))
+plot(correlog1.1$correlation[1:2000], type="b", pch=16, cex=1.5, lwd=1.5,
+xlab="distance", ylab="Moran's I", cex.lab=2, cex.axis=1.5); abline(h=0)
+
+
+# make a map of the residuals:
+plot(dat_working$easting, dat_working$northing, col=c("blue",
+"red")[sign(resid(model))/2+1.5], pch=19,
+cex=abs(resid(model))/max(resid(model))*2, xlab="geographical xcoordinates",
+ylab="geographical y-coordinates")
+
+# calculate Moran's I values explicitly for a certain distance, and to test for its significance:
+require(spdep)
+comm.nb <- dnearneigh(as.matrix(dat_working[43:44]), 0, 100) #give lower and upper distance class here!
+
+## This is not working
+comm.listw <- nb2listw(comm.nb, zero.policy=TRUE ) # turns neighbourhood object into a weighted list
+
+#this next step takes often several minutes to run:
+GlobMT1.1<- moran.test(residuals(model), listw=snouter.listw)
+
+library('nlme')
+gls.mod1 <- gls(perc_change_bin ~ tot_pop + Prop_Indigenous, data=dat_working)
+vario1 <- Variogram(gls.mod1, form = ~x + y, resType = "pearson") 
+plot(vario1, smooth=TRUE)
+
+## Spatial eigenvector mapping
+library(spdep)
+
+xycords <- dat_working %>% select(easting,northing)
+xycords <- as.matrix(xycords)
+comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")], 
+                                  proj4string = 
+                                  CRS("+proj=utm +zone=48N +datum=WGS84"),
+                                  dat_working)
+                                
+nb1.0 <- dnearneigh(comm_sp, 0, 50000)
+nb1.0_dists <- nbdists(nb1.0, coordinates(comm_sp))
+nb1.0_sims <- lapply(nb1.0_dists, function(x) (1-((x/4)^2)) )
+ME.listw <- nb2listw(nb1.0, glist=nb1.0_sims, style="B", zero.policy = TRUE)
+sevm1 <- ME(snouter1.1 ~ rain + djungle, data=snouter.df, family=gaussian,
+listw=ME.listw)
+
+me.mod1 <- ME(perc_change_bin ~ tot_pop + Prop_Indigenous, data=dat_working,
+              family=binomial)
