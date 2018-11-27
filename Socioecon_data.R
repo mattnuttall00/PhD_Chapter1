@@ -2242,7 +2242,7 @@ comm_mismatch
 anti_join(LC_dat_forest, dat_master, by="CommCode")
 # There are 37 communes that are in LC_dat_forest but not matched in dat_master.  THis will be because of Commune/CommCode mismatches. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
 
-# Changing CommCode to numeric to make editing the values easier
+# Change CommCode to CHARACTER to make editing the values easier
 dat_master$CommCode <- as.numeric(dat_master$CommCode)
 dat_master$CommCode <- as.factor(dat_master$CommCode)
 dat_master$CommCode <- as.character(dat_master$CommCode)
@@ -2748,7 +2748,7 @@ p37 <- ggplot(dat_working, aes(x=Pax_migt_out, y=perc_change))+
 plot_grid(p36,p37)
 
 
-#### brms package - Bayesian models ####
+## brms package - Bayesian models ####
 
 library('brms')
 
@@ -2784,3 +2784,56 @@ brm_mod4 <- brm(bf(perc_change ~ numPrimLivFarm+M18_60_ill+male_18_60,
 
 summary(brm_mod4)
 marginal_effects(brm_mod4)
+
+
+## crch package - ML models ####
+library(crch)
+
+# In the paper for the package, they first fit a logistic censored model for "rain" with one variable as the regressor for the location and another variable as the regressor of the scale.  I am not sure what the scale and location are.  This is the example of the bionmial model or hurdle model.
+
+# model 1
+cens.mod1 <- crch(perc_change ~ propPrimLivFarm+Prop_Indigenous+Les1_R_Land, 
+                  data = dat_working, left = 0, right = 100, dist = "logistic")
+
+summary(cens.mod1)
+
+# model 2
+tot_pop10 <- (dat_working$tot_pop)*10
+cens.mod2 <- crch(perc_change ~ tot_pop | tot_pop10, 
+                  data = dat_working, left = 0, dist = "logistic")
+
+summary(cens.mod2)
+plot(perc_change ~ tot_pop, data=dat_working)
+abline(coef(cens.mod2)[1:2], col="blue")
+cens.mod2$coefficients
+
+# predict from model 2
+newx <- data.frame(tot_pop = seq(301,35300, length=100),
+                   tot_pop10 = seq(3010,353000, length=100))
+
+newy <- predict(cens.mod2, newdata = newx, int="c")
+summary(newy)
+plot(perc_change ~ tot_pop, data=dat_working)
+matlines(newx,newy,lty=c(1,2,2),col="black")
+
+# model 3
+cens.mod3 <- crch(perc_change ~ tot_pop, 
+                  data = dat_working, left = 0, dist = "logistic")
+summary(cens.mod3)
+
+
+## trying normal GLM
+library(boot)
+
+# first need to transform perc_change into 1's and 0's
+dat_working <- dat_working %>% 
+                mutate(perc_change_bin = ifelse(perc_change==0, 
+                                                perc_change,
+                                                1))
+summary(dat_working$perc_change_bin)
+plot(dat_working$perc_change_bin ~ dat_working$tot_pop)
+
+# model
+glm.mod1 <- glm(perc_change_bin ~ tot_pop, data = dat_working, family = "binomial")
+summary(glm.mod1)
+glm.diag.plots(glm.mod1)
