@@ -2042,6 +2042,14 @@ LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 LC_dat_forest <- read_csv("CCI_ForCov_Commune_forest.csv")
 LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
 
+# Load data for commune centre xy coords
+communeXY <- read_csv("Commune_centres.csv")
+communeXY$CommCode <- as.character(communeXY$CommCode)
+
+# merge LC_dat_forest and commune xy
+LC_dat_forest <- left_join(LC_dat_forest, communeXY, by="CommCode")
+
+
 ### Identifying the communes that have no forest in 2010 ####
 ## Load raw data
 
