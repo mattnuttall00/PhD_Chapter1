@@ -3,6 +3,7 @@ title: "Macroeconomic models"
 author: "Matt Nuttall"
 date: "30 October 2018"
 output: word_document
+bibliography: My_Library.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +15,7 @@ library('broom')
 library('knitr')
 ```
 
-Below are the loadings for the principal components for the economic, commodity price, and producer price variables.  The first two principal components for each set of variables account for over 95% of the total variance, and so there is a fairly strong justification for dropping the other PC's.  Below I have only reported the first two PC's.   
+Below are the loadings for the principal components for the economic, commodity price, and producer price variables.  The first two principal components for each set of variables account for over 95% of the total variance, and so there is a fairly strong justification for dropping the other PC's.  Below I have only reported the first two PC's.   [@nuno_detecting_2015]
 
 The first PC for the economic variables shows the strong positive covariance between all variables, excluding agricultural proportion of GDP (agr_gdp), which is negatively correlated with all the others. Luc suggested that in this case I could select i) one of the variables with negative loadings to represent the others, in this case probably foreign direct investment (fdi), as it has the strongest loading, and then ii) agricultural proportion of GDP (agr_gdp) as this will reflect the contrasting relationship. For PC2 I could select industrial proportion of GDP (ind_gdp) because it has a strong contrasting loading compared to the others, and normally I would then select agr_gdp to represent the positive loadings but it has already been selected for PC1.  
 
