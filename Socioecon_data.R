@@ -2040,7 +2040,7 @@ LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 
 # Load data that only has forested communes
 LC_dat_forest <- read_csv("CCI_ForCov_Commune_forest.csv")
-LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
+LC_dat_forest$CommCode <- as.character(LC_dat_forest$CommCode)
 
 # Load data for commune centre xy coords
 communeXY <- read_csv("Commune_centres.csv")
@@ -2251,11 +2251,7 @@ anti_join(LC_dat_forest, dat_master, by="CommCode")
 # There are 37 communes that are in LC_dat_forest but not matched in dat_master.  THis will be because of Commune/CommCode mismatches. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
 
 # Change CommCode to CHARACTER to make editing the values easier
-dat_master$CommCode <- as.numeric(dat_master$CommCode)
-dat_master$CommCode <- as.factor(dat_master$CommCode)
 dat_master$CommCode <- as.character(dat_master$CommCode)
-LC_dat_forest$CommCode <- as.numeric(LC_dat_forest$CommCode)
-LC_dat_forest$CommCode <- as.factor(LC_dat_forest$CommCode)
 LC_dat_forest$CommCode <- as.character(LC_dat_forest$CommCode)
 
 
@@ -2897,22 +2893,33 @@ plot(vario1, smooth=TRUE)
 ## Spatial eigenvector mapping ####
 library(spdep)
 library(boot)
-
-xycords <- dat_working %>% select(easting,northing)
-xycords <- as.matrix(xycords)
+library(adespatial)
 
 comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")], 
                                   proj4string = 
                                   CRS("+proj=utm +zone=48N +datum=WGS84"),
                                   dat_working)
-                                
-nneighb_5000 <- dnearneigh(comm_sp, 0, 50000)
-nneighb_dists <- nbdists(nneighb_5000, coordinates(comm_sp))
-nneighb_sims <- lapply(nneighb_dists, function(x) (1-((x/4)^2)) )
-ME.listw <- nb2listw(nneighb_5000, glist=nneighb_sims, style="B", zero.policy = TRUE)
 
-sevm1 <- ME(snouter1.1 ~ rain + djungle, data=snouter.df, family=gaussian,
-listw=ME.listw)
+# NOTE I need to use poly2nb function from adespatial, which creates neighbour surface using polygons.  I think I need to use this because my commune centroid points are not equally spaced, and so setting the upper distance bound for dnearneigh() is tricky
+
+# DONT DO THIS EVERY TIME. Export this layer to use to clip boundary_khum.shp to only the communes in dat_working
+writeOGR(comm_sp, dsn = "H://PhD_Objective1", layer = "comm_sp", driver = "ESRI Shapefile")
+
+# Import commune shapefile
+communeSHP <- readOGR(dsn = "H://PhD_Objective1", layer = "boundary_khum_forest2010")
+plot(communeSHP)
+
+# Neighbour analysis
+neighpoly <- poly2nb(communeSHP)
+plot(neighpoly, coordinates(communeSHP), add = TRUE, pch = 20, col = "red")
+
+# nneighb_5000 <- dnearneigh(comm_sp, 0, 20000)
+nneighb_dists <- nbdists(neighpoly, coordinates(comm_sp))
+nneighb_sims <- lapply(nneighb_dists, function(x) (1-((x/4)^2)) )
+ME.listw <- nb2listw(neighpoly, style="B", zero.policy = TRUE)
+
+# I should test to see if adding weights (e.g. glist = nneighb_sims) actually does anything to the model outputs.  I doubt it now that I have used polygons for the neighbour analysis
+
 
 ## Demographics
 
