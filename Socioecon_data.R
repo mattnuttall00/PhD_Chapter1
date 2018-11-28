@@ -2894,22 +2894,54 @@ gls.mod1 <- gls(perc_change_bin ~ tot_pop + Prop_Indigenous, data=dat_working)
 vario1 <- Variogram(gls.mod1, form = ~x + y, resType = "pearson") 
 plot(vario1, smooth=TRUE)
 
-## Spatial eigenvector mapping
+## Spatial eigenvector mapping ####
 library(spdep)
+library(boot)
 
 xycords <- dat_working %>% select(easting,northing)
 xycords <- as.matrix(xycords)
+
 comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")], 
                                   proj4string = 
                                   CRS("+proj=utm +zone=48N +datum=WGS84"),
                                   dat_working)
                                 
-nb1.0 <- dnearneigh(comm_sp, 0, 50000)
-nb1.0_dists <- nbdists(nb1.0, coordinates(comm_sp))
-nb1.0_sims <- lapply(nb1.0_dists, function(x) (1-((x/4)^2)) )
-ME.listw <- nb2listw(nb1.0, glist=nb1.0_sims, style="B", zero.policy = TRUE)
+nneighb_5000 <- dnearneigh(comm_sp, 0, 50000)
+nneighb_dists <- nbdists(nneighb_5000, coordinates(comm_sp))
+nneighb_sims <- lapply(nneighb_dists, function(x) (1-((x/4)^2)) )
+ME.listw <- nb2listw(nneighb_5000, glist=nneighb_sims, style="B", zero.policy = TRUE)
+
 sevm1 <- ME(snouter1.1 ~ rain + djungle, data=snouter.df, family=gaussian,
 listw=ME.listw)
 
-me.mod1 <- ME(perc_change_bin ~ tot_pop + Prop_Indigenous, data=dat_working,
-              family=binomial)
+## Demographics
+
+# Non-spatial model
+glm.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous, 
+                data = dat_working, family = binomial)
+
+glm.diag.plots(glm.modDem1)
+summary(glm.modDem1)
+
+# Get eigenvectors
+me.modDem1 <- ME(perc_change_bin ~ tot_pop * Prop_Indigenous, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+# Spatial model
+sp.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous + fitted(me.modDem1), 
+                data = dat_working, family = binomial)
+
+glm.diag.plots(sp.modDem1) # There are potentially 3 points having a lot of influence
+summary(sp.modDem1)
+
+# Compare models
+anova(sp.modDem1, glm.modDem1, test="Chisq")
+
+# Simplify model by removing interation
+sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + fitted(me.modDem1), 
+                data = dat_working, family = binomial)
+
+summary(sp.modDem2)
+
+# Compare models
+anova(sp.modDem2,sp.modDem1, test = "Chisq")
