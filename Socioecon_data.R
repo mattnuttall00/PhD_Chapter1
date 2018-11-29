@@ -2894,6 +2894,7 @@ plot(vario1, smooth=TRUE)
 library(spdep)
 library(boot)
 library(adespatial)
+library(rgdal)
 
 comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")], 
                                   proj4string = 
@@ -2907,7 +2908,17 @@ writeOGR(comm_sp, dsn = "H://PhD_Objective1", layer = "comm_sp", driver = "ESRI 
 
 # Import commune shapefile
 communeSHP <- readOGR(dsn = "H://PhD_Objective1", layer = "boundary_khum_forest2010")
+communeSHP <- readOGR(dsn = "C://Users/Matt&Kez/Documents/Matt PhD/PhD_Objective1", 
+                      layer = "boundary_khum")
 plot(communeSHP)
+commCode_sub <- dat_working %>% select(CommCode)
+commCode_sub <- as.vector(t(commCode_sub))
+commCode_sub <- commCode_sub %>% rename(CODEKHUM = CommCode)
+commCode_sub$CommCode <- as.integer(commCode_sub$CommCode)
+communeSHP.sub <- subset(communeSHP@data, CODEKHUM %in% commCode_sub)
+communeSHP.sub <- communeSHP[communeSHP@data$CODEKHUM %in% commCode_sub$CommCode,]
+commune.sub <- communeSHP.sub@data$CODEKHUM
+anti_join(commCode_sub$CODEKHUM, commune.sub)
 
 # Neighbour analysis
 neighpoly <- poly2nb(communeSHP)
