@@ -2931,9 +2931,13 @@ ME.listw <- nb2listw(neighpoly, style="B", zero.policy = TRUE)
 # I should test to see if adding weights (e.g. glist = nneighb_sims) actually does anything to the model outputs.  I doubt it now that I have used polygons for the neighbour analysis
 
 
-## Demographics
+### Demographics ####
 
-# Non-spatial model
+# plots 
+plot(dat_working$perc_change_bin ~ dat_working$tot_pop)
+plot(dat_working$perc_change_bin ~ dat_working$Prop_Indigenous)
+
+## Non-spatial model
 glm.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous, 
                 data = dat_working, family = binomial)
 
@@ -2944,21 +2948,86 @@ summary(glm.modDem1)
 me.modDem1 <- ME(perc_change_bin ~ tot_pop * Prop_Indigenous, 
               data=dat_working, family=binomial, listw = ME.listw)
 
-# Spatial model
+## Spatial model 1
 sp.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous + fitted(me.modDem1), 
                 data = dat_working, family = binomial)
 
 glm.diag.plots(sp.modDem1) # There are potentially 3 points having a lot of influence
 summary(sp.modDem1)
+vif(sp.modDem1) # some variance inflation
 
 # Compare models
 anova(sp.modDem1, glm.modDem1, test="Chisq")
 
-# Simplify model by removing interation
-sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + fitted(me.modDem1), 
+## Spatial model 2. Simplify spatial model by removing interaction
+
+# First get eigenvectors
+me.modDem2 <- ME(perc_change_bin ~ tot_pop + Prop_Indigenous, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + fitted(me.modDem2), 
                 data = dat_working, family = binomial)
 
 summary(sp.modDem2)
+glm.diag.plots(sp.modDem2)
 
 # Compare models
 anova(sp.modDem2,sp.modDem1, test = "Chisq")
+
+## Simplify spatial model further. Prop_indigenous has a stronger effect and higher significance, so remove tot_pop
+
+# first get eigenvectors
+me.modDem3 <- ME(perc_change_bin ~ Prop_Indigenous, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modDem3 <- glm(perc_change_bin ~ Prop_Indigenous + fitted(me.modDem3), 
+                data = dat_working, family = binomial)
+
+summary(sp.modDem3)
+anova(sp.modDem2, sp.modDem3, test="Chi")
+
+
+### Education ####
+
+# plots
+par(mfrow=c(2,1))
+plot(dat_working$perc_change_bin ~ dat_working$M6_24_sch)
+plot(dat_working$perc_change_bin ~ dat_working$M18_60_ill)
+
+## Non-spatial model
+glm.modEdu1 <- glm(perc_change_bin ~ M6_24_sch * M18_60_ill, 
+                data = dat_working, family = binomial)
+
+glm.diag.plots(glm.modEdu1)
+summary(glm.modEdu1)
+
+# Get eigenvectors
+me.modEdu1 <- ME(perc_change_bin ~ M6_24_sch * M18_60_ill, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+## Spatial model 1
+sp.modEdu1 <- glm(perc_change_bin ~ M6_24_sch * M18_60_ill + fitted(me.modEdu1), 
+                data = dat_working, family = binomial)
+
+glm.diag.plots(sp.modEdu1) # There are potentially 3 points having a lot of influence
+summary(sp.modEdu1)
+vif(sp.modEdu1) # some variance inflation, especially for M18_60_ill
+
+# compare models
+anova(glm.modEdu1,sp.modEdu1, test="Chi")
+
+## Spatial model 2.  Simplify the model by removing interaction
+
+# get eigenvectors
+me.modEdu2 <- ME(perc_change_bin ~ M6_24_sch + M18_60_ill, 
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.05)
+
+sp.modEdu2 <- glm(perc_change_bin ~ M6_24_sch + M18_60_ill + fitted(me.modEdu2), 
+                data = dat_working, family = binomial)
+
+summary(sp.modEdu2)
+vif(sp.modEdu2) # no variance inflation
+
+# compare models
+anova(sp.modEdu1,sp.modEdu2, test = "Chi")
+
