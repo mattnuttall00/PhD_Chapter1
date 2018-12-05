@@ -2932,10 +2932,13 @@ ME.listw <- nb2listw(neighpoly, style="B", zero.policy = TRUE)
 
 
 ### Demographics ####
+library(faraway)
+
 
 # plots 
 plot(dat_working$perc_change_bin ~ dat_working$tot_pop)
 plot(dat_working$perc_change_bin ~ dat_working$Prop_Indigenous)
+pairs(demogs)
 
 ## Non-spatial model
 glm.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous, 
@@ -2956,7 +2959,7 @@ glm.diag.plots(sp.modDem1) # There are potentially 3 points having a lot of infl
 summary(sp.modDem1)
 vif(sp.modDem1) # some variance inflation
 
-# Compare models
+# Compare models.  The spatial model has less residual deviance and is the better model
 anova(sp.modDem1, glm.modDem1, test="Chisq")
 
 ## Spatial model 2. Simplify spatial model by removing interaction
@@ -2964,15 +2967,19 @@ anova(sp.modDem1, glm.modDem1, test="Chisq")
 # First get eigenvectors
 me.modDem2 <- ME(perc_change_bin ~ tot_pop + Prop_Indigenous, 
               data=dat_working, family=binomial, listw = ME.listw)
+me.modDem2.fit <- fitted(me.modDem2)
 
-sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + fitted(me.modDem2), 
+sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + as.vector(me.modDem2.fit), 
                 data = dat_working, family = binomial)
 
 summary(sp.modDem2)
 glm.diag.plots(sp.modDem2)
 
-# Compare models
+# Compare models.  Looks like the model with interaction has lower resid. dev.
 anova(sp.modDem2,sp.modDem1, test = "Chisq")
+
+# I'm not sure whether to include the interaction.  The model appears to be better but that doesn't necessarily mean there is a true interaction.  With the interaction, Prop_indigneous is not significant, but when I remove the interaction the significance of tot_pop goes down and Prop_indigenous goes up.  The actual direction of the effect for Prop_indigenous changes when the mode gets simplified.  The standard error for Prop_indig is huge in the more complicated model, so I am not happy to trust it.
+
 
 ## Simplify spatial model further. Prop_indigenous has a stronger effect and higher significance, so remove tot_pop
 
@@ -2984,15 +2991,51 @@ sp.modDem3 <- glm(perc_change_bin ~ Prop_Indigenous + fitted(me.modDem3),
                 data = dat_working, family = binomial)
 
 summary(sp.modDem3)
+
+# compare models.  The model with tot_pop included is better
 anova(sp.modDem2, sp.modDem3, test="Chi")
+glm.diag.plots(sp.modDem3)
 
+# added variable plots
+avPlots(sp.modDem2)
 
+## Predictions and plotting
+
+# tot_pop
+newtot_pop <- seq(301,35300,length=100)
+mnprop_ind <- rep(mean(dat_working$Prop_Indigenous), length = 100)
+mnspfitted <- rep(mean(fitted(me.modDem2)), length = 100)
+newypop <- predict(sp.modDem2, 
+                   newdata = list(tot_pop=newtot_pop, Prop_Indigenous=mnprop_ind, 
+                        me.modDem2.fit = mnspfitted),type="link", se=TRUE)
+
+plot(dat_working$tot_pop, dat_working$perc_change_bin, xlab="Total population", 
+     ylab = "Probability of forest loss")
+lines(newtot_pop,ilogit(newypop$fit),lwd=2)
+lines(newtot_pop,ilogit(newypop$fit+1.96*newypop$se.fit),lty=3)
+lines(newtot_pop,ilogit(newypop$fit-1.96*newypop$se.fit),lty=3)
+
+# Prop_Indigenous
+newProp_ind <- seq(0,1,length=100)
+mntot_pop <- rep(mean(dat_working$tot_pop), length=100)
+newyind <- predict(sp.modDem2, newdata = list(Prop_Indigenous = newProp_ind,
+                                              tot_pop = mntot_pop, 
+                                              me.modDem2.fit = mnspfitted),
+                   type = "link", se = TRUE)
+plot(dat_working$Prop_Indigenous, dat_working$perc_change_bin, 
+     xlab="Proportion of population indigenous", ylab = "Probability of forest loss")
+lines(newProp_ind,ilogit(newyind$fit),lwd=2)
+lines(newProp_ind,ilogit(newyind$fit+1.96*newyind$se.fit),lty=3)
+lines(newProp_ind,ilogit(newyind$fit-1.96*newyind$se.fit),lty=3)
+
+#
 ### Education ####
 
 # plots
 par(mfrow=c(2,1))
 plot(dat_working$perc_change_bin ~ dat_working$M6_24_sch)
 plot(dat_working$perc_change_bin ~ dat_working$M18_60_ill)
+pairs(education)
 
 ## Non-spatial model
 glm.modEdu1 <- glm(perc_change_bin ~ M6_24_sch * M18_60_ill, 
@@ -3013,7 +3056,7 @@ glm.diag.plots(sp.modEdu1) # There are potentially 3 points having a lot of infl
 summary(sp.modEdu1)
 vif(sp.modEdu1) # some variance inflation, especially for M18_60_ill
 
-# compare models
+# compare models. Spatial model is better
 anova(glm.modEdu1,sp.modEdu1, test="Chi")
 
 ## Spatial model 2.  Simplify the model by removing interaction
@@ -3021,13 +3064,449 @@ anova(glm.modEdu1,sp.modEdu1, test="Chi")
 # get eigenvectors
 me.modEdu2 <- ME(perc_change_bin ~ M6_24_sch + M18_60_ill, 
               data=dat_working, family=binomial, listw = ME.listw, alpha = 0.05)
+me.modEdu2.fit <- fitted(me.modEdu2)
 
-sp.modEdu2 <- glm(perc_change_bin ~ M6_24_sch + M18_60_ill + fitted(me.modEdu2), 
+sp.modEdu2 <- glm(perc_change_bin ~ M6_24_sch + M18_60_ill + as.vector(me.modEdu2.fit), 
                 data = dat_working, family = binomial)
 
 summary(sp.modEdu2)
 vif(sp.modEdu2) # no variance inflation
 
-# compare models
+# compare models.  Model with interaction is better, but I think this is because the variables are correlated, rather than there being an actual interaction. 
 anova(sp.modEdu1,sp.modEdu2, test = "Chi")
+
+# Try simplify model further
+
+# get eigenvectors
+me.modEdu3 <- ME(perc_change_bin ~ M18_60_ill, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEdu3 <- glm(perc_change_bin ~ M18_60_ill + fitted(me.modEdu3),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEdu3)
+anova(sp.modEdu2,sp.modEdu3, test = "Chi")
+
+# The more complicated model is better
+
+## Predictions and plots
+
+# M6_24_sch
+newM6_24_sch <- seq(0,1,length=100)
+mnM18_60_ill <- rep(mean(dat_working$M18_60_ill), length=100)
+mnspfitted.ed <- rep(mean(me.modEdu2.fit), length=100)
+newyM6_24_sch <- predict(sp.modEdu2, newdata = list(M6_24_sch = newM6_24_sch,
+                                                    M18_60_ill = mnM18_60_ill,
+                                                    me.modEdu2.fit = mnspfitted.ed),
+                         type = "link", se = TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$M6_24_sch, dat_working$perc_change_bin, xlab="Proportion of males in school", 
+     ylab = "Probability of forest loss")
+lines(newM6_24_sch,ilogit(newyM6_24_sch$fit),lwd=2)
+lines(newM6_24_sch,ilogit(newyM6_24_sch$fit+1.96*newyM6_24_sch$se.fit),lty=3)
+lines(newM6_24_sch,ilogit(newyM6_24_sch$fit-1.96*newyM6_24_sch$se.fit),lty=3)
+
+# M18_60_ill
+newM18_60_ill <- seq(0,0.9,length=100)
+mnM6_24_sch <- rep(mean(dat_working$M6_24_sch), length=100)
+mnspfitted.ed <- rep(mean(me.modEdu2.fit), length=100)
+newyM18_60_ill <- predict(sp.modEdu2, newdata = list(M18_60_ill = newM18_60_ill,
+                                                     M6_24_sch = mnM6_24_sch,
+                                                    me.modEdu2.fit = mnspfitted.ed),
+                          type = "link", se = TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$M18_60_ill, dat_working$perc_change_bin, xlab="Proportion of illiterate males", 
+     ylab = "Probability of forest loss")
+lines(newM18_60_ill,ilogit(newyM18_60_ill$fit),lwd=2)
+lines(newM18_60_ill,ilogit(newyM18_60_ill$fit+1.96*newyM18_60_ill$se.fit),lty=3)
+lines(newM18_60_ill,ilogit(newyM18_60_ill$fit-1.96*newyM18_60_ill$se.fit),lty=3)
+
+## Employment ####
+
+# Plots
+pairs(employ)
+par(mfrow=c(4,2))
+plot(dat_working$numPrimLivFarm, dat_working$perc_change_bin)
+plot(dat_working$propPrimLivFarm, dat_working$perc_change_bin)
+plot(dat_working$Fish_man, dat_working$perc_change_bin)
+plot(dat_working$ntfp_fam, dat_working$perc_change_bin)
+plot(dat_working$fam_prod, dat_working$perc_change_bin)
+plot(dat_working$Cloth_craft, dat_working$perc_change_bin)
+plot(dat_working$Trader, dat_working$perc_change_bin)
+plot(dat_working$serv_prov, dat_working$perc_change_bin)
+
+# non-spatial model
+glm.modEmp1 <- glm(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
+                     Cloth_craft+Trader+serv_prov, data = dat_working, family = binomial)
+
+summary(glm.modEmp1)
+
+# spatial model 1
+
+# get eigenvectors
+me.modEmp1 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
+                     Cloth_craft+Trader+serv_prov, 
+              data=dat_working, family=binomial, listw = ME.listw)
+me.modEmp1.fit <- fitted(me.modEmp1)
+
+sp.modEmp1 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
+                     Cloth_craft+Trader+serv_prov + fitted(me.modEmp1),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp1)
+anova(sp.modEmp1, test="Chisq")
+
+# spatial model 2 - simplified - remove PropPrimLiveFarm
+me.modEmp2 <- ME(perc_change_bin ~ numPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
+                     Cloth_craft+Trader+serv_prov, 
+              data=dat_working, family=binomial, listw = ME.listw)
+me.modEmp1.fit <- fitted(me.modEmp1)
+
+sp.modEmp2 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
+                     Cloth_craft+Trader+serv_prov + fitted(me.modEmp2),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp2)
+
+# compare models
+anova(sp.modEmp1,sp.modEmp2, test = "Chi")
+
+# spatial model 3 - simplified - remove fam_prod
+me.modEmp3 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+
+                     Cloth_craft+Trader+serv_prov, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEmp3 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+
+                     Cloth_craft+Trader+serv_prov + fitted(me.modEmp3),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp3)
+
+# compare models
+anova(sp.modEmp1,sp.modEmp3, test = "Chi")
+anova(sp.modEmp2,sp.modEmp3, test = "Chi")
+
+# spatial model 4 - simplified - remove Cloth_craft
+me.modEmp4 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+
+                   Fish_man+ntfp_fam+fam_prod+Trader+serv_prov, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEmp4 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+
+                   Fish_man+ntfp_fam+fam_prod+Trader+serv_prov + fitted(me.modEmp4),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp4)
+
+# compare models
+anova(sp.modEmp1,sp.modEmp4, test = "Chi")
+
+# spatial model 5 - simplified - remove propPrimLivFarm, fam_prod, Trader, serv_prod
+me.modEmp5 <- ME(perc_change_bin ~numPrimLivFarm+Fish_man+ntfp_fam+
+                     Cloth_craft, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEmp5 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man+ntfp_fam+
+                     Cloth_craft + fitted(me.modEmp5),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp5)
+
+# compare models.  Now the simpler model is better
+anova(sp.modEmp1,sp.modEmp5, test = "Chi")
+
+# spatial model 6 - simplified - as above but also exclude ntfp_fam
+me.modEmp6 <- ME(perc_change_bin ~numPrimLivFarm+Fish_man+
+                     Cloth_craft, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+me.modEmp6.fit <- fitted(me.modEmp6)
+
+sp.modEmp6 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man+
+                     Cloth_craft + me.modEmp6.fit,
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp6)
+
+# compare models.  again the simpler model is better
+anova(sp.modEmp5,sp.modEmp6, test = "Chi")
+
+# spatial model 7 - simplified - as above but also exclude Cloth_craft
+me.modEmp7 <- ME(perc_change_bin ~numPrimLivFarm+Fish_man, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEmp7 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man + fitted(me.modEmp7),
+                  data = dat_working, family = binomial)
+
+summary(sp.modEmp7)
+
+# compare models.  This suggests keeping Cloth_craft in
+anova(sp.modEmp6,sp.modEmp7, test = "Chi")
+
+## Predicting and plotting
+
+# Pull out the eigenvectors 
+me.modEmp6.vec <- me.modEmp6$vectors
+me.modEmp6.vec <- as.data.frame(me.modEmp6.vec)
+
+# numPrimLivFarm
+newnumPrimLivFarm <- seq(0,6169,length=100)
+mnFish_man <- rep(mean(dat_working$Fish_man), length=100)
+mnCloth_craft <- rep(mean(dat_working$Cloth_craft), length=100)
+mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
+mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
+mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
+mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
+newynumPrimLivFarm <- predict(sp.modEmp6, 
+                              newdata = list(numPrimLivFarm = newnumPrimLivFarm,
+                                             Fish_man = mnFish_man,
+                                             Cloth_craft = mnCloth_craft,
+                                             me.modEmp6.fit = mnme.modEmp6.fit),
+                              type = "link", se = TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$numPrimLivFarm, dat_working$perc_change_bin, xlab="Families whose primary livelihood is farming", 
+     ylab = "Probability of forest loss")
+lines(newnumPrimLivFarm,ilogit(newynumPrimLivFarm$fit),lwd=2)
+lines(newnumPrimLivFarm,ilogit(newynumPrimLivFarm$fit+1.96*newynumPrimLivFarm$se.fit),lty=3)
+lines(newnumPrimLivFarm,ilogit(newynumPrimLivFarm$fit-1.96*newynumPrimLivFarm$se.fit),lty=3)
+
+
+# Fish_man
+newFish_man <- seq(0,1727, length=100) 
+mnnumPrimLivFarm <- rep(mean(dat_working$numPrimLivFarm), length=100)
+mnCloth_craft <- rep(mean(dat_working$Cloth_craft), length=100)
+mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
+mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
+mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
+mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
+newyFish_man <- predict(sp.modEmp6, 
+                        newdata = list(Fish_man = newFish_man,
+                                       numPrimLivFarm = mnnumPrimLivFarm,
+                                       Cloth_craft = mnCloth_craft,
+                                       me.modEmp6.fit = mnme.modEmp6.fit),
+                        type = "link", se = TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$Fish_man, dat_working$perc_change_bin, xlab="Families whose primary livelihood is fishing", 
+     ylab = "Probability of forest loss")
+lines(newFish_man,ilogit(newyFish_man$fit),lwd=2)
+lines(newFish_man,ilogit(newyFish_man$fit+1.96*newyFish_man$se.fit),lty=3)
+lines(newFish_man,ilogit(newyFish_man$fit-1.96*newyFish_man$se.fit),lty=3)
+
+
+# Cloth_craft
+newCloth_craft <- seq(0,0.9, length=100)
+mnFish_man <- rep(mean(dat_working$Fish_man), length=100) 
+mnnumPrimLivFarm <- rep(mean(dat_working$numPrimLivFarm), length=100)
+mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
+mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
+mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
+mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
+newyCloth_craft <- predict(sp.modEmp6, 
+                        newdata = list(Cloth_craft = newCloth_craft,
+                                       Fish_man = mnFish_man,
+                                       numPrimLivFarm = mnnumPrimLivFarm,
+                                       me.modEmp6.fit = mnme.modEmp6.fit),
+                        type = "link", se = TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$Cloth_craft, dat_working$perc_change_bin, xlab="Families whose primary livelihood is textiles", 
+     ylab = "Probability of forest loss")
+lines(newCloth_craft,ilogit(newyCloth_craft$fit),lwd=2)
+lines(newCloth_craft,ilogit(newyCloth_craft$fit+1.96*newyCloth_craft$se.fit),lty=3)
+lines(newCloth_craft,ilogit(newyCloth_craft$fit-1.96*newyCloth_craft$se.fit),lty=3)
+
+
+## Economic security ####
+
+# Plots
+pairs(econSec)
+par(mfrow=c(2,3))
+plot(dat_working$Les1_R_Land, dat_working$perc_change_bin)
+plot(dat_working$No_R_Land, dat_working$perc_change_bin)
+plot(dat_working$Les1_F_Land, dat_working$perc_change_bin)
+plot(dat_working$No_F_Land, dat_working$perc_change_bin)
+plot(dat_working$pig_fam, dat_working$perc_change_bin)
+
+## non-spatial model
+glm.modEcon1 <- glm(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land+No_F_Land+pig_fam,
+                    data = dat_working, family = binomial)
+
+summary(glm.modEcon1)
+
+## Spatial model 1
+
+# Get eigenvectors
+me.modEcon1 <- ME(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land+No_F_Land+pig_fam, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEcon1 <- glm(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land+No_F_Land+pig_fam + 
+                     fitted(me.modEcon1), 
+              data=dat_working, family=binomial)
+
+summary(sp.modEcon1)
+anova(sp.modEcon1, glm.modEcon1, test = "Chisq")
+
+## Spatial model 2 - simplify - exclude No_F_Land 
+
+# get eigenvectors 
+me.modEcon2 <- ME(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land+pig_fam, 
+              data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modEcon2 <- glm(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land+pig_fam + 
+                     fitted(me.modEcon2), 
+              data=dat_working, family=binomial)
+
+summary(sp.modEcon2)
+anova(sp.modEcon1,sp.modEcon2)
+# Simplified model is better
+
+# Spatial model 3 - simplify - exclude pig_fam
+me.modEcon3 <- ME(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land, 
+              data=dat_working, family=binomial, listw = ME.listw)
+me.modEcon3.fit <- fitted(me.modEcon3)
+me.modEcon3.vec <- me.modEcon3$vectors
+
+sp.modEcon3 <- glm(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land + me.modEcon3.fit, 
+              data=dat_working, family=binomial)
+
+summary(sp.modEcon3)
+anova(sp.modEcon2,sp.modEcon3, test = "Chisq")
+# Simplified model is better
+
+## predictions and plots
+
+# Les1_R_Land
+newLes1_R_Land <- seq(0,0.932,length=100)
+mnNo_R_Land <- rep(mean(dat_working$No_R_Land), length=100)
+mnLes1_F_Land <- rep(mean(dat_working$Les1_F_Land), length=100)
+#mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
+mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.28 <- c(mnvec16, mnvec28)
+mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyLes1_R_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = newLes1_R_Land,
+                                                       No_R_Land = mnNo_R_Land,
+                                                       Les1_F_Land = mnLes1_F_Land,
+                                                       me.modEcon3.fit = mnme.modEcon3),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$Les1_R_Land, dat_working$perc_change_bin, xlab="Families with less than 1ha rice land", 
+     ylab = "Probability of forest loss")
+lines(newLes1_R_Land,ilogit(newyLes1_R_Land$fit),lwd=2)
+lines(newLes1_R_Land,ilogit(newyLes1_R_Land$fit+1.96*newyLes1_R_Land$se.fit),lty=3)
+lines(newLes1_R_Land,ilogit(newyLes1_R_Land$fit-1.96*newyLes1_R_Land$se.fit),lty=3)
+
+
+# No_R_Land
+newNo_R_Land <- seq(0,0.68,length=100)
+mnLes1_R_Land <- rep(mean(dat_working$Les1_R_Land), length=100)
+mnLes1_F_Land <- rep(mean(dat_working$Les1_F_Land), length=100)
+#mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
+mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.28 <- c(mnvec16, mnvec28)
+mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyNo_R_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = mnLes1_R_Land,
+                                                       No_R_Land = newNo_R_Land,
+                                                       Les1_F_Land = mnLes1_F_Land,
+                                                       me.modEcon3.fit = mnme.modEcon3),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$No_R_Land, dat_working$perc_change_bin, xlab="Families with no rice land", 
+     ylab = "Probability of forest loss")
+lines(newNo_R_Land,ilogit(newyNo_R_Land$fit),lwd=2)
+lines(newNo_R_Land,ilogit(newyNo_R_Land$fit+1.96*newyNo_R_Land$se.fit),lty=3)
+lines(newNo_R_Land,ilogit(newyNo_R_Land$fit-1.96*newyNo_R_Land$se.fit),lty=3)
+
+
+# Les1_F_Land
+newLes1_F_Land <- seq(0,0.74,length=100)
+mnLes1_R_Land <- rep(mean(dat_working$Les1_R_Land), length=100)
+mnNo_R_Land <- rep(mean(dat_working$No_R_Land), length=100)
+#mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
+mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec16.28 <- c(mnvec16, mnvec28)
+mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyLes1_F_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = mnLes1_R_Land,
+                                                       No_R_Land = mnNo_R_Land,
+                                                       Les1_F_Land = newLes1_F_Land,
+                                                       me.modEcon3.fit = mnme.modEcon3),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$Les1_F_Land, dat_working$perc_change_bin, xlab="Families with less than 1ha farming land", 
+     ylab = "Probability of forest loss")
+lines(newLes1_F_Land,ilogit(newyLes1_F_Land$fit),lwd=2)
+lines(newLes1_F_Land,ilogit(newyLes1_F_Land$fit+1.96*newyLes1_F_Land$se.fit),lty=3)
+lines(newLes1_F_Land,ilogit(newyLes1_F_Land$fit-1.96*newyLes1_F_Land$se.fit),lty=3)
+
+## Access to services ####
+
+# plots
+pairs(service)
+par(mfrow=c(2,3))
+plot(dat_working$dist_sch, dat_working$perc_change_bin)
+plot(dat_working$garbage, dat_working$perc_change_bin)
+plot(dat_working$KM_Market, dat_working$perc_change_bin)
+plot(dat_working$KM_Comm, dat_working$perc_change_bin)
+plot(dat_working$wat_safe, dat_working$perc_change_bin)
+plot(dat_working$wat_pipe, dat_working$perc_change_bin)
+
+## non-spatial model
+glm.modSer1 <- glm(perc_change_bin ~ dist_sch+garbage+KM_Market+KM_Comm+wat_safe+wat_pipe,
+                   data = dat_working, family = binomial)
+summary(glm.modSer1)
+
+## Spatial model 1
+
+# Get eigenvectors
+me.modSer1 <- ME(perc_change_bin ~ dist_sch+garbage+KM_Market+KM_Comm+wat_safe+wat_pipe,
+                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.1)
+
+sp.modSer1 <- glm(perc_change_bin ~ dist_sch+garbage+KM_Market+KM_Comm+wat_safe+wat_pipe+
+                    fitted(me.modSer1),
+                   data = dat_working, family = binomial)
+summary(sp.modSer1)
+anova(glm.modSer1,sp.modSer1, test="Chisq")
+
+# Spatial model 2 - simplify - exclude dist_sch
+
+# Get eigenvectors
+me.modSer2 <- ME(perc_change_bin ~ garbage+KM_Market+KM_Comm+wat_safe+wat_pipe,
+                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.05)
+
+sp.modSer2 <- glm(perc_change_bin ~ garbage+KM_Market+KM_Comm+wat_safe+wat_pipe+
+                    fitted(me.modSer2),
+                   data = dat_working, family = binomial)
+
+summary(sp.modSer2)
+anova(sp.modSer1, sp.modSer2, test="Chisq")
+
+# Spatial model 3 - simplify - exclude dist_sch + garbage
+
+# Get eigenvectors
+me.modSer2 <- ME(perc_change_bin ~ garbage+KM_Market+KM_Comm+wat_safe+wat_pipe,
+                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.05)
+
+sp.modSer2 <- glm(perc_change_bin ~ dist_sch+garbage+KM_Market+KM_Comm+wat_safe+wat_pipe+
+                    fitted(me.modSer2),
+                   data = dat_working, family = binomial)
+
+summary(sp.modSer2)
+anova(sp.modSer1, sp.modSer2, test="Chisq")
 
