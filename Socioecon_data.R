@@ -2980,7 +2980,10 @@ ME.listw <- nb2listw(neighpoly, style="B", zero.policy = TRUE)
 
 ### Demographics ####
 library(faraway)
-
+library(gridExtra)
+library(grid)
+library(scales)
+library(export)
 
 # plots 
 plot(dat_working$perc_change_bin ~ dat_working$tot_pop)
@@ -3062,6 +3065,30 @@ lines(newtot_pop,ilogit(newypop$fit),lwd=2)
 lines(newtot_pop,ilogit(newypop$fit+1.96*newypop$se.fit),lty=3)
 lines(newtot_pop,ilogit(newypop$fit-1.96*newypop$se.fit),lty=3)
 
+# Plot with ggplot
+pop_pred <- data.frame(newx = newtot_pop,
+                       newy = ilogit(newypop$fit),
+                       upr = ilogit(newypop$fit+1.96*newypop$se.fit),
+                       lwr = ilogit(newypop$fit-1.96*newypop$se.fit))
+
+p_tot_pop <- ggplot(pop_pred, aes(x=newx, y=newy))+
+            geom_line(size=1, color="#000099")+
+            geom_point(data=dat_working, aes(x=tot_pop, y=perc_change_bin), shape=1, size=1)+
+            ylim(0,1)+
+            geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+            labs(x="Total population", y="")+
+            theme(plot.margin = unit(c(0,0,1.5,0), "cm"))
+
+ggplot(pop_pred, aes(x=newx, y=newy))+
+  geom_line(size=1)+
+  ylim(0,1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), linetype=3, alpha=0, colour="black")+
+  labs(x="Total population", y="Probability of forest loss")
+
+
+library(visreg)
+visreg(sp.modDem2, xvar="tot_pop", type = "conditional")
+
 # Prop_Indigenous
 newProp_ind <- seq(0,1,length=100)
 mntot_pop <- rep(mean(dat_working$tot_pop), length=100)
@@ -3074,6 +3101,30 @@ plot(dat_working$Prop_Indigenous, dat_working$perc_change_bin,
 lines(newProp_ind,ilogit(newyind$fit),lwd=2)
 lines(newProp_ind,ilogit(newyind$fit+1.96*newyind$se.fit),lty=3)
 lines(newProp_ind,ilogit(newyind$fit-1.96*newyind$se.fit),lty=3)
+
+# Plot with ggplot
+propInd_pred <- data.frame(newx = newProp_ind,
+                       newy = ilogit(newyind$fit),
+                       upr = ilogit(newyind$fit+1.96*newyind$se.fit),
+                       lwr = ilogit(newyind$fit-1.96*newyind$se.fit))
+
+p_prop_ind <- ggplot(propInd_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=Prop_Indigenous, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion indigenous", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_tot_pop,p_prop_ind, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="demog_plots4", width=10, height=10)
 
 #
 ### Education ####
@@ -3169,6 +3220,44 @@ plot(dat_working$M18_60_ill, dat_working$perc_change_bin, xlab="Proportion of il
 lines(newM18_60_ill,ilogit(newyM18_60_ill$fit),lwd=2)
 lines(newM18_60_ill,ilogit(newyM18_60_ill$fit+1.96*newyM18_60_ill$se.fit),lty=3)
 lines(newM18_60_ill,ilogit(newyM18_60_ill$fit-1.96*newyM18_60_ill$se.fit),lty=3)
+
+# Plot with ggplot
+M6_24_sch_pred <- data.frame(newx = newM6_24_sch,
+                       newy = ilogit(newyM6_24_sch$fit),
+                       upr = ilogit(newyM6_24_sch$fit+1.96*newyM6_24_sch$se.fit),
+                       lwr = ilogit(newyM6_24_sch$fit-1.96*newyM6_24_sch$se.fit))
+
+p_M6_24_sch <- ggplot(M6_24_sch_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=M6_24_sch, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of young males in school", y="")+
+              theme(plot.margin = unit(c(0,0,1.5,0), "cm"))
+
+M18_60_ill_pred <- data.frame(newx = newM18_60_ill,
+                       newy = ilogit(newyM18_60_ill$fit),
+                       upr = ilogit(newyM18_60_ill$fit+1.96*newyM18_60_ill$se.fit),
+                       lwr = ilogit(newyM18_60_ill$fit-1.96*newyM18_60_ill$se.fit))
+
+p_M18_60_ill <- ggplot(M18_60_ill_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=M18_60_ill, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of illiterate adult males", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_M6_24_sch,p_M18_60_ill, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="education_plots", width=10, height=10)
 
 ## Employment ####
 
@@ -3372,6 +3461,59 @@ lines(newCloth_craft,ilogit(newyCloth_craft$fit+1.96*newyCloth_craft$se.fit),lty
 lines(newCloth_craft,ilogit(newyCloth_craft$fit-1.96*newyCloth_craft$se.fit),lty=3)
 
 
+# Plot with ggplot
+numPrimLivFarm_pred <- data.frame(newx = newnumPrimLivFarm,
+                       newy = ilogit(newynumPrimLivFarm$fit),
+                       upr = ilogit(newynumPrimLivFarm$fit+1.96*newynumPrimLivFarm$se.fit),
+                       lwr = ilogit(newynumPrimLivFarm$fit-1.96*newynumPrimLivFarm$se.fit))
+
+p_numPrimLivFarm <- ggplot(numPrimLivFarm_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=numPrimLivFarm, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="No. families whose main livelihood is farming", y="")+
+              theme(plot.margin = unit(c(0,0,1.5,0), "cm"))
+
+fish_man_pred <- data.frame(newx = newFish_man,
+                       newy = ilogit(newyFish_man$fit),
+                       upr = ilogit(newyFish_man$fit+1.96*newyFish_man$se.fit),
+                       lwr = ilogit(newyFish_man$fit-1.96*newyFish_man$se.fit))
+
+p_fish_man <- ggplot(fish_man_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=Fish_man, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of illiterate adult males", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+Cloth_craft_pred <- data.frame(newx = newCloth_craft,
+                       newy = ilogit(newyCloth_craft$fit),
+                       upr = ilogit(newyCloth_craft$fit+1.96*newyCloth_craft$se.fit),
+                       lwr = ilogit(newyCloth_craft$fit-1.96*newyCloth_craft$se.fit))
+
+p_Cloth_craft <- ggplot(Cloth_craft_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=Cloth_craft, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of illiterate adult males", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_M6_24_sch,p_M18_60_ill, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="education_plots", width=10, height=10)
+
+#
 ## Economic security ####
 
 # Plots
@@ -3421,6 +3563,10 @@ me.modEcon3 <- ME(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land,
               data=dat_working, family=binomial, listw = ME.listw)
 me.modEcon3.fit <- fitted(me.modEcon3)
 me.modEcon3.vec <- me.modEcon3$vectors
+
+# identifying outlier
+dat_working %>% 
+  filter(No_R_Land>0.6)
 
 sp.modEcon3 <- glm(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land + me.modEcon3.fit, 
               data=dat_working, family=binomial)
@@ -3477,6 +3623,45 @@ plot(dat_working$No_R_Land, dat_working$perc_change_bin, xlab="Families with no 
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit),lwd=2)
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit+1.96*newyNo_R_Land$se.fit),lty=3)
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit-1.96*newyNo_R_Land$se.fit),lty=3)
+
+## ggplot
+
+Les1_R_land_pred <- data.frame(newx = newLes1_R_Land,
+                       newy = ilogit(newyLes1_R_Land$fit),
+                       upr = ilogit(newyLes1_R_Land$fit+1.96*newyLes1_R_Land$se.fit),
+                       lwr = ilogit(newyLes1_R_Land$fit-1.96*newyLes1_R_Land$se.fit))
+
+p_Les1_R_land <- ggplot(Les1_R_land_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=Les1_R_Land, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of families with less than 1ha rice land", y="")+
+              theme(plot.margin = unit(c(0,0,1.5,0), "cm"))
+
+No_R_land_pred <- data.frame(newx = newNo_R_Land,
+                       newy = ilogit(newyNo_R_Land$fit),
+                       upr = ilogit(newyNo_R_Land$fit+1.96*newyNo_R_Land$se.fit),
+                       lwr = ilogit(newyNo_R_Land$fit-1.96*newyNo_R_Land$se.fit))
+
+p_No_R_land <- ggplot(No_R_land_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=No_R_Land, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Proportion of families with no rice land", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_Les1_R_land,p_No_R_land, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="EconSec_plots", width=8, height=8)
+
 
 
 # Les1_F_Land
@@ -3659,6 +3844,44 @@ lines(newwat_safe,ilogit(newywat_safe$fit+1.96*newywat_safe$se.fit),lty=3)
 lines(newwat_safe,ilogit(newywat_safe$fit-1.96*newywat_safe$se.fit),lty=3)
 
 
+## ggplot
+
+KM_comm_pred <- data.frame(newx = newKM_Comm,
+                       newy = ilogit(newyKM_Comm$fit),
+                       upr = ilogit(newyKM_Comm$fit+1.96*newyKM_Comm$se.fit),
+                       lwr = ilogit(newyKM_Comm$fit-1.96*newyKM_Comm$se.fit))
+
+p_KM_comm <- ggplot(KM_comm_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=KM_Comm, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Distance to Commune capital", y="")+
+              theme(plot.margin = unit(c(0,0,1.5,0), "cm"))
+
+KM_Market_pred <- data.frame(newx = newKM_Market,
+                       newy = ilogit(newyKM_Market$fit),
+                       upr = ilogit(newyKM_Market$fit+1.96*newyKM_Market$se.fit),
+                       lwr = ilogit(newyKM_Market$fit-1.96*newyKM_Market$se.fit))
+
+p_KM_Market <- ggplot(KM_Market_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=KM_Market, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Distance to nearest market", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_KM_comm,p_KM_Market, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="serv_plots", width=8, height=8)
+
 ## Social justice ####
 
 # Plots 
@@ -3715,6 +3938,30 @@ lines(newland_confl,ilogit(newyland_confl$fit),lwd=2)
 lines(newland_confl,ilogit(newyland_confl$fit+1.96*newyland_confl$se.fit),lty=3)
 lines(newland_confl,ilogit(newyland_confl$fit-1.96*newyland_confl$se.fit),lty=3)
 
+
+# ggplot
+
+KM_Market_pred <- data.frame(newx = newKM_Market,
+                       newy = ilogit(newyKM_Market$fit),
+                       upr = ilogit(newyKM_Market$fit+1.96*newyKM_Market$se.fit),
+                       lwr = ilogit(newyKM_Market$fit-1.96*newyKM_Market$se.fit))
+
+p_KM_Market <- ggplot(KM_Market_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=KM_Market, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Distance to nearest market", y="")+
+              theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
+
+demog_plots <- grid.arrange(
+                arrangeGrob(p_KM_comm,p_KM_Market, ncol=1, 
+                  left = textGrob("Probability of forest loss", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2ppt(file="serv_plots", width=8, height=8)
 
 ## Health ####
 
@@ -3776,6 +4023,25 @@ lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit),lwd=2)
 lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit+1.96*newyKM_Heal_cent$se.fit),lty=3)
 lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit-1.96*newyKM_Heal_cent$se.fit),lty=3)
 
+# ggplot 
+
+KM_Heal_cent_pred <- data.frame(newx = newKM_Heal_cent,
+                       newy = ilogit(newyKM_Heal_cent$fit),
+                       upr = ilogit(newyKM_Heal_cent$fit+1.96*newyKM_Heal_cent$se.fit),
+                       lwr = ilogit(newyKM_Heal_cent$fit-1.96*newyKM_Heal_cent$se.fit))
+
+p_KM_Heal_cent <- ggplot(KM_Heal_cent_pred, aes(x=newx, y=newy))+
+              geom_line(size=1, color="#000099")+
+              geom_point(data=dat_working, 
+                         aes(x=KM_Heal_cent, y=perc_change_bin), shape=1, size=1)+
+              ylim(0,1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.25,fill="#000099")+
+              labs(x="Distance to nearest health centre", y="Probability of forest loss")
+              
+
+
+
+graph2ppt(file="health_plots", width=8, height=8)
 
 ## Migration ####
 
