@@ -3688,7 +3688,147 @@ summary(sp.modJus1)
 # get eigenvectors
 me.modJus2 <- ME(perc_change_bin ~ land_confl, data=dat_working, family=binomial, 
                 listw = ME.listw)
+me.modJus2.fit <- fitted(me.modJus2)
 
-sp.modJus2 <- glm(perc_change_bin ~ land_confl+fitted(me.modJus2), 
+sp.modJus2 <- glm(perc_change_bin ~ land_confl+as.vector(me.modJus2.fit), 
                   data=dat_working, family=binomial)
 summary(sp.modJus2)
+
+## predictions and plotting
+
+# land_confl
+newland_confl <- seq(0,179,length=100)
+mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
+#mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+#mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+#mnvec16.28 <- c(mnvec16, mnvec28)
+#mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyland_confl <- predict(sp.modJus2, newdata = list(land_confl = newland_confl,
+                                                       me.modJus2.fit = mnme.modJus2),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$land_confl, dat_working$perc_change_bin, xlab="Land conflic cases", 
+     ylab = "Probability of forest loss")
+lines(newland_confl,ilogit(newyland_confl$fit),lwd=2)
+lines(newland_confl,ilogit(newyland_confl$fit+1.96*newyland_confl$se.fit),lty=3)
+lines(newland_confl,ilogit(newyland_confl$fit-1.96*newyland_confl$se.fit),lty=3)
+
+
+## Health ####
+
+# plots
+pairs(health)
+par(mfrow=c(3,1))
+plot(dat_working$KM_Heal_cent, dat_working$perc_change_bin)
+plot(dat_working$inf_mort, dat_working$perc_change_bin)
+plot(dat_working$U5_mort, dat_working$perc_change_bin)
+
+# non-spatial model
+glm.modHeal1 <- glm(perc_change_bin ~ KM_Heal_cent+inf_mort+U5_mort, 
+                    data=dat_working, family=binomial)
+summary(glm.modHeal1)
+
+## spatial model 1
+
+# eigenvectors
+me.modHeal1 <- ME(perc_change_bin ~ KM_Heal_cent+inf_mort+U5_mort, 
+                  data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modHeal1 <- glm(perc_change_bin ~ KM_Heal_cent+inf_mort+U5_mort+fitted(me.modHeal1), 
+                    data=dat_working, family=binomial)
+summary(sp.modHeal1)
+# inf_mort and U5_mort are ridiculous. I will take them out
+
+## spatial model 2 - remove inf_mort and U5_mort
+
+# eigenvectors
+me.modHeal2 <- ME(perc_change_bin ~ KM_Heal_cent, 
+                  data=dat_working, family=binomial, listw = ME.listw)
+me.modHeal2.fit <- fitted(me.modHeal2)
+me.modHeal2.vec <- me.modHeal2$vectors
+me.modHeal2.vec <- data.frame(me.modHeal2.vec)
+
+sp.modHeal2 <- glm(perc_change_bin ~ KM_Heal_cent+me.modHeal2.fit, 
+                    data=dat_working, family=binomial)
+summary(sp.modHeal2)
+# I will use this model
+
+## predictions and plotting
+
+# KM_Heal_cent
+newKM_Heal_cent <- seq(0,90,length=100)
+#mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
+mnvec16 <- rep(mean(me.modHeal2.vec$vec16), length=100)
+mnvec28 <- rep(mean(me.modHeal2.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 2-column matrix as that's what went into the model
+mnvec16.28 <- c(mnvec16, mnvec28)
+mnme.modHeal2 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyKM_Heal_cent <- predict(sp.modHeal2, newdata = list(KM_Heal_cent = newKM_Heal_cent,
+                                                       me.modHeal2.fit = mnme.modHeal2),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$KM_Heal_cent, dat_working$perc_change_bin, xlab="Distance to health centre", 
+     ylab = "Probability of forest loss")
+lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit),lwd=2)
+lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit+1.96*newyKM_Heal_cent$se.fit),lty=3)
+lines(newKM_Heal_cent,ilogit(newyKM_Heal_cent$fit-1.96*newyKM_Heal_cent$se.fit),lty=3)
+
+
+## Migration ####
+
+# plots
+pairs(migrate)
+plot(dat_working$Pax_migt_in, dat_working$perc_change_bin)
+plot(dat_working$Pax_migt_out, dat_working$perc_change_bin)
+
+# non-spatial model
+glm.modMig1 <- glm(perc_change_bin ~ Pax_migt_in+Pax_migt_out,
+                   data=dat_working, family=binomial)
+summary(glm.modMig1)
+
+## spatial model 1
+
+# eigenvectors
+me.modMig1 <- ME(perc_change_bin ~ Pax_migt_in+Pax_migt_out, 
+                  data=dat_working, family=binomial, listw = ME.listw)
+
+sp.modMig1 <- glm(perc_change_bin ~ Pax_migt_in+Pax_migt_out+fitted(me.modMig1),
+                   data=dat_working, family=binomial)
+summary(sp.modMig1)
+
+## spatial model 2 - remove Pax_migt_out - because in-migration is more likely to cause forest loss
+
+me.modMig2 <- ME(perc_change_bin ~ Pax_migt_in, 
+                  data=dat_working, family=binomial, listw = ME.listw)
+me.modMig2.fit <- fitted(me.modMig2)
+me.modMig2.vec <- data.frame(me.modMig2.fit)
+
+sp.modMig2 <- glm(perc_change_bin ~ Pax_migt_in+me.modMig2.fit,
+                   data=dat_working, family=binomial)
+summary(sp.modMig2)
+# Pax-migt-in is not significant
+
+## predictions and plotting
+
+# Pax_migt_in
+newPax_migt_in <- seq(0,4018,length=100)
+#mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
+mnvec2 <- rep(mean(me.modMig2.vec$vec2), length=100)
+mnvec28 <- rep(mean(me.modMig2.vec$vec28), length=100)
+mnvec39 <- rep(mean(me.modMig2.vec$vec39), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+mnvec2.28.39 <- c(mnvec2,mnvec28,mnvec39)
+mnme.modMig2 <- matrix(mnvec2.28.39, ncol = 3, byrow = FALSE)
+newyPax_migt_in <- predict(sp.modMig2, newdata = list(Pax_migt_in = newPax_migt_in,
+                                                       me.modMig2.fit = mnme.modMig2),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$Pax_migt_in, dat_working$perc_change_bin, xlab="Number of in-migrants", 
+     ylab = "Probability of forest loss")
+lines(newPax_migt_in,ilogit(newyPax_migt_in$fit),lwd=2)
+lines(newPax_migt_in,ilogit(newyPax_migt_in$fit+1.96*newyPax_migt_in$se.fit),lty=3)
+lines(newPax_migt_in,ilogit(newyPax_migt_in$fit-1.96*newyPax_migt_in$se.fit),lty=3)
