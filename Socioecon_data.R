@@ -710,7 +710,6 @@ dat2 %>%
 dat %>% 
   filter(Province=="Mondul Kiri") %>%
   filter(Commune=="Bu Sra") %>%
-  select()
   filter(!VillGis==2080302) %>%
   summarise(mean = mean(U5_mort))
 # The problem is that the number of indigeous people is much higher that the total population. The dodgy number is Phnong females over 18.  I think the fairest way to deal with it is to change the value to the mean of the commune
@@ -1038,6 +1037,54 @@ dat2 <- dat2 %>%
         mutate(dist_sch = ifelse(Commune=="Preah Rumkel", 
                                 replace(dist_sch, dist_sch==dist_sch, 11.5), 
                                 dist_sch))
+
+#
+## crim_case errors####
+
+# Koh Kong > Chi Phat
+dat2 %>% 
+  filter(Province=="Koh Kong") %>% 
+  filter(Commune == "Chi Phat") %>% 
+  select(VillGis,crim_case)
+# One village has a very high number of cases. I will replace it with commune mean (0.003507532)
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(crim_case = ifelse(VillGis==9070504, 
+                                replace(crim_case, crim_case==crim_case, 0.003507532), 
+                                crim_case))
+
+# Pursat > Krapeu Pir
+dat2 %>% 
+  filter(Province=="Pursat") %>% 
+  filter(Commune == "Krapeu Pir") %>% 
+  select(VillGis,crim_case)
+# One village has a very high number of cases. I will replace it with commune mean (0.003012048)
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(crim_case = ifelse(VillGis==15060202, 
+                                replace(crim_case, crim_case==crim_case,0.003012048), 
+                                crim_case))
+
+# Preah Sihanouk > Kaoh Rung
+dat2 %>% 
+  filter(Province=="Preah Sihanouk") %>% 
+  filter(Commune == "Kaoh Rung") %>% 
+  select(VillGis,crim_case)
+# two villages have high values, will replace with commune mean (0.01462475)
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(crim_case = ifelse(VillGis==18010501, 
+                                replace(crim_case, crim_case==crim_case,0.01462475), 
+                                crim_case))
+
+# Replace values
+dat2 <- dat2 %>%
+        mutate(crim_case = ifelse(VillGis==18010502, 
+                                replace(crim_case, crim_case==crim_case,0.01462475), 
+                                crim_case))
 
 #
 #### Aggregating to the Commune level ####
@@ -3500,13 +3547,148 @@ anova(sp.modSer1, sp.modSer2, test="Chisq")
 # Spatial model 3 - simplify - exclude dist_sch + garbage
 
 # Get eigenvectors
-me.modSer2 <- ME(perc_change_bin ~ garbage+KM_Market+KM_Comm+wat_safe+wat_pipe,
-                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.05)
+me.modSer3 <- ME(perc_change_bin ~ KM_Market+KM_Comm+wat_safe+wat_pipe,
+                 data = dat_working, family = binomial, listw = ME.listw)
 
-sp.modSer2 <- glm(perc_change_bin ~ dist_sch+garbage+KM_Market+KM_Comm+wat_safe+wat_pipe+
-                    fitted(me.modSer2),
+sp.modSer3 <- glm(perc_change_bin ~ KM_Market+KM_Comm+wat_safe+wat_pipe+
+                    fitted(me.modSer3),
                    data = dat_working, family = binomial)
 
-summary(sp.modSer2)
-anova(sp.modSer1, sp.modSer2, test="Chisq")
+summary(sp.modSer3)
+anova(sp.modSer1, sp.modSer3, test="Chisq")
+# Simpler model is better
 
+# Spatial model 4 - simplify - exclude dist_sch + garbage + wat_safe + wat_pipe
+
+# Get eigenvectors
+me.modSer4 <- ME(perc_change_bin ~ KM_Market+KM_Comm,
+                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.05)
+
+sp.modSer4 <- glm(perc_change_bin ~ KM_Market+KM_Comm+fitted(me.modSer4),
+                   data = dat_working, family = binomial)
+
+summary(sp.modSer4)
+anova(sp.modSer3, sp.modSer4, test="Chisq")
+# model 3 is better - just
+
+# Spatial model 5 - simplify - exclude dist_sch + garbage + wat_pipe
+
+# Get eigenvectors
+me.modSer5 <- ME(perc_change_bin ~ KM_Market+KM_Comm+wat_safe,
+                 data = dat_working, family = binomial, listw = ME.listw)
+me.modSer5.fit <- fitted(me.modSer5)
+
+sp.modSer5 <- glm(perc_change_bin ~ KM_Market+KM_Comm+wat_safe+as.vector(me.modSer5.fit),
+                   data = dat_working, family = binomial)
+
+summary(sp.modSer5)
+anova(sp.modSer3, sp.modSer5, test="Chisq")
+# Spatial model 3 is apparently the best but I don't think I need wat_pipe and wat_safe. So for now I am going to use spatial model 5
+
+## Predictions and plotting
+
+# KM_Market
+newKM_Market <- seq(0,154,length=100)
+mnKM_Comm <- rep(mean(dat_working$KM_Comm), length=100)
+mnwat_safe <- rep(mean(dat_working$wat_safe), length=100)
+mnme.modSer5 <- rep(mean(me.modSer5.fit), length=100)
+#mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+#mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+#mnvec16.28 <- c(mnvec16, mnvec28)
+#mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyKM_Market <- predict(sp.modSer5, newdata = list(KM_Market = newKM_Market,
+                                                       KM_Comm = mnKM_Comm,
+                                                       wat_safe = mnwat_safe,
+                                                       me.modSer5.fit = mnme.modSer5),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$KM_Market, dat_working$perc_change_bin, xlab="Distance (KM) from nearest market", 
+     ylab = "Probability of forest loss")
+lines(newKM_Market,ilogit(newyKM_Market$fit),lwd=2)
+lines(newKM_Market,ilogit(newyKM_Market$fit+1.96*newyKM_Market$se.fit),lty=3)
+lines(newKM_Market,ilogit(newyKM_Market$fit-1.96*newyKM_Market$se.fit),lty=3)
+
+
+# KM_Comm
+newKM_Comm <- seq(0,28,length=100)
+mnKM_Market <- rep(mean(dat_working$KM_Market), length=100)
+mnwat_safe <- rep(mean(dat_working$wat_safe), length=100)
+mnme.modSer5 <- rep(mean(me.modSer5.fit), length=100)
+#mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+#mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+#mnvec16.28 <- c(mnvec16, mnvec28)
+#mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newyKM_Comm <- predict(sp.modSer5, newdata = list(KM_Market = mnKM_Market,
+                                                       KM_Comm = newKM_Comm,
+                                                       wat_safe = mnwat_safe,
+                                                       me.modSer5.fit = mnme.modSer5),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$KM_Comm, dat_working$perc_change_bin, xlab="Distance (KM) from Commune office", 
+     ylab = "Probability of forest loss")
+lines(newKM_Comm,ilogit(newyKM_Comm$fit),lwd=2)
+lines(newKM_Comm,ilogit(newyKM_Comm$fit+1.96*newyKM_Comm$se.fit),lty=3)
+lines(newKM_Comm,ilogit(newyKM_Comm$fit-1.96*newyKM_Comm$se.fit),lty=3)
+
+
+# wat_safe
+newwat_safe <- seq(0,1,length=100)
+mnKM_Market <- rep(mean(dat_working$KM_Market), length=100)
+mnKM_Comm <- rep(mean(dat_working$wat_safe), length=100)
+mnme.modSer5 <- rep(mean(me.modSer5.fit), length=100)
+#mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
+#mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
+# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+#mnvec16.28 <- c(mnvec16, mnvec28)
+#mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+newywat_safe <- predict(sp.modSer5, newdata = list(KM_Market = mnKM_Market,
+                                                       KM_Comm = mnKM_Comm,
+                                                       wat_safe = newwat_safe,
+                                                       me.modSer5.fit = mnme.modSer5),
+                           type="link", se=TRUE)
+
+par(mfrow=c(1,1))
+plot(dat_working$wat_safe, dat_working$perc_change_bin, xlab="Proportion families with access to safe water", 
+     ylab = "Probability of forest loss")
+lines(newwat_safe,ilogit(newywat_safe$fit),lwd=2)
+lines(newwat_safe,ilogit(newywat_safe$fit+1.96*newywat_safe$se.fit),lty=3)
+lines(newwat_safe,ilogit(newywat_safe$fit-1.96*newywat_safe$se.fit),lty=3)
+
+
+## Social justice ####
+
+# Plots 
+pairs(justice)
+par(mfrow=c(1,2))
+plot(dat_working$land_confl, dat_working$perc_change_bin)
+plot(dat_working$crim_case, dat_working$perc_change_bin)
+
+# non-spatial model
+glm.modJus1 <- glm(perc_change_bin ~ crim_case+land_confl, data=dat_working, family = binomial)
+summary(glm.modJus1)
+
+## spatial model 1
+
+# get eigenvectors
+me.modJus1 <- ME(perc_change_bin ~ crim_case+land_confl, data=dat_working, family=binomial, 
+                listw = ME.listw)
+
+sp.modJus1 <- glm(perc_change_bin ~ crim_case+land_confl+fitted(me.modJus1), 
+                  data=dat_working, family=binomial)
+
+summary(sp.modJus1)
+# Something strange going on with crim_Case
+
+## spatial model 2 - remove crim_case
+
+# get eigenvectors
+me.modJus2 <- ME(perc_change_bin ~ land_confl, data=dat_working, family=binomial, 
+                listw = ME.listw)
+
+sp.modJus2 <- glm(perc_change_bin ~ land_confl+fitted(me.modJus2), 
+                  data=dat_working, family=binomial)
+summary(sp.modJus2)
