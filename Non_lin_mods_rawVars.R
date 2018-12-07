@@ -8,6 +8,7 @@ library('voxel')
 library('nlstools')
 library('minpack.lm')
 library('broom')
+library('export')
 
 ### Load data ####
 dat_econ <- read_csv("macroeconomic_vars.csv")
@@ -236,7 +237,8 @@ plot_grid(p40,p42)
 
 # I am going to test simple linear models first.  I may need to use GLMs if there are issues with the variance, errors, or overdispersion
 
-## fdi
+## fdi ####
+
 hist(dat_sub$for_cov_roc)
 hist(dat_sub$fdi)
 ggplot(dat_sub, aes(x=fdi, y=for_cov_roc))+
@@ -338,11 +340,12 @@ enlm2 %>%
   augment() %>%
   ggplot(., aes(x = fdi, y = for_cov_roc)) +
   geom_point(size = 1) +
-  geom_line(aes(x = fdi, y = .fitted)) +
+  geom_line(aes(x = fdi, y = .fitted),size=1, color="#000099") +
   theme_bw() +
   labs(x = "Foreign Direct Investment",
        y = "Forest cover % change")
 
+graph2ppt(file="fdi_plot", width=8, height=8)
 
 # compare exponential models
 anova(enlm1,enlm2)
@@ -360,3 +363,196 @@ AIC(elm2)
 # The non linear model has a much lower AIC, and therefore is the better model.
 
 # I now need to estimate confidence intervals, using Monte Carlo simulation
+
+
+## agr_gdp ####
+
+hist(dat_sub$for_cov_roc)
+hist(dat_sub$agr_gdp)
+ggplot(dat_sub, aes(x=agr_gdp, y=for_cov_roc))+
+  geom_point()
+# The relationship does not look linear. Try log-transform
+ggplot(dat_sub, aes(x=agr_gdp, y=log(for_cov_roc)))+
+  geom_point()
+
+# I almost think the non-log transformed plot looks more linear. I'll start wit that
+
+elm3 <- lm(for_cov_roc ~ agr_gdp, data=dat_sub)
+par(mfrow=c(2,2))
+plot(elm3)
+# doesn't look too bad.  plots suggest it could be linear relationship, although may have non normal variance
+
+summary(elm3)
+
+# Lets look at the model fit
+par(mfrow=c(1,1))
+newxvars <- seq(22.7,44.4, length = 100)
+newyvars <- predict(elm3, newdata = list(agr_gdp=newxvars), int = "c")
+str(newyvars)
+head(newyvars)
+
+# new dataframe
+df.newvars <- data_frame(newx = newxvars,
+                         newy = as.numeric(newyvars[,"fit"]),
+                         newupr = as.numeric(newyvars[,"upr"]),
+                         newlwr = as.numeric(newyvars[,"lwr"]))
+
+# Plot
+ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
+  geom_point(data = dat_sub, aes(x = agr_gdp,y = for_cov_roc))+
+  labs(x = "Agricultural contribution to GDP",
+       y = "Forest cover % change")+
+    theme_bw()+
+  theme(legend.position="none")
+
+# Now I will try linear model with log-transformed y
+elm4 <- lm(log(for_cov_roc) ~ agr_gdp, data = dat_sub)
+
+par(mfrow=c(2,3))
+plot(elm4)
+hist(elm2$residuals)
+summary(elm2)
+# diagnostic plots suggest log-transforming Y makes it more non-linear
+
+# Lets plot the model fit
+elm4 %>%
+  augment() %>%
+  ggplot(., aes(x = agr_gdp, y = exp(log.for_cov_roc.))) +
+  geom_point(size = 1) +
+  geom_line(aes(x = agr_gdp, y = exp(.fitted)),size=1, color="#000099") +
+  geom_ribbon(aes(ymin = exp(.fitted - (1.96*.se.fit)),
+                  ymax = exp(.fitted + (1.96*.se.fit))),
+              alpha = 0.5,fill="#000099") +
+  theme_bw() +
+  labs(x = "Agricultural contribution to GDP",
+       y = "Forest cover % change")
+
+graph2ppt(file="agr_gdp_plot", width=8, height=8)
+
+# compare models
+AIC(elm3) 
+AIC(elm4)
+
+## non-linear models
+
+## 2 parameter exponential
+# Starting values
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+enlm3 <- nls(for_cov_roc ~ a*exp(-b*agr_gdp), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(enlm2))
+summary(enlm1)
+
+# Diagnostics look good, as does the output
+
+# Plot model fit
+enlm3 %>%
+  augment() %>%
+  ggplot(., aes(x = agr_gdp, y = for_cov_roc)) +
+  geom_point(size = 1) +
+  geom_line(aes(x = agr_gdp, y = .fitted)) +
+  theme_bw() +
+  labs(x = "Agricultural contribution to GDP",
+       y = "Forest cover % change")
+
+AIC(enlm3)
+AIC(elm3)
+anova(enlm3,elm3)
+
+
+## ind_gdp ####
+par(mfrow=c(1,1))
+hist(dat_sub$for_cov_roc)
+hist(dat_sub$ind_gdp)
+ggplot(dat_sub, aes(x=ind_gdp, y=for_cov_roc))+
+  geom_point()
+# The relationship does not look linear. Try log-transform
+ggplot(dat_sub, aes(x=ind_gdp, y=log(for_cov_roc)))+
+  geom_point()
+
+ggplot(dat_sub, aes(x=ind_gdp, y=exp(for_cov_roc)))+
+  geom_point()
+
+ggplot(dat_sub, aes(x=ind_gdp, y=-exp(for_cov_roc)^-3))+
+  geom_point()
+
+# exp(y) is the best for linearising.  But non-linear model may be the way forward
+
+elm5 <- lm(for_cov_roc ~ ind_gdp, data=dat_sub)
+par(mfrow=c(2,2))
+plot(elm5)
+# doesnt look linear
+
+# look at model fit
+newxvars <- seq(15,30.7, length = 100)
+newyvars <- predict(elm5, newdata = list(ind_gdp=newxvars), int = "c")
+str(newyvars)
+head(newyvars)
+
+# new dataframe
+df.newvars <- data_frame(newx = newxvars,
+                         newy = as.numeric(newyvars[,"fit"]),
+                         newupr = as.numeric(newyvars[,"upr"]),
+                         newlwr = as.numeric(newyvars[,"lwr"]))
+
+# Plot
+ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line(size=1, color="#000099") +
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25), fill="#000099")+
+  geom_point(data = dat_sub, aes(x = ind_gdp,y = for_cov_roc))+
+  labs(x = "industrial contribution to GDP",
+       y = "Forest cover % change")+
+    theme_bw()+
+  theme(legend.position="none")
+
+graph2ppt(file="ind_gdp_plot", width=8, height=8)
+
+# linear model with exp(y)
+elm6 <- lm(exp(for_cov_roc) ~ ind_gdp, data=dat_sub)
+par(mfrow=c(2,2))
+plot(elm6)
+
+# Lets plot the model fit
+elm6 %>%
+  augment() %>%
+  ggplot(., aes(x = ind_gdp, y = exp.for_cov_roc.)) +
+  geom_point(size = 1) +
+  geom_line(aes(x = ind_gdp, y = exp(.fitted)),size=1, color="#000099") +
+  geom_ribbon(aes(ymin = exp(.fitted - (1.96*.se.fit)),
+                  ymax = exp(.fitted + (1.96*.se.fit))),
+              alpha = 0.5,fill="#000099") +
+  theme_bw() +
+  labs(x = "Industrial contribution to GDP",
+       y = "Forest cover % change")
+
+## non-linear model
+
+## 2 parameter exponential
+# Starting values
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+enlm4 <- nls(for_cov_roc ~ a*exp(-b*ind_gdp), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(enlm4))
+summary(enlm1)
+
+# Diagnostics look good, as does the output
+
+# Plot model fit
+enlm4 %>%
+  augment() %>%
+  ggplot(., aes(x = ind_gdp, y = for_cov_roc)) +
+  geom_point(size = 1) +
+  geom_line(aes(x = ind_gdp, y = .fitted)) +
+  theme_bw() +
+  labs(x = "Industrial contribution to GDP",
+       y = "Forest cover % change")
+
+# compare models
+AIC(elm5)
+AIC(enlm4)
