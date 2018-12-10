@@ -9,6 +9,7 @@ library('nlstools')
 library('minpack.lm')
 library('broom')
 library('export')
+library('propagate')
 
 ### Load data ####
 dat_econ <- read_csv("macroeconomic_vars.csv")
@@ -335,7 +336,14 @@ summary(enlm2)
 
 # Diagnostics look good, as does the output
 
-# Plot model fit
+## Confidence intervals
+
+# Create new dataframe for predicting 
+enlm2_newx <- data.frame(fdi = seq(0,1873,length=100))
+enlm2_newy <- predictNLS(enlm2, newdata=enlm2_newx, interval = "confidence", alpha = 0.05)
+head(enlm2_newy$summary)
+
+# Plot model fit (using original data)
 enlm2 %>%
   augment() %>%
   ggplot(., aes(x = fdi, y = for_cov_roc)) +
@@ -347,6 +355,37 @@ enlm2 %>%
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 graph2ppt(file="fdi_plot", width=8, height=8)
+
+# Plot model fit using new data
+lwr_raw <- enlm2_newy$summary[,10]
+upr_raw <- enlm2_newy$summary[,11]
+
+enlm2_newdf <- data.frame(newx = enlm2_newx,
+                          newy = enlm2_newy$summary[,7],
+                          lwr_raw = lwr_raw,
+                          upr_raw = upr_raw)
+enlm2_newdf<- enlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+
+ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
+   geom_line(size=1, color="#000099")+
+  geom_point(data=dat_sub, aes(x=fdi, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.5, fill="#FFFFFF", color="#FFFFFF"), show.legend = FALSE)+
+  theme_bw() +
+  labs(x = "Direct Foreign Investment (USD Millions)",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
+   geom_line(size=1)+
+  geom_point(data=dat_sub, aes(x=fdi, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.5,fill=variable), show.legend = FALSE)+
+  labs(x = "Direct Foreign Investment (USD Millions)",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+
+
+scale_fill_manual(values=c("#000099")  
 
 # compare exponential models
 anova(enlm1,enlm2)
