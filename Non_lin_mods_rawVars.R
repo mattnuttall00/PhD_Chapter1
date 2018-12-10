@@ -331,7 +331,7 @@ b <- -0.0005*log(2)/a
 enlm2 <- nls(for_cov_roc ~ a*exp(-b*fdi), start = list(a=a, b=b), data = dat_sub)
 par(mfrow=c(2,2))
 plot(nlsResiduals(enlm2))
-summary(enlm1)
+summary(enlm2)
 
 # Diagnostics look good, as does the output
 
@@ -339,11 +339,12 @@ summary(enlm1)
 enlm2 %>%
   augment() %>%
   ggplot(., aes(x = fdi, y = for_cov_roc)) +
-  geom_point(size = 1) +
+  geom_point(size = 1.5) +
   geom_line(aes(x = fdi, y = .fitted),size=1, color="#000099") +
   theme_bw() +
   labs(x = "Foreign Direct Investment",
-       y = "Forest cover % change")
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 graph2ppt(file="fdi_plot", width=8, height=8)
 
@@ -413,7 +414,8 @@ elm4 <- lm(log(for_cov_roc) ~ agr_gdp, data = dat_sub)
 par(mfrow=c(2,3))
 plot(elm4)
 hist(elm2$residuals)
-summary(elm2)
+summary(elm4)
+acf(residuals(elm4))
 # diagnostic plots suggest log-transforming Y makes it more non-linear
 
 # Lets plot the model fit
@@ -426,8 +428,9 @@ elm4 %>%
                   ymax = exp(.fitted + (1.96*.se.fit))),
               alpha = 0.5,fill="#000099") +
   theme_bw() +
-  labs(x = "Agricultural contribution to GDP",
-       y = "Forest cover % change")
+  labs(x = "Agricultural contribution (%) to GDP",
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 graph2ppt(file="agr_gdp_plot", width=8, height=8)
 
@@ -485,6 +488,8 @@ ggplot(dat_sub, aes(x=ind_gdp, y=-exp(for_cov_roc)^-3))+
 elm5 <- lm(for_cov_roc ~ ind_gdp, data=dat_sub)
 par(mfrow=c(2,2))
 plot(elm5)
+summary(elm5)
+acf(residuals(elm5))
 # doesnt look linear
 
 # look at model fit
@@ -504,10 +509,11 @@ ggplot(df.newvars, aes(x = newx, y = newy)) +
   geom_line(size=1, color="#000099") +
   geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25), fill="#000099")+
   geom_point(data = dat_sub, aes(x = ind_gdp,y = for_cov_roc))+
-  labs(x = "industrial contribution to GDP",
+  labs(x = "Industrial contribution to GDP",
        y = "Forest cover % change")+
     theme_bw()+
-  theme(legend.position="none")
+  theme(legend.position="none")+
+   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 graph2ppt(file="ind_gdp_plot", width=8, height=8)
 
