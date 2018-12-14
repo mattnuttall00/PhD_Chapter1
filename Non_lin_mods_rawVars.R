@@ -20,7 +20,8 @@ dat_resp <- read_csv("ForCov_LU_econVars_PCs.csv")
 # create working dataframe (excluding principal components)
 dat_work <- dat_resp %>% 
   mutate(year = as.character(year)) %>% 
-  select(1:13) %>% 
+  dplyr::select(year,for_cov_pix,for_cov_area,for_cov_perc,for_cov_roc,urban_pix,urban_area,
+                urban_perc,urban_roc,agric_pix,agric_area,agric_perc,agric_roc) %>% 
   left_join(.,dat_econ, by = "year")
 
 ###---------------------------------------------------------------------------------------------
@@ -369,23 +370,12 @@ enlm2_newdf<- enlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -
 ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
    geom_line(size=1, color="#000099")+
   geom_point(data=dat_sub, aes(x=fdi, y=for_cov_roc))+
-  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.5, fill="#FFFFFF", color="#FFFFFF"), show.legend = FALSE)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
   theme_bw() +
   labs(x = "Direct Foreign Investment (USD Millions)",
        y = "Rate of forest cover loss (%)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
-   geom_line(size=1)+
-  geom_point(data=dat_sub, aes(x=fdi, y=for_cov_roc))+
-  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.5,fill=variable), show.legend = FALSE)+
-  labs(x = "Direct Foreign Investment (USD Millions)",
-       y = "Rate of forest cover loss (%)")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
-
-
-scale_fill_manual(values=c("#000099")  
 
 # compare exponential models
 anova(enlm1,enlm2)
@@ -471,7 +461,7 @@ elm4 %>%
        y = "Forest cover % change")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-graph2ppt(file="agr_gdp_plot", width=8, height=8)
+graph2ppt(file="fdi_plot", width=8, height=8)
 
 # compare models
 AIC(elm3) 
