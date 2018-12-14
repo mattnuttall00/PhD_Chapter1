@@ -885,3 +885,26 @@ ggplot(cnlm3_newdf, aes(x=sug_med, y=newy))+
   labs(x = "Sugar price",
        y = "Rate of forest cover loss (%)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+## rub_med ####
+
+plot(dat_sub$rub_med, dat_sub$for_cov_roc)
+plot(dat_sub$rub_med, log(dat_sub$for_cov_roc))
+
+ggplot(dat_sub, aes(x=rub_med, y=for_cov_roc))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+# try model with log(y)
+
+clm6 <- lm(log(for_cov_roc) ~ rub_med, data = dat_sub)
+par(mfrow=c(2,2))
+plot(clm5)
+summary(clm6)
+acf(residuals(clm6))
+
+# predictions and plotting
+newrubx <- seq(585,4830,length=100)
+newruby <- exp(predict(clm6, newdata = list(rub_med=newrubx, int="c")))
+rubpred_df <- data.frame(rub_med = newrubx,
+                         newy = newruby)
