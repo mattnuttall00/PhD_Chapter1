@@ -10,6 +10,7 @@ library('minpack.lm')
 library('broom')
 library('export')
 library('propagate')
+library('quantreg')
 
 ### Load data ####
 dat_econ <- read_csv("macroeconomic_vars.csv")
@@ -591,3 +592,119 @@ enlm4 %>%
 # compare models
 AIC(elm5)
 AIC(enlm4)
+
+### Modelling commodity variables ####
+
+# I will be modelling Agricultural Raw Materials Index (armi), because it is the stongest loading for PC1, and theoretically I think it is also important as it represents the commodity market at a regional level.  Rice_med has been selected because it is the largest positive loading for PC2.  Sug_med has been selected because it is the largest negative loading for PC2.  Rub_med has been selected for theoretical reasons - rubber has played a major role in economic land concessions.  
+
+## armi ####
+
+# Plots
+str(dat_sub)
+
+# for_cov_roc ~ armi
+plot(dat_sub$armi, dat_sub$for_cov_roc)
+
+# log(for_cov_roc) ~ armi
+plot(dat_sub$armi, log(dat_sub$for_cov_roc))
+
+# There appears to be heteroscedasticity.  I may have to try quantile regression
+
+# First let's try a linear model with log-transformed y
+
+clm1 <- lm(log(for_cov_roc) ~ armi, data = dat_sub)
+par(mfrow=c(2,2))
+plot(clm1)
+summary(clm1)
+par(mfrow=c(1,1))
+acf(residuals(clm1))
+
+# Lets plot the fit
+
+newxvars <- seq(48,122, length=100)
+newyvars <- exp(predict(clm1, newdata = list(armi=newx), int = "c"))
+
+# new dataframe
+df.newvars <- data_frame(newx = newxvars,
+                         newy = as.numeric(newyvars[,"fit"]),
+                         newupr = as.numeric(newyvars[,"upr"]),
+                         newlwr = as.numeric(newyvars[,"lwr"]))
+
+# Plot
+p1 <- ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
+  geom_point(data = dat_sub, aes(x = armi,y = for_cov_roc))+
+  labs(x = "Agricultural Raw Materials Index",
+       y = "Forest cover % change")+
+    theme_bw()+
+  theme(legend.position="none")
+
+# quickly try a linear model with no transformation
+clm2 <- lm(for_cov_roc ~ armi, data = dat_sub)
+ggplot(dat_sub, aes(x=armi, y=for_cov_roc)) + geom_point() + geom_smooth(method = "lm")
+summary(clm2)
+
+
+# Now let's try quantile regression model
+
+cqm1 <- rq(log(for_cov_roc) ~ armi, data = dat_sub, tau = seq(0.05,0.95,by=0.05))
+quantplot <- summary(cqm1)
+plot(quantplot, xlim=c(48,122), ylim=c(-0.05,0))
+
+qs <- 1:9/10
+ggplot(dat_sub, aes(x=armi, y=for_cov_roc))+
+  geom_point()+
+  geom_quantile(quantiles=qs)
+
+# Ok I don't actually think I need quantile regression.  The heteroscedasicity only exists in the log-transformed plot.  
+
+# I will try a non-linear model
+
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+cnlm1 <- nls(for_cov_roc ~ a*exp(-b*armi), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(cnlm1))
+summary(cnlm1)
+
+
+# Plot model fit (using original data)
+p2 <- cnlm1 %>%
+  augment() %>%
+  ggplot(., aes(x = armi, y = for_cov_roc)) +
+  geom_point(size = 1.5) +
+  geom_line(aes(x = armi, y = .fitted),size=1, color="#000099") +
+  theme_bw() +
+  labs(x = "Agricultural Raw Materials Index",
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# Create new dataframe for predicting 
+cnlm1_newx <- data.frame(armi = seq(48,122,length=100))
+cnlm1_newy <- predictNLS(cnlm1, newdata=cnlm1_newx, interval = "confidence", alpha = 0.05)
+head(cnlm1_newy$summary)
+
+# Plot model fit using new data
+lwr_raw <- cnlm1_newy$summary[,10]
+upr_raw <- cnlm1_newy$summary[,11]
+
+cnlm1_newdf <- data.frame(newx = cnlm1_newx,
+                          newy = cnlm1_newy$summary[,7],
+                          lwr_raw = lwr_raw,
+                          upr_raw = upr_raw)
+cnlm1_newdf<- cnlm1_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+
+p3 <- ggplot(cnlm1_newdf, aes(x=armi, y=newy))+
+   geom_line(size=1, color="#000099")+
+  geom_point(data=dat_sub, aes(x=armi, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
+  theme_bw() +
+  labs(x = "Agricultural Raw Materials Index",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+plot_grid(p1,p2,p3)
+AIC(clm1)
+AIC(cnlm1)
