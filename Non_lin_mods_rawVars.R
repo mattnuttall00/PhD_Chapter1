@@ -708,3 +708,99 @@ p3 <- ggplot(cnlm1_newdf, aes(x=armi, y=newy))+
 plot_grid(p1,p2,p3)
 AIC(clm1)
 AIC(cnlm1)
+
+
+## rice_med ####
+
+par(mfrow=c(1,1))
+plot(dat_sub$rice_med, dat_sub$for_cov_roc)
+plot(dat_sub$rice_med, log(dat_sub$for_cov_roc))
+
+# log-transformed y helps to linearise
+
+# linear model
+clm3 <- lm(log(for_cov_roc) ~ rice_med, data=dat_sub)
+par(mfrow=c(2,2))
+plot(clm3)
+summary(clm3)
+acf(residuals(clm3))
+
+# Lets plot the fit
+
+newxvars <- seq(171,647, length=100)
+newyvars <- exp(predict(clm3, newdata = list(rice_med=newx), int = "c"))
+
+# new dataframe
+df.newvars <- data_frame(newx = newxvars,
+                         newy = as.numeric(newyvars[,"fit"]),
+                         newupr = as.numeric(newyvars[,"upr"]),
+                         newlwr = as.numeric(newyvars[,"lwr"]))
+
+# Plot
+ggplot(df.newvars, aes(x = newx, y = newy)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
+  geom_point(data = dat_sub, aes(x = rice_med,y = for_cov_roc))+
+  labs(x = "Price of rice",
+       y = "Forest cover % change")+
+    theme_bw()+
+  theme(legend.position="none")
+
+# model with log(y) is very poor
+
+# plot linear model (with no log-transformation)
+ggplot(dat_sub, aes(x=rice_med, y=for_cov_roc))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+clm4 <- lm(for_cov_roc ~ rice_med, data=dat_sub)
+summary(clm4)
+
+# Try non-linear model
+
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+a <- 0.1
+b <- -0.001*log(2)/a
+
+cnlm2 <- nls(for_cov_roc ~ a*exp(-b*rice_med), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(cnlm1))
+summary(cnlm1)
+
+
+# Plot model fit (using original data)
+cnlm2 %>%
+  augment() %>%
+  ggplot(., aes(x = rice_med, y = for_cov_roc)) +
+  geom_point(size = 1.5) +
+  geom_line(aes(x = rice_med, y = .fitted),size=1, color="#000099") +
+  theme_bw() +
+  labs(x = "Rice price",
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# Create new dataframe for predicting 
+cnlm2_newx <- data.frame(rice_med = seq(171,647,length=100))
+cnlm2_newy <- predictNLS(cnlm2, newdata=cnlm2_newx, interval = "confidence", alpha = 0.05)
+head(cnlm2_newy$summary)
+
+# Plot model fit using new data
+lwr_raw <- cnlm2_newy$summary[,10]
+upr_raw <- cnlm2_newy$summary[,11]
+
+cnlm2_newdf <- data.frame(newx = cnlm2_newx,
+                          newy = cnlm2_newy$summary[,7],
+                          lwr_raw = lwr_raw,
+                          upr_raw = upr_raw)
+cnlm1_newdf<- cnlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+
+ggplot(cnlm2_newdf, aes(x=rice_med, y=newy))+
+   geom_line(size=1, color="#000099")+
+  geom_point(data=dat_sub, aes(x=rice_med, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
+  theme_bw() +
+  labs(x = "Rice price",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
