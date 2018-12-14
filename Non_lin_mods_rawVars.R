@@ -746,7 +746,7 @@ ggplot(df.newvars, aes(x = newx, y = newy)) +
     theme_bw()+
   theme(legend.position="none")
 
-# model with log(y) is very poor
+# model with log(y) is very poor (not sure it's working properly)
 
 # plot linear model (with no log-transformation)
 ggplot(dat_sub, aes(x=rice_med, y=for_cov_roc))+
@@ -763,6 +763,7 @@ b <- -0.0005*log(2)/a
 
 a <- 0.1
 b <- -0.001*log(2)/a
+# changing staring values don't make a difference
 
 cnlm2 <- nls(for_cov_roc ~ a*exp(-b*rice_med), start = list(a=a, b=b), data = dat_sub)
 par(mfrow=c(2,2))
@@ -771,7 +772,7 @@ summary(cnlm1)
 
 
 # Plot model fit (using original data)
-cnlm2 %>%
+p4 <- cnlm2 %>%
   augment() %>%
   ggplot(., aes(x = rice_med, y = for_cov_roc)) +
   geom_point(size = 1.5) +
@@ -794,13 +795,93 @@ cnlm2_newdf <- data.frame(newx = cnlm2_newx,
                           newy = cnlm2_newy$summary[,7],
                           lwr_raw = lwr_raw,
                           upr_raw = upr_raw)
-cnlm1_newdf<- cnlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+cnlm2_newdf<- cnlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
 
-ggplot(cnlm2_newdf, aes(x=rice_med, y=newy))+
-   geom_line(size=1, color="#000099")+
+# plot
+p5 <- ggplot(cnlm2_newdf, aes(x=rice_med, y=newy))+
+  geom_line(size=1, color="#000099")+
   geom_point(data=dat_sub, aes(x=rice_med, y=for_cov_roc))+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
   theme_bw() +
   labs(x = "Rice price",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+plot_grid(p4,p5)
+
+## sug_med ####
+
+plot(dat_sub$sug_med, dat_sub$for_cov_roc)
+plot(dat_sub$sug_med, log(dat_sub$for_cov_roc))
+
+# start with linear model with log(y)
+clm5 <- lm(log(for_cov_roc) ~ sug_med, data=dat_sub)
+par(mfrow=c(2,2))
+plot(clm4)
+summary(clm5)
+acf(residuals(clm5))
+
+# predict and plot
+newsugx <- seq(138.33,573.33, length=100)
+newsugy <- exp(predict(clm5, newdata = list(sug_med=newsugx), int="c"))
+head(newsugy)
+
+sugpred_df <- data.frame(sug_med = newsugx,
+                         newy = newsugy[,1],
+                         lwr = newsugy[,2],
+                         upr = newsugy[,3])
+head(sugpred_df)
+
+p5 <- ggplot(sugpred_df,aes(x=sug_med, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
+  geom_point(data=dat_sub, aes(x=sug_med, y=for_cov_roc))
+
+# Try non-linear model
+
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+cnlm3 <- nls(for_cov_roc ~ a*exp(-b*sug_med), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(cnlm1))
+summary(cnlm1)
+
+
+# Plot model fit (using original data)
+p6 <- cnlm3 %>%
+  augment() %>%
+  ggplot(., aes(x = sug_med, y = for_cov_roc)) +
+  geom_point(size = 1.5) +
+  geom_line(aes(x = sug_med, y = .fitted),size=1, color="#000099") +
+  theme_bw() +
+  labs(x = "Sugar price",
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+plot_grid(p5,p6)
+
+# Create new dataframe for predicting 
+cnlm3_newx <- data.frame(sug_med = seq(138.33,573.33,length=100))
+cnlm3_newy <- predictNLS(cnlm3, newdata=cnlm3_newx, interval = "confidence", alpha = 0.05)
+head(cnlm3_newy$summary)
+
+# Plot model fit using new data
+lwr_raw <- cnlm3_newy$summary[,12]
+upr_raw <- cnlm3_newy$summary[,12]
+
+cnlm3_newdf <- data.frame(newx = cnlm3_newx,
+                          newy = cnlm3_newy$summary[,7],
+                          lwr_raw = lwr_raw,
+                          upr_raw = upr_raw)
+cnlm3_newdf<- cnlm3_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+
+# plot
+ggplot(cnlm3_newdf, aes(x=sug_med, y=newy))+
+  geom_line(size=1, color="#000099")+
+  geom_point(data=dat_sub, aes(x=sug_med, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
+  theme_bw() +
+  labs(x = "Sugar price",
        y = "Rate of forest cover loss (%)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
