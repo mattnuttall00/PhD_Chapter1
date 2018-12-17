@@ -867,7 +867,7 @@ cnlm3_newy <- predictNLS(cnlm3, newdata=cnlm3_newx, interval = "confidence", alp
 head(cnlm3_newy$summary)
 
 # Plot model fit using new data
-lwr_raw <- cnlm3_newy$summary[,12]
+lwr_raw <- cnlm3_newy$summary[,11]
 upr_raw <- cnlm3_newy$summary[,12]
 
 cnlm3_newdf <- data.frame(newx = cnlm3_newx,
@@ -905,6 +905,60 @@ acf(residuals(clm6))
 
 # predictions and plotting
 newrubx <- seq(585,4830,length=100)
-newruby <- exp(predict(clm6, newdata = list(rub_med=newrubx, int="c")))
+newruby <- exp(predict(clm6, newdata = list(rub_med=newrubx), int = "c"))
 rubpred_df <- data.frame(rub_med = newrubx,
-                         newy = newruby)
+                         newy = newruby[,"fit"],
+                         upr = newruby[,"upr"],
+                         lwr = newruby[,"lwr"])
+
+ggplot(rubpred_df,aes(x=rub_med, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
+  geom_point(data=dat_sub, aes(x=rub_med, y=for_cov_roc))
+
+# Try non-linear model
+
+a <- 1.1
+b <- -0.0005*log(2)/a
+
+cnlm4 <- nls(for_cov_roc ~ a*exp(-b*rub_med), start = list(a=a, b=b), data = dat_sub)
+par(mfrow=c(2,2))
+plot(nlsResiduals(cnlm4))
+summary(cnlm4)
+
+
+# Plot model fit (using original data)
+cnlm4 %>%
+  augment() %>%
+  ggplot(., aes(x = rub_med, y = for_cov_roc)) +
+  geom_point(size = 1.5) +
+  geom_line(aes(x = rub_med, y = .fitted),size=1, color="#000099") +
+  theme_bw() +
+  labs(x = "Rubber price",
+       y = "Forest cover % change")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# Create new dataframe for predicting 
+cnlm4_newx <- data.frame(rub_med = seq(585,4830,length=100))
+cnlm4_newy <- predictNLS(cnlm4, newdata=cnlm4_newx, interval = "confidence", alpha = 0.05)
+head(cnlm4_newy$summary)
+
+# Plot model fit using new data
+lwr_raw <- cnlm4_newy$summary[,11]
+upr_raw <- cnlm4_newy$summary[,12]
+
+cnlm4_newdf <- data.frame(newx = cnlm4_newx,
+                          newy = cnlm4_newy$summary[,7],
+                          lwr_raw = lwr_raw,
+                          upr_raw = upr_raw)
+cnlm4_newdf<- cnlm4_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
+
+# plot
+ggplot(cnlm4_newdf, aes(x=rub_med, y=newy))+
+  geom_line(size=1, color="#000099")+
+  geom_point(data=dat_sub, aes(x=rub_med, y=for_cov_roc))+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
+  theme_bw() +
+  labs(x = "Rubber price",
+       y = "Rate of forest cover loss (%)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
