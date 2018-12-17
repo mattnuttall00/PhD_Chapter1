@@ -11,6 +11,8 @@ library('broom')
 library('export')
 library('propagate')
 library('quantreg')
+library('gridExtra')
+library('grid')
 
 ### Load data ####
 dat_econ <- read_csv("macroeconomic_vars.csv")
@@ -359,8 +361,8 @@ enlm2 %>%
 graph2ppt(file="fdi_plot", width=8, height=8)
 
 # Plot model fit using new data
-lwr_raw <- enlm2_newy$summary[,10]
-upr_raw <- enlm2_newy$summary[,11]
+lwr_raw <- enlm2_newy$summary[,11]
+upr_raw <- enlm2_newy$summary[,12]
 
 enlm2_newdf <- data.frame(newx = enlm2_newx,
                           newy = enlm2_newy$summary[,7],
@@ -368,13 +370,13 @@ enlm2_newdf <- data.frame(newx = enlm2_newx,
                           upr_raw = upr_raw)
 enlm2_newdf<- enlm2_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
 
-ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
+fdiplot <- ggplot(enlm2_newdf, aes(x=fdi, y=newy))+
    geom_line(size=1, color="#000099")+
   geom_point(data=dat_sub, aes(x=fdi, y=for_cov_roc))+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
   theme_bw() +
   labs(x = "Direct Foreign Investment (USD Millions)",
-       y = "Rate of forest cover loss (%)")+
+       y = "")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
 
@@ -417,19 +419,19 @@ summary(elm3)
 
 # Lets look at the model fit
 par(mfrow=c(1,1))
-newxvars <- seq(22.7,44.4, length = 100)
-newyvars <- predict(elm3, newdata = list(agr_gdp=newxvars), int = "c")
-str(newyvars)
-head(newyvars)
+elm3_newxvars <- seq(22.7,44.4, length = 100)
+elm3_newyvars <- predict(elm3, newdata = list(agr_gdp=elm3_newxvars), int = "c")
+str(elm3_newyvars)
+head(elm3_newyvars)
 
 # new dataframe
-df.newvars <- data_frame(newx = newxvars,
-                         newy = as.numeric(newyvars[,"fit"]),
-                         newupr = as.numeric(newyvars[,"upr"]),
-                         newlwr = as.numeric(newyvars[,"lwr"]))
+agr_gdp_newvars <- data_frame(newx = elm3_newxvars,
+                         newy = as.numeric(elm3_newyvars[,"fit"]),
+                         newupr = as.numeric(elm3_newyvars[,"upr"]),
+                         newlwr = as.numeric(elm3_newyvars[,"lwr"]))
 
 # Plot
-ggplot(df.newvars, aes(x = newx, y = newy)) +
+ggplot(agr_gdp_newvars, aes(x = newx, y = newy)) +
   geom_line() +
   geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
   geom_point(data = dat_sub, aes(x = agr_gdp,y = for_cov_roc))+
@@ -446,20 +448,21 @@ plot(elm4)
 hist(elm2$residuals)
 summary(elm4)
 acf(residuals(elm4))
+pacf(residuals(elm4))
 # diagnostic plots suggest log-transforming Y makes it more non-linear
 
 # Lets plot the model fit
-elm4 %>%
+agr_gdp_plot <- elm4 %>%
   augment() %>%
   ggplot(., aes(x = agr_gdp, y = exp(log.for_cov_roc.))) +
   geom_point(size = 1) +
   geom_line(aes(x = agr_gdp, y = exp(.fitted)),size=1, color="#000099") +
   geom_ribbon(aes(ymin = exp(.fitted - (1.96*.se.fit)),
                   ymax = exp(.fitted + (1.96*.se.fit))),
-              alpha = 0.5,fill="#000099") +
+              alpha = 0.5) +
   theme_bw() +
   labs(x = "Agricultural contribution (%) to GDP",
-       y = "Forest cover % change")+
+       y = "")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 graph2ppt(file="fdi_plot", width=8, height=8)
@@ -523,24 +526,24 @@ acf(residuals(elm5))
 # doesnt look linear
 
 # look at model fit
-newxvars <- seq(15,30.7, length = 100)
-newyvars <- predict(elm5, newdata = list(ind_gdp=newxvars), int = "c")
+inf_gdp_newx <- seq(15,30.7, length = 100)
+inf_gdp_newy <- predict(elm5, newdata = list(ind_gdp=inf_gdp_newx), int = "c")
 str(newyvars)
 head(newyvars)
 
 # new dataframe
-df.newvars <- data_frame(newx = newxvars,
+ind_gdp_df_newvars <- data_frame(newx = inf_gdp_newx,
                          newy = as.numeric(newyvars[,"fit"]),
-                         newupr = as.numeric(newyvars[,"upr"]),
-                         newlwr = as.numeric(newyvars[,"lwr"]))
+                         newupr = as.numeric(inf_gdp_newy[,"upr"]),
+                         newlwr = as.numeric(inf_gdp_newy[,"lwr"]))
 
 # Plot
-ggplot(df.newvars, aes(x = newx, y = newy)) +
+ind_gdp_plot <- ggplot(ind_gdp_df_newvars, aes(x = newx, y = newy)) +
   geom_line(size=1, color="#000099") +
-  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25), fill="#000099")+
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.5))+
   geom_point(data = dat_sub, aes(x = ind_gdp,y = for_cov_roc))+
-  labs(x = "Industrial contribution to GDP",
-       y = "Forest cover % change")+
+  labs(x = "Industrial contribution (%) to GDP",
+       y = "")+
     theme_bw()+
   theme(legend.position="none")+
    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -621,24 +624,25 @@ acf(residuals(clm1))
 
 # Lets plot the fit
 
-newxvars <- seq(48,122, length=100)
-newyvars <- exp(predict(clm1, newdata = list(armi=newx), int = "c"))
+armi_newxvars <- seq(48,122, length=100)
+armi_newyvars <- exp(predict(clm1, newdata = list(armi=armi_newxvars), int = "c"))
 
 # new dataframe
-df.newvars <- data_frame(newx = newxvars,
-                         newy = as.numeric(newyvars[,"fit"]),
-                         newupr = as.numeric(newyvars[,"upr"]),
-                         newlwr = as.numeric(newyvars[,"lwr"]))
+armi_newdf <- data_frame(newx = armi_newxvars,
+                         newy = as.numeric(armi_newyvars[,"fit"]),
+                         newupr = as.numeric(armi_newyvars[,"upr"]),
+                         newlwr = as.numeric(armi_newyvars[,"lwr"]))
 
 # Plot
-p1 <- ggplot(df.newvars, aes(x = newx, y = newy)) +
-  geom_line() +
+armiplot <- ggplot(armi_newdf, aes(x = newx, y = newy)) +
+  geom_line(size=1, color="#000099") +
   geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
   geom_point(data = dat_sub, aes(x = armi,y = for_cov_roc))+
   labs(x = "Agricultural Raw Materials Index",
-       y = "Forest cover % change")+
-    theme_bw()+
-  theme(legend.position="none")
+       y = "")+
+  theme_bw()+
+  theme(legend.position="none")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 # quickly try a linear model with no transformation
 clm2 <- lm(for_cov_roc ~ armi, data = dat_sub)
@@ -687,8 +691,8 @@ cnlm1_newy <- predictNLS(cnlm1, newdata=cnlm1_newx, interval = "confidence", alp
 head(cnlm1_newy$summary)
 
 # Plot model fit using new data
-lwr_raw <- cnlm1_newy$summary[,10]
-upr_raw <- cnlm1_newy$summary[,11]
+lwr_raw <- cnlm1_newy$summary[,11]
+upr_raw <- cnlm1_newy$summary[,12]
 
 cnlm1_newdf <- data.frame(newx = cnlm1_newx,
                           newy = cnlm1_newy$summary[,7],
@@ -727,26 +731,25 @@ acf(residuals(clm3))
 
 # Lets plot the fit
 
-newxvars <- seq(171,647, length=100)
-newyvars <- exp(predict(clm3, newdata = list(rice_med=newx), int = "c"))
+rice_med_newx <- seq(171,647, length=100)
+rice_med_newy <- exp(predict(clm3, newdata = list(rice_med=rice_med_newx), int = "c"))
 
 # new dataframe
-df.newvars <- data_frame(newx = newxvars,
-                         newy = as.numeric(newyvars[,"fit"]),
-                         newupr = as.numeric(newyvars[,"upr"]),
-                         newlwr = as.numeric(newyvars[,"lwr"]))
+rice_med_df_newvars <- data_frame(newx = rice_med_newx,
+                         newy = as.numeric(rice_med_newy[,"fit"]),
+                         newupr = as.numeric(rice_med_newy[,"upr"]),
+                         newlwr = as.numeric(rice_med_newy[,"lwr"]))
 
 # Plot
-ggplot(df.newvars, aes(x = newx, y = newy)) +
-  geom_line() +
+rice_med_plot <- ggplot(rice_med_df_newvars, aes(x = newx, y = newy)) +
+  geom_line(size=1, color="#000099") +
   geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
   geom_point(data = dat_sub, aes(x = rice_med,y = for_cov_roc))+
-  labs(x = "Price of rice",
-       y = "Forest cover % change")+
+  labs(x = "Rice price (USD/ton)",
+       y = "")+
     theme_bw()+
-  theme(legend.position="none")
-
-# model with log(y) is very poor (not sure it's working properly)
+  theme(legend.position="none")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 # plot linear model (with no log-transformation)
 ggplot(dat_sub, aes(x=rice_med, y=for_cov_roc))+
@@ -788,8 +791,8 @@ cnlm2_newy <- predictNLS(cnlm2, newdata=cnlm2_newx, interval = "confidence", alp
 head(cnlm2_newy$summary)
 
 # Plot model fit using new data
-lwr_raw <- cnlm2_newy$summary[,10]
-upr_raw <- cnlm2_newy$summary[,11]
+lwr_raw <- cnlm2_newy$summary[,11]
+upr_raw <- cnlm2_newy$summary[,12]
 
 cnlm2_newdf <- data.frame(newx = cnlm2_newx,
                           newy = cnlm2_newy$summary[,7],
@@ -832,10 +835,13 @@ sugpred_df <- data.frame(sug_med = newsugx,
                          upr = newsugy[,3])
 head(sugpred_df)
 
-p5 <- ggplot(sugpred_df,aes(x=sug_med, y=newy))+
-  geom_line()+
+sug_med_plot <- ggplot(sugpred_df,aes(x=sug_med, y=newy))+
+  geom_line(size=1, color="#000099")+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
-  geom_point(data=dat_sub, aes(x=sug_med, y=for_cov_roc))
+  geom_point(data=dat_sub, aes(x=sug_med, y=for_cov_roc))+
+  theme_bw()+
+  labs(x="Sugar price (USD/ton)", y="")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 # Try non-linear model
 
@@ -954,13 +960,13 @@ cnlm4_newdf <- data.frame(newx = cnlm4_newx,
 cnlm4_newdf<- cnlm4_newdf %>% mutate(upr = newy+upr_raw) %>% mutate(lwr = newy -lwr_raw)
 
 # plot
-ggplot(cnlm4_newdf, aes(x=rub_med, y=newy))+
+rubplot <- ggplot(cnlm4_newdf, aes(x=rub_med, y=newy))+
   geom_line(size=1, color="#000099")+
   geom_point(data=dat_sub, aes(x=rub_med, y=for_cov_roc))+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha = 0.1), show.legend = FALSE)+
   theme_bw() +
-  labs(x = "Rubber price",
-       y = "Rate of forest cover loss (%)")+
+  labs(x = "Rubber price (USD/ton)",
+       y = "")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
@@ -993,11 +999,11 @@ prodrice_df <- data.frame(prod_rice = newx,
                           lwr = newy[,"lwr"],
                           upr = newy[,"upr"])
 
-ggplot(prodrice_df,aes(x=prod_rice, y=newy))+
-  geom_line()+
+prod_rice_plot <- ggplot(prodrice_df,aes(x=prod_rice, y=newy))+
+  geom_line(size=1, color="#000099")+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
   geom_point(data=dat_sub, aes(x=prod_rice, y=for_cov_roc))+
-  labs(x="Producer price - rice (USD/Ton)", y="Rate of forest loss (%)")
+  labs(x="Producer price - rice (USD/Ton)", y="")
 
 ## prod_corn ####
 
@@ -1066,8 +1072,48 @@ prodsug_df <- data.frame(prod_sug = newx,
                           upr = newy[,"upr"])
 
 par(mfrow=c(1,1))
-ggplot(prodsug_df,aes(x=prod_sug, y=newy))+
-  geom_line()+
+prod_sug_plot <- ggplot(prodsug_df,aes(x=prod_sug, y=newy))+
+  geom_line(size=1, color="#000099")+
   geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
   geom_point(data=dat_sub, aes(x=prod_sug, y=for_cov_roc))+
-  labs(x="Producer price - sugar (USD/Ton)", y="Rate of forest loss (%)")
+  labs(x="Producer price - sugar (USD/Ton)", y="")
+
+
+### mass plotting ####
+
+# fdi - enlm2, fdiplot
+# agr_gdp - elm4, agr_gdp_plot
+# ind_gdp - elm5, ind_gdp_plot
+
+# armi - clm1, armiplot
+# rub_med - cnlm4, rubplot
+# rice_med - clm3, rice_med_plot
+# sug_med - clm5, sug_med_plot
+
+# prod_rice - plm1, prod_rice_plot
+# prod_sug - plm3, prod_sug_plot
+
+
+econ_plots <- grid.arrange(
+                arrangeGrob(agr_gdp_plot,ind_gdp_plot,fdiplot, ncol=2, 
+                  left = textGrob("Rate of forest loss (%)", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2doc(file="econ_plots", width=8, height=8)
+
+comm_plots <- grid.arrange(
+                arrangeGrob(armiplot,rubplot,rice_med_plot,sug_med_plot, ncol=2, 
+                  left = textGrob("Rate of forest loss (%)", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2doc(file="comm_plots", width=8, height=8)
+
+prod_plots <- grid.arrange(
+                arrangeGrob(prod_rice_plot,prod_sug_plot, ncol=1, 
+                  left = textGrob("Rate of forest loss (%)", rot = 90,
+                              gp=gpar(fontface="bold", fontsize=15)))
+)
+
+graph2doc(file="prod_plots", width=8, height=8)
