@@ -962,3 +962,112 @@ ggplot(cnlm4_newdf, aes(x=rub_med, y=newy))+
   labs(x = "Rubber price",
        y = "Rate of forest cover loss (%)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
+### Modelling producer price variables ####
+## prod_rice ####
+
+plot(dat_sub$prod_rice, dat_sub$for_cov_roc)
+plot(dat_sub$prod_rice, log(dat_sub$for_cov_roc))
+
+ggplot(dat_sub, aes(x=prod_rice, y=for_cov_roc))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+# model with log(y)
+
+plm1 <- lm(log(for_cov_roc) ~ prod_rice, data = dat_sub)
+par(mfrow=c(2,2))
+plot(plm1)    
+summary(plm1)
+
+# predict and plot
+newx <- seq(96,270,length=100)
+newy <- exp(predict(plm1, newdata=list(prod_rice=newx), int="c"))
+head(newy)
+
+
+prodrice_df <- data.frame(prod_rice = newx,
+                          newy = newy[,"fit"],
+                          lwr = newy[,"lwr"],
+                          upr = newy[,"upr"])
+
+ggplot(prodrice_df,aes(x=prod_rice, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
+  geom_point(data=dat_sub, aes(x=prod_rice, y=for_cov_roc))+
+  labs(x="Producer price - rice (USD/Ton)", y="Rate of forest loss (%)")
+
+## prod_corn ####
+
+plot(dat_sub$prod_corn, dat_sub$for_cov_roc)
+plot(dat_sub$prod_corn, log(dat_sub$for_cov_roc))
+
+ggplot(dat_sub, aes(x=prod_corn, y=for_cov_roc))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+# model with log(y)
+
+plm2 <- lm(log(for_cov_roc) ~ prod_corn, data = dat_sub)
+par(mfrow=c(2,2))
+plot(plm2)    
+summary(plm2)
+acf(residuals(plm2))
+pacf(residuals(plm2))
+
+# predict and plot
+newx <- seq(74,316,length=100)
+newy <- exp(predict(plm2, newdata=list(prod_corn=newx), int="c"))
+head(newy)
+
+
+prodcorn_df <- data.frame(prod_corn = newx,
+                          newy = newy[,"fit"],
+                          lwr = newy[,"lwr"],
+                          upr = newy[,"upr"])
+
+par(mfrow=c(1,1))
+ggplot(prodcorn_df,aes(x=prod_corn, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
+  geom_point(data=dat_sub, aes(x=prod_corn, y=for_cov_roc))+
+  labs(x="Producer price - corn (USD/Ton)", y="Rate of forest loss (%)")
+
+
+## prod_sug ####
+
+plot(dat_sub$prod_sug, dat_sub$for_cov_roc)
+plot(dat_sub$prod_sug, log(dat_sub$for_cov_roc))
+
+ggplot(dat_sub, aes(x=prod_sug, y=for_cov_roc))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+# model with log(y)
+
+plm3 <- lm(log(for_cov_roc) ~ prod_sug, data = dat_sub)
+par(mfrow=c(2,2))
+plot(plm3)    
+summary(plm3)
+acf(residuals(plm3))
+pacf(residuals(plm3))
+
+# predict and plot
+newx <- seq(1192,3715,length=100)
+newy <- exp(predict(plm3, newdata=list(prod_sug=newx), int="c"))
+head(newy)
+
+
+prodsug_df <- data.frame(prod_sug = newx,
+                          newy = newy[,"fit"],
+                          lwr = newy[,"lwr"],
+                          upr = newy[,"upr"])
+
+par(mfrow=c(1,1))
+ggplot(prodsug_df,aes(x=prod_sug, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.25), show.legend = FALSE)+
+  geom_point(data=dat_sub, aes(x=prod_sug, y=for_cov_roc))+
+  labs(x="Producer price - sugar (USD/Ton)", y="Rate of forest loss (%)")
