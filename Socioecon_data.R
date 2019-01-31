@@ -2966,8 +2966,16 @@ plot(communeSHP)
 
 # Ensuring the number of polygons matches the number of rows in dat_master otherwise when you try to get the eigenvectors during the modeling below it throws up an error about x and/or y not matching. For some reason there are 761 points in comm_sp but communeSHP has 768.  In GIS I have identified the communes which do not appear in com_sp.  I will remove them from communeSHP
 
-st_geometry_type(communeSHP)
-communeSHP <- communeSHP %>% filter(KHUM50_ID != c(21203,150602,150604,150603,150605,150601,21206))
+# can't get it to work with multiple features so having to do them one by one...
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 21206,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 150602,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 150604,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 150603,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 60104,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 150605,]
+communeSHP <- communeSHP[communeSHP@data$KHUM50_ID != 150601,]
+
+str(communeSHP@data)
 
 # Neighbour analysis
 neighpoly <- poly2nb(communeSHP)
@@ -3002,7 +3010,7 @@ summary(glm.modDem1)
 
 # Get eigenvectors
 me.modDem1 <- ME(perc_change_bin ~ tot_pop * Prop_Indigenous, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha=0.4)
 
 ## Spatial model 1
 sp.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous + fitted(me.modDem1), 
