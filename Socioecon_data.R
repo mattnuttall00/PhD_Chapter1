@@ -4,7 +4,7 @@
 library('cowplot')
 library('tidyverse')
 
-dat <- read.csv("Socioeconomic_variables.csv")
+dat <- read.csv("Socioeconomic_variables_2010.csv")
 commDat <- read.csv("commGIS.csv")
 
 
@@ -1375,7 +1375,7 @@ ggplot(dat_master, aes(land_confl))+
   geom_histogram()+
   facet_wrap(~Province)
 
-# THere are a few provinces with a handful of outliers, but I am inclined to believe these, as the numbers are not beyond what I would expect.  Provinces are: Banteay Meanchey, Battambang, Kampot, Kracheh, Pailin, Pursat, and Siem Reap.  
+# There are a few provinces with a handful of outliers, but I am inclined to believe these, as the numbers are not beyond what I would expect.  Provinces are: Banteay Meanchey, Battambang, Kampot, Kracheh, Pailin, Pursat, and Siem Reap.  
 
 ## Pax_migt_in ####
 qplot(dat_master$Pax_migt_in, geom = "histogram")
@@ -1413,7 +1413,7 @@ dat_master %>%
   group_by(CommCode) %>% 
   filter(., F6_24_sch < 0.05) %>% 
   print(width=Inf)
-# Apparently Kaoh Peak commune in Ratankiri, 0% of their 6-24 year olds (male and female) are in school.  THis sounds like a Null response in the date.  THe total population of the commune is nearly 3000, with over 600 families.  That means there MUST be chldren between6 and 24 years old, and some of them must be in school.  Although....the nearest school is 21km away.  ANd the whole commune is indigenous. More than half of adult women are illiterate and nearly half of men are. All families rely on farming as their primary livelihood.  They are 53km from the nearest market. PErhaps it's true?
+# Apparently Kaoh Peak commune in Ratankiri, 0% of their 6-24 year olds (male and female) are in school.  THis sounds like a Null response in the data.  THe total population of the commune is nearly 3000, with over 600 families.  That means there MUST be chldren between6 and 24 years old, and some of them must be in school.  Although....the nearest school is 21km away.  And the whole commune is indigenous. More than half of adult women are illiterate and nearly half of men are. All families rely on farming as their primary livelihood.  They are 53km from the nearest market. Perhaps it's true?
 
 ggplot(dat_master, aes(F6_24_sch))+
   geom_histogram()+
@@ -2061,29 +2061,23 @@ dat_master %>%
 
 # after running above cleaning there are still a few communes with high values, but in the cleaning stage above I decided to leave them as they are for various reasons. I can always remove or edit later. 
 
-#### Plots ----------------------------------------------------------------------------------
-
-# response variable = forest cover % change?  Or absolute amount lost? Do we look at forest loss from 2009-2010, or 2010-2011? Do we look at multiple years?
-
-# Scale of response = commune
-# If there are more than 1 pixels in a commune - 
 
 #### CCI LAND COVER DATA------------------------------------------------------------------------------------------------------
 
 #### Load data ####
 library('tidyverse')
 
-## This is ALL of the data (including communes that start with no forest in 2010)
-LC_dat <- read_csv("CCI_ForCov_Commune.csv")
-str(LC_dat)
+## This is ALL of the data (including communes that start with no forest in 2010). No need to load this anymore
+#LC_dat <- read_csv("CCI_ForCov_Commune.csv")
+#str(LC_dat)
 
 # Change data classes
-LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
-LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
-LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
+#LC_dat$perc_change <- as.numeric(LC_dat$perc_change)
+#LC_dat$perc_change_dir <- as.numeric(LC_dat$perc_change_dir)
+#LC_dat$CODEKHUM <- as.factor(LC_dat$CODEKHUM)
 
 
-### This section below is a result of talking to Nils about how to deal with all of the 0's in percent change.  I have decided I am not interested in Communes that have no forest cover in 2010 (and therefore cannot physically lose any forest between 2010 and 2011).  However, I AM interested in Communes that start with forest cover, but do not lose any between 2010 and 2011.  I have discussed with Nils the idea of using a zero-inflated model, which will deal with all the 0's.  Therefore what I have done with LC_dat1 below is now not appropriate.  
+### This section below is a result of talking to Nils about how to deal with all of the 0's in percent change.  I have decided I am not interested in Communes that have no forest cover in 2010 (and therefore cannot physically lose any forest between 2010 and 2011).  However, I AM interested in Communes that start with forest cover, but do not lose any between 2010 and 2011.  I have discussed with Nils the idea of using a zero-inflated model, which will deal with all the 0's.  Therefore what I have done with LC_dat1 (starting row 2138) below is now not appropriate.  
 
 # Load data that only has forested communes
 LC_dat_forest <- read_csv("CCI_ForCov_Commune_forest.csv")
@@ -2302,7 +2296,7 @@ comm_mismatch
 
 # Lets see how badly the data sets match.  I want to know if all of the communes in LC_dat_forest are in dat_master
 anti_join(LC_dat_forest, dat_master, by="CommCode")
-# There are 37 communes that are in LC_dat_forest but not matched in dat_master.  THis will be because of Commune/CommCode mismatches. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
+# There are 37 communes that are in LC_dat_forest but not matched in dat_master.  This will be because of Commune/CommCode mismatches. I will see if I can use Commune name to find the commune in dat_master.  If I can, I will change the CommCode in dat_master. Best to change it there because in the future I am likely to want to find the commune in GIS, so I need those CommCodes to match.
 
 # Change CommCode to CHARACTER to make editing the values easier
 dat_master$CommCode <- as.character(dat_master$CommCode)
@@ -2663,9 +2657,12 @@ length(LC_dat1$perc_change)
 head(LC_dat1)
 
 
+
 #### MODELLING----------------------------------------------------------------------------------------------------
 
 ## Joining dataframe (for data when percent loss > 0) ####
+
+## This section below is old - from before I used only 2010 forested communes
 
 # Join tables
 dat_vars_forcov <- left_join(dat_master,LC_dat1, by = "CommCode")
@@ -2801,7 +2798,6 @@ p36 <- ggplot(dat_working, aes(x=Pax_migt_in, y=perc_change))+
       geom_point()
 p37 <- ggplot(dat_working, aes(x=Pax_migt_out, y=perc_change))+
       geom_point()
-
 
 plot_grid(p36,p37)
 
@@ -2949,6 +2945,8 @@ library(spdep)
 library(boot)
 library(adespatial)
 library(rgdal)
+library(sf)
+library(raster)
 
 comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")], 
                                   proj4string = 
@@ -2957,7 +2955,7 @@ comm_sp <- SpatialPointsDataFrame(dat_working[c("easting","northing")],
 
 # NOTE I need to use poly2nb function from adespatial, which creates neighbour surface using polygons.  I think I need to use this because my commune centroid points are not equally spaced, and so setting the upper distance bound for dnearneigh() is tricky
 
-# DONT DO THIS EVERY TIME. Export this layer to use to clip boundary_khum.shp to only the communes in dat_working
+# DON'T DO THIS EVERY TIME. Export this layer to use to clip boundary_khum.shp to only the communes in dat_working
 writeOGR(comm_sp, dsn = "H://PhD_Objective1", layer = "comm_sp", driver = "ESRI Shapefile")
 
 # Import commune shapefile
@@ -2966,13 +2964,18 @@ communeSHP <- readOGR(dsn = "C://Users/Matt&Kez/Documents/Matt PhD/PhD_Objective
                       layer = "boundary_khum_forest2010")
 plot(communeSHP)
 
+# Ensuring the number of polygons matches the number of rows in dat_master otherwise when you try to get the eigenvectors during the modeling below it throws up an error about x and/or y not matching. For some reason there are 761 points in comm_sp but communeSHP has 768.  In GIS I have identified the communes which do not appear in com_sp.  I will remove them from communeSHP
+
+st_geometry_type(communeSHP)
+communeSHP <- communeSHP %>% filter(KHUM50_ID != c(21203,150602,150604,150603,150605,150601,21206))
+
 # Neighbour analysis
 neighpoly <- poly2nb(communeSHP)
 plot(neighpoly, coordinates(communeSHP), add = TRUE, pch = 20, col = "red")
 
-# nneighb_5000 <- dnearneigh(comm_sp, 0, 20000)
+#nneighb_5000 <- dnearneigh(comm_sp, 0, 20000)
 nneighb_dists <- nbdists(neighpoly, coordinates(comm_sp))
-nneighb_sims <- lapply(nneighb_dists, function(x) (1-((x/4)^2)) )
+#nneighb_sims <- lapply(nneighb_dists, function(x) (1-((x/4)^2)) )
 ME.listw <- nb2listw(neighpoly, style="B", zero.policy = TRUE)
 
 # I should test to see if adding weights (e.g. glist = nneighb_sims) actually does anything to the model outputs.  I doubt it now that I have used polygons for the neighbour analysis
