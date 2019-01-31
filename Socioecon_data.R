@@ -3010,7 +3010,7 @@ summary(glm.modDem1)
 
 # Get eigenvectors
 me.modDem1 <- ME(perc_change_bin ~ tot_pop * Prop_Indigenous, 
-              data=dat_working, family=binomial, listw = ME.listw, alpha=0.4)
+              data=dat_working, family=binomial, listw = ME.listw, alpha=0.2)
 
 ## Spatial model 1
 sp.modDem1 <- glm(perc_change_bin ~ tot_pop * Prop_Indigenous + fitted(me.modDem1), 
@@ -3027,7 +3027,7 @@ anova(sp.modDem1, glm.modDem1, test="Chisq")
 
 # First get eigenvectors
 me.modDem2 <- ME(perc_change_bin ~ tot_pop + Prop_Indigenous, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modDem2.fit <- fitted(me.modDem2)
 
 sp.modDem2 <- glm(perc_change_bin ~ tot_pop + Prop_Indigenous + as.vector(me.modDem2.fit), 
@@ -3082,7 +3082,7 @@ pop_pred <- data.frame(newx = newtot_pop,
                        upr = ilogit(newypop$fit+1.96*newypop$se.fit),
                        lwr = ilogit(newypop$fit-1.96*newypop$se.fit))
 
-p_tot_pop <- ggplot(pop_pred, aes(x=newx, y=newy))+
+p_tot_pop <-ggplot(pop_pred, aes(x=newx, y=newy))+
             geom_line(size=1, color="#000099")+
             geom_point(data=dat_working, aes(x=tot_pop, y=perc_change_bin), shape=1, size=1)+
             ylim(0,1)+
@@ -3128,6 +3128,7 @@ p_prop_ind <- ggplot(propInd_pred, aes(x=newx, y=newy))+
               labs(x="Proportion indigenous", y="")+
               theme(plot.margin = unit(c(1.5,0,0,0), "cm"))
 
+visreg(sp.modDem2, xvar="Prop_Indigenous", type = "conditional")
 
 demog_plots <- grid.arrange(
                 arrangeGrob(p_tot_pop,p_prop_ind, ncol=1, 
@@ -3172,7 +3173,7 @@ anova(glm.modEdu1,sp.modEdu1, test="Chi")
 
 # get eigenvectors
 me.modEdu2 <- ME(perc_change_bin ~ M6_24_sch + M18_60_ill, 
-              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.05)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modEdu2.fit <- fitted(me.modEdu2)
 
 sp.modEdu2 <- glm(perc_change_bin ~ M6_24_sch + M18_60_ill + as.vector(me.modEdu2.fit), 
@@ -3295,7 +3296,7 @@ summary(glm.modEmp1)
 # get eigenvectors
 me.modEmp1 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
                      Cloth_craft+Trader+serv_prov, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modEmp1.fit <- fitted(me.modEmp1)
 
 sp.modEmp1 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
@@ -3308,7 +3309,7 @@ anova(sp.modEmp1, test="Chisq")
 # spatial model 2 - simplified - remove PropPrimLiveFarm
 me.modEmp2 <- ME(perc_change_bin ~ numPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
                      Cloth_craft+Trader+serv_prov, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modEmp1.fit <- fitted(me.modEmp1)
 
 sp.modEmp2 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man+ntfp_fam+fam_prod+
@@ -3323,7 +3324,7 @@ anova(sp.modEmp1,sp.modEmp2, test = "Chi")
 # spatial model 3 - simplified - remove fam_prod
 me.modEmp3 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+
                      Cloth_craft+Trader+serv_prov, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 
 sp.modEmp3 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+Fish_man+ntfp_fam+
                      Cloth_craft+Trader+serv_prov + fitted(me.modEmp3),
@@ -3338,7 +3339,7 @@ anova(sp.modEmp2,sp.modEmp3, test = "Chi")
 # spatial model 4 - simplified - remove Cloth_craft
 me.modEmp4 <- ME(perc_change_bin ~ numPrimLivFarm+propPrimLivFarm+
                    Fish_man+ntfp_fam+fam_prod+Trader+serv_prov, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 
 sp.modEmp4 <- glm(perc_change_bin ~  numPrimLivFarm+propPrimLivFarm+
                    Fish_man+ntfp_fam+fam_prod+Trader+serv_prov + fitted(me.modEmp4),
@@ -3352,7 +3353,7 @@ anova(sp.modEmp1,sp.modEmp4, test = "Chi")
 # spatial model 5 - simplified - remove propPrimLivFarm, fam_prod, Trader, serv_prod
 me.modEmp5 <- ME(perc_change_bin ~numPrimLivFarm+Fish_man+ntfp_fam+
                      Cloth_craft, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 
 sp.modEmp5 <- glm(perc_change_bin ~  numPrimLivFarm+Fish_man+ntfp_fam+
                      Cloth_craft + fitted(me.modEmp5),
@@ -3366,7 +3367,7 @@ anova(sp.modEmp1,sp.modEmp5, test = "Chi")
 # spatial model 6 - simplified - as above but also exclude ntfp_fam
 me.modEmp6 <- ME(perc_change_bin ~numPrimLivFarm+Fish_man+
                      Cloth_craft, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 
 me.modEmp6.fit <- fitted(me.modEmp6)
 
@@ -3401,9 +3402,14 @@ me.modEmp6.vec <- as.data.frame(me.modEmp6.vec)
 newnumPrimLivFarm <- seq(0,6169,length=100)
 mnFish_man <- rep(mean(dat_working$Fish_man), length=100)
 mnCloth_craft <- rep(mean(dat_working$Cloth_craft), length=100)
+mnvec15 <- rep(mean(me.modEmp6.vec$vec15), length=100)
+mnvec15 <- as.matrix(mnvec15)
+
+# the below vectors (28,16,17) don't occur within sp.modEmp6 so I'm not sure why I have them there below
 mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
 mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
 mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+
 # Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
 mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
 mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
@@ -3411,7 +3417,7 @@ newynumPrimLivFarm <- predict(sp.modEmp6,
                               newdata = list(numPrimLivFarm = newnumPrimLivFarm,
                                              Fish_man = mnFish_man,
                                              Cloth_craft = mnCloth_craft,
-                                             me.modEmp6.fit = mnme.modEmp6.fit),
+                                             me.modEmp6.fit = mnvec15),
                               type = "link", se = TRUE)
 
 par(mfrow=c(1,1))
@@ -3426,9 +3432,12 @@ lines(newnumPrimLivFarm,ilogit(newynumPrimLivFarm$fit-1.96*newynumPrimLivFarm$se
 newFish_man <- seq(0,1727, length=100) 
 mnnumPrimLivFarm <- rep(mean(dat_working$numPrimLivFarm), length=100)
 mnCloth_craft <- rep(mean(dat_working$Cloth_craft), length=100)
+
+# ignore the below
 mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
 mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
 mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+
 # Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
 mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
 mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
@@ -3436,7 +3445,7 @@ newyFish_man <- predict(sp.modEmp6,
                         newdata = list(Fish_man = newFish_man,
                                        numPrimLivFarm = mnnumPrimLivFarm,
                                        Cloth_craft = mnCloth_craft,
-                                       me.modEmp6.fit = mnme.modEmp6.fit),
+                                       me.modEmp6.fit = mnvec15),
                         type = "link", se = TRUE)
 
 par(mfrow=c(1,1))
@@ -3451,9 +3460,12 @@ lines(newFish_man,ilogit(newyFish_man$fit-1.96*newyFish_man$se.fit),lty=3)
 newCloth_craft <- seq(0,0.9, length=100)
 mnFish_man <- rep(mean(dat_working$Fish_man), length=100) 
 mnnumPrimLivFarm <- rep(mean(dat_working$numPrimLivFarm), length=100)
+
+# ignore the below
 mnvec28 <- rep(mean(me.modEmp6.vec$vec28), length=100)
 mnvec16 <- rep(mean(me.modEmp6.vec$vec16), length=100)
 mnvec17 <- rep(mean(me.modEmp6.vec$vec17), length=100)
+
 # Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
 mnvec16.17.28 <- c(mnvec16, mnvec17, mnvec28)
 mnme.modEmp6.fit <- matrix(mnvec16.17.28, ncol = 3, byrow = FALSE)
@@ -3461,7 +3473,7 @@ newyCloth_craft <- predict(sp.modEmp6,
                         newdata = list(Cloth_craft = newCloth_craft,
                                        Fish_man = mnFish_man,
                                        numPrimLivFarm = mnnumPrimLivFarm,
-                                       me.modEmp6.fit = mnme.modEmp6.fit),
+                                       me.modEmp6.fit = mnvec15),
                         type = "link", se = TRUE)
 
 par(mfrow=c(1,1))
@@ -3571,9 +3583,10 @@ anova(sp.modEcon1,sp.modEcon2)
 
 # Spatial model 3 - simplify - exclude pig_fam
 me.modEcon3 <- ME(perc_change_bin ~ Les1_R_Land+No_R_Land+Les1_F_Land, 
-              data=dat_working, family=binomial, listw = ME.listw)
+              data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modEcon3.fit <- fitted(me.modEcon3)
 me.modEcon3.vec <- me.modEcon3$vectors
+me.modEcon3.vec <- as.data.frame(me.modEcon3.vec)
 
 # identifying outlier
 dat_working %>% 
@@ -3592,12 +3605,17 @@ anova(sp.modEcon2,sp.modEcon3, test = "Chisq")
 newLes1_R_Land <- seq(0,0.932,length=100)
 mnNo_R_Land <- rep(mean(dat_working$No_R_Land), length=100)
 mnLes1_F_Land <- rep(mean(dat_working$Les1_F_Land), length=100)
+mnvec15 <- rep(mean(me.modEcon3.vec$vec15), length=100)
+mnvec8 <- rep(mean(me.modEcon3.vec$vec8), length=100)
+
+# Ignore the below (check model to see which vectors)
 #mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
 mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
 mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
-# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
-mnvec16.28 <- c(mnvec16, mnvec28)
-mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+
+# Need to put the eigenvector variables into a 2-column matrix as that's what went into the model
+mnvec15.8 <- c(mnvec15, mnvec8)
+mnme.modEcon3 <- matrix(mnvec15.8, ncol = 2, byrow = FALSE)
 newyLes1_R_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = newLes1_R_Land,
                                                        No_R_Land = mnNo_R_Land,
                                                        Les1_F_Land = mnLes1_F_Land,
@@ -3616,12 +3634,16 @@ lines(newLes1_R_Land,ilogit(newyLes1_R_Land$fit-1.96*newyLes1_R_Land$se.fit),lty
 newNo_R_Land <- seq(0,0.68,length=100)
 mnLes1_R_Land <- rep(mean(dat_working$Les1_R_Land), length=100)
 mnLes1_F_Land <- rep(mean(dat_working$Les1_F_Land), length=100)
+
+# Ignore below
 #mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
 mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
 mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
-# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
+# Need to put the eigenvector variables into a 2-column matrix as that's what went into the model
 mnvec16.28 <- c(mnvec16, mnvec28)
 mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+
+
 newyNo_R_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = mnLes1_R_Land,
                                                        No_R_Land = newNo_R_Land,
                                                        Les1_F_Land = mnLes1_F_Land,
@@ -3634,6 +3656,8 @@ plot(dat_working$No_R_Land, dat_working$perc_change_bin, xlab="Families with no 
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit),lwd=2)
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit+1.96*newyNo_R_Land$se.fit),lty=3)
 lines(newNo_R_Land,ilogit(newyNo_R_Land$fit-1.96*newyNo_R_Land$se.fit),lty=3)
+
+## NEED TO REMOVE OUTLIER
 
 ## ggplot
 
@@ -3679,12 +3703,15 @@ graph2ppt(file="EconSec_plots", width=8, height=8)
 newLes1_F_Land <- seq(0,0.74,length=100)
 mnLes1_R_Land <- rep(mean(dat_working$Les1_R_Land), length=100)
 mnNo_R_Land <- rep(mean(dat_working$No_R_Land), length=100)
+
+# Ignore below
 #mnme.modEcon3 <- rep(mean(me.modEcon3.fit), length=100)
 mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
 mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
 # Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
 mnvec16.28 <- c(mnvec16, mnvec28)
 mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+
 newyLes1_F_Land <- predict(sp.modEcon3, newdata = list(Les1_R_Land = mnLes1_R_Land,
                                                        No_R_Land = mnNo_R_Land,
                                                        Les1_F_Land = newLes1_F_Land,
@@ -3771,7 +3798,7 @@ anova(sp.modSer3, sp.modSer4, test="Chisq")
 
 # Get eigenvectors
 me.modSer5 <- ME(perc_change_bin ~ KM_Market+KM_Comm+wat_safe,
-                 data = dat_working, family = binomial, listw = ME.listw)
+                 data = dat_working, family = binomial, listw = ME.listw, alpha = 0.2)
 me.modSer5.fit <- fitted(me.modSer5)
 
 sp.modSer5 <- glm(perc_change_bin ~ KM_Market+KM_Comm+wat_safe+as.vector(me.modSer5.fit),
@@ -3921,10 +3948,12 @@ summary(sp.modJus1)
 
 # get eigenvectors
 me.modJus2 <- ME(perc_change_bin ~ land_confl, data=dat_working, family=binomial, 
-                listw = ME.listw)
+                listw = ME.listw, alpha = 0.2)
 me.modJus2.fit <- fitted(me.modJus2)
+me.modJus2.vec <- me.modJus2$vectors
+me.modJus2.vec <- as.data.frame(me.modJus2.vec)
 
-sp.modJus2 <- glm(perc_change_bin ~ land_confl+as.vector(me.modJus2.fit), 
+sp.modJus2 <- glm(perc_change_bin ~ land_confl+me.modJus2.fit, 
                   data=dat_working, family=binomial)
 summary(sp.modJus2)
 
@@ -3932,12 +3961,16 @@ summary(sp.modJus2)
 
 # land_confl
 newland_confl <- seq(0,179,length=100)
-mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
+mnvec15 <- rep(mean(me.modJus2.vec$vec15), length=100)
+mnvec7 <- rep(mean(me.modJus2.vec$vec7), length=100)
+
 #mnvec16 <- rep(mean(me.modEcon3.vec$vec16), length=100)
 #mnvec28 <- rep(mean(me.modEcon3.vec$vec28), length=100)
-# Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
-#mnvec16.28 <- c(mnvec16, mnvec28)
-#mnme.modEcon3 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+
+# Need to put the eigenvector variables into a 2-column matrix as that's what went into the model
+mnvec15.7 <- c(mnvec15, mnvec7)
+mnme.modJus2 <- matrix(mnvec15.7, ncol = 2, byrow = FALSE)
+
 newyland_confl <- predict(sp.modJus2, newdata = list(land_confl = newland_confl,
                                                        me.modJus2.fit = mnme.modJus2),
                            type="link", se=TRUE)
@@ -4003,7 +4036,7 @@ summary(sp.modHeal1)
 
 # eigenvectors
 me.modHeal2 <- ME(perc_change_bin ~ KM_Heal_cent, 
-                  data=dat_working, family=binomial, listw = ME.listw)
+                  data=dat_working, family=binomial, listw = ME.listw, alpha = 0.2)
 me.modHeal2.fit <- fitted(me.modHeal2)
 me.modHeal2.vec <- me.modHeal2$vectors
 me.modHeal2.vec <- data.frame(me.modHeal2.vec)
@@ -4017,12 +4050,14 @@ summary(sp.modHeal2)
 
 # KM_Heal_cent
 newKM_Heal_cent <- seq(0,90,length=100)
-#mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
-mnvec16 <- rep(mean(me.modHeal2.vec$vec16), length=100)
-mnvec28 <- rep(mean(me.modHeal2.vec$vec28), length=100)
+mnme.modHeal2 <- rep(mean(me.modHeal2.fit), length=100)
+mnme.modHeal2 <- as.matrix(mnme.modHeal2, ncol=1, byrow=FALSE)
+
+#mnvec16 <- rep(mean(me.modHeal2.vec$vec16), length=100)
+#mnvec28 <- rep(mean(me.modHeal2.vec$vec28), length=100)
 # Need to put the eigenvector variables into a 2-column matrix as that's what went into the model
-mnvec16.28 <- c(mnvec16, mnvec28)
-mnme.modHeal2 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
+#mnvec16.28 <- c(mnvec16, mnvec28)
+#mnme.modHeal2 <- matrix(mnvec16.28, ncol = 2, byrow = FALSE)
 newyKM_Heal_cent <- predict(sp.modHeal2, newdata = list(KM_Heal_cent = newKM_Heal_cent,
                                                        me.modHeal2.fit = mnme.modHeal2),
                            type="link", se=TRUE)
@@ -4092,13 +4127,17 @@ summary(sp.modMig2)
 
 # Pax_migt_in
 newPax_migt_in <- seq(0,4018,length=100)
-#mnme.modJus2 <- rep(mean(me.modJus2.fit), length=100)
-mnvec2 <- rep(mean(me.modMig2.vec$vec2), length=100)
-mnvec28 <- rep(mean(me.modMig2.vec$vec28), length=100)
-mnvec39 <- rep(mean(me.modMig2.vec$vec39), length=100)
+mnme.modMig2 <- rep(mean(me.modMig2.fit), length=100)
+mnme.modMig2 <- as.matrix(mnme.modMig2, ncol=1, byrow=FALSE)
+
+#mnvec2 <- rep(mean(me.modMig2.vec$vec2), length=100)
+#mnvec28 <- rep(mean(me.modMig2.vec$vec28), length=100)
+#mnvec39 <- rep(mean(me.modMig2.vec$vec39), length=100)
+
 # Need to put the eigenvector variables into a 3-column matrix as that's what went into the model
-mnvec2.28.39 <- c(mnvec2,mnvec28,mnvec39)
-mnme.modMig2 <- matrix(mnvec2.28.39, ncol = 3, byrow = FALSE)
+#mnvec2.28.39 <- c(mnvec2,mnvec28,mnvec39)
+#mnme.modMig2 <- matrix(mnvec2.28.39, ncol = 3, byrow = FALSE)
+
 newyPax_migt_in <- predict(sp.modMig2, newdata = list(Pax_migt_in = newPax_migt_in,
                                                        me.modMig2.fit = mnme.modMig2),
                            type="link", se=TRUE)
