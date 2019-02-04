@@ -7,6 +7,8 @@ library('tidyverse')
 dat <- read.csv("Socioeconomic_variables_2010.csv")
 commDat <- read.csv("commGIS.csv")
 
+# Added this during meeting with Nils and Jeroen. Jeroen reckons using the raw difference in forest cover plus an offset (to account for differences in starting forest cover values) is a better option than using proprtion or % change
+rawforest <- read.csv("raw_change_forest.csv", header=TRUE)
 
 #### Grouping and summarising indigenous group variables ####
 # Subset indigenous group columns
