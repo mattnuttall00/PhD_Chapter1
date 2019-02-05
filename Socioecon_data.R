@@ -2097,6 +2097,16 @@ LC_dat_forest_merge %>% filter(duplicated(CommCode) | duplicated(CommCode, fromL
 LC_dat_forest <- distinct(LC_dat_forest_merge, CommCode, .keep_all=TRUE)
 str(LC_dat_forest)
 
+## This section below is the result of the meeting with Nils and Jeroen in January 2019.  I need to get all raw forest cover data (forested only) from 2010 - 2015.  When I say raw I mean the raw amount of forest (in pixels or km2 etc.) rather than % change or rate of change as I was using before.  Jeroen reckons using GLM and raw difference values plus an offset to account for different starting values of forest cover in 2010, is the way to go.
+
+# Load raw data
+dat_raw_10_15 <- read.csv("CCI_ForCov_CommuneForest_2010-15.csv", header = TRUE)
+str(dat_raw_10_15)
+
+# Try to get into tidy format
+dat_rawforest <- gather(dat_raw_10_15, year, diffPix)
+str(dat_rawforest)
+head(dat_rawforest)
 
 ### Identifying the communes that have no forest in 2010 ####
 ## Load raw data
