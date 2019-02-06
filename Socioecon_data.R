@@ -4229,12 +4229,8 @@ hist(dat_rawforest$forestPix)
 pixdiff <- dat_rawforest$pixDiff
 pixdiff <- as.numeric(pixdiff)
 pixdiff <- na.omit(pixdiff)            
-pixdiff <- as.numeric(pixdiff)
 
 hist(pixdiff, breaks = c(-50,0,554))
-max(pixdiff)
-mean(pixdiff)
-median(pixdiff)
 summary(pixdiff)
 
 pixdiff1 <- pixdiff[pixdiff >-5 & pixdiff <5] 
@@ -4244,6 +4240,7 @@ hist(pixdiff1)
 M1 <- lmer(pixDiff ~ 1 + (1|Commune) + (1|Year), offset = forestPix, data=dat_rawforest)
 summary(M1)
 plot(residuals(M1))
+hist(residuals(M1))
 
 # create offset which is raw forest cover difference / original raw forest cover
 dat_rawforest <- dat_rawforest %>% 
