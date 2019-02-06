@@ -4253,3 +4253,4 @@ dat_rawforest <- dat_rawforest %>%
 M2 <- lmer(pixDiff ~ 1 + (1|Commune) + (1|Year), offset = offset, data=dat_rawforest)
 summary(M2)
 plot(residuals(M2))
+hist(residuals(M2))
