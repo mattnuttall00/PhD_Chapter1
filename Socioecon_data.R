@@ -2104,11 +2104,65 @@ str(LC_dat_forest)
 # Load raw data
 dat_raw_10_15 <- read.csv("CCI_ForCov_CommuneForest_2010-15.csv", header = TRUE)
 str(dat_raw_10_15)
+head(dat_raw_10_15)
 
-# Try to get into tidy format
-dat_rawforest <- gather(dat_raw_10_15, year, diffPix)
+# Split into two dfs
+forestPix <- dat_raw_10_15[ ,c(1:3,5,7,9,11,13)]
+str(forestPix)
+
+pixDiff <- dat_raw_10_15[ ,c(1:2,4,6,8,10,12,14)]
+str(pixDiff)
+head(pixDiff)
+
+# Get into tidy format
+
+forestPix <- forestPix %>% 
+  gather(key = Year, value = forestPix, X2010:X2015) 
+str(forestPix)
+head(forestPix)
+
+pixDiff <- pixDiff %>% gather(key = Year, value = pixDiff, diffPix:diffPix.5)
+head(pixDiff)
+str(pixDiff)
+
+# Add year to pixDiff to match forestPix
+years <- c("X2010", "X2011", "X2012", "X2013", "X2014", "X2015")
+years1 <- rep(years, each = 768)
+
+pixDiff$Year <- years1
+str(pixDiff)      
+pixDiff[765:770,]
+forestPix[765:770,]
+
+# Merge forestPix and diffPix
+dat_rawforest <- cbind(forestPix, pixDiff)
 str(dat_rawforest)
 head(dat_rawforest)
+
+# Check the order is correct
+dat_rawforest[1533:1540,]
+
+# Remove duplicate columns
+dat_rawforest <- dat_rawforest[,-c(5:7)]
+
+# Remove "X" in year
+dat_rawforest$Year <- substr(dat_rawforest$Year, start = 2, stop = 5)
+
+# NO NEED TO DO EVERY TIME. Identify missing Commune names from dat_master. I will update Excel sheet so this won't need to be done again
+dat_master %>% filter(CommCode==21206)
+dat_master %>% filter(CommCode==150601)
+dat_master %>% filter(CommCode==150602)
+dat_master %>% filter(CommCode==150603)
+dat_master %>% filter(CommCode==150604)
+dat_master %>% filter(CommCode==150605)
+
+# re-order columns
+dat_rawforest <- dat_rawforest %>% select(Year,CommCode,Commune,forestPix,pixDiff)
+
+# re-order rows so that they go 2010,2011,2012...etc 
+
+newdf <- dat_rawforest[order(dat_rawforest$Commune, dat_rawforest$CommCode),]
+head(newdf)
 
 ### Identifying the communes that have no forest in 2010 ####
 ## Load raw data
