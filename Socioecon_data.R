@@ -2115,7 +2115,6 @@ str(pixDiff)
 head(pixDiff)
 
 # Get into tidy format
-
 forestPix <- forestPix %>% 
   gather(key = Year, value = forestPix, X2010:X2015) 
 str(forestPix)
@@ -2160,9 +2159,8 @@ dat_master %>% filter(CommCode==150605)
 dat_rawforest <- dat_rawforest %>% select(Year,CommCode,Commune,forestPix,pixDiff)
 
 # re-order rows so that they go 2010,2011,2012...etc 
+dat_rawforest <- dat_rawforest[order(dat_rawforest$Commune, dat_rawforest$CommCode),]
 
-newdf <- dat_rawforest[order(dat_rawforest$Commune, dat_rawforest$CommCode),]
-head(newdf)
 
 ### Identifying the communes that have no forest in 2010 ####
 ## Load raw data
@@ -4214,3 +4212,23 @@ plot(dat_working$Pax_migt_in, dat_working$perc_change_bin, xlab="Number of in-mi
 lines(newPax_migt_in,ilogit(newyPax_migt_in$fit),lwd=2)
 lines(newPax_migt_in,ilogit(newyPax_migt_in$fit+1.96*newyPax_migt_in$se.fit),lty=3)
 lines(newPax_migt_in,ilogit(newyPax_migt_in$fit-1.96*newyPax_migt_in$se.fit),lty=3)
+
+## New response variable (raw forest cover) ####
+
+# Remove 5 communes that have 0 forest in 2010 (not sure how they slipped through the net)
+dat_rawforest <- dat_rawforest %>% 
+                  filter(!CommCode %in% c(40102,40105,150206,150208,150302))
+
+
+
+hist(dat_rawforest$forestPix)
+
+pixdiff <- dat_rawforest$pixDiff
+pixdiff <- as.numeric(pixdiff)
+pixdiff <- na.omit(pixdiff)            
+pixdiff <- as.numeric(pixdiff)
+hist(pixdiff)
+max(pixdiff)
+mean(pixdiff)
+median(pixdiff)
+summary(pixdiff)
