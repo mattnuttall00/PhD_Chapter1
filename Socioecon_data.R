@@ -4214,12 +4214,15 @@ lines(newPax_migt_in,ilogit(newyPax_migt_in$fit+1.96*newyPax_migt_in$se.fit),lty
 lines(newPax_migt_in,ilogit(newyPax_migt_in$fit-1.96*newyPax_migt_in$se.fit),lty=3)
 
 ## New response variable (raw forest cover) ####
+library(nlme)
+library(lme4)
 
 # Remove 5 communes that have 0 forest in 2010 (not sure how they slipped through the net)
 dat_rawforest <- dat_rawforest %>% 
                   filter(!CommCode %in% c(40102,40105,150206,150208,150302))
 
-
+# changing pixDiff to numeric 
+dat_rawforest$pixDiff <- as.numeric(dat_rawforest$pixDiff)
 
 hist(dat_rawforest$forestPix)
 
@@ -4227,8 +4230,26 @@ pixdiff <- dat_rawforest$pixDiff
 pixdiff <- as.numeric(pixdiff)
 pixdiff <- na.omit(pixdiff)            
 pixdiff <- as.numeric(pixdiff)
-hist(pixdiff)
+
+hist(pixdiff, breaks = c(-50,0,554))
 max(pixdiff)
 mean(pixdiff)
 median(pixdiff)
 summary(pixdiff)
+
+pixdiff1 <- pixdiff[pixdiff >-5 & pixdiff <5] 
+hist(pixdiff1)
+
+# Model 1 - offset = original amount of forest in 2010
+M1 <- lmer(pixDiff ~ 1 + (1|Commune) + (1|Year), offset = forestPix, data=dat_rawforest)
+summary(M1)
+plot(residuals(M1))
+
+# create offset which is raw forest cover difference / original raw forest cover
+dat_rawforest <- dat_rawforest %>% 
+                  mutate(offset = pixDiff/forestPix)
+
+# Model 2 - offset = raw forest cover difference / original raw forest cover
+M2 <- lmer(pixDiff ~ 1 + (1|Commune) + (1|Year), offset = offset, data=dat_rawforest)
+summary(M2)
+plot(residuals(M2))
