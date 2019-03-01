@@ -52,6 +52,8 @@ dat_rawforest <- dat_rawforest %>% select(Year,CommCode,Commune,forestPix,pixDif
 # re-order rows so that they go 2010,2011,2012...etc 
 dat_rawforest <- dat_rawforest[order(dat_rawforest$Commune, dat_rawforest$CommCode),]
 
+head(dat_rawforest)
+
 ############
 ###
 ### So to expediate things, I've taken ALL of the above manipulations for granted and have just assumed that the
