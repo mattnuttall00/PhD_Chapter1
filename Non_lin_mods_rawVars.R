@@ -1,3 +1,7 @@
+
+
+### Load libraries & data ####
+
 library('nlme')
 library('ggplot2')
 library('cowplot')
@@ -14,20 +18,21 @@ library('quantreg')
 library('gridExtra')
 library('grid')
 
-### Load data ####
+
 dat_econ <- read_csv("macroeconomic_vars.csv")
-dat_econ <- mutate(dat_econ, year = as.character(year))
+dat_econ <- mutate(dat_econ, year = as.factor(year))
 str(dat_econ)
 dat_resp <- read_csv("ForCov_LU_econVars_PCs.csv")
 
 # create working dataframe (excluding principal components)
 dat_work <- dat_resp %>% 
-  mutate(year = as.character(year)) %>% 
+  mutate(year = as.factor(year)) %>% 
   dplyr::select(year,for_cov_pix,for_cov_area,for_cov_perc,for_cov_roc,urban_pix,urban_area,
                 urban_perc,urban_roc,agric_pix,agric_area,agric_perc,agric_roc) %>% 
   left_join(.,dat_econ, by = "year")
 
-###---------------------------------------------------------------------------------------------
+str(dat_work)
+
 ### Exploratory Plots ####
 
 # For_cov_roc and agr_gdp over time
@@ -50,7 +55,9 @@ p4 <- ggplot(dat_work, aes(x=year, y=for_cov_roc))+
 plot_grid(p4,p3)
 
 
-## Scatter plots of raw economic predictors ####
+## Scatter plots of raw economic predictors and forest cover rate of change ####
+
+
 # scatter plot for_cov_roc ~ gdp
 p5 <- ggplot(dat_work, aes(x=gdp, y=for_cov_roc))+
        geom_point()
@@ -75,9 +82,38 @@ p9 <- ggplot(dat_work, aes(x=dev_agri, y=for_cov_roc))+
 p10 <- ggplot(dat_work, aes(x=dev_env, y=for_cov_roc))+
         geom_point()
 
-plot_grid(p6,p7,p8)
+plot_grid(p5,p6,p7,p8,p9,p10)
+
+## Scatter plots of raw economic predictors and raw forest loss ####
+
+# scatter plot for_cov_area ~ gdp
+p5 <- ggplot(dat_work, aes(x=gdp, y=for_cov_area))+
+       geom_point()
+
+# scatter plot for for_cov_area ~ fdi
+p6 <- ggplot(dat_work, aes(x=fdi, y=for_cov_area))+
+       geom_point()
+
+# scatter plot for for_cov_area ~ agr_gdp
+p7 <- ggplot(dat_work, aes(x=agr_gdp, y=for_cov_area))+
+       geom_point()
+  
+# scatter plot for for_cov_area ~ ind_gdp
+p8 <- ggplot(dat_work, aes(x=ind_gdp, y=for_cov_area))+
+       geom_point()
+
+# scatter plot for for_cov_area ~ dev_agri
+p9 <- ggplot(dat_work, aes(x=dev_agri, y=for_cov_area))+
+       geom_point()
+
+# scatter plot for for_cov_area ~ dev_env
+p10 <- ggplot(dat_work, aes(x=dev_env, y=for_cov_area))+
+        geom_point()
+
+plot_grid(p5,p6,p7,p8,p9,p10)
 
 ## Scatter plots of raw economic predictors with log-transformed Y ####
+
 # scatter plot for_cov_roc ~ gdp
 p11 <- ggplot(dat_work, aes(x=gdp, y=log(for_cov_roc)))+
        geom_point()
@@ -102,11 +138,12 @@ p15 <- ggplot(dat_work, aes(x=dev_agri, y=log(for_cov_roc)))+
 p16 <- ggplot(dat_work, aes(x=dev_env, y=log(for_cov_roc)))+
         geom_point()
 
-plot_grid(p12,p13,p14)
+plot_grid(p11,p12,p13,p14,p15,p16)
 
 ## The two extreme data points (1994 and 2015) are wildly different from the rest of the data, and are therefore acting as extreme outliers.  I will see what happens when I remove them
 
 ## subset data & remove outliers ####
+
 # Remove the first two years (due to NA in for_cov_roc and the outlier), and the last year (due to outlier)
 dat_sub <- dat_work %>% 
   filter(.,!year %in% c("1993","1994","2015"))
@@ -114,7 +151,8 @@ dat_sub <- dat_work %>%
 dat_sub1 <- dat_work %>% 
   filter(.,!year %in% c("1993","1994"))
 
-## Scatter plots of raw economic variables and log-transformed Y ####
+## Scatter plots of raw economic variables and log-transformed Y with subsetted data ####
+
 # scatter plot for_cov_roc ~ gdp
 p17 <- ggplot(dat_sub, aes(x=gdp, y=log(for_cov_roc)))+
        geom_point()
@@ -139,10 +177,25 @@ p21 <- ggplot(dat_sub, aes(x=dev_agri, y=log(for_cov_roc)))+
 p22 <- ggplot(dat_sub, aes(x=dev_env, y=log(for_cov_roc)))+
         geom_point()
 
-plot_grid(p18,p19,p20)
+
+plot_grid(p17,p18,p19,p20,p21,p22)
+
+## detrend response
+dt_lm_forCov_roc <- lm(for_cov_roc~I(1:length(for_cov_roc)),data=dat_sub)
+dt_forCov_roc <- dat_sub$for_cov_roc[1:20] - predict(lm(for_cov_roc~I(1:length(for_cov_roc)),
+                                                        data=dat_sub))
+summary(dt_lm_forCov_roc)
+dat_sub$dt_for_cov_roc <- dt_forCov_roc
+
+# scatter plot of detrended for_cov_roc ~ fdi
+p23 <- ggplot(dat_sub, aes(x=fdi, y=dt_for_cov_roc))+
+        geom_point()
+
+plot_grid(p18,p23)
 
 
 ## Scatter plots of raw commodity predictors and raw Y ####
+
 # scatter plot for_cov_roc ~ armi
 p23 <- ggplot(dat_work, aes(x=armi, y=for_cov_roc))+
        geom_point()
@@ -164,12 +217,15 @@ p27 <- ggplot(dat_work, aes(x=sug_med, y=for_cov_roc))+
        geom_point()
 
 
-plot_grid(p23,p24,p27)
+plot_grid(p23,p24,p25,p27)
 
 ## Scatter plots of raw commodity predictors with log-transformed Y with subsetted data ####
+
+# scatter plot for for_cov_roc ~ armi
 p28 <- ggplot(dat_sub, aes(x=armi, y=log(for_cov_roc)))+
        geom_point()
 
+# scatter plot for for_cov_roc ~ rice-med
 p29 <- ggplot(dat_sub, aes(x=rice_med, y=log(for_cov_roc)))+
        geom_point()
 
@@ -185,10 +241,11 @@ p31 <- ggplot(dat_sub, aes(x=corn_med, y=log(for_cov_roc)))+
 p32 <- ggplot(dat_sub, aes(x=sug_med, y=log(for_cov_roc)))+
        geom_point()
 
-plot_grid(p28,p29,p32)
+plot_grid(p28,p29,p30,p32)
 
 
 ## Scatter plots of raw producer predictors and raw Y ####
+
 # scatter plot for_cov_roc ~ prod_rice
 p33 <- ggplot(dat_work, aes(x=prod_rice, y=for_cov_roc))+
   geom_point()
@@ -212,13 +269,14 @@ p37 <- ggplot(dat_work, aes(x=prod_sug, y=for_cov_roc))+
 plot_grid(p35,p37)
 
 
-## Scatter plots of raw producer predictors and log-transformed Y ####
+## Scatter plots of raw producer predictors and log-transformed Y with subsetted data ####
+
 # scatter plot for_cov_roc ~ prod_rice
-p38 <- ggplot(dat_work, aes(x=prod_rice, y=log(for_cov_roc)))+
+p38 <- ggplot(dat_sub, aes(x=prod_rice, y=log(for_cov_roc)))+
   geom_point()
 
 # scatter plot for for_cov_roc ~ prod_rub 
-p39 <- ggplot(dat_work, aes(x=prod_rub, y=log(for_cov_roc)))+
+p39 <- ggplot(dat_sub, aes(x=prod_rub, y=log(for_cov_roc)))+
   geom_point()
 
 # scatter plot for for_cov_roc ~ prod_cass
@@ -226,14 +284,14 @@ p40 <- ggplot(dat_sub, aes(x=prod_cass, y=log(for_cov_roc)))+
   geom_point()
 
 # scatter plot for for_cov_roc ~ prod_corn
-p41 <- ggplot(dat_work, aes(x=prod_corn, y=log(for_cov_roc)))+
+p41 <- ggplot(dat_sub, aes(x=prod_corn, y=log(for_cov_roc)))+
   geom_point()
 
 # scatter plot for for_cov_roc ~ prod_sug
 p42 <- ggplot(dat_sub, aes(x=prod_sug, y=log(for_cov_roc)))+
   geom_point()
 
-plot_grid(p40,p42)
+plot_grid(p38,p40,p42)
 
 ###--------------------------------------------------------------------------------------------
 ### Modelling economic variables ####
@@ -252,6 +310,9 @@ ggplot(dat_sub, aes(x=fdi, y=for_cov_roc))+
 ggplot(dat_sub, aes(x=fdi, y=log(for_cov_roc)))+
   geom_point()
 # Bit better
+
+
+## Simple linear model
 
 # estimate parameters by eye first:
 # intercept: 0.5, effect: 3.5/1750 = 0.002
@@ -285,6 +346,7 @@ ggplot(df.newvars, aes(x = newx, y = newy)) +
   labs(x = "Foreign Direct Investment",
        y = "Forest cover % change")+
     theme_bw()+
+    theme(element_blank())+
   theme(legend.position="none")
 
 # The model is a rubbish fit as far as I'm concerned.  I will try a linear model with log-transformed Y
@@ -305,6 +367,7 @@ elm2 %>%
                   ymax = exp(.fitted + (1.96*.se.fit))),
               alpha = 0.5) +
   theme_bw() +
+  theme(element_blank())+
   labs(x = "Foreign Direct Investment",
        y = "Forest cover % change")
 
