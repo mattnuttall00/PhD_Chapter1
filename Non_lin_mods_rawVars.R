@@ -107,7 +107,7 @@ p9 <- ggplot(dat_work, aes(x=dev_agri, y=for_cov_area))+
        geom_point()
 
 # scatter plot for for_cov_area ~ dev_env
-p10 <- ggplot(dat_work, aes(x=dev_env, y=for_cov_area))+
+p10 <- ggplot(dat_work, aes(x=dev_env, y=log(for_cov_area)))+
         geom_point()
 
 plot_grid(p5,p6,p7,p8,p9,p10)
@@ -144,12 +144,31 @@ plot_grid(p11,p12,p13,p14,p15,p16)
 
 ## subset data & remove outliers ####
 
+# add forest cover change
+dat_work <- dat_work %>% mutate(for_change = for_cov_area - lag(for_cov_area, default = first(for_cov_area)))
+
+# add economic variable changes
+dat_work <- dat_work %>% mutate(gdp_change = gdp - lag(gdp, default = first(gdp)))
+dat_work <- dat_work %>% mutate(fdi_change = fdi - lag(fdi, default = first(fdi)))
+dat_work <- dat_work %>% mutate(ind_gdp_change = ind_gdp - lag(ind_gdp, default = first(ind_gdp)))
+dat_work <- dat_work %>% mutate(agr_gdp_change = agr_gdp - lag(agr_gdp, default = first(agr_gdp)))
+dat_work <- dat_work %>% mutate(dev_agri_change = dev_agri - lag(dev_agri, default = first(dev_agri)))
+dat_work <- dat_work %>% mutate(dev_env_change = dev_env - lag(dev_env, default = first(dev_env)))
+
+# add commdity variable changes
+dat_work <- dat_work %>% mutate(armi_change = armi - lag(armi, default = first(armi)))
+dat_work <- dat_work %>% mutate(rice_med_change = rice_med - lag(rice_med, default = first(rice_med)))
+dat_work <- dat_work %>% mutate(rub_med_change = rub_med - lag(rub_med, default = first(rub_med)))
+dat_work <- dat_work %>% mutate(corn_med_change = corn_med - lag(corn_med, default = first(corn_med)))
+dat_work <- dat_work %>% mutate(sug_med_change = sug_med - lag(sug_med, default = first(sug_med)))
+
 # Remove the first two years (due to NA in for_cov_roc and the outlier), and the last year (due to outlier)
 dat_sub <- dat_work %>% 
   filter(.,!year %in% c("1993","1994","2015"))
+dat_sub <- as.data.frame(dat_sub)
 
 dat_sub1 <- dat_work %>% 
-  filter(.,!year %in% c("1993","1994"))
+  filter(.,!year %in% c("1993"))
 
 ## Scatter plots of raw economic variables and log-transformed Y with subsetted data ####
 
@@ -163,11 +182,13 @@ p18 <- ggplot(dat_sub, aes(x=fdi, y=log(for_cov_roc)))+
 
 # scatter plot for for_cov_roc ~ agr_gdp
 p19 <- ggplot(dat_sub, aes(x=agr_gdp, y=log(for_cov_roc)))+
-       geom_point()
+       geom_point()+
+       stat_smooth(method="lm")
   
 # scatter plot for for_cov_roc ~ ind_gdp
 p20 <- ggplot(dat_sub, aes(x=ind_gdp, y=log(for_cov_roc)))+
-       geom_point()
+       geom_point()+
+       stat_smooth(method="lm")
 
 # scatter plot for for_cov_roc ~ dev_agri
 p21 <- ggplot(dat_sub, aes(x=dev_agri, y=log(for_cov_roc)))+
@@ -192,6 +213,73 @@ p23 <- ggplot(dat_sub, aes(x=fdi, y=dt_for_cov_roc))+
         geom_point()
 
 plot_grid(p18,p23)
+
+
+## Scatter plots of changes in economic predictors and changes in forest cover ####
+
+cp1 <- ggplot(dat_sub1, aes(x=gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp2 <- ggplot(dat_work, aes(x=fdi_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp3 <- ggplot(dat_work, aes(x=ind_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp4 <- ggplot(dat_sub, aes(x=agr_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp5 <- ggplot(dat_sub, aes(x=dev_agri_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp6 <- ggplot(dat_sub, aes(x=dev_env_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+
+plot_grid(cp1,cp2,cp3,cp4,cp5,cp6)
+
+# compare agr_gdp plots
+plot_grid(cp4,p19)
+
+# compare ind_gdp plots
+plot_grid(cp3,p20)
+
+## check for lags
+
+# becasue I want to look for a lag in for_change, the vector of for_change will be one value short, so I need to add 2015 back in (it was removed from dat_sub in the subset section above)
+dat_work %>% dplyr::select(for_change) %>% filter(year=="2015") # -0.0900
+
+# agr_gdp
+cp7 <- ggplot(dat_sub, aes(x= agr_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp4,cp7)
+# The slope gets flatter with the lag
+
+
+# ind_gdp
+cp8 <- ggplot(dat_sub, aes(x= ind_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp3,cp8)
+# The slope gets flatter with the lag
+
+
+# gdp
+cp9 <- ggplot(dat_sub, aes(x= gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp1,cp9)
+# The slope gets steeper with the lag
+
+# fdi
+cp10 <- ggplot(dat_sub, aes(x= fdi_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp2,cp10)
+# The slope gets slightly flatter with the lag
+
+# dev_agri
+cp11 <- ggplot(dat_sub, aes(x= dev_agri_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp5,cp11)
+# The slope gets steeper with the lag
+
+# dev_env
+cp12 <- ggplot(dat_sub, aes(x= dev_env_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp6,cp12)
+# The slope changes direction from positive (no lag) to negative (lag)
 
 
 ## Scatter plots of raw commodity predictors and raw Y ####
@@ -242,6 +330,73 @@ p32 <- ggplot(dat_sub, aes(x=sug_med, y=log(for_cov_roc)))+
        geom_point()
 
 plot_grid(p28,p29,p30,p32)
+
+
+## Scatter plots of changes in commodity predictors and changes in forest cover ####
+
+cc1 <- ggplot(dat_sub, aes(x=armi_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cc2 <- ggplot(dat_sub, aes(x=rice_med_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cc3 <- ggplot(dat_sub, aes(x=rub_med_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cc4 <- ggplot(dat_sub, aes(x=corn_med_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cc5 <- ggplot(dat_sub, aes(x=sug_med_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+
+plot_grid(cc1,cc2,cc3,cc4,cc5)
+
+## check for lags
+
+# becasue I want to look for a lag in for_change, the vector of for_change will be one value short, so I need to add 2015 back in (it was removed from dat_sub in the subset section above)
+dat_work %>% dplyr::select(for_change) %>% filter(year=="2015") # -0.0900
+
+# armi
+cc6 <- ggplot(dat_sub, aes(x= armi_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc1,cc6)
+# Positive slope which gets steeper with lag
+
+# rice_med
+cc7 <- ggplot(dat_sub, aes(x= rice_med_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc2,cc7)
+# one extreme outlier in rice_med. Let's see what happens when it's removed
+
+rice2 <- dat_sub[c(1:13,15:20),]
+
+# compare original fit with subsetted fit 
+cc8 <- ggplot(rice2, aes(x= rice_med_change, y=for_change))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc2,cc8)
+# When the outlier is removed the slope changes direction
+
+# compare new fit with new fit lagged
+cc9 <- ggplot(rice2, aes(x= rice_med_change, y=c(tail(rice2$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc8,cc9)
+# The lag changes the direction of the slope back to a positive relationship
+
+# rub_med
+cc10 <- ggplot(dat_sub, aes(x= rub_med_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc3,cc10)
+# Lag changes direction of slope from negative to positive (weak relationship)
+
+# corn_med
+cc11 <- ggplot(dat_sub, aes(x= corn_med_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc4,cc11)
+# Lag makes slope slightly steeper
+
+# sug_med
+cc12 <- ggplot(dat_sub, aes(x= sug_med_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cc5,cc12)
+# lag makes slope slightly steeper
 
 
 ## Scatter plots of raw producer predictors and raw Y ####
@@ -339,7 +494,7 @@ df.newvars <- data_frame(newx = newxvars,
                          newlwr = as.numeric(newyvars[,"lwr"]))
 
 # Plot
-ggplot(df.newvars, aes(x = newx, y = newy)) +
+elm1.plot <- ggplot(df.newvars, aes(x = newx, y = newy)) +
   geom_line() +
   geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha = 0.25))+
   geom_point(data = dat_sub, aes(x = fdi,y = for_cov_roc))+
@@ -356,9 +511,10 @@ par(mfrow=c(2,3))
 plot(elm2)
 hist(elm2$residuals)
 summary(elm2)
+# Not conviced that we have normal errors 
 
 # Lets plot the model fit
-elm2 %>%
+elm2.plot <- elm2 %>%
   augment() %>%
   ggplot(., aes(x = fdi, y = exp(log.for_cov_roc.))) +
   geom_point(size = 1) +
@@ -370,6 +526,14 @@ elm2 %>%
   theme(element_blank())+
   labs(x = "Foreign Direct Investment",
        y = "Forest cover % change")
+
+
+# plot the two linear models
+plot_grid(elm1.plot,elm2.plot)
+
+## Try GLM rather than LM
+
+eglm1 <- 
 
 ## Exponential models
 
@@ -449,6 +613,8 @@ anova(enlm1,enlm2)
 
 # compare lm model to log linear model
 anova(elm2,elm1)
+AIC(elm1)
+AIC(elm2)
 
 # Compare nls model to lm model
 anova(enlm2, elm1)
