@@ -145,7 +145,8 @@ plot_grid(p11,p12,p13,p14,p15,p16)
 ## subset data & remove outliers ####
 
 # add forest cover change
-dat_work <- dat_work %>% mutate(for_change = for_cov_area - lag(for_cov_area, default = first(for_cov_area)))
+dat_work <- dat_work %>% 
+  mutate(for_change = for_cov_area - lag(for_cov_area, default = first(for_cov_area)))
 
 # add economic variable changes
 dat_work <- dat_work %>% mutate(gdp_change = gdp - lag(gdp, default = first(gdp)))
@@ -161,6 +162,16 @@ dat_work <- dat_work %>% mutate(rice_med_change = rice_med - lag(rice_med, defau
 dat_work <- dat_work %>% mutate(rub_med_change = rub_med - lag(rub_med, default = first(rub_med)))
 dat_work <- dat_work %>% mutate(corn_med_change = corn_med - lag(corn_med, default = first(corn_med)))
 dat_work <- dat_work %>% mutate(sug_med_change = sug_med - lag(sug_med, default = first(sug_med)))
+
+# add producer price variable changes
+dat_work <- dat_work %>% 
+  mutate(prod_rice_change = prod_rice - lag(prod_rice, default = first(prod_rice)))
+dat_work <- dat_work %>% mutate(prod_rub_change = prod_rub - lag(prod_rub, default = first(prod_rub)))
+dat_work <- dat_work %>% 
+  mutate(prod_cass_change = prod_cass - lag(prod_cass, default = first(prod_cass)))
+dat_work <- dat_work %>% 
+  mutate(prod_corn_change = prod_corn - lag(prod_corn, default = first(prod_corn)))
+dat_work <- dat_work %>% mutate(prod_sug_change = prod_sug - lag(prod_sug, default = first(prod_sug)))
 
 # Remove the first two years (due to NA in for_cov_roc and the outlier), and the last year (due to outlier)
 dat_sub <- dat_work %>% 
@@ -217,20 +228,20 @@ plot_grid(p18,p23)
 
 ## Scatter plots of changes in economic predictors and changes in forest cover ####
 
-cp1 <- ggplot(dat_sub1, aes(x=gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
-cp2 <- ggplot(dat_work, aes(x=fdi_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
-cp3 <- ggplot(dat_work, aes(x=ind_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
-cp4 <- ggplot(dat_sub, aes(x=agr_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
-cp5 <- ggplot(dat_sub, aes(x=dev_agri_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
-cp6 <- ggplot(dat_sub, aes(x=dev_env_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce1 <- ggplot(dat_sub, aes(x=gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce2 <- ggplot(dat_sub, aes(x=fdi_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce3 <- ggplot(dat_sub, aes(x=ind_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce4 <- ggplot(dat_sub, aes(x=agr_gdp_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce5 <- ggplot(dat_sub, aes(x=dev_agri_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+ce6 <- ggplot(dat_sub, aes(x=dev_env_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
 
-plot_grid(cp1,cp2,cp3,cp4,cp5,cp6)
+plot_grid(ce1,ce2,ce3,ce4,ce5,ce6)
 
 # compare agr_gdp plots
-plot_grid(cp4,p19)
+plot_grid(ce4,p19)
 
 # compare ind_gdp plots
-plot_grid(cp3,p20)
+plot_grid(ce3,p20)
 
 ## check for lags
 
@@ -238,47 +249,47 @@ plot_grid(cp3,p20)
 dat_work %>% dplyr::select(for_change) %>% filter(year=="2015") # -0.0900
 
 # agr_gdp
-cp7 <- ggplot(dat_sub, aes(x= agr_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce7 <- ggplot(dat_sub, aes(x= agr_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp4,cp7)
+plot_grid(ce4,cp7)
 # The slope gets flatter with the lag
 
 
 # ind_gdp
-cp8 <- ggplot(dat_sub, aes(x= ind_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce8 <- ggplot(dat_sub, aes(x= ind_gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp3,cp8)
+plot_grid(ce3,ce8)
 # The slope gets flatter with the lag
 
 
 # gdp
-cp9 <- ggplot(dat_sub, aes(x= gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce9 <- ggplot(dat_sub, aes(x= gdp_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp1,cp9)
+plot_grid(ce1,ce9)
 # The slope gets steeper with the lag
 
 # fdi
-cp10 <- ggplot(dat_sub, aes(x= fdi_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce10 <- ggplot(dat_sub, aes(x= fdi_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp2,cp10)
+plot_grid(ce2,ce10)
 # The slope gets slightly flatter with the lag
 
 # dev_agri
-cp11 <- ggplot(dat_sub, aes(x= dev_agri_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce11 <- ggplot(dat_sub, aes(x= dev_agri_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp5,cp11)
+plot_grid(ce5,ce11)
 # The slope gets steeper with the lag
 
 # dev_env
-cp12 <- ggplot(dat_sub, aes(x= dev_env_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+ce12 <- ggplot(dat_sub, aes(x= dev_env_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
         geom_point() + stat_smooth(method="lm")
 
-plot_grid(cp6,cp12)
+plot_grid(ce6,ce12)
 # The slope changes direction from positive (no lag) to negative (lag)
 
 
@@ -398,6 +409,9 @@ cc12 <- ggplot(dat_sub, aes(x= sug_med_change, y=c(tail(dat_sub$for_change,-1), 
 plot_grid(cc5,cc12)
 # lag makes slope slightly steeper
 
+# plot all lags
+plot_grid(cc6,cc9,cc10,cc11,cc12)
+
 
 ## Scatter plots of raw producer predictors and raw Y ####
 
@@ -421,7 +435,7 @@ p36 <- ggplot(dat_work, aes(x=prod_corn, y=for_cov_roc))+
 p37 <- ggplot(dat_work, aes(x=prod_sug, y=for_cov_roc))+
   geom_point()
 
-plot_grid(p35,p37)
+plot_grid(p33,p34,p35,p36,p37)
 
 
 ## Scatter plots of raw producer predictors and log-transformed Y with subsetted data ####
@@ -447,6 +461,56 @@ p42 <- ggplot(dat_sub, aes(x=prod_sug, y=log(for_cov_roc)))+
   geom_point()
 
 plot_grid(p38,p40,p42)
+
+## Scatter plots of changes in producer price variables and changes in forest cover ####
+
+cp1 <- ggplot(dat_sub, aes(x=prod_rice_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp2 <- ggplot(dat_sub, aes(x=prod_rub_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp3 <- ggplot(dat_sub, aes(x=prod_cass_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp4 <- ggplot(dat_sub, aes(x=prod_corn_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+cp5 <- ggplot(dat_sub, aes(x=prod_sug_change, y=for_change))+geom_point()+ stat_smooth(method = "lm")
+
+plot_grid(cp1,cp2,cp3,cp4,cp5)
+
+## check for lags
+
+# becasue I want to look for a lag in for_change, the vector of for_change will be one value short, so I need to add 2015 back in (it was removed from dat_sub in the subset section above)
+dat_work %>% dplyr::select(for_change) %>% filter(year=="2015") # -0.0900
+
+# prod_rice
+cp6 <- ggplot(dat_sub, aes(x=prod_rice_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp1,cp6)
+# Slope (positive) gets steeper with the lag
+
+# prod_rub
+cp7 <- ggplot(dat_sub, aes(x=prod_rub_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp2,cp7)
+# slope (positive) ges steepr with the lag. I think that the 2015 value of for_change is dragging the slop up
+
+# prod_cass
+cp8 <- ggplot(dat_sub, aes(x=prod_cass_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp3,cp8)
+# slope (negative) gets less steep with lag
+
+# prod_corn
+cp9 <- ggplot(dat_sub, aes(x=prod_corn_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp4,cp9)
+# no real change in (positive) slope
+
+# prod_sug
+cp10 <- ggplot(dat_sub, aes(x=prod_sug_change, y=c(tail(dat_sub$for_change,-1), -0.0900)))+
+        geom_point() + stat_smooth(method="lm")
+
+plot_grid(cp5,cp10)
+# slope (positive) gets steeper with lag
 
 ###--------------------------------------------------------------------------------------------
 ### Modelling economic variables ####
