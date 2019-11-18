@@ -147,6 +147,7 @@ plot_grid(p11,p12,p13,p14,p15,p16)
 # add forest cover change
 dat_work <- dat_work %>% 
   mutate(for_change = for_cov_area - lag(for_cov_area, default = first(for_cov_area)))
+dat_work$for_change <- abs(dat_work$for_change)
 
 # add economic variable changes
 dat_work <- dat_work %>% mutate(gdp_change = gdp - lag(gdp, default = first(gdp)))
@@ -511,6 +512,7 @@ cp10 <- ggplot(dat_sub, aes(x=prod_sug_change, y=c(tail(dat_sub$for_change,-1), 
 
 plot_grid(cp5,cp10)
 # slope (positive) gets steeper with lag
+
 
 ###--------------------------------------------------------------------------------------------
 ### Modelling economic variables ####
