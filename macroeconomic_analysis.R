@@ -23,6 +23,8 @@ library('grid')
 
 ## abreviations
 
+# for_cov_area = absolute area covered by forest
+# for_cov_perc = % of forest cover remaining with 1993 being the baseline (i.e. 100%)
 # gdp = gdp per capita
 # gdp_gr = % growth in gdp
 # gni = gross national income per capita
@@ -36,6 +38,7 @@ library('grid')
 # cpi = crop production index
 # nfi = non-food production index
 # rice/rub/corn/sug_med = median annual market prices for rice, rubber, corn, sugar
+# for_prod = total production values from forestry
 # prod_rice/rub/cass/corn/sug = mean annual producer (farm gate) prices for rice, rubber, cassava, corn, sugar
 # for_rem = rmaining absolute forest cover
 
@@ -70,7 +73,9 @@ dat_change <- data.frame(year = dat$year,
                          prod_cass=dat$prod_cass-lag(dat$prod_cass,default = first(dat$prod_cass)),
                          prod_corn=dat$prod_corn-lag(dat$prod_corn,default = first(dat$prod_corn)),
                          prod_sug=dat$prod_sug-lag(dat$prod_sug,default = first(dat$prod_sug)),
-                         for_rem=dat$for_rem-lag(dat$for_rem,default = first(dat$for_rem)))
+                         for_rem=dat$for_rem)
+
+# I have left remaining forest (for_rem) as an absolute value because the change in for_rem would be identical to the change in for_cov, and the literature suggests that the absolute amount of remaining forest can be an important predictor
 
 # remove 1993 as no values
 dat_change <- dat_change[2:23, ]
@@ -78,11 +83,27 @@ str(dat_change)
 head(dat_change)
 
 # remove -ve sign for variables with only negative values
+dat_change$for_cov <- abs(dat_change$for_cov)
+dat_change$for_cov_perc <- abs(dat_change$for_cov_perc)
 
-
+str(dat_change)
 
 #### Exploratory plots ####
 
 par(mfrow=c(1,2))
 hist(dat_change$for_cov)
 hist(dat_change$for_cov_perc)
+# what distribution do I think this is?  non-negative continous.  But it's not bounded by 0 - there could feasibly be negative values.  In fact all of the values were originally negative (i.e. negative change in forest cover) but I have removed the -ve sign for ease of interpretation (i.e. changed to amount of forest lost).  I will try standard linear models and see what the residuals look like, before trying GLM which will require a distribution.
+
+# gdp, gdp growth, gni, fdi, ind_gdp, agr_gdp, 
+par(mfrow=c(3,2))
+hist(dat_change$gdp)
+hist(dat_change$gdp_gr)
+hist(dat_change$gni)
+hist(dat_change$fdi)
+hist(dat_change$ind_gdp)
+hist(dat_change$agr_gdp)
+
+# GDP -big outlier for change in gdp - 1994.  This is because in 1993 there was the first general election, and this is when the country fully embraced a free market economy (see Chhair & Ung 2013). So strange things happened to GDP between 1993 and 1994 which is messing with the change in GDP and change in GDP growth.  I am not confident that the data points GDP for 1993, and therefore GDP growth for 1994, from the World Bank are reliable.  I will change (in dat_change only) gdp in 1994 to NA, and gdp_gr in 1994 to NAs in the "load & format data" section 
+
+# Most of the gdp_gr values are negative, which indicates a slowing down of gdp growth. I wonder if this is misleading, becasue the gdp is still growing, just at a slower rate? Perhaps I can include raw gdp_gr as well.  There is also an outlier for gdp_gr, caused by the large change in gdp between 1994 and 1995.  ONe outlier in agr_gdp - in 1994 as well.  
