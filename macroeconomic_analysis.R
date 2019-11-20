@@ -20,7 +20,6 @@ library('grid')
 
 #### Load & format data ####
 
-
 ## abreviations
 
 # for_cov_area = absolute area covered by forest
@@ -44,6 +43,9 @@ library('grid')
 
 dat <- read.csv("Data/national/macroeconomic_vars.csv")
 dat$year <- as.factor(dat$year)
+
+# remove gdp_gr for 1994 (see explanation in "exploratory plots" section)
+dat[2,6] <- NA
 str(dat)
 
 # I want to use the changes in variable quantities, not the raw quantities themselves.
@@ -75,7 +77,7 @@ dat_change <- data.frame(year = dat$year,
                          prod_sug=dat$prod_sug-lag(dat$prod_sug,default = first(dat$prod_sug)),
                          for_rem=dat$for_rem)
 
-# I have left remaining forest (for_rem) as an absolute value because the change in for_rem would be identical to the change in for_cov, and the literature suggests that the absolute amount of remaining forest can be an important predictor
+# I have left remaining forest (for_rem) as an absolute value (rather than change) because the change in for_rem would be identical to the change in for_cov, and the literature suggests that the absolute amount of remaining forest can be an important predictor
 
 # remove 1993 as no values
 dat_change <- dat_change[2:23, ]
@@ -86,10 +88,15 @@ head(dat_change)
 dat_change$for_cov <- abs(dat_change$for_cov)
 dat_change$for_cov_perc <- abs(dat_change$for_cov_perc)
 
-str(dat_change)
+# change 1994 gdp, ind_gdp, agr_gdp to NA (see explanation below in "exploratory plots")
+dat_change[1,4] <- NA
+dat_change[1,c(8,9)] <- NA
+
+head(dat_change)
 
 #### Exploratory plots ####
 
+  ## Histograms ####
 par(mfrow=c(1,2))
 hist(dat_change$for_cov)
 hist(dat_change$for_cov_perc)
@@ -104,6 +111,42 @@ hist(dat_change$fdi)
 hist(dat_change$ind_gdp)
 hist(dat_change$agr_gdp)
 
-# GDP -big outlier for change in gdp - 1994.  This is because in 1993 there was the first general election, and this is when the country fully embraced a free market economy (see Chhair & Ung 2013). So strange things happened to GDP between 1993 and 1994 which is messing with the change in GDP and change in GDP growth.  I am not confident that the data points GDP for 1993, and therefore GDP growth for 1994, from the World Bank are reliable.  I will change (in dat_change only) gdp in 1994 to NA, and gdp_gr in 1994 to NAs in the "load & format data" section 
+# GDP -big outlier for change in gdp - 1994.  This is because in 1993 there was the first general election, and this is when the country fully embraced a free market economy (see Chhair & Ung 2013). So strange things happened to GDP between 1993 and 1994 which is messing with the change in GDP and change in GDP growth.  I am not confident that the data points GDP for 1993, and therefore GDP growth for 1994, from the World Bank are reliable.  I will change gdp in 1994 to NA (in dat_change), and gdp_gr in 1994 to NAs (in dat) in the "load & format data" section 
+# Histograms look way better now the above data points are removed
 
-# Most of the gdp_gr values are negative, which indicates a slowing down of gdp growth. I wonder if this is misleading, becasue the gdp is still growing, just at a slower rate? Perhaps I can include raw gdp_gr as well.  There is also an outlier for gdp_gr, caused by the large change in gdp between 1994 and 1995.  ONe outlier in agr_gdp - in 1994 as well.  
+# One outlier in agr_gdp - in 1994 as well. I suppose that if I am removing values for gdp in 1994 then I ought to remove ind_gdp and agr_gdp from 1994 as well, seeing as the data are from the same source. 
+# 1994 values for ind_gdp and agr_gdp removed. Histograms look better
+
+# dev_agri, dev_env, pop_den, armi, cpi, nfi
+hist(dat_change$dev_agri)
+hist(dat_change$dev_env)
+hist(dat_change$pop_den)
+hist(dat_change$armi)
+hist(dat_change$cpi)
+hist(dat_change$nfi)
+# one outlier in dev_agri (2015), but no valid reason to remove it.  Nothing else looks strange
+
+# rice_med,rub_med,corn_med,sug_med
+par(mfrow=c(2,2))
+hist(dat_change$rice_med)
+hist(dat_change$rub_med)
+hist(dat_change$corn_med)
+hist(dat_change$sug_med)
+# large outlier for rice_med. Nothing suspicious - the price of rice is quite variable, and spikes in 2008, then slowly decrase again after 2008.  
+
+# for_prod, for_rem
+par(mfrow=c(1,2))
+hist(dat_change$for_prod)
+hist(dat_change$for_rem)
+# big drop in forestry production around 1999. Changes in remaining forest all positive because forest is lost each year and I removed the negative sign
+
+  ## Scatter plots ####
+
+# for_cov ~ gdp
+ggplot(dat_change,aes(x=gdp, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+ggplot(dat_change,aes(x=gdp, y=for_cov))+ geom_point()
+
+# for_cov ~ gdp_gr
+ggplot(dat_change,aes(x=gdp_gr, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=gdp_gr, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+ggplot(dat_change,aes(x=gdp_gr, y=log(for_cov)))+ geom_point()
