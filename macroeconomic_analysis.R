@@ -142,11 +142,134 @@ hist(dat_change$for_rem)
 
   ## Scatter plots ####
 
+### NOTE: These scatter plots and models do not take time (ie trends over time for variables) into account and so should be treated with caution. They are for exploratory purposes only
+
 # for_cov ~ gdp
 ggplot(dat_change,aes(x=gdp, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
 ggplot(dat_change,aes(x=gdp, y=for_cov))+ geom_point()
+# negative slope - as the changes in gdp get larger and more positive, the changes in forest cover get smaller
+
 
 # for_cov ~ gdp_gr
 ggplot(dat_change,aes(x=gdp_gr, y=for_cov))+ geom_point()
 ggplot(dat_change,aes(x=gdp_gr, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
-ggplot(dat_change,aes(x=gdp_gr, y=log(for_cov)))+ geom_point()
+# Positive slope - as the changes in gdp_gr become positive and larger, the changes in forest cover get larger
+
+# One outlier skewing the trend. Test removing it
+ggplot(dat_change,aes(x=gdp_gr, y=for_cov))+ geom_point(data=subset(dat_change, gdp_gr <7))+ 
+  stat_smooth(data=subset(dat_change, gdp_gr <7),method="lm")
+# trend disappears without that datum 
+
+
+# for_cov ~ gni
+ggplot(dat_change,aes(x=gni, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=gni, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# negative slope - as changes in gni become positive and larger, changes in forest cover get smaller
+
+# forest_cov ~ fdi
+ggplot(dat_change,aes(x=fdi, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=fdi, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# negative slope - as changes in fdi get positive and larger, changes in forest cover get smaller
+
+# forest_cov ~ ind_gdp
+ggplot(dat_change,aes(x=ind_gdp, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=ind_gdp, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# positive slope - as changes in ind_gdp become positive and get larger, changes in for_cov get larger. Not what I was expecting
+
+# for_cov ~ agr_gdp
+ggplot(dat_change,aes(x=agr_gdp, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=agr_gdp, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# negative slope - when changes in agr_gdp are negative (ie contribution of agriculture to gdp gets smaller) the changes in for_cov are larger (ie more forest is lost), and when changes in agr_gdp become positive (ie agriculture contribution to gdp gets larger), changes in forest cover get smaller.  Not what I was expecting
+
+# for_cov ~ dev_agri
+ggplot(dat_change,aes(x=dev_agri, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=dev_agri, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# positive slop - when changes in dev_agri are negative, changes in for_cov are smaller, when changes in dev_agri are positive and larger, changes in for_cov get larger
+
+# there is one outlier, I will see what happens when it is removed
+ggplot(dat_change,aes(x=dev_agri, y=for_cov))+ geom_point(data=subset(dat_change, dev_agri > -600))+
+  stat_smooth(data=subset(dat_change, dev_agri > -600),method="lm")
+# trend disappears without that datum. Its the 1994 and 2015 values, which were causing issues with for_cov_roc previously. They are suspiciously identical, and low
+
+
+# for_cov ~ dev_env
+ggplot(dat_change,aes(x=dev_env, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=dev_env, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# very slight negative slope but doesn't look significant 
+
+# for_cov ~ pop_den
+ggplot(dat_change,aes(x=pop_den, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=pop_den, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# positive slope - as changes in pop_den get larger (all positive) then changes in for_cov get larger
+
+# for_cov ~ armi
+ggplot(dat_change,aes(x=armi, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=armi, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# very slight negative slope but doesn't look sig
+
+# for_cov ~ cpi
+ggplot(dat_change,aes(x=cpi, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=cpi, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# no trend - flat 
+
+# for_cov ~ nfi
+ggplot(dat_change,aes(x=nfi, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=nfi, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# negative slope - when chages in nfi are negative (ie production decreases) then changes in for_cov are larger, and when changes in nfi are positive (production increases) then changes in for_cov get smaller
+
+# for_cov ~ rice_med
+ggplot(dat_change,aes(x=rice_med, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=rice_med, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# no trend. Large outlier (as identified above).
+
+# if we remove outlier
+ggplot(dat_change,aes(x=rice_med, y=for_cov))+ geom_point(data=subset(dat_change, rice_med <300))+ 
+  stat_smooth(data=subset(dat_change, rice_med <300),method="lm")
+# positive slope when outlier is removed - ie as the changes in price of rice are negative (price goes down) then changes in for_cov get smaller, and when changes in price of rice are positive then changes in for_cov get larger
+
+
+# for_cov ~ rub_med
+ggplot(dat_change,aes(x=rub_med, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=rub_med, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# slilght positive slope - when rubber price goes down, changes in for_cov are low, and when price of rub goes up, changes in for_cov get larger
+
+# test a lag
+# 1 year lag
+ggplot(dat_change,aes(x=lag(rub_med), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# 2 year lag
+ggplot(dat_change,aes(x=lag(rub_med, n=2L), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# interestingly the relationship is what I would expect when there is no lag, ie as prices in rubber go up, forest cover loss is high. But when I introduce a 1 year lag (ie the for_cov value against the previous years rub_med value) the relationship disappears, and then with a 2-year lag the slope reverses - so as prices in rubber go up, the changes in for_cov get smaller
+
+
+# for_cov ~ corn_med
+ggplot(dat_change,aes(x=corn_med, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=corn_med, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# no relationship
+
+# try lag
+ggplot(dat_change,aes(x=lag(corn_med), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# 2 year lag
+ggplot(dat_change,aes(x=lag(corn_med, n=2L), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# same as rub_med.  With lag, for_cov changes get smaller as prices of corn increase, and this slope gets steeper with a 2-year lag
+
+
+# for_cov ~ sug_med
+ggplot(dat_change,aes(x=sug_med, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=sug_med, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# flat
+
+# lag
+ggplot(dat_change,aes(x=lag(sug_med), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# 2 year lag
+ggplot(dat_change,aes(x=lag(sug_med, n=2L), y=for_cov))+ geom_point()+ 
+  stat_smooth(method="lm")
+# slope is negative with both lags - as prices in sugar go up, changes in for_cov go down
+
+
+## NOTE: these lags aren't to be taken too seriously just yet as I haven't accounted for time trends
+
