@@ -17,6 +17,7 @@ library('propagate')
 library('quantreg')
 library('gridExtra')
 library('grid')
+library('corrplot')
 
 #### Load & format data ####
 
@@ -95,7 +96,6 @@ dat_change[1,c(8,9)] <- NA
 head(dat_change)
 
 #### Exploratory plots ####
-
   ## Histograms ####
 par(mfrow=c(1,2))
 hist(dat_change$for_cov)
@@ -381,3 +381,41 @@ ggplot(dat_change,aes(x=lag(for_rem), y=for_cov))+ geom_point()+ stat_smooth(met
 # 2 year lag
 ggplot(dat_change,aes(x=lag(for_rem, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
 # similar slope
+#### Standardising & correlations ####
+
+# test for correlations before standardising 
+
+correlation <- cor(dat_change[2:26], use = "complete.obs")
+write.csv(correlation, file="macrovars_corr.csv")
+
+# gdp and gni are highly correlated (0.99)
+# gdp and prod_rub are slightly correlated (0.63)
+# gdp_gr and prod_corn are slightly correlated (0.6)
+# gni and prod_rub are slightly correlated (0.6)
+# gni and prod_corn are slightly correlated (0.62)
+# ind_gdp and agr_gdp are slightly correlated (-0.61)
+# pop_den and prod_rub are correlated (-0.8)
+# pop_den and for_rem are correlated (0.8)
+# armi and rub_med are highly correlated (0.9)
+# rice_med and prod_rice are slightly correlated (0.67)
+# prod_rice and prod_rub are slightly correlated (0.63)
+# prod_rub and for_rem are correlated (-0.73)
+# for_rem and gdp slightly correlated (-0.6)
+
+# now I want to check what happens to the correlations after standardisation
+dat_scale <- apply(dat_change[ , c(2:26)], 2, scale)
+dat_scale <- as.data.frame(dat_scale)
+str(dat_scale)
+head(dat_scale)
+
+# check the apply function has scaled and centered
+scale_check <- scale(dat_change$for_cov, center = T, scale = T)
+cbind(dat_scale$for_cov,scale_check)
+
+# correlations on scaled variables
+corr_scale <- cor(dat_scale, use = "complete.obs")
+write.csv(correlation, file="macrovars_corr_scale.csv")
+
+# The results are exactly the same. Using gdp or gni depends on whether I am interested in the theory that the development of a country's economy influences forest loss, or the theory that increases in the population's socioeconomic situation influences forest loss.  Because the second half of this chapter will looks at spatially-explicit, fine-scale socioeconomics, I will stick with gdp for now.   
+
+# create working dataframe
