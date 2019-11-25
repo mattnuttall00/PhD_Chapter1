@@ -273,3 +273,111 @@ ggplot(dat_change,aes(x=lag(sug_med, n=2L), y=for_cov))+ geom_point()+
 
 ## NOTE: these lags aren't to be taken too seriously just yet as I haven't accounted for time trends
 
+
+# for_cov ~ for_prod
+ggplot(dat_change,aes(x=for_prod, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=for_prod, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# one massive outlier in 2000 - huge drop in forestry production between 1999 and 2000
+
+# try remove the outlier
+ggplot(dat_change,aes(x=for_prod, y=for_cov))+ 
+  geom_point(data=subset(dat_change,for_prod > -740000))+ 
+  stat_smooth(data=subset(dat_change,for_prod > -740000), method="lm")
+# negative slope - as changes in forest production become positive and larger, changes in forest cover decrease. This is the opposite of what I would expect. But there may be a lag here. Bit tricky to say which way the lag would go, but I would assume that forestry production metric would go up the year after the trees are cut down (but that assumes it takes a year for the timber to be processed and to be counted in the metric)
+
+# test lead (opposite direction to the lags above) with outlier removed
+ggplot(dat_change,aes(x=lead(for_prod), y=for_cov))+ 
+  geom_point(data=subset(dat_change,for_prod > -740000))+ 
+  stat_smooth(data=subset(dat_change,for_prod > -740000), method="lm")
+# similar slope to non-lead
+
+# test lag in other direction
+ggplot(dat_change,aes(x=lag(for_prod), y=for_cov))+ 
+  geom_point(data=subset(dat_change,for_prod > -740000))+ 
+  stat_smooth(data=subset(dat_change,for_prod > -740000), method="lm")
+# trend mostly goes away
+
+# I don't actually think there would be a lag/lead for this variable. The speed with which forest is cleared and timber is processed is high, and so trees cut down in one year will probably make it into the data for forestry production in the same year
+
+
+# for_cov ~ prod_rice
+ggplot(dat_change,aes(x=prod_rice, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=prod_rice, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# no real trend
+
+# 1 year lag
+ggplot(dat_change,aes(x=lag(prod_rice), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# negative slope with the lag - as changes in producer price of rice become positive and get larger,the changes in forest cover get smaller. 
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(prod_rice, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# intercept changes but not the slope 
+
+
+# for_cov ~ prod_rubber
+ggplot(dat_change,aes(x=prod_rub, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=prod_rub, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# not real trend
+
+# 1 year lag
+ggplot(dat_change,aes(x=lag(prod_rub), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steep negative slope - as rubber prices become positive and get larger, changes in for_cov get smaller
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(prod_rub, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# slope gets steeper
+
+
+# for_cov ~ prod_cass
+ggplot(dat_change,aes(x=prod_cass, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=prod_cass, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# positive slope - as prod_cass get positive and larger, changes in for_cov get larger
+
+# 1 year lag
+ggplot(dat_change,aes(x=lag(prod_cass), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# slope gets less steep
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(prod_cass, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# trend reverses
+
+# for_cov ~ prod_corn
+ggplot(dat_change,aes(x=prod_corn, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=prod_corn, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# slight negative slope - prod_corn gets larger and positive, changes in for_cov get smaller
+
+# lag
+ggplot(dat_change,aes(x=lag(prod_corn), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steeper slope
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(prod_corn, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steepr slope again
+
+
+# for_cov ~ prod_sug
+ggplot(dat_change,aes(x=prod_sug, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=prod_sug, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# slight negative slope - prod_sug gets larger and positive, changes in for_cov get smaller
+
+# lag
+ggplot(dat_change,aes(x=lag(prod_sug), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steeper slope
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(prod_sug, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steepr slope again
+
+
+# for_cov ~ for_rem
+ggplot(dat_change,aes(x=for_rem, y=for_cov))+ geom_point()
+ggplot(dat_change,aes(x=for_rem, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# positive slope - when there is more forest remaining, changes in for_cov are larger
+
+# lag
+ggplot(dat_change,aes(x=lag(for_rem), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# steeper slope
+
+# 2 year lag
+ggplot(dat_change,aes(x=lag(for_rem, n=2L), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+# similar slope
