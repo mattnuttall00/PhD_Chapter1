@@ -18,6 +18,7 @@ library('quantreg')
 library('gridExtra')
 library('grid')
 library('corrplot')
+library('MuMIn')
 
 #### Load & format data ####
 
@@ -94,6 +95,7 @@ dat_change[1,4] <- NA
 dat_change[1,c(8,9)] <- NA
 
 head(dat_change)
+write.csv(dat_change, file="dat_change.csv")
 
 #### Exploratory plots ####
   ## Histograms ####
@@ -416,6 +418,79 @@ cbind(dat_scale$for_cov,scale_check)
 corr_scale <- cor(dat_scale, use = "complete.obs")
 write.csv(correlation, file="macrovars_corr_scale.csv")
 
-# The results are exactly the same. Using gdp or gni depends on whether I am interested in the theory that the development of a country's economy influences forest loss, or the theory that increases in the population's socioeconomic situation influences forest loss.  Because the second half of this chapter will looks at spatially-explicit, fine-scale socioeconomics, I will stick with gdp for now.   
+# The results are exactly the same. Using gdp or gni depends on whether I am interested in the theory that the development of a country's economy influences forest loss, or the theory that increases in the population's socioeconomic situation influences forest loss.  Because the second half of this chapter will look at spatially-explicit, fine-scale socioeconomics, I will stick with gdp for now. 
+# pop_den and prod_rub, and pop_den and for_rem are correlated.  I think the pop_den ~ prod_rub correlation is chance - I can't see how they would be related in real life. The two variables are there to explain totally different drivers, and so I will keep them both.  You could argue that pop_den ~ for_rem correlation makes sense (ie the higher the popualtion density the less forest will remain), but the relationship is not like that, and is actually mostly positive. Therefore I think it's likely that this is chance too.  I will keep both for now.
+# The armi ~ rub_med correlation is more worrying, as these are likely to be genuinely correlated. If you plot armi against all of the other x_med variables, they are all slightly correlated (which is expected).  The only one that isn't is rice_med.  Therefore there is an argument to just use armi and rice_med.  But I am quite interested in the individual commodities, and so I will keep them in for now, but will probably remove them later.  
+# The correlation between for_rem and prod_rub is interesting, and suggests and interaction, and so I don't want to remove either of them.
 
-# create working dataframe
+# useful disucssion about correlated predictors here: https://bit.ly/2qCMt9b
+# this is also cool: https://bit.ly/33k5TwD
+
+#### Create working dataframes ####
+
+# I have decided not to use standardised variables. The coefficients from non-standardised variables are easier to interpret, predictions will be easier to understand, and the discussion will be easier if the values are in the original scale/unit.  Also see: 
+# https://bit.ly/34otX2J
+# https://bit.ly/2OpFZn7
+
+str(dat_change)
+
+# remove for_cov_perc
+dat_work <- dat_change[ ,-3]
+
+# remove gni
+dat_work <- dat_work[ ,-5]
+
+# In order to account for the effect of time in all of the models, I will fit a lm of for_cov ~ year, and use the residuals as a predictor in the subsequent models
+dat_change$year <- as.numeric(dat_change$year)
+time_mod <- lm(for_cov ~ year, data=dat_change)
+summary(time_mod)
+hist(time_mod$residuals)
+
+# have a look at the model fit
+newtimex <- seq(2,23,length=100)
+newtimey <- predict(time_mod, newdata = list(year=newtimex), int="c")
+df.newvars <- data_frame(newx = newtimex,
+                         newy = as.numeric(newtimey[,"fit"]),
+                         newupr = as.numeric(newtimey[,"upr"]),
+                         newlwr = as.numeric(newtimey[,"lwr"]))
+
+ggplot(df.newvars, aes(x = newx, y = newy))+
+  geom_line()+
+  geom_point(data = dat_change, aes(x=year, y=for_cov))+
+  geom_ribbon(aes(ymin = newlwr, ymax = newupr, alpha=0.25))
+  
+time_resid <- time_mod$residuals
+
+# add time variable to dat_work
+dat_work$time <- time_resid
+
+
+## I will start by modelling sets of predictors at a time.  All sets will have the time variable, and amount of forest remaining. The sets will be:
+
+# macroeconomic - gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
+dat_me <- dat_work[ ,c(1:10,24:25)]
+str(dat_me)
+
+# commodities - armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod
+dat_com <- dat_work[ ,c(1:2,11:18,24:25)]
+str(dat_com)
+
+# producer prices - prod_rice, prod_rub, prod_cass, prod_corn, prod_sug
+dat_prod <- dat_work[ ,c(1:2,19:25)]
+str(dat_prod)
+
+#### Models of subsets ####
+  ## Macroeconomic set ####
+
+str(dat_me)
+head(dat_me)
+
+# if gdp, gdp_gr, ind_gdp, agr_gdp are used then rows will be removed
+
+# saturated model
+me.mod1 <- lm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, data=dat_me)
+summary(me.mod1)
+me.mod1$residuals
+
+# dredge
+system.time(dredge.me <- dredge(me.mod1, beta = "none", evaluate = TRUE, rank = AIC))
