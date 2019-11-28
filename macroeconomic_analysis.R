@@ -19,6 +19,7 @@ library('gridExtra')
 library('grid')
 library('corrplot')
 library('MuMIn')
+library('car')
 
 #### Load & format data ####
 
@@ -465,7 +466,7 @@ time_resid <- time_mod$residuals
 dat_work$time <- time_resid
 
 
-## I will start by modelling sets of predictors at a time.  All sets will have the time variable, and amount of forest remaining. The sets will be:
+## I will start by modelling sets of predictors at a time.  All sets will have the time variable, and amount of forest remaining. This is because time and for_rem will be in the final model and so they need to be in the subset models so that the effects of the subset variables are partial effects, accounting for time and remaining forest. The sets will be:
 
 # macroeconomic - gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
 dat_me <- dat_work[ ,c(1:10,24:25)]
@@ -487,10 +488,85 @@ head(dat_me)
 
 # if gdp, gdp_gr, ind_gdp, agr_gdp are used then rows will be removed
 
-# saturated model
-me.mod1 <- lm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, data=dat_me)
+# saturated model - rows with missing values removed for dredge function below
+dat_me1 <- dat_me[c(3:22), ]
+me.mod1 <- lm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem, 
+              na.action="na.fail", data=dat_me1)
 summary(me.mod1)
 me.mod1$residuals
 
-# dredge
-system.time(dredge.me <- dredge(me.mod1, beta = "none", evaluate = TRUE, rank = AIC))
+# dredge (AICc used as small sample size)
+system.time(dredge.me <- dredge(me.mod1, beta = "none", evaluate = TRUE, rank = AICc))
+write.csv(dredge.me, file="dredge.me.csv")
+coefTable(dredge.me)
+
+# There is only one top model (AICc < 2). It contains for_rem, time, pop_den
+
+# fit the model, using full data as no missing data in these variables
+me.mod2 <- lm(for_cov ~ for_rem + pop_den + time, data = dat_me)
+summary(me.mod2)
+par(mfrow=c(2,2))
+plot(me.mod2)
+# I think the plots look ok - residual plot suggests homoscedasticity (although very slight possibility this isn't true towards the right hand side of the plot, but hard to say with such small sample size). Q-Q plot not particularly pretty, but I don't think this suggests any major issues, more just an issue with few data points. 
+vif(me.mod2)
+# variance inflation are all <5 so I think are fine
+
+# data point 2 (which is actually rowname 1) appears to have undue influence - I'll check to se what happens when it is removed
+
+me.mod3 <- update(me.mod2, data=dat_me[-1, ])
+plot(me.mod3)
+summary(me.mod3)
+# coefficients change slightly but it makes very little difference. So I'll keep the point in
+
+# test a model with the same terms but with interactions
+me.mod4 <- lm(for_cov ~ for_rem * pop_den * time, data = dat_me)
+plot(me.mod4)
+# residual plot and QQ plot look good - slightly better than me.mod2 I think
+summary(me.mod4)
+# for_rem is a significant term. Potentially an interesting interaction between for_rem and pop_den - the for_rem coefficient direction changes from positive (no interaction) to negative (interaction). But the p value for the interaction is nearly 0.1
+
+# compare models
+anova(me.mod2,me.mod4)
+# model with no interactions is better
+
+# try a simpler interaction model with only an interaction between for_rem and pop_den
+me.mod5 <- lm(for_cov ~ for_rem * pop_den + time, data = dat_me)
+plot(me.mod5)
+# plots look fine - similar to above
+summary(me.mod5)
+# interaction term is not significant, neither is pop_den
+
+# compare models
+anova(me.mod2, me.mod5)
+# the more complex model is not significantly better
+
+# It looks like me.mod2 is the best macroeconomic model. Compare the "importance" of the effects
+me.mod2a <- lm(for_cov ~ scale(for_rem) + scale(pop_den) + scale(time), data = dat_me)
+summary(me.mod2a)
+# time and for_rem have similar effects on for_cov, pop_den has less of an effect
+
+## plot the effects
+
+# pop_den
+newpop_den <- seq(1.11,1.920,0.01)
+length(newpop_den)
+
+meantime <- rep(mean(dat_me$time),82)
+meanfor_rem <- rep(mean(dat_me$for_rem),82)
+
+newy.me <- predict(me.mod2, newdata = 
+                     list(pop_den=newpop_den, time=meantime, for_rem=meanfor_rem),
+                   int="c")
+
+pred.pop_den <- data.frame(newx = newpop_den,
+                           newy = as.numeric(newy.me[ ,"fit"]),
+                           newupr = as.numeric(newy.me[ ,"upr"]),
+                           newlwr = as.numeric(newy.me[ ,"lwr"]))
+
+ggplot(pred.pop_den, aes(x=newx, y=newy))+
+  geom_line()+
+  geom_ribbon(aes(ymin=newlwr, ymax=newupr, alpha=0.25))+
+  geom_point(data=dat_me,aes(x=pop_den, y=for_cov))
+  
+  
+  
