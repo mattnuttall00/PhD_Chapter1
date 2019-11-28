@@ -3,7 +3,6 @@
 #### Load packages ####
 
 library('nlme')
-library('ggplot2')
 library('cowplot')
 library('tidyverse')
 library('gamm4')
@@ -96,7 +95,7 @@ dat_change[1,4] <- NA
 dat_change[1,c(8,9)] <- NA
 
 head(dat_change)
-write.csv(dat_change, file="dat_change.csv")
+#write.csv(dat_change, file="dat_change.csv")
 
 #### Exploratory plots ####
   ## Histograms ####
@@ -540,10 +539,91 @@ summary(me.mod5)
 anova(me.mod2, me.mod5)
 # the more complex model is not significantly better
 
-# It looks like me.mod2 is the best macroeconomic model. Compare the "importance" of the effects
+# It looks like me.mod2 is the best unlagged macroeconomic model. Compare the "importance" of the effects
 me.mod2a <- lm(for_cov ~ scale(for_rem) + scale(pop_den) + scale(time), data = dat_me)
 summary(me.mod2a)
 # time and for_rem have similar effects on for_cov, pop_den has less of an effect
+
+
+## Models with time lags in the predictors
+
+# create data
+dat_me_lag <- data.frame(year = dat_me$year,
+                         for_cov = dat_me$for_cov,
+                         time = dat_me$time,
+                         gdp.lag1 = lag(dat_me$gdp),
+                         gdp.lag2 = lag(dat_me$gdp, n=2L),
+                         gdp_gr.lag1 = lag(dat_me$gdp_gr),
+                         gdp_gr.lag2 = lag(dat_me$gdp_gr, n=2L),
+                         fdi.lag1 = lag(dat_me$fdi),
+                         fdi.lag2 = lag(dat_me$fdi, n=2L),
+                         ind_gdp.lag1 = lag(dat_me$ind_gdp),
+                         ind_gdp.lag2 = lag(dat_me$ind_gdp, n=2L),
+                         agr_gdp.lag1 = lag(dat_me$agr_gdp),
+                         agr_gdp.lag2 = lag(dat_me$agr_gdp, n=2L),
+                         dev_agr.lag1 = lag(dat_me$dev_agri),
+                         dev_agr.lag2 = lag(dat_me$dev_agri, n=2L),
+                         dev_env.lag1 = lag(dat_me$dev_env),
+                         dev_env.lag2 = lag(dat_me$dev_env, n=2L),
+                         pop_den.lag1 = lag(dat_me$pop_den),
+                         pop_den.lag2 = lag(dat_me$pop_den, n=2L),
+                         for_rem.lag1 = lag(dat_me$for_rem),
+                         for_rem.lag2 = lag(dat_me$for_rem, n=2L))
+
+# remove the rows that have NAs
+dat_me_lag_sub <- dat_me_lag[c(5:22), ]
+
+# saturated model - WARNING TAKES AGES TO RUN
+me.modlag.all <- lm(for_cov ~ gdp.lag1+gdp.lag2+gdp_gr.lag1+gdp_gr.lag2+fdi.lag1+fdi.lag2+ind_gdp.lag1+
+                   ind_gdp.lag2+agr_gdp.lag1+agr_gdp.lag2+dev_agr.lag1+dev_agr.lag2+dev_env.lag1+dev_env.lag2+
+                   pop_den.lag1+pop_den.lag2+for_rem.lag1+for_rem.lag2+time, 
+                   data=dat_me_lag_sub, na.action="na.fail")
+summary(me.modlag.all)
+
+dredge.me.lag.all <- dredge(me.modlag.all, beta = "none", evaluate = TRUE, rank = AICc)
+
+# just lag 1 saturated model
+me.modlag.1 <- lm(for_cov ~ gdp.lag1+gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+dev_agr.lag1+dev_env.lag1+
+                 pop_den.lag1+for_rem.lag1+time, data=dat_me_lag_sub, na.action="na.fail")
+
+summary(me.modlag.1)
+
+dredge.me.lag.1 <- dredge(me.modlag.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(dredge.me.lag.1, file="dredge.me.lag.1.csv")
+
+# when a 1 year lag is applied, time (unlagged) is still in the best model, and for_rem, ind_gdp, and pop_den are all in the model. Compared with the best model from the unlagged data, the effect size of for_rem is virtually identical between lagged and un-lagged, the effect size of pop_den is virtually identical between lagged and unlagged.  ind_gdp appears in the top model when it is lagged, which it does not when unlagged. The effect is positive for lagged ind_gdp, so that when ind_gdp gets larger in time t, forest loss increases in t+1, which is not what I would have hypothesised.  
+
+# re-create the model.  Because of the variables in the top dredged model, I can keep in more rows from the original dataset (fewer NAs)
+dat_me_lag_dredge <- dat_me_lag[c(3:22), ]
+
+me.modlag.2 <- lm(for_cov ~ time + for_rem.lag1 + ind_gdp.lag1 + pop_den.lag1, data=dat_me_lag_dredge)
+summary(me.modlag.2)
+par(mfrow=c(2,2))
+plot(me.modlag.2)
+# plots look fine. point 5 appears to be having large influence
+
+# remove point 5 (row 3)
+me.modlag.3 <- update(me.modlag.2, data=dat_me_lag_dredge[-3, ])
+plot(me.modlag.3)
+summary(me.modlag.3)
+# plots and coefficients very similar so I'm not worried aobut the point
+
+# test for interactions
+me.modlag.4 <- lm(for_cov ~ time * for_rem.lag1 * ind_gdp.lag1 * pop_den.lag1, data=dat_me_lag_dredge)
+summary(me.modlag.4)
+plot(me.modlag.4)
+# Not liking the residuals plot - some heterosced
+
+# compare models
+anova(me.modlag.2,me.modlag.4)
+# More complex model has some support, but simpler model just beats it I think
+
+# reduce complexity
+me.modlag.5 <- lm(for_cov ~ for_rem.lag1 * pop_den.lag1 + ind_gdp.lag1 + time , data=dat_me_lag_dredge)
+summary(me.modlag.5)
+plot(me.modlag.5)
+
+
 
 ## plot the effects
 
@@ -562,6 +642,8 @@ pred.pop_den <- data.frame(newx = newpop_den,
                            newy = as.numeric(newy.me[ ,"fit"]),
                            newupr = as.numeric(newy.me[ ,"upr"]),
                            newlwr = as.numeric(newy.me[ ,"lwr"]))
+
+
 
 ggplot(pred.pop_den, aes(x=newx, y=newy))+
   geom_line()+
