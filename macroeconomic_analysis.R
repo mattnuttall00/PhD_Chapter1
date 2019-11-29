@@ -501,6 +501,8 @@ coefTable(dredge.me)
 
 # There is only one top model (AICc < 2). It contains for_rem, time, pop_den
 
+
+
 # fit the model, using full data as no missing data in these variables
 me.mod2 <- lm(for_cov ~ for_rem + pop_den + time, data = dat_me)
 summary(me.mod2)
@@ -517,23 +519,34 @@ plot(me.mod3)
 summary(me.mod3)
 # coefficients change slightly but it makes very little difference. So I'll keep the point in
 
+
+
 # test a model with the same terms but with interactions
-me.mod4 <- lm(for_cov ~ for_rem * pop_den * time, data = dat_me)
+me.mod4 <- lm(for_cov ~ scale(for_rem,center = T,scale = F) * scale(pop_den,center = T,scale = F) * 
+                scale(time,center = T,scale = F), data = dat_me)
+
+# same model but without centering (jsut to test)
+me.mod4a <- lm(for_cov ~ for_rem * pop_den * time, data = dat_me)
+# Model inference is similar, but with centering more terms are significant. This is due to the centering reducing the variance inflation caused by colinearity between interaction terms 
+
 plot(me.mod4)
 # residual plot and QQ plot look good - slightly better than me.mod2 I think
 summary(me.mod4)
-# for_rem is a significant term. Potentially an interesting interaction between for_rem and pop_den - the for_rem coefficient direction changes from positive (no interaction) to negative (interaction). But the p value for the interaction is nearly 0.1
+vif(me.mod4)
+# When centered, all terms are significant. Potentially an interesting interaction between for_rem and pop_den - as pop_den increases, the positive effect (ie more forest loss with higher for_rem) gets smaller. So an increaseing population makes the amount of forest remaining less important for forest loss. But the p value for the interaction is nearly 0.1
 
 # compare models
 anova(me.mod2,me.mod4)
 # model with no interactions is better
 
+
+
 # try a simpler interaction model with only an interaction between for_rem and pop_den
-me.mod5 <- lm(for_cov ~ for_rem * pop_den + time, data = dat_me)
+me.mod5 <- lm(for_cov ~ scale(for_rem, center=T, scale=F) * scale(pop_den,center=T,scale=F) + time, data = dat_me)
 plot(me.mod5)
 # plots look fine - similar to above
 summary(me.mod5)
-# interaction term is not significant, neither is pop_den
+# interaction term is not significant. All other terms are significant 
 
 # compare models
 anova(me.mod2, me.mod5)
@@ -543,6 +556,7 @@ anova(me.mod2, me.mod5)
 me.mod2a <- lm(for_cov ~ scale(for_rem) + scale(pop_den) + scale(time), data = dat_me)
 summary(me.mod2a)
 # time and for_rem have similar effects on for_cov, pop_den has less of an effect
+
 
 
 ## Models with time lags in the predictors
@@ -582,6 +596,7 @@ summary(me.modlag.all)
 
 dredge.me.lag.all <- dredge(me.modlag.all, beta = "none", evaluate = TRUE, rank = AICc)
 
+
 # just lag 1 saturated model
 me.modlag.1 <- lm(for_cov ~ gdp.lag1+gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+dev_agr.lag1+dev_env.lag1+
                  pop_den.lag1+for_rem.lag1+time, data=dat_me_lag_sub, na.action="na.fail")
@@ -592,6 +607,8 @@ dredge.me.lag.1 <- dredge(me.modlag.1, beta = "none", evaluate = TRUE, rank = AI
 write.csv(dredge.me.lag.1, file="dredge.me.lag.1.csv")
 
 # when a 1 year lag is applied, time (unlagged) is still in the best model, and for_rem, ind_gdp, and pop_den are all in the model. Compared with the best model from the unlagged data, the effect size of for_rem is virtually identical between lagged and un-lagged, the effect size of pop_den is virtually identical between lagged and unlagged.  ind_gdp appears in the top model when it is lagged, which it does not when unlagged. The effect is positive for lagged ind_gdp, so that when ind_gdp gets larger in time t, forest loss increases in t+1, which is not what I would have hypothesised.  
+
+
 
 # re-create the model.  Because of the variables in the top dredged model, I can keep in more rows from the original dataset (fewer NAs)
 dat_me_lag_dredge <- dat_me_lag[c(3:22), ]
@@ -608,8 +625,12 @@ plot(me.modlag.3)
 summary(me.modlag.3)
 # plots and coefficients very similar so I'm not worried aobut the point
 
+
+
 # test for interactions
-me.modlag.4 <- lm(for_cov ~ time * for_rem.lag1 * ind_gdp.lag1 * pop_den.lag1, data=dat_me_lag_dredge)
+me.modlag.4 <- lm(for_cov ~ scale(time,center=T,scale=F) * scale(for_rem.lag1,center=T,scale=F) * 
+                  scale(ind_gdp.lag1,center=T,scale=F) * scale(pop_den.lag1,center=T,scale=F), 
+                  data=dat_me_lag_dredge)
 summary(me.modlag.4)
 plot(me.modlag.4)
 # Not liking the residuals plot - some heterosced
@@ -618,25 +639,85 @@ plot(me.modlag.4)
 anova(me.modlag.2,me.modlag.4)
 # More complex model has some support, but simpler model just beats it I think
 
-# reduce complexity
-me.modlag.5 <- lm(for_cov ~ for_rem.lag1 * pop_den.lag1 + ind_gdp.lag1 + time , data=dat_me_lag_dredge)
+
+# reduce complexity - only interaction between for_rem and pop_den
+me.modlag.5 <- lm(for_cov ~ scale(for_rem.lag1,center=T,scale=F) * scale(pop_den.lag1,center=T,scale=F) + 
+                  ind_gdp.lag1 + time , data=dat_me_lag_dredge)
 summary(me.modlag.5)
 plot(me.modlag.5)
+vif(me.modlag.5)
 
 
 
-## plot the effects
+## Models with a 2 year time lag
+me.mod2lag.1 <- lm(for_cov ~ gdp.lag2+gdp_gr.lag2+fdi.lag2+ind_gdp.lag2+agr_gdp.lag2+dev_agr.lag2+dev_env.lag2+
+                 pop_den.lag2+for_rem.lag2+time, data=dat_me_lag_sub, na.action="na.fail")
+summary(me.mod2lag.1)
+
+dredge.me.lag.2 <- dredge(me.mod2lag.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(dredge.me.lag.2, file="dredge.me.lag.2.csv")
+
+# when a 2 year lag is applied, the model has the same terms as before -  time (unlagged), and then lagged versions of for_rem, ind_gdp, pop_den.  See excel spreadsheet "macroecon_models" for summary comparisons
+
+# re-create the model using all available data
+me.mod2lag.2 <- lm(for_cov ~ for_rem.lag2 + pop_den.lag2 + ind_gdp.lag2 + time, data=dat_me_lag_dredge)
+summary(me.mod2lag.2)
+plot(me.mod2lag.2)
+# I think the plots look ok
+
+# check for variance inflation
+vif(me.mod2lag.2)
+# for_rem.lag2 has a vif of just over 5, but the rest are <5.  Fine I think
+
+
+
+# test interactions
+me.mod2lag.3 <- lm(for_cov ~ scale(for_rem.lag2,center=T,scale=F) * scale(pop_den.lag2,center=T,scale=F) * 
+                   scale(ind_gdp.lag2,center=T,scale=F) + scale(time,center=T,scale=F), 
+                   data=dat_me_lag_dredge)
+summary(me.mod2lag.3)
+plot(me.mod2lag.3)
+vif(me.mod2lag.3)
+# Plots look fine. VIF's for for_rem:ind_gdp and pop_den:ind_gdp are too high, but they are already centered so I'm not exactly sure what I can do about it.
+
+# Only for_rem:pop_den is sig, so I will simplify the interactions 
+me.mod2lag.4 <- lm(for_cov ~ scale(for_rem.lag2,center=T,scale=F) * scale(pop_den.lag2,center=T,scale=F) + 
+                   ind_gdp.lag2 + time, data=dat_me_lag_dredge)
+
+plot(me.mod2lag.4)
+# QQ plot doesn't look that great -  the top end shoots off
+summary(me.mod2lag.4)
+vif(me.mod2lag.4)
+# vifs are ok - all <6
+
+
+### summary
+
+# FOR_REM - the effect size of for_rem is very consistent throughout all models, even between lagged and unlagged. It remains highly signifcant throughout, and so I can conclude that it is an important predictor. The effect is positive, which suggests that the more forest there is available, the more likely it is to be lost. See below under pop_den for details on interactions. There seems to be no increase/decrease in effect size when the variable is lagged or not, and so I would stick with the raw (unlagged) version.
+
+# TIME - As above. This is also a 'control' variable so will definitely be in the final model(s). There was one signifcant case of interaction between time and pop_den (see below udner pop_den)
+
+# IND_GDP - This is no an important variable when there is no time lag.  Yet in appears in the top dredged models for 1year and 2year lag.  The effect size varies quite a bit, althoug is much larger (and more significant) with a 2-year time lag.  The effect is positive, and therefore suggests that when there are positive changes to industrial proportion of GDP at time t, this predicts larger forest loss in time t+1 and t+2. This is opposite of what I would have expected. There were no instances of interactions with this variable
+
+# POP_DEN - This is an important predictor, and is signifcant in all models (except me.mod4a which wasn't centered and so is not correct anyway).  The effect size is large - with every unit increase of population density (i.e. another person per square km), a further 400-600ha of forest is predicted to be lost. There is also decent evidence of an interaction between forest remaining and population density, and to a lesser extent population density and time.  The interaction effect for for_rem:pop_den is negative, and so with every unit increase in population density, the effect of remaining forest is reduced by between 13-66%. In one case, when a 1-year lag is applied, there is an interaction whereby one unit increase of time (1 year) reduces the effect of pop_den, but only by 0.1%, so not really that useful. Although perhaps this suggest that if we had more data, we would see that the effect of population density on forest loss is getting smaller over time. 
+
+# In terms of models, the models with 2 year lag have the lowest AICc values.  All of the models have very similar R2 values. Based on all of the above, me.mod2lag.4 constitutes the best model when each component is taken into account, and the AICc is the lowest of all the models.
+
+
+## plot the effects of me.mod2lag.4
 
 # pop_den
-newpop_den <- seq(1.11,1.920,0.01)
-length(newpop_den)
+df.me.pop_den <- crossing(scale(pop_den.lag2,center=T,scale=F) = seq(min(dat_me_lag_dredge$pop_den.lag2),
+                                    max(dat_me_lag_dredge$pop_den.lag2),length=100),
+                      scale(for_rem.lag2,center=T,scale=F) = mean(dat_me_lag_dredge$for_rem.lag2),
+                      ind_gdp.lag2 = rep(0.8368),
+                      time = mean(dat_me_lag_dredge$time))
+head(df.me.pop_den)
 
-meantime <- rep(mean(dat_me$time),82)
-meanfor_rem <- rep(mean(dat_me$for_rem),82)
+df.me.pop_den <- new_data(me.mod2lag.4, terms = c("pop_den.lag2","for_rem.lag2","ind_gdp.lag2","time"),
+                          typical = "mean")
 
-newy.me <- predict(me.mod2, newdata = 
-                     list(pop_den=newpop_den, time=meantime, for_rem=meanfor_rem),
-                   int="c")
+newpop_den <- predict(me.mod2lag.4, newdata = list(df.me.pop_den), int="c")
 
 pred.pop_den <- data.frame(newx = newpop_den,
                            newy = as.numeric(newy.me[ ,"fit"]),
