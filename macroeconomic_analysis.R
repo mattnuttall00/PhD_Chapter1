@@ -680,8 +680,15 @@ plot(me.mod2lag.3)
 vif(me.mod2lag.3)
 # Plots look fine. VIF's for for_rem:ind_gdp and pop_den:ind_gdp are too high, but they are already centered so I'm not exactly sure what I can do about it.
 
-# Only for_rem:pop_den is sig, so I will simplify the interactions 
-me.mod2lag.4 <- lm(for_cov ~ scale(for_rem.lag2,center=T,scale=F) * scale(pop_den.lag2,center=T,scale=F) + 
+
+
+# Only for_rem:pop_den is sig, so I will simplify the interactions
+
+# first add the centered data to the dataframe so I don't have to center the variables in the model formula
+dat_me_lag_dredge$for_rem.lag2.cen <- c(scale(dat_me_lag_dredge$for_rem.lag2,center=T,scale=F))
+dat_me_lag_dredge$pop_den.lag2.cen <- c(scale(dat_me_lag_dredge$pop_den.lag2,center=T,scale=F))
+
+me.mod2lag.4 <- lm(for_cov ~ for_rem.lag2.cen * pop_den.lag2.cen + 
                    ind_gdp.lag2 + time, data=dat_me_lag_dredge)
 
 plot(me.mod2lag.4)
@@ -691,45 +698,78 @@ vif(me.mod2lag.4)
 # vifs are ok - all <6
 
 
+# change the order of the interaction
+me.mod2lag.5 <- lm(for_cov ~ pop_den.lag2.cen * for_rem.lag2.cen + 
+                   ind_gdp.lag2 + time, data=dat_me_lag_dredge)
+
+plot(me.mod2lag.5)
+# QQ plot same as above
+summary(me.mod2lag.5)
+vif(me.mod2lag.5)
+# vifs are ok - all <6
+
+# the order of the terms in the interaction doesn't make any difference to the coefficients.
+
 ### summary
 
-# FOR_REM - the effect size of for_rem is very consistent throughout all models, even between lagged and unlagged. It remains highly signifcant throughout, and so I can conclude that it is an important predictor. The effect is positive, which suggests that the more forest there is available, the more likely it is to be lost. See below under pop_den for details on interactions. There seems to be no increase/decrease in effect size when the variable is lagged or not, and so I would stick with the raw (unlagged) version.
+# FOR_REM - the effect size of for_rem is very consistent throughout all models, even between lagged and unlagged. It remains highly signifcant throughout, and so I can conclude that it is an important predictor. The effect is positive, which suggests that the more forest there is available, the more likely it is to be lost. See below under pop_den for details on interactions. There seems to be no increase/decrease in effect size when the variable is lagged or not.
 
 # TIME - As above. This is also a 'control' variable so will definitely be in the final model(s). There was one signifcant case of interaction between time and pop_den (see below udner pop_den)
 
-# IND_GDP - This is no an important variable when there is no time lag.  Yet in appears in the top dredged models for 1year and 2year lag.  The effect size varies quite a bit, althoug is much larger (and more significant) with a 2-year time lag.  The effect is positive, and therefore suggests that when there are positive changes to industrial proportion of GDP at time t, this predicts larger forest loss in time t+1 and t+2. This is opposite of what I would have expected. There were no instances of interactions with this variable
+# IND_GDP - This is not an important variable when there is no time lag.  Yet it appears in the top dredged models for 1year and 2year lag.  The effect size varies quite a bit, although is much larger (and more significant) with a 2-year time lag.  The effect is positive, and therefore suggests that when there are positive changes to industrial proportion of GDP at time t, this predicts larger forest loss in time t+1 and t+2. This is opposite of what I would have expected. There were no instances of interactions with this variable
 
-# POP_DEN - This is an important predictor, and is signifcant in all models (except me.mod4a which wasn't centered and so is not correct anyway).  The effect size is large - with every unit increase of population density (i.e. another person per square km), a further 400-600ha of forest is predicted to be lost. There is also decent evidence of an interaction between forest remaining and population density, and to a lesser extent population density and time.  The interaction effect for for_rem:pop_den is negative, and so with every unit increase in population density, the effect of remaining forest is reduced by between 13-66%. In one case, when a 1-year lag is applied, there is an interaction whereby one unit increase of time (1 year) reduces the effect of pop_den, but only by 0.1%, so not really that useful. Although perhaps this suggest that if we had more data, we would see that the effect of population density on forest loss is getting smaller over time. 
+# POP_DEN - This is an important predictor, and is signifcant in all models (except me.mod4a which wasn't centered and so is not correct anyway).  The effect size is large - with every unit increase of population density (i.e. another person per square km), the changes (loss) in forest cover goes down by between 400-600ha (taken from coefficients for models with no interaction). This is the opposite of what I would expect - I would have expected increases in population density to drive more forest loss, but this doesn't seem to be the case.  There is also decent evidence of an interaction between forest remaining and population density, and to a lesser extent population density and time.  The interaction effect for for_rem:pop_den is negative, and so with every unit increase in population density, the effect of remaining forest is reduced by between 13-66% (depending on the model). Conversely, for every unit increase of remaining forest, the effect of population density goes up. In one case, when a 1-year lag is applied, there is an interaction whereby one unit increase of time (1 year) reduces the effect of pop_den, but only by 0.1%, so not really that useful. Although perhaps this suggest that if we had more data, we would see that the effect of population density on forest loss is getting smaller over time. 
 
 # In terms of models, the models with 2 year lag have the lowest AICc values.  All of the models have very similar R2 values. Based on all of the above, me.mod2lag.4 constitutes the best model when each component is taken into account, and the AICc is the lowest of all the models.
 
 
-## plot the effects of me.mod2lag.4
+### plot the effects of me.mod2lag.4
 
-# pop_den
-df.me.pop_den <- crossing(scale(pop_den.lag2,center=T,scale=F) = seq(min(dat_me_lag_dredge$pop_den.lag2),
-                                    max(dat_me_lag_dredge$pop_den.lag2),length=100),
-                      scale(for_rem.lag2,center=T,scale=F) = mean(dat_me_lag_dredge$for_rem.lag2),
-                      ind_gdp.lag2 = rep(0.8368),
-                      time = mean(dat_me_lag_dredge$time))
-head(df.me.pop_den)
+## pop_den
 
-df.me.pop_den <- new_data(me.mod2lag.4, terms = c("pop_den.lag2","for_rem.lag2","ind_gdp.lag2","time"),
-                          typical = "mean")
-
-newpop_den <- predict(me.mod2lag.4, newdata = list(df.me.pop_den), int="c")
-
-pred.pop_den <- data.frame(newx = newpop_den,
-                           newy = as.numeric(newy.me[ ,"fit"]),
-                           newupr = as.numeric(newy.me[ ,"upr"]),
-                           newlwr = as.numeric(newy.me[ ,"lwr"]))
-
-
-
-ggplot(pred.pop_den, aes(x=newx, y=newy))+
-  geom_line()+
-  geom_ribbon(aes(ymin=newlwr, ymax=newupr, alpha=0.25))+
-  geom_point(data=dat_me,aes(x=pop_den, y=for_cov))
+# expand grid and predict pop_den with min, max, and mean values of for_rem
+df.pop_den <- expand.grid(pop_den.lag2.cen = seq(min(dat_me_lag_dredge$pop_den.lag2.cen),
+                                    max(dat_me_lag_dredge$pop_den.lag2.cen),length=100),
+                       for_rem.lag2.cen = c(-6313.347, -6.548762e-12,10056.03),
+                       ind_gdp.lag2 = 0.8368, 
+                       time = mean(dat_me_lag_dredge$time))
   
+pop_den.pred <- predict(me.mod2lag.5,test.df, int="c")
+pop_den.pred <- as.data.frame(pop_den.pred)
+df.pop_den$fit <- pop_den.pred$fit
+df.pop_den$upr <- pop_den.pred$upr
+df.pop_den$lwr <- pop_den.pred$lwr
+
+# predictions for pop_den when for_rem at minimum
+df.pop_den.min <- df.pop_den[1:100, ]
+
+# predictions for pop_den when for_rem at mean
+df.pop_den.mean <- df.pop_den[101:200, ]
+
+# predictions for pop_den when for_rem at max
+df.pop_den.max <- df.pop_den[201:300, ]
+
+# plot pop_den partial effect with varying values of for_rem
+ggplot(df.pop_den, aes(x=pop_den.lag2.cen))+
+  geom_line(data=df.pop_den.mean, aes(y=fit, color="mean"), size=1.5)+
+  geom_ribbon(data=df.pop_den.mean, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#56B4E9", show.legend=F)+
   
+  geom_line(data=df.pop_den.min, aes(y=fit, color="min"), size=1.5)+
+  geom_ribbon(data=df.pop_den.min, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#009E73", show.legend=F)+
+ 
+  geom_line(data=df.pop_den.max, aes(y=fit,color="max"), size=1.5)+
+  geom_ribbon(data=df.pop_den.max, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#D55E00", show.legend=F)+
   
+  scale_color_manual(name = "Remaining forest", 
+                     values = c("mean"="#56B4E9", "min"="#009E73", "max"="#D55E00"))+
+ 
+  xlab("Changes in population density (centered)")+
+  ylab("Amount of forest lost (ha)")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+
+
+                        
