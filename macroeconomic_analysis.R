@@ -730,11 +730,11 @@ vif(me.mod2lag.5)
 # expand grid and predict pop_den with min, max, and mean values of for_rem
 df.pop_den <- expand.grid(pop_den.lag2.cen = seq(min(dat_me_lag_dredge$pop_den.lag2.cen),
                                     max(dat_me_lag_dredge$pop_den.lag2.cen),length=100),
-                       for_rem.lag2.cen = c(-6313.347, -6.548762e-12,10056.03),
+                       for_rem.lag2.cen = c(-6313.347, -6.548762e-12, 10056.03),
                        ind_gdp.lag2 = 0.8368, 
                        time = mean(dat_me_lag_dredge$time))
   
-pop_den.pred <- predict(me.mod2lag.5,test.df, int="c")
+pop_den.pred <- predict(me.mod2lag.5, df.pop_den, int="c")
 pop_den.pred <- as.data.frame(pop_den.pred)
 df.pop_den$fit <- pop_den.pred$fit
 df.pop_den$upr <- pop_den.pred$upr
@@ -750,26 +750,104 @@ df.pop_den.mean <- df.pop_den[101:200, ]
 df.pop_den.max <- df.pop_den[201:300, ]
 
 # plot pop_den partial effect with varying values of for_rem
-ggplot(df.pop_den, aes(x=pop_den.lag2.cen))+
+p1 <- ggplot(df.pop_den, aes(x=pop_den.lag2.cen))+
   geom_line(data=df.pop_den.mean, aes(y=fit, color="mean"), size=1.5)+
   geom_ribbon(data=df.pop_den.mean, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#56B4E9", show.legend=F)+
   
-  geom_line(data=df.pop_den.min, aes(y=fit, color="min"), size=1.5)+
+  geom_line(data=df.pop_den.min, aes(y=fit, color="min (2015)"), size=1.5)+
   geom_ribbon(data=df.pop_den.min, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#009E73", show.legend=F)+
  
-  geom_line(data=df.pop_den.max, aes(y=fit,color="max"), size=1.5)+
+  geom_line(data=df.pop_den.max, aes(y=fit,color="max (1996)"), size=1.5)+
   geom_ribbon(data=df.pop_den.max, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#D55E00", show.legend=F)+
   
-  scale_color_manual(name = "Remaining forest", 
-                     values = c("mean"="#56B4E9", "min"="#009E73", "max"="#D55E00"))+
+  scale_color_manual(name = "Remaining forest\nat time t-2", 
+                     values = c("max (1996)"="#D55E00","mean"="#56B4E9", "min (2015)"="#009E73"),
+                     breaks = c("max (1996)", "mean", "min (2015)"))+
+  
  
-  xlab("Changes in population density (centered)")+
-  ylab("Amount of forest lost (ha)")+
+  xlab("Changes in population density at time t-2 (centered)")+
+  ylab("Amount of forest lost at time t (ha)")+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
 
 
+  
+## for_rem
+
+# expand grid and predict for_rem with min, max, and mean values of pop_den
+df.for_rem <- expand.grid(for_rem.lag2.cen = seq(min(dat_me_lag_dredge$for_rem.lag2.cen),
+                                    max(dat_me_lag_dredge$for_rem.lag2.cen),length=100),
+                       pop_den.lag2.cen = c(-0.2865, -8.880632e-17, 0.5235),
+                       ind_gdp.lag2 = 0.8368, 
+                       time = mean(dat_me_lag_dredge$time))
+  
+for_rem.pred <- predict(me.mod2lag.5, df.for_rem, int="c")
+for_rem.pred <- as.data.frame(for_rem.pred)
+df.for_rem$fit <- for_rem.pred$fit
+df.for_rem$upr <- for_rem.pred$upr
+df.for_rem$lwr <- for_rem.pred$lwr
+
+# predictions for for_rem when pop_den at minimum
+df.for_rem.min <- df.for_rem[1:100, ]
+
+# predictions for for_ren when pop_den at mean
+df.for_rem.mean <- df.for_rem[101:200, ]
+
+# predictions for for_rem when pop_den at max
+df.for_rem.max <- df.for_rem[201:300, ]
 
 
-                        
+# plot for_rem partial effect with varying values of pop_den
+p2 <- ggplot(df.for_rem, aes(x=for_rem.lag2.cen))+
+  geom_line(data=df.for_rem.mean, aes(y=fit, color="mean"), size=1.5)+
+  geom_ribbon(data=df.for_rem.mean, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#56B4E9", show.legend=F)+
+  
+  geom_line(data=df.for_rem.min, aes(y=fit, color="min"), size=1.5)+
+  geom_ribbon(data=df.for_rem.min, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#009E73", show.legend=F)+
+ 
+  geom_line(data=df.for_rem.max, aes(y=fit,color="max"), size=1.5)+
+  geom_ribbon(data=df.for_rem.max, aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#D55E00", show.legend=F)+
+  
+  
+  scale_color_manual(name = "Changes in population\ndensity at time t-2", 
+                     values = c("mean"="#56B4E9", "min"="#009E73", "max"="#D55E00"))+
+ 
+  xlab("Amount of forest remaining at time t-2 (centered)")+
+  ylab("Amount of forest lost at time t (ha)")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ 
+
+## ind_gdp
+
+## for_rem
+
+# expand grid and predict for_rem with min, max, and mean values of pop_den
+df.ind_gdp <- expand.grid(ind_gdp.lag2 = seq(-0.8000,3.4000, length=100),
+                       pop_den.lag2.cen = mean(dat_me_lag_dredge$pop_den.lag2.cen),
+                       for_rem.lag2.cen = mean(dat_me_lag_dredge$for_rem.lag2.cen),  
+                       time = mean(dat_me_lag_dredge$time))
+  
+ind_gdp.pred <- predict(me.mod2lag.5, df.ind_gdp, int="c")
+ind_gdp.pred <- as.data.frame(ind_gdp.pred)
+df.ind_gdp$fit <- ind_gdp.pred$fit
+df.ind_gdp$upr <- ind_gdp.pred$upr
+df.ind_gdp$lwr <- ind_gdp.pred$lwr
+
+
+# plot ind_gdp partial effect 
+p3 <- ggplot(df.ind_gdp, aes(x=ind_gdp.lag2, y=fit))+
+  geom_line(color="#56B4E9", size=1.5)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr, alpha=0.4), fill="#56B4E9", show.legend=F)+
+  xlab("Changes in Industrial sector proportion of GDP (%) at time t-2")+
+  ylab("Amount of forest lost at time t (ha)")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+  
+  
+ggsave("Results/Macroeconomics/Plots/me.plot.pop_den.png", p1, width = 30, height = 20, units = "cm", dpi=300)
+ggsave("Results/Macroeconomics/Plots/me.plot.for_rem.png", p2, width = 30, height = 20, units = "cm", dpi=300)
+ggsave("Results/Macroeconomics/Plots/me.plot.ind_gdp.png", p3, width = 20, height = 20, units = "cm", dpi=300) 
