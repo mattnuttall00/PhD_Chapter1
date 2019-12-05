@@ -28,7 +28,7 @@ par(op)
 
 ## NEGATIVE BINOMIAL
 
-# This is also a discrete distribution for non-negative data. It is presented in the literature as a combination of two distributions, giving a combined Poisson-gamma distribution. This means we first assume that the Ys are Poisson distributed with the mean μ assumed to follow a gamma distribution. With some mathematicalmanipulation, we end up with the negative binomial distribution for Y.
+# This is also a discrete distribution for non-negative data. It is presented in the literature as a combination of two distributions, giving a combined Poisson-gamma distribution. This means we first assume that the Ys are Poisson distributed with the mean μ assumed to follow a gamma distribution. With some mathematical manipulation, we end up with the negative binomial distribution for Y.
 
 # Nowadays, the negative binomial distribution is considered a stand-alone distribution, and it is not necessary to dig into the Poisson-gamma mixture background.The distribution function has two parameters: μ and k.
 
@@ -40,13 +40,15 @@ par(op)
 
 ## GAMMA
 
-# The gamma distribution can be used for a continuous response variable Y that has positive values (Y > 0), and the distribution function has various forms.
+# The gamma distribution can be used for a continuous response variable Y that has positive values (Y > 0), and the distribution function has various forms. The gamma distribution is useful for describing a wide range of processes where the data are positively skew (i.e. non-normal, with a long tail on the right). It is a two-parameter distribution, where the parameters are traditionally known as shape and rate.
 
 # the mean and variance are: E(Y) = u and var(Y) = u^2 / v
 
 # v is the equivalent to k in the negative binomial. The dispersion is determined by v^–1; a small value of v (relative to μ2) implies that the spread in the data is large.
 
 # For a large v, the gamma distribution becomes bell shaped and symmetric. In such cases, the Gaussian distribution can be used as well. Faraway (2006) gives an example of a linear regression model and a gamma GLM with a small (0.0045) dispersion parameter v–1; estimated parameters and standard errors obtained by both methods are nearly identical. However, for larger values of v–1, this is not the necessarily the case. Note that the allowable range of Y values is larger then 0. So, you cannot use this distribution if your response variable takes negative values or has a value of zero.
+
+# An important use of the gamma distribution is in describing continuous measurement data that are not normally distributed
 
 ## Bernoulli & binomial
 
