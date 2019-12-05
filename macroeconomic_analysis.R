@@ -19,6 +19,7 @@ library('grid')
 library('corrplot')
 library('MuMIn')
 library('car')
+library('boot')
 
 #### Load & format data ####
 
@@ -208,6 +209,10 @@ ggplot(dat_change,aes(x=pop_den, y=for_cov))+ geom_point()+ stat_smooth(method="
 ggplot(dat_change,aes(x=armi, y=for_cov))+ geom_point()
 ggplot(dat_change,aes(x=armi, y=for_cov))+ geom_point()+ stat_smooth(method="lm")
 # very slight negative slope but doesn't look sig
+
+# armi with 1 year lag
+ggplot(dat_change,aes(x=lag(armi), y=for_cov))+ geom_point()+ stat_smooth(method="lm")
+
 
 # for_cov ~ cpi
 ggplot(dat_change,aes(x=cpi, y=for_cov))+ geom_point()
@@ -718,7 +723,7 @@ vif(me.mod2lag.5)
 
 # IND_GDP - This is not an important variable when there is no time lag.  Yet it appears in the top dredged models for 1year and 2year lag.  The effect size varies quite a bit, although is much larger (and more significant) with a 2-year time lag.  The effect is positive, and therefore suggests that when there are positive changes to industrial proportion of GDP at time t, this predicts larger forest loss in time t+1 and t+2. This is opposite of what I would have expected. There were no instances of interactions with this variable
 
-# POP_DEN - This is an important predictor, and is signifcant in all models (except me.mod4a which wasn't centered and so is not correct anyway).  The effect size is large - with every unit increase of population density (i.e. another person per square km), the changes (loss) in forest cover goes down by between 400-600ha (taken from coefficients for models with no interaction). This is the opposite of what I would expect - I would have expected increases in population density to drive more forest loss, but this doesn't seem to be the case.  There is also decent evidence of an interaction between forest remaining and population density, and to a lesser extent population density and time.  The interaction effect for for_rem:pop_den is negative, and so with every unit increase in population density, the effect of remaining forest is reduced by between 13-66% (depending on the model). Conversely, for every unit increase of remaining forest, the effect of population density goes up. In one case, when a 1-year lag is applied, there is an interaction whereby one unit increase of time (1 year) reduces the effect of pop_den, but only by 0.1%, so not really that useful. Although perhaps this suggest that if we had more data, we would see that the effect of population density on forest loss is getting smaller over time. 
+# POP_DEN - This is an important predictor, and is signifcant in all models (except me.mod4a which wasn't centered and so is not correct anyway).  The effect size is large - with every unit increase of population density (i.e. another person per square km), the changes (loss) in forest cover goes down by between 400-600ha (taken from coefficients for models with no interaction). This is the opposite of what I would expect - I would have expected increases in population density to drive more forest loss, but this doesn't seem to be the case. When I run a simple model with just pop_den, and pop_den + time, the coefficient is positive. It's only when for_rem is added that it turns negative, highlighting the interaction.  There is decent evidence of an interaction between forest remaining and population density, and to a lesser extent population density and time.  The interaction effect for for_rem:pop_den is negative, and so with every unit increase in population density, the effect of remaining forest is reduced by between 13-66% (depending on the model - see 'macroecon_models.xlsx'). Conversely, for every unit increase of remaining forest, the effect of population density goes up. In one case, when a 1-year lag is applied, there is an interaction whereby one unit increase of time (1 year) reduces the effect of pop_den, but only by 0.1%, so not really that useful. Although perhaps this suggest that if we had more data, we would see that the effect of population density on forest loss is getting smaller over time. 
 
 # In terms of models, the models with 2 year lag have the lowest AICc values.  All of the models have very similar R2 values. Based on all of the above, me.mod2lag.4 constitutes the best model when each component is taken into account, and the AICc is the lowest of all the models.
 
@@ -851,3 +856,238 @@ p3 <- ggplot(df.ind_gdp, aes(x=ind_gdp.lag2, y=fit))+
 ggsave("Results/Macroeconomics/Plots/me.plot.pop_den.png", p1, width = 30, height = 20, units = "cm", dpi=300)
 ggsave("Results/Macroeconomics/Plots/me.plot.for_rem.png", p2, width = 30, height = 20, units = "cm", dpi=300)
 ggsave("Results/Macroeconomics/Plots/me.plot.ind_gdp.png", p3, width = 20, height = 20, units = "cm", dpi=300) 
+
+
+  ## Commodity / production set ####
+
+str(dat_com)
+head(dat_com)
+
+# REMINDER - armi and rub_med are highly correlated, and armi and the other commodity prices are quite correlated (except rice_med)
+
+# model for dredge with no armi
+com.mod1 <- lm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + for_rem + time,
+               data = dat_com, na.action="na.fail")
+summary(com.mod1)
+
+# dredge
+dredge.com1 <- dredge(com.mod1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(dredge.com1, file="dredge.com1.csv")
+
+# for_rem + time, plus rice_med, rub_med, sug_med are in the top candidate models
+
+
+# now lets check dredge with armi and rice_med only
+com.mod2 <- lm(for_cov ~ cpi + nfi + rice_med + armi + for_prod + for_rem + time,
+               data = dat_com, na.action="na.fail")
+summary(com.mod2)
+
+# dredge
+dredge.com2 <- dredge(com.mod2, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(dredge.com2, file="dredge.com2.csv")
+
+# for_rem + time, plus armi, rice_med.  I will use armi instead of rub_med and sug_med as it reduces the number of terms in the models, and armi reflects the trends in those commodities anyway.
+
+# fit the model
+com.mod3 <- lm(for_cov ~ armi + rice_med + for_rem + time, data=dat_com)
+summary(com.mod3)
+# neither armi or rice_med are sig in this model, which was to be expected as in the dredge they do not appear together in the top models. I will test models with both in indiviudally
+
+# remove rice_med
+com.mod4 <- lm(for_cov ~ armi + for_rem + time, data = dat_com)
+summary(com.mod4)
+par(mfrow=c(2,2))
+plot(com.mod4)
+# Plots look ok.  armi is still not signifcant which is interesting
+vif(com.mod4)
+# vifs are good (~1)
+
+# remove armi but leave rice_med in
+com.mod5 <- lm(for_cov ~ rice_med + for_rem + time, data=dat_com)
+summary(com.mod5)
+plot(com.mod5)
+# perhaps very slight signs of heterosced
+vif(com.mod5)
+# vifs good
+
+# test interactions
+com.mod6 <- lm(for_cov ~ armi * rice_med * for_rem * time, data = dat_com)
+summary(com.mod6)
+# only for_rem is sig
+
+# reduce complexity
+com.mod7 <- lm(for_cov ~ armi * rice_med * for_rem + time, data = dat_com)
+summary(com.mod7)
+# result is the same
+
+
+# out of curiosity I will test some of the other vars 
+com.mod8 <- lm(for_cov ~ cpi + for_rem + time, data = dat_com)
+summary(com.mod8)
+
+com.mod9 <- lm(for_cov ~ nfi + for_rem + time, data = dat_com)
+summary(com.mod9)
+
+com.mod10 <- lm(for_cov ~ for_prod + for_rem + time, data = dat_com)
+summary(com.mod10)
+
+com.mod11 <- lm(for_cov ~ rub_med + for_rem + time, data = dat_com)
+summary(com.mod11)
+
+# nope
+
+
+## now I will test with time lags
+
+# create data
+
+dat_com_lag <- data.frame(year = dat_com$year,
+                          time = dat_com$time,
+                          for_cov = dat_com$for_cov,
+                          for_rem.lag1 = lag(dat_com$for_rem),
+                          for_rem.lag2 = lag(dat_com$for_rem, n=2L),
+                          armi.lag1 = lag(dat_com$armi),
+                          armi.lag2 = lag(dat_com$armi, n=2L),
+                          cpi.lag1 = lag(dat_com$cpi),
+                          cpi.lag2 = lag(dat_com$cpi, n=2L),
+                          nfi.lag1 = lag(dat_com$nfi),
+                          nfi.lag2 = lag(dat_com$nfi, n=2L),
+                          rice_med.lag1 = lag(dat_com$rice_med),
+                          rice_med.lag2 = lag(dat_com$rice_med, n=2L),
+                          rub_med.lag1 = lag(dat_com$rub_med),
+                          rub_med.lag2 = lag(dat_com$rub_med, n=2L),
+                          corn.med.lag1 = lag(dat_com$corn_med),
+                          corn_med.lag2 = lag(dat_com$corn_med, n=2L),
+                          sug_med.lag1 = lag(dat_com$sug_med),
+                          sug_med.lag2 = lag(dat_com$sug_med, n=2L),
+                          for_prod.lag1 = lag(dat_com$for_prod),
+                          for_prod_lag2 = lag(dat_com$for_prod, n=2L))
+
+# remove first row for 1-year lag
+dat_com_lag1 <- dat_com_lag[2:22, ]
+str(dat_com_lag1)
+head(dat_com_lag1)
+
+# remove first two rows for 2-year lag
+dat_com_lag2 <- dat_com_lag[3:22, ]
+str(dat_com_lag2)
+head(dat_com_lag2)
+
+
+## model dredge for 1-year lag with no armi
+com.modlag.1 <- lm(for_cov ~ cpi.lag1+nfi.lag1+rice_med.lag1+rub_med.lag1+corn.med.lag1+sug_med.lag1+
+                     for_prod.lag1 + for_rem.lag1 + time, data = dat_com_lag1, na.action="na.fail")
+summary(com.modlag.1)
+
+dredge.com.lag1 <- dredge(com.modlag.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(dredge.com.lag1, file="dredge.comm.lag1.csv")
+
+# for_prod, rub_med (and for_rem, time) are now in the top candidate models from dredge
+
+# re-create full model with those terms
+com.modlag.2 <- lm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, data=dat_com_lag1)
+summary(com.modlag.2)
+# for_prod.lag1 only slightly signficant
+plot(com.modlag.2)
+# definitely looks like some hetersced. Not dramatic but its there. But could be being caused by those two points on the far right of the resid v fitted plot.  I bet you one of the points is 2015 - the really small value which was the same as 1993 and just a bit weird
+
+# remove 2015
+dat_com_lag1.sub <- dat_com_lag1[1:20, ]
+
+# re-run model
+com.modlag.3 <- lm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, data=dat_com_lag1.sub)
+summary(com.modlag.3)
+plot(com.modlag.3)
+# ok so that made no difference 
+
+# based on cooks distance point 8 (rowname 9) is having large effect. I'll try and remove that
+dat_com_lag1.sub <- dat_com_lag1[c(1:6,8:21), ]
+
+# re-run model
+com.modlag.4 <- lm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, data=dat_com_lag1.sub)
+summary(com.modlag.4)
+plot(com.modlag.4)
+# removing point 8 doesn't really reduce the heterosced, but does make the QQ plot worse!
+
+# the problem could be non-linearity.  Try adding quadratic terms
+# first have to center
+dat_com_lag1$for_prod.lag1.cen <- scale(dat_com_lag1$for_prod.lag1, center = T,scale = F)
+dat_com_lag1$rub_med.lag1.cen <- scale(dat_com_lag1$rub_med.lag1, center = T, scale = F)
+
+# add quadratic term to for_prod
+com.modlag.5 <- lm(for_cov ~ for_prod.lag1.cen + I(for_prod.lag1.cen^2) + 
+                     rub_med.lag1 + for_rem.lag1 + time, data=dat_com_lag1)
+summary(com.modlag.5)                   
+plot(com.modlag.5)                   
+# helps very slightly
+
+# add quadratic term to rub_med
+com.modlag.6 <- lm(for_cov ~ for_prod.lag1 + rub_med.lag1.cen + I(rub_med.lag1.cen^2) + 
+                     for_rem.lag1 + time, data=dat_com_lag1)
+summary(com.modlag.6)                   
+plot(com.modlag.6)                   
+# I think that makes the non-linearity worse
+
+# both terms quadratic
+com.modlag.7 <- lm(for_cov ~ for_prod.lag1.cen + I(for_prod.lag1.cen^2) + 
+                     rub_med.lag1.cen + I(rub_med.lag1.cen^2) + 
+                     for_rem.lag1 + time, data=dat_com_lag1)
+summary(com.modlag.7)                   
+plot(com.modlag.7)                   
+# there are a handful of points on the left of the resid v fit plot that are causing the issue
+
+# try log-transforming the y
+com.modlag.8 <- lm(log(for_cov) ~ for_prod.lag1.cen + rub_med.lag1.cen + for_rem.lag1 + time, 
+                   data=dat_com_lag1)
+summary(com.modlag.8)                   
+plot(com.modlag.8)                   
+# point 22 is causing issues (which is 2015)
+
+# remove that point
+dat_com_lag1.sub <- dat_com_lag1[1:20, ]
+                   
+com.modlag.9 <- lm(log(for_cov) ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, 
+                   data=dat_com_lag1.sub)
+summary(com.modlag.9)                   
+plot(com.modlag.9)               
+# distinctly non-linear. Point 21 now causing the issue
+
+# remove that point
+dat_com_lag1.sub <- dat_com_lag1.sub[1:19, ]
+         
+com.modlag.10 <- lm(log(for_cov) ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, 
+                   data=dat_com_lag1.sub)
+summary(com.modlag.10)                   
+plot(com.modlag.10)            
+# still very non-linear
+
+# try quadratic terms with log-transformed y
+com.modlag.11 <- lm(log(for_cov) ~ for_prod.lag1.cen + I(for_prod.lag1.cen^2) + 
+                    rub_med.lag1.cen + I(rub_med.lag1.cen^2) + 
+                    for_rem.lag1 + time, data=dat_com_lag1.sub)
+summary(com.modlag.11)                   
+plot(com.modlag.11)
+# worse                   
+
+
+## move on to GLM.  I will start with Gamma distribution (continuous non-negative Y) with inverse link 
+com.glmlag.1 <- glm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, 
+                    family = Gamma(link="inverse"), data=dat_com_lag1)
+summary(com.glmlag.1) 
+com.glmlag.1_diag <- glm.diag(com.glmlag.1)
+glm.diag.plots(com.glmlag.1, com.glmlag.1_diag)                   
+# still the problem with non-linear residuals. But this isn't an issue with GLMs right?!
+
+# compare with log link
+com.glmlag.2 <- glm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, 
+                    family = Gamma(link="log"), data=dat_com_lag1)
+summary(com.glmlag.2) 
+com.glmlag.2_diag <- glm.diag(com.glmlag.2)
+glm.diag.plots(com.glmlag.2, com.glmlag.2_diag) 
+
+# compare with identity link
+com.glmlag.3 <- glm(for_cov ~ for_prod.lag1 + rub_med.lag1 + for_rem.lag1 + time, 
+                    family = Gamma(link="identity"), data=dat_com_lag1)
+summary(com.glmlag.3) 
+com.glmlag.3_diag <- glm.diag(com.glmlag.3)
+glm.diag.plots(com.glmlag.3, com.glmlag.3_diag) 
