@@ -577,6 +577,21 @@ write.csv(me.dredge.gam.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gam
 ## The gaussian distribution is better than the gamma distribution for lagged predictors too.
 
 
+## I will therefore use the gaussian distribution for the dredge that will include all macroeconomic variables and their lagged versions. I will not include for_rem, and I will not use gdp_gr.lag2
+
+# merge dataframes
+dat_me_sat <- cbind(dat_me1[2:20, 1:10],dat_me_lag_sub[ ,3:19])
+
+me.satMod <- glm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+
+                           gdp.lag1+ gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+
+                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+
+                           gdp.lag2+fdi.lag2+ind_gdp.lag2+agr_gdp.lag2+dev_agr.lag2+dev_env.lag2+
+                           pop_den.lag2+time, na.action="na.fail", family=gaussian, data=dat_me_sat)
+# dredge
+system.time(me.dredge.sat <- dredge(me.satMod, beta = "none", evaluate = TRUE, rank = AICc))
+
+
+
 #
   ## Commodity / production set ####
 
