@@ -577,7 +577,7 @@ write.csv(me.dredge.gam.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gam
 ## The gaussian distribution is better than the gamma distribution for lagged predictors too.
 
 
-## I will therefore use the gaussian distribution for the dredge that will include all macroeconomic variables and their lagged versions. I will not include for_rem, and I will not use gdp_gr.lag2
+## I will therefore use the gaussian distribution for the dredges that will include all macroeconomic variables and their lagged versions. I will not include for_rem, and I will not use gdp_gr.lag2
 
 # merge dataframes
 dat_me_sat <- cbind(dat_me1[2:20, 1:10],dat_me_lag_sub[ ,3:19])
