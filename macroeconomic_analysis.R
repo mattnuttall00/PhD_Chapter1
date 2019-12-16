@@ -506,6 +506,10 @@ head(dat_me)
 # remove NA rows
 dat_me1 <- dat_me[c(3:22), ]
 
+
+    # Unlagged #####
+
+
 ## saturated model with a gaussian distribution for unlagged predictors
 me.mod.gaus.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+agr_gdp+dev_agri+dev_env+pop_den+time, 
               na.action="na.fail", family=gaussian, data=dat_me1)
@@ -726,7 +730,7 @@ ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
   
 
-
+    # 1 year lag #####
 
 ## Test lagged predictors 
 
@@ -758,7 +762,7 @@ dat_me_lag_sub <- dat_me_lag[c(4:22), ]
 
 
 ## saturated model with gaussian distribution for 1-year lagged predictors
-me.mod.gaus.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+
+me.mod.gaus.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+agr_gdp.lag1+
                            dev_agr.lag1+dev_env.lag1+pop_den.lag1+time, 
                            na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
 summary(me.mod.gaus.lag.1)
@@ -779,6 +783,104 @@ me.dredge.gam.lag.1 <- dredge(me.mod.gam.lag.1, beta = "none", evaluate = TRUE, 
 write.csv(me.dredge.gam.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.lag.1.csv")
 
 ## The gaussian distribution is better than the gamma distribution for lagged predictors too.
+
+
+## Model averaging
+
+# AICc < 6
+me.modAv.aicc6.lag1 <- model.avg(me.dredge.gaus.lag.1, subset = delta < 6, fit = TRUE)
+summary(me.dredge.gaus.lag.1)
+
+
+# Predict with the AICc<6 set
+
+# gdp.lag1
+gdp.lag1.newdata <- expand.grid(gdp.lag1 = seq(min(dat_me_lag_sub$gdp.lag1), 
+                                               max(dat_me_lag_sub$gdp.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1))
+gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp.lag1.newdata, se.fit=TRUE)
+gdp.lag1.predict <- data.frame(gdp.lag1.predict)
+gdp.lag1.predict$lwr <- gdp.lag1.predict$fit-2*gdp.lag1.predict$se.fit
+gdp.lag1.predict$upr <- gdp.lag1.predict$fit+2*gdp.lag1.predict$se.fit
+gdp.lag1.predict <- cbind(gdp.lag1.predict, gdp.lag1.newdata)
+
+# plot
+ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in GDP per capita (USD Billions) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# gdp_gr.lag1
+gdp_gr.lag1.newdata <- expand.grid(gdp_gr.lag1 = seq(min(dat_me_lag_sub$gdp_gr.lag1), 
+                                               max(dat_me_lag_sub$gdp_gr.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+gdp_gr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp_gr.lag1.newdata, se.fit=TRUE)
+gdp_gr.lag1.predict <- data.frame(gdp_gr.lag1.predict)
+gdp_gr.lag1.predict$lwr <- gdp_gr.lag1.predict$fit-2*gdp_gr.lag1.predict$se.fit
+gdp_gr.lag1.predict$upr <- gdp_gr.lag1.predict$fit+2*gdp_gr.lag1.predict$se.fit
+gdp_gr.lag1.predict <- cbind(gdp_gr.lag1.predict, gdp_gr.lag1.newdata)
+
+# plot
+ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in GDP growth (%) per capita at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+
+# fdi.lag1
+fdi.lag1.newdata <- expand.grid(fdi.lag1 = seq(min(dat_me_lag_sub$fdi.lag1), 
+                                               max(dat_me_lag_sub$fdi.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+fdi.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=fdi.lag1.newdata, se.fit=TRUE)
+fdi.lag1.predict <- data.frame(fdi.lag1.predict)
+fdi.lag1.predict$lwr <- fdi.lag1.predict$fit-2*fdi.lag1.predict$se.fit
+fdi.lag1.predict$upr <- fdi.lag1.predict$fit+2*fdi.lag1.predict$se.fit
+fdi.lag1.predict <- cbind(fdi.lag1.predict,fdi.lag1.newdata)
+
+# plot
+ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Foreign Direct Investment (USD Millions) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+
+
 
 
 #
