@@ -5,7 +5,6 @@
 library('nlme')
 library('cowplot')
 library('tidyverse')
-library('gamm4')
 library('mgcv')
 library('voxel')
 library('nlstools')
@@ -20,6 +19,7 @@ library('corrplot')
 library('MuMIn')
 library('car')
 library('boot')
+library('wesanderson')
 
 #### Load & format data ####
 
@@ -494,16 +494,20 @@ head(dat_me)
 
 # It is difficutly to identify the correct response distribution with so few data points.  Based on the "real" data, a gamma might be appropraite as the data are non-negatve and continous.  However the response (change in forest cover) is a derived variable, and although in my sample the data are non-negative, it is only non-negative because I have made it that way.  In reality, I am measuring forest loss and so the response is negative. Theoretically the data could be both positive (afforestation) and negative (deforestation), potentially centered around a mean.  Therefore the response could theoretically be normal. With so few data, it will likley make little difference which distribution I use. Nevertheless, in order to try and identify the best distribution, I will use some model selection procedures on both gamma and gaussian GLMs. 
 
+# My rule for correlations are that if there is a correlation coefficient of 0.6 (or -0.6) or more, then one variable will be excluded from the set.
+
 # my model selection procedure will follow the following steps: 
 # 1) use dredge on the unlagged and lagged predictors using a gaussian and then a gamma glm. The distribution that provides the models with the lowest AICc will be selected
-# 2) Using the selected distribution, I will include all unlagged and lagged predictors in a big dredge. I will select the top models (AICc<2) and use model averaging for the final predictions.
+# 2) Using the selected distribution, I will include all unlagged and lagged predictors separate dredges. I will select the top models (AICc<6) and use model averaging for the final predictions. Because I am using a information-theoretic approach with model averaging, I will include models with much higher dAICc that most people advocate.  This is based on Burnham & Anderson 2002.  The model weights for all of the top candiadate models from dredge() are very low, which suggests that none of the models have a high probability of being the "best" model, and this supports a IT and model averaging approach. 
+# 3) 2 * SE will be used as confidence intervals, following from Burnham & ANderson 2002 (p. 176)
 
+# For this set, ind_gdp and agr_gdp are correlated (-0.61) and so one must be removed. Conceptually, the agricultural sector is likely to have a more important relationship with deforesation, and so I will remove ind_gdp.
 
 # remove NA rows
 dat_me1 <- dat_me[c(3:22), ]
 
 ## saturated model with a gaussian distribution for unlagged predictors
-me.mod.gaus.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, 
+me.mod.gaus.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+agr_gdp+dev_agri+dev_env+pop_den+time, 
               na.action="na.fail", family=gaussian, data=dat_me1)
 summary(me.mod.gaus.1)
 
@@ -521,7 +525,207 @@ summary(me.mod.gam.1)
 me.dredge.gam.1 <- dredge(me.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
 write.csv(me.dredge.gam.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.1.csv")
 
-# gaussian distribution produces the best models for the unlagged predictors
+# gaussian distribution produces the best models for the unlagged predictors. Therefore the top candidate models from that dredge will be used for model averaging.
+
+
+## Model averaging
+
+# AICc < 6
+me.modAv.aicc6 <- model.avg(me.dredge.gaus.1, subset = delta < 6, fit = TRUE)
+summary(me.modAv.aicc6)
+
+
+# Predict with the AICc<6 set
+
+# pop_den
+pop_den.newdata <- expand.grid(pop_den = seq(min(dat_me1$pop_den), max(dat_me1$pop_den), length=100),
+                          time = mean(dat_me1$time),
+                          gdp = mean(dat_me1$gdp),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          dev_env = mean(dat_me1$dev_env),
+                          fdi = mean(dat_me1$fdi),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+pop_den.predict <- predict(me.modAv.aicc6, newdata=pop_den.newdata, se.fit=TRUE)
+pop_den.predict <- data.frame(pop_den.predict)
+pop_den.predict$lwr <- pop_den.predict$fit-2*pop_den.predict$se.fit
+pop_den.predict$upr <- pop_den.predict$fit+2*pop_den.predict$se.fit
+pop_den.predict <- cbind(pop_den.predict, pop_den.newdata)
+
+# plot
+ggplot(data=pop_den.predict, aes(x=pop_den, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in population density (pax/km^2) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# gdp
+gdp.newdata <- expand.grid(gdp = seq(min(dat_me1$gdp), max(dat_me1$gdp), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          dev_env = mean(dat_me1$dev_env),
+                          fdi = mean(dat_me1$fdi),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+gdp.predict <- predict(me.modAv.aicc6, newdata=gdp.newdata, se.fit=TRUE)
+gdp.predict <- data.frame(gdp.predict)
+gdp.predict$lwr <- gdp.predict$fit-2*gdp.predict$se.fit
+gdp.predict$upr <- gdp.predict$fit+2*gdp.predict$se.fit
+gdp.predict <- cbind(gdp.predict, gdp.newdata)
+
+# plot
+ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in GDP per capita (USD Billion) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# agr_gdp
+agr_gdp.newdata <- expand.grid(agr_gdp = seq(min(dat_me1$agr_gdp), max(dat_me1$agr_gdp), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          gdp = mean(dat_me1$gdp),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          dev_env = mean(dat_me1$dev_env),
+                          fdi = mean(dat_me1$fdi),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+agr_gdp.predict <- predict(me.modAv.aicc6, newdata=agr_gdp.newdata, se.fit=TRUE)
+agr_gdp.predict <- data.frame(agr_gdp.predict)
+agr_gdp.predict$lwr <- agr_gdp.predict$fit-2*agr_gdp.predict$se.fit
+agr_gdp.predict$upr <- agr_gdp.predict$fit+2*agr_gdp.predict$se.fit
+agr_gdp.predict <- cbind(agr_gdp.predict, agr_gdp.newdata)
+
+# plot
+ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in Agricultural sector proprtion of GDP (%) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# dev_agri
+dev_agri.newdata <- expand.grid(dev_agri = seq(min(dat_me1$dev_agri), max(dat_me1$dev_agri), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          gdp = mean(dat_me1$gdp),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          dev_env = mean(dat_me1$dev_env),
+                          fdi = mean(dat_me1$fdi),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+dev_agri.predict <- predict(me.modAv.aicc6, newdata=dev_agri.newdata, se.fit=TRUE)
+dev_agri.predict <- data.frame(dev_agri.predict)
+dev_agri.predict$lwr <- dev_agri.predict$fit-2*dev_agri.predict$se.fit
+dev_agri.predict$upr <- dev_agri.predict$fit+2*dev_agri.predict$se.fit
+dev_agri.predict <- cbind(dev_agri.predict, dev_agri.newdata)
+
+# plot
+ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to Agricultural sector (USD Millions) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# fdi
+fdi.newdata <- expand.grid(fdi = seq(min(dat_me1$fdi), max(dat_me1$fdi), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          gdp = mean(dat_me1$gdp),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          dev_env = mean(dat_me1$dev_env),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+fdi.predict <- predict(me.modAv.aicc6, newdata=fdi.newdata, se.fit=TRUE)
+fdi.predict <- data.frame(fdi.predict)
+fdi.predict$lwr <- fdi.predict$fit-2*fdi.predict$se.fit
+fdi.predict$upr <- fdi.predict$fit+2*fdi.predict$se.fit
+fdi.predict <- cbind(fdi.predict, fdi.newdata)
+
+# plot
+ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Foreign Direct Investment (USD Millions) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# dev_env
+dev_env.newdata <- expand.grid(dev_env = seq(min(dat_me1$dev_env), max(dat_me1$dev_env), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          gdp = mean(dat_me1$gdp),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          fdi = mean(dat_me1$fdi),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          gdp_gr = mean(dat_me1$gdp_gr))
+dev_env.predict <- predict(me.modAv.aicc6, newdata=dev_env.newdata, se.fit=TRUE)
+dev_env.predict <- data.frame(dev_env.predict)
+dev_env.predict$lwr <- dev_env.predict$fit-2*dev_env.predict$se.fit
+dev_env.predict$upr <- dev_env.predict$fit+2*dev_env.predict$se.fit
+dev_env.predict <- cbind(dev_env.predict, dev_env.newdata)
+
+# plot
+ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to the Environment sector (USD Millions) at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+
+
+# gdp_gr
+gdp_gr.newdata <- expand.grid(gdp_gr = seq(min(dat_me1$gdp_gr), max(dat_me1$gdp_gr), length=100),
+                          time = mean(dat_me1$time),
+                          pop_den = mean(dat_me1$pop_den),
+                          gdp = mean(dat_me1$gdp),
+                          agr_gdp = mean(dat_me1$agr_gdp),
+                          fdi = mean(dat_me1$fdi),
+                          dev_agri = mean(dat_me1$dev_agri),
+                          dev_env = mean(dat_me1$dev_env))
+gdp_gr.predict <- predict(me.modAv.aicc6, newdata=gdp_gr.newdata, se.fit=TRUE)
+gdp_gr.predict <- data.frame(gdp_gr.predict)
+gdp_gr.predict$lwr <- gdp_gr.predict$fit-2*gdp_gr.predict$se.fit
+gdp_gr.predict$upr <- gdp_gr.predict$fit+2*gdp_gr.predict$se.fit
+gdp_gr.predict <- cbind(gdp_gr.predict, gdp_gr.newdata)
+
+# plot
+ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("% growth of GDP per capita at time t")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+  
+
 
 
 ## Test lagged predictors 
