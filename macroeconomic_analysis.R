@@ -20,6 +20,7 @@ library('MuMIn')
 library('car')
 library('boot')
 library('wesanderson')
+library('ggplot2')
 
 #### Load & format data ####
 
@@ -557,16 +558,16 @@ pop_den.predict$upr <- pop_den.predict$fit+2*pop_den.predict$se.fit
 pop_den.predict <- cbind(pop_den.predict, pop_den.newdata)
 
 # plot
-ggplot(data=pop_den.predict, aes(x=pop_den, y=fit))+
-  geom_line(color="#339900", size=1)+
-  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
-  xlab("Changes in population density (pax/km^2) at time t")+
-  ylab("Amount of forest lost (ha) at time t")+
-  theme(text = element_text(size=15))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(),axis.line = element_line(colour = "black"))
-
+pop_den_plot<- ggplot(data=pop_den.predict, aes(x=pop_den, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Changes in population density (pax/km^2) at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/pop_den_plot.png", pop_den_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 # gdp
 gdp.newdata <- expand.grid(gdp = seq(min(dat_me1$gdp), max(dat_me1$gdp), length=100),
@@ -584,7 +585,7 @@ gdp.predict$upr <- gdp.predict$fit+2*gdp.predict$se.fit
 gdp.predict <- cbind(gdp.predict, gdp.newdata)
 
 # plot
-ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
+gdp_plot <- ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -593,7 +594,7 @@ ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-
+ggsave(file="Results/Macroeconomics/Plots/gdp_plot.png", gdp_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 # agr_gdp
 agr_gdp.newdata <- expand.grid(agr_gdp = seq(min(dat_me1$agr_gdp), max(dat_me1$agr_gdp), length=100),
@@ -611,7 +612,7 @@ agr_gdp.predict$upr <- agr_gdp.predict$fit+2*agr_gdp.predict$se.fit
 agr_gdp.predict <- cbind(agr_gdp.predict, agr_gdp.newdata)
 
 # plot
-ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
+agr_gdp_plot <- ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -620,6 +621,7 @@ ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/agr_gdp_plot.png", agr_gdp_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_agri
@@ -638,7 +640,7 @@ dev_agri.predict$upr <- dev_agri.predict$fit+2*dev_agri.predict$se.fit
 dev_agri.predict <- cbind(dev_agri.predict, dev_agri.newdata)
 
 # plot
-ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
+dev_agri_plot <- ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -647,6 +649,7 @@ ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_agri_plot.png", dev_agri_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # fdi
@@ -665,7 +668,7 @@ fdi.predict$upr <- fdi.predict$fit+2*fdi.predict$se.fit
 fdi.predict <- cbind(fdi.predict, fdi.newdata)
 
 # plot
-ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
+fdi_plot <- ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -674,6 +677,7 @@ ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/fdi_plot.png", fdi_plot , width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_env
@@ -692,7 +696,7 @@ dev_env.predict$upr <- dev_env.predict$fit+2*dev_env.predict$se.fit
 dev_env.predict <- cbind(dev_env.predict, dev_env.newdata)
 
 # plot
-ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
+dev_env_plot <- ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -701,6 +705,7 @@ ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_env_plot.png", dev_env_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # gdp_gr
@@ -719,7 +724,7 @@ gdp_gr.predict$upr <- gdp_gr.predict$fit+2*gdp_gr.predict$se.fit
 gdp_gr.predict <- cbind(gdp_gr.predict, gdp_gr.newdata)
 
 # plot
-ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
+gdP_gr_plot <- ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -728,7 +733,9 @@ ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-  
+ggsave(file="Results/Macroeconomics/Plots/gdP_gr_plot.png", gdP_gr_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
 
     # 1 year lag #####
 
@@ -811,7 +818,7 @@ gdp.lag1.predict$upr <- gdp.lag1.predict$fit+2*gdp.lag1.predict$se.fit
 gdp.lag1.predict <- cbind(gdp.lag1.predict, gdp.lag1.newdata)
 
 # plot
-ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
+gdp.lag1_plot <- ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -820,6 +827,7 @@ ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/gdp.lag1_plot.png", gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # gdp_gr.lag1
@@ -839,7 +847,7 @@ gdp_gr.lag1.predict$upr <- gdp_gr.lag1.predict$fit+2*gdp_gr.lag1.predict$se.fit
 gdp_gr.lag1.predict <- cbind(gdp_gr.lag1.predict, gdp_gr.lag1.newdata)
 
 # plot
-ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
+gdp_gr.lag1_plot <- ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -848,7 +856,7 @@ ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-
+ggsave(file="Results/Macroeconomics/Plots/gdp_gr.lag1_plot.png", gdp_gr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # fdi.lag1
@@ -868,7 +876,7 @@ fdi.lag1.predict$upr <- fdi.lag1.predict$fit+2*fdi.lag1.predict$se.fit
 fdi.lag1.predict <- cbind(fdi.lag1.predict,fdi.lag1.newdata)
 
 # plot
-ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
+fdi.lag1_plot <- ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   ylim(0,1500)+
@@ -877,30 +885,550 @@ ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/fdi.lag1_plot.png", fdi.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
+# agr_gdp.lag1
+agr_gdp.lag1.newdata <- expand.grid(agr_gdp.lag1 = seq(min(dat_me_lag_sub$agr_gdp.lag1), 
+                                               max(dat_me_lag_sub$agr_gdp.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+agr_gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=agr_gdp.lag1.newdata, se.fit=TRUE)
+agr_gdp.lag1.predict <- data.frame(agr_gdp.lag1.predict)
+agr_gdp.lag1.predict$lwr <- agr_gdp.lag1.predict$fit-2*agr_gdp.lag1.predict$se.fit
+agr_gdp.lag1.predict$upr <- agr_gdp.lag1.predict$fit+2*agr_gdp.lag1.predict$se.fit
+agr_gdp.lag1.predict <- cbind(agr_gdp.lag1.predict,agr_gdp.lag1.newdata)
+
+# plot
+agr_gdp.lag1_plot <- ggplot(data=agr_gdp.lag1.predict, aes(x=agr_gdp.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Contribution of agricultural sector to GDP as proportion (%) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag1_plot.png", agr_gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
+# dev_agr.lag1
+dev_agr.lag1.newdata <- expand.grid(dev_agr.lag1 = seq(min(dat_me_lag_sub$dev_agr.lag1), 
+                                               max(dat_me_lag_sub$dev_agr.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+dev_agr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_agr.lag1.newdata, se.fit=TRUE)
+dev_agr.lag1.predict <- data.frame(dev_agr.lag1.predict)
+dev_agr.lag1.predict$lwr <- dev_agr.lag1.predict$fit-2*dev_agr.lag1.predict$se.fit
+dev_agr.lag1.predict$upr <- dev_agr.lag1.predict$fit+2*dev_agr.lag1.predict$se.fit
+dev_agr.lag1.predict <- cbind(dev_agr.lag1.predict,dev_agr.lag1.newdata)
+
+# plot
+dev_agr.lag1_plot <- ggplot(data=dev_agr.lag1.predict, aes(x=dev_agr.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to agricultural sector (USD Millions) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag1_plot.png", dev_agr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# dev_env.lag1
+dev_env.lag1.newdata <- expand.grid(dev_env.lag1 = seq(min(dat_me_lag_sub$dev_env.lag1), 
+                                               max(dat_me_lag_sub$dev_env.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag1 = mean(dat_me_lag_sub$pop_den.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+dev_env.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_env.lag1.newdata, se.fit=TRUE)
+dev_env.lag1.predict <- data.frame(dev_env.lag1.predict)
+dev_env.lag1.predict$lwr <- dev_env.lag1.predict$fit-2*dev_env.lag1.predict$se.fit
+dev_env.lag1.predict$upr <- dev_env.lag1.predict$fit+2*dev_env.lag1.predict$se.fit
+dev_env.lag1.predict <- cbind(dev_env.lag1.predict,dev_env.lag1.newdata)
+
+# plot
+dev_env.lag1_plot <- ggplot(data=dev_env.lag1.predict, aes(x=dev_env.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to environment sector (USD Millions) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_env.lag1_plot.png", dev_env.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# pop_den.lag1
+pop_den.lag1.newdata <- expand.grid(pop_den.lag1 = seq(min(dat_me_lag_sub$pop_den.lag1), 
+                                               max(dat_me_lag_sub$pop_den.lag1), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
+                          fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
+                          agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
+                          dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+pop_den.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=pop_den.lag1.newdata, se.fit=TRUE)
+pop_den.lag1.predict <- data.frame(pop_den.lag1.predict)
+pop_den.lag1.predict$lwr <- pop_den.lag1.predict$fit-2*pop_den.lag1.predict$se.fit
+pop_den.lag1.predict$upr <- pop_den.lag1.predict$fit+2*pop_den.lag1.predict$se.fit
+pop_den.lag1.predict <- cbind(pop_den.lag1.predict,pop_den.lag1.newdata)
+
+# plot
+pop_den.lag1_plot <- ggplot(data=pop_den.lag1.predict, aes(x=pop_den.lag1, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in population density (pax/km^2) at time t-1")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/pop_den.lag1_plot.png", pop_den.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 #
+    # 2 year lag ####
+
+## saturated model with gaussian distribution for 2-year lagged predictors
+me.mod.gaus.lag.2 <- glm(for_cov ~ gdp.lag2 + fdi.lag2 + agr_gdp.lag2 +
+                           dev_agr.lag2 + dev_env.lag2 + pop_den.lag2 + time, 
+                           na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
+summary(me.mod.gaus.lag.2)
+
+# dredge
+me.dredge.gaus.lag.2 <- dredge(me.mod.gaus.lag.2, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(me.dredge.gaus.lag.2, file="Results/Macroeconomics/Dredge/me.dredge.gaus.lag.2.csv")
+
+
+# AICc < 6
+me.modAv.aicc6.lag2 <- model.avg(me.dredge.gaus.lag.2, subset = delta < 6, fit = TRUE)
+summary(me.dredge.gaus.lag.2)
+
+
+# Predict with the AICc<6 set
+
+# gdp.lag2
+gdp.lag2.newdata <- expand.grid(gdp.lag2 = seq(min(dat_me_lag_sub$gdp.lag2), 
+                                               max(dat_me_lag_sub$gdp.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag2 = mean(dat_me_lag_sub$pop_den.lag2),
+                          agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
+                          dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
+                          dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2))
+gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=gdp.lag2.newdata, se.fit=TRUE)
+gdp.lag2.predict <- data.frame(gdp.lag2.predict)
+gdp.lag2.predict$lwr <- gdp.lag2.predict$fit-2*gdp.lag2.predict$se.fit
+gdp.lag2.predict$upr <- gdp.lag2.predict$fit+2*gdp.lag2.predict$se.fit
+gdp.lag2.predict <- cbind(gdp.lag2.predict, gdp.lag2.newdata)
+
+# plot
+gdp.lag2_plot <- ggplot(data=gdp.lag2.predict, aes(x=gdp.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in GDP per capita (USD Billions) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/gdp.lag2_plot.png", gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# fdi.lag2
+fdi.lag2.newdata <- expand.grid(fdi.lag2 = seq(min(dat_me_lag_sub$fdi.lag2), 
+                                               max(dat_me_lag_sub$fdi.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag2 = mean(dat_me_lag_sub$pop_den.lag2),
+                          agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
+                          dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
+                          dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+fdi.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=fdi.lag2.newdata, se.fit=TRUE)
+fdi.lag2.predict <- data.frame(fdi.lag2.predict)
+fdi.lag2.predict$lwr <- fdi.lag2.predict$fit-2*fdi.lag2.predict$se.fit
+fdi.lag2.predict$upr <- fdi.lag2.predict$fit+2*fdi.lag2.predict$se.fit
+fdi.lag2.predict <- cbind(fdi.lag2.predict,fdi.lag2.newdata)
+
+# plot
+fdi.lag2_plot <- ggplot(data=fdi.lag2.predict, aes(x=fdi.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Foreign Direct Investment (USD Millions) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/fdi.lag2_plot.png", fdi.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# agr_gdp.lag2
+agr_gdp.lag2.newdata <- expand.grid(agr_gdp.lag2 = seq(min(dat_me_lag_sub$agr_gdp.lag2), 
+                                               max(dat_me_lag_sub$agr_gdp.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag2 = mean(dat_me_lag_sub$pop_den.lag2),
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
+                          dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
+                          dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+agr_gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=agr_gdp.lag2.newdata, se.fit=TRUE)
+agr_gdp.lag2.predict <- data.frame(agr_gdp.lag2.predict)
+agr_gdp.lag2.predict$lwr <- agr_gdp.lag2.predict$fit-2*agr_gdp.lag2.predict$se.fit
+agr_gdp.lag2.predict$upr <- agr_gdp.lag2.predict$fit+2*agr_gdp.lag2.predict$se.fit
+agr_gdp.lag2.predict <- cbind(agr_gdp.lag2.predict,agr_gdp.lag2.newdata)
+
+# plot
+agr_gdp.lag2_plot <- ggplot(data=agr_gdp.lag2.predict, aes(x=agr_gdp.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Contribution of agricultural sector to GDP as proportion (%) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag2_plot.png", agr_gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# dev_agr.lag2
+dev_agr.lag2.newdata <- expand.grid(dev_agr.lag2 = seq(min(dat_me_lag_sub$dev_agr.lag2), 
+                                               max(dat_me_lag_sub$dev_agr.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag2 = mean(dat_me_lag_sub$pop_den.lag2),
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
+                          agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
+                          dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+dev_agr.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_agr.lag2.newdata, se.fit=TRUE)
+dev_agr.lag2.predict <- data.frame(dev_agr.lag2.predict)
+dev_agr.lag2.predict$lwr <- dev_agr.lag2.predict$fit-2*dev_agr.lag2.predict$se.fit
+dev_agr.lag2.predict$upr <- dev_agr.lag2.predict$fit+2*dev_agr.lag2.predict$se.fit
+dev_agr.lag2.predict <- cbind(dev_agr.lag2.predict,dev_agr.lag2.newdata)
+
+# plot
+dev_agr.lag2_plot <- ggplot(data=dev_agr.lag2.predict, aes(x=dev_agr.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to agricultural sector (USD Millions) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag2_plot.png", dev_agr.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# dev_env.lag2
+dev_env.lag2.newdata <- expand.grid(dev_env.lag2 = seq(min(dat_me_lag_sub$dev_env.lag2), 
+                                               max(dat_me_lag_sub$dev_env.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          pop_den.lag2 = mean(dat_me_lag_sub$pop_den.lag2),
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
+                          agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
+                          dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+dev_env.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_env.lag2.newdata, se.fit=TRUE)
+dev_env.lag2.predict <- data.frame(dev_env.lag2.predict)
+dev_env.lag2.predict$lwr <- dev_env.lag2.predict$fit-2*dev_env.lag2.predict$se.fit
+dev_env.lag2.predict$upr <- dev_env.lag2.predict$fit+2*dev_env.lag2.predict$se.fit
+dev_env.lag2.predict <- cbind(dev_env.lag2.predict,dev_env.lag2.newdata)
+
+# plot
+dev_env.lag2_plot <- ggplot(data=dev_env.lag2.predict, aes(x=dev_env.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Development flows to environment sector (USD Millions) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/dev_env.lag2_plot.png", dev_env.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# pop_den.lag2
+pop_den.lag2.newdata <- expand.grid(pop_den.lag2 = seq(min(dat_me_lag_sub$pop_den.lag2), 
+                                               max(dat_me_lag_sub$pop_den.lag2), length=100),
+                          time = mean(dat_me_lag_sub$time),
+                          dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
+                          agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
+                          dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+pop_den.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=pop_den.lag2.newdata, se.fit=TRUE)
+pop_den.lag2.predict <- data.frame(pop_den.lag2.predict)
+pop_den.lag2.predict$lwr <- pop_den.lag2.predict$fit-2*pop_den.lag2.predict$se.fit
+pop_den.lag2.predict$upr <- pop_den.lag2.predict$fit+2*pop_den.lag2.predict$se.fit
+pop_den.lag2.predict <- cbind(pop_den.lag2.predict,pop_den.lag2.newdata)
+
+# plot
+pop_den.lag2_plot <- ggplot(data=pop_den.lag2.predict, aes(x=pop_den.lag2, y=fit))+
+  geom_line(color="#339900", size=1)+
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  ylim(0,1500)+
+  xlab("Changes in population density (pax/km^2) at time t-2")+
+  ylab("Amount of forest lost (ha) at time t")+
+  theme(text = element_text(size=15))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/pop_den.lag2_plot.png", pop_den.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
   ## Commodity / production set ####
 
 str(dat_com)
 head(dat_com)
 
-# REMINDER - armi and rub_med are highly correlated, and armi and the other commodity prices are quite correlated (except rice_med)
+
+    # Unlagged ####
+
+# REMINDER - armi and rub_med are highly correlated, and armi and the other commodity prices are slightly correlated (except rice_med), but by less than 0.6. I will remove armi so that I can investigate the individual commodities 
+
+
+## saturated model with a gaussian distribution for unlagged predictors
+com.mod.gaus.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time, 
+              na.action="na.fail", family=gaussian, data=dat_com)
+summary(com.mod.gaus.1)
+
+# dredge
+com.dredge.gaus.1 <- dredge(com.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(com.dredge.gaus.1, file="Results/Macroeconomics/Dredge/com.dredge.gaus.1.csv")
+
+
+## saturated model with gamma distribution for unlagged predictors
+com.mod.gam.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time, 
+              na.action="na.fail", family=Gamma, data=dat_com)
+summary(com.mod.gam.1)
+
+# dredge
+com.dredge.gam.1 <- dredge(com.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(com.dredge.gam.1, file="Results/Macroeconomics/Dredge/com.dredge.gam.1.csv")
+
+
+## The gaussian distribution produces the better models
+
+## model averaging
+# AICc < 6
+com.modAv.aicc6 <- model.avg(com.dredge.gaus.1, subset = delta < 6, fit = TRUE)
+summary(com.modAv.aicc6)
+
+
+# Predict with the AICc<6 set
+
+# cpi
+cpi.newdata <- expand.grid(cpi = seq(min(dat_com$cpi), max(dat_com$cpi), length=100),
+                          nfi = mean(dat_com$nfi),
+                          rice_med = mean(dat_com$rice_med),
+                          rub_med = mean(dat_com$rub_med),
+                          corn_med = mean(dat_com$corn_med),
+                          sug_med = mean(dat_com$sug_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+cpi.predict <- predict(com.modAv.aicc6, newdata=cpi.newdata, se.fit=TRUE)
+cpi.predict <- data.frame(cpi.predict)
+cpi.predict$lwr <- cpi.predict$fit-2*cpi.predict$se.fit
+cpi.predict$upr <- cpi.predict$fit+2*cpi.predict$se.fit
+cpi.predict <- cbind(cpi.predict, cpi.newdata)
+
+# plot
+cpi_plot <- ggplot(data=cpi.predict, aes(x=cpi, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Crop Production Index at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/cpi_plot.png", cpi_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# nfi
+nfi.newdata <- expand.grid(nfi = seq(min(dat_com$nfi), max(dat_com$nfi), length=100),
+                          cpi = mean(dat_com$cpi),
+                          rice_med = mean(dat_com$rice_med),
+                          rub_med = mean(dat_com$rub_med),
+                          corn_med = mean(dat_com$corn_med),
+                          sug_med = mean(dat_com$sug_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+nfi.predict <- predict(com.modAv.aicc6, newdata=nfi.newdata, se.fit=TRUE)
+nfi.predict <- data.frame(nfi.predict)
+nfi.predict$lwr <- nfi.predict$fit-2*nfi.predict$se.fit
+nfi.predict$upr <- nfi.predict$fit+2*nfi.predict$se.fit
+nfi.predict <- cbind(nfi.predict, nfi.newdata)
+
+# plot
+nfi_plot <- ggplot(data=nfi.predict, aes(x=nfi, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Non-food Production Index at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/nfi_plot.png", nfi_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# rice_med
+rice_med.newdata <- expand.grid(rice_med = seq(min(dat_com$rice_med), max(dat_com$rice_med), length=100),
+                          cpi = mean(dat_com$cpi),
+                          nfi = mean(dat_com$nfi),
+                          rub_med = mean(dat_com$rub_med),
+                          corn_med = mean(dat_com$corn_med),
+                          sug_med = mean(dat_com$sug_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+rice_med.predict <- predict(com.modAv.aicc6, newdata=rice_med.newdata, se.fit=TRUE)
+rice_med.predict <- data.frame(rice_med.predict)
+rice_med.predict$lwr <- rice_med.predict$fit-2*rice_med.predict$se.fit
+rice_med.predict$upr <- rice_med.predict$fit+2*rice_med.predict$se.fit
+rice_med.predict <- cbind(rice_med.predict, rice_med.newdata)
+
+# plot
+rice_med_plot <- ggplot(data=rice_med.predict, aes(x=rice_med, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Median price of rice at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.png", rice_med_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+# rub_med
+rub_med.newdata <- expand.grid(rub_med = seq(min(dat_com$rub_med), max(dat_com$rub_med), length=100),
+                          cpi = mean(dat_com$cpi),
+                          nfi = mean(dat_com$nfi),
+                          rice_med = mean(dat_com$rice_med),
+                          corn_med = mean(dat_com$corn_med),
+                          sug_med = mean(dat_com$sug_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+rub_med.predict <- predict(com.modAv.aicc6, newdata=rub_med.newdata, se.fit=TRUE)
+rub_med.predict <- data.frame(rub_med.predict)
+rub_med.predict$lwr <- rub_med.predict$fit-2*rub_med.predict$se.fit
+rub_med.predict$upr <- rub_med.predict$fit+2*rub_med.predict$se.fit
+rub_med.predict <- cbind(rub_med.predict, rub_med.newdata)
+
+# plot
+rub_med_plot <- ggplot(data=rub_med.predict, aes(x=rub_med, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Median price of rubber at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.png", rub_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 
+# corn_med
+corn_med.newdata <- expand.grid(corn_med = seq(min(dat_com$corn_med), max(dat_com$corn_med), length=100),
+                          cpi = mean(dat_com$cpi),
+                          nfi = mean(dat_com$nfi),
+                          rice_med = mean(dat_com$rice_med),
+                          rub_med = mean(dat_com$rub_med),
+                          sug_med = mean(dat_com$sug_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+corn_med.predict <- predict(com.modAv.aicc6, newdata=corn_med.newdata, se.fit=TRUE)
+corn_med.predict <- data.frame(corn_med.predict)
+corn_med.predict$lwr <- corn_med.predict$fit-2*corn_med.predict$se.fit
+corn_med.predict$upr <- corn_med.predict$fit+2*corn_med.predict$se.fit
+corn_med.predict <- cbind(corn_med.predict, corn_med.newdata)
+
+# plot
+corn_med_plot <- ggplot(data=corn_med.predict, aes(x=corn_med, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Median price of corn at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.png", corn_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
-### dredge using selected variables but with different distributions and compare the results. 
+# sug_med
+sug_med.newdata <- expand.grid(sug_med = seq(min(dat_com$sug_med), max(dat_com$sug_med), length=100),
+                          cpi = mean(dat_com$cpi),
+                          nfi = mean(dat_com$nfi),
+                          rice_med = mean(dat_com$rice_med),
+                          rub_med = mean(dat_com$rub_med),
+                          corn_med = mean(dat_com$corn_med),
+                          for_prod = mean(dat_com$for_prod),
+                          time = mean(dat_com$time))
+sug_med.predict <- predict(com.modAv.aicc6, newdata=sug_med.newdata, se.fit=TRUE)
+sug_med.predict <- data.frame(sug_med.predict)
+sug_med.predict$lwr <- sug_med.predict$fit-2*sug_med.predict$se.fit
+sug_med.predict$upr <- sug_med.predict$fit+2*sug_med.predict$se.fit
+sug_med.predict <- cbind(sug_med.predict, sug_med.newdata)
 
-## sup mat - correlation matrix + full model selection approach.  
+# plot
+sug_med_plot <- ggplot(data=sug_med.predict, aes(x=sug_med, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Median price of sugar at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.png", sug_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
-## distributions - simulate data from different distributions and compare. fit model with just intercept with both links and compare.  
 
-## ignore interactions. Stick to main effects - don't have the power.  
+# sug_med
+for_prod.newdata <- expand.grid(for_prod = seq(min(dat_com$for_prod), max(dat_com$for_prod), length=100),
+                          cpi = mean(dat_com$cpi),
+                          nfi = mean(dat_com$nfi),
+                          rice_med = mean(dat_com$rice_med),
+                          rub_med = mean(dat_com$rub_med),
+                          corn_med = mean(dat_com$corn_med),
+                          sug_med = mean(dat_com$sug_med),
+                          time = mean(dat_com$time))
+for_prod.predict <- predict(com.modAv.aicc6, newdata=for_prod.newdata, se.fit=TRUE)
+for_prod.predict <- data.frame(for_prod.predict)
+for_prod.predict$lwr <- for_prod.predict$fit-2*for_prod.predict$se.fit
+for_prod.predict$upr <- for_prod.predict$fit+2*for_prod.predict$se.fit
+for_prod.predict <- cbind(for_prod.predict, for_prod.newdata)
 
-## does dredge include null model? 
+# plot
+for_prod_plot <- ggplot(data=for_prod.predict, aes(x=for_prod, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Total timber production (m3) at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.png", for_prod_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+
