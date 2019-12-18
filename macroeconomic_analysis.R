@@ -1831,3 +1831,133 @@ for_prod_plot.lag1 <- ggplot(data=for_prod.predict.lag1, aes(x=for_prod.lag1, y=
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
 ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag1.png", for_prod_plot.lag1, width = 30, 
        height = 20, units = "cm", dpi=300)
+
+
+
+
+# test model with armi instead of the individual commodities
+com.mod.gaus.lag1a <- glm(for_cov ~ cpi.lag1 + nfi.lag1 + armi.lag1 + for_prod.lag1 + time, 
+              na.action="na.fail", family=gaussian, data=dat_com_lag1)
+summary(com.mod.gaus.lag1a)
+
+# dredge
+com.dredge.gaus.lag1a <- dredge(com.mod.gaus.lag1a, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(com.dredge.gaus.lag1a, file="Results/Macroeconomics/Dredge/com.dredge.gaus.lag1a.csv")
+
+## model averaging
+# AICc < 6
+com.modAv1a.aicc6.lag1 <- model.avg(com.dredge.gaus.lag1a, subset = delta < 6, fit = TRUE)
+summary(com.modAv1a.aicc6.lag1)
+
+
+# cpi.lag1a
+cpi.newdata.lag1a <- expand.grid(cpi.lag1 = seq(min(dat_com_lag1$cpi.lag1), max(dat_com_lag1$cpi.lag1), 
+                                               length=100),
+                          nfi.lag1 = mean(dat_com_lag1$nfi.lag1),
+                          armi.lag1 = mean(dat_com_lag1$armi.lag1),
+                          for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
+                          time = mean(dat_com_lag1$time))
+cpi.predict.lag1a <- predict(com.modAv1a.aicc6.lag1, newdata=cpi.newdata.lag1a, se.fit=TRUE)
+cpi.predict.lag1a <- data.frame(cpi.predict.lag1a)
+cpi.predict.lag1a$lwr <- cpi.predict.lag1a$fit-2*cpi.predict.lag1a$se.fit
+cpi.predict.lag1a$upr <- cpi.predict.lag1a$fit+2*cpi.predict.lag1a$se.fit
+cpi.predict.lag1a <- cbind(cpi.predict.lag1a, cpi.newdata.lag1a)
+
+# plot
+cpi_plot.lag1a <- ggplot(data=cpi.predict.lag1a, aes(x=cpi.lag1, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Crop Production Index at time t-1")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/cpi_plot.lag1a.png", cpi_plot.lag1a, width = 30, height = 20, 
+       units = "cm", dpi=300)
+
+
+
+# nfi.lag1a
+nfi.newdata.lag1a <- expand.grid(nfi.lag1 = seq(min(dat_com_lag1$nfi.lag1), max(dat_com_lag1$nfi.lag1), 
+                                               length=100),
+                          cpi.lag1 = mean(dat_com_lag1$cpi.lag1),
+                          armi.lag1 = mean(dat_com_lag1$armi.lag1),
+                          for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
+                          time = mean(dat_com_lag1$time))
+nfi.predict.lag1a <- predict(com.modAv1a.aicc6.lag1, newdata=nfi.newdata.lag1a, se.fit=TRUE)
+nfi.predict.lag1a <- data.frame(nfi.predict.lag1a)
+nfi.predict.lag1a$lwr <- nfi.predict.lag1a$fit-2*nfi.predict.lag1a$se.fit
+nfi.predict.lag1a$upr <- nfi.predict.lag1a$fit+2*nfi.predict.lag1a$se.fit
+nfi.predict.lag1a <- cbind(nfi.predict.lag1a, nfi.newdata.lag1a)
+
+# plot
+nfi_plot.lag1a <- ggplot(data=nfi.predict.lag1a, aes(x=nfi.lag1, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Non-food Production Index at time t-1")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/nfi_plot.lag1a.png", nfi_plot.lag1a, width = 30, height = 20, 
+       units = "cm", dpi=300)
+
+
+
+# armi.lag1a
+armi.newdata.lag1a <- expand.grid(armi.lag1 = seq(min(dat_com_lag1$armi.lag1), max(dat_com_lag1$armi.lag1), 
+                                               length=100),
+                          cpi.lag1 = mean(dat_com_lag1$cpi.lag1),
+                          nfi.lag1 = mean(dat_com_lag1$nfi.lag1),
+                          for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
+                          time = mean(dat_com_lag1$time))
+armi.predict.lag1a <- predict(com.modAv1a.aicc6.lag1, newdata=armi.newdata.lag1a, se.fit=TRUE)
+armi.predict.lag1a <- data.frame(armi.predict.lag1a)
+armi.predict.lag1a$lwr <- armi.predict.lag1a$fit-2*armi.predict.lag1a$se.fit
+armi.predict.lag1a$upr <- armi.predict.lag1a$fit+2*armi.predict.lag1a$se.fit
+armi.predict.lag1a <- cbind(armi.predict.lag1a, armi.newdata.lag1a)
+
+# plot
+armi_plot.lag1a <- ggplot(data=armi.predict.lag1a, aes(x=armi.lag1, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Agricultural Raw Materials Index at time t-1")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/armi_plot.lag1a.png", armi_plot.lag1a, width = 30, height = 20, 
+       units = "cm", dpi=300)
+
+
+
+# for_prod.lag1a
+for_prod.newdata.lag1a <- expand.grid(for_prod.lag1 = seq(min(dat_com_lag1$for_prod.lag1), 
+                                                      max(dat_com_lag1$for_prod.lag1), 
+                                               length=100),
+                          cpi.lag1 = mean(dat_com_lag1$cpi.lag1),
+                          nfi.lag1 = mean(dat_com_lag1$nfi.lag1),
+                          armi.lag1 = mean(dat_com_lag1$armi.lag1),
+                          time = mean(dat_com_lag1$time))
+for_prod.predict.lag1a <- predict(com.modAv1a.aicc6.lag1, newdata=for_prod.newdata.lag1a, se.fit=TRUE)
+for_prod.predict.lag1a <- data.frame(for_prod.predict.lag1a)
+for_prod.predict.lag1a$lwr <- for_prod.predict.lag1a$fit-2*for_prod.predict.lag1a$se.fit
+for_prod.predict.lag1a$upr <- for_prod.predict.lag1a$fit+2*for_prod.predict.lag1a$se.fit
+for_prod.predict.lag1a <- cbind(for_prod.predict.lag1a, for_prod.newdata.lag1a)
+
+# plot
+for_prod_plot.lag1a <- ggplot(data=for_prod.predict.lag1a, aes(x=for_prod.lag1, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Total timber production (m3) at time t-1")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag1a.png", for_prod_plot.lag1a, width = 30,
+       height = 20, units = "cm", dpi=300)
+
