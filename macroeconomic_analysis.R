@@ -2223,3 +2223,104 @@ ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag2.png", for_prod_plot
 
 
 
+
+  ##Producer price set ####
+
+str(dat_prod)
+head(dat_prod)
+
+# prod_rice and prod_rub are slightly correlated (0.63).  In the context of deforestation, I think that rubber is much more likely to have an impact.  But let's have a quick look
+
+rice <- glm(for_cov ~ prod_rice + time, family=gaussian, data=dat_prod)
+summary(rice)
+rub <- glm(for_cov ~ prod_rub + time, family=gaussian, data=dat_prod)
+summary(rub)
+# both are shit, but the prod_rub has a slightly larger effect size and smaller SE, so I will go with rub
+
+
+
+## saturated model with a gaussian distribution for unlagged predictors
+prod.mod.gaus.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time, 
+              na.action="na.fail", family=gaussian, data=dat_prod)
+summary(prod.mod.gaus.1)
+
+# dredge
+prod.dredge.gaus.1 <- dredge(prod.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(prod.dredge.gaus.1, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.1.csv")
+
+
+## saturated model with gamma distribution for unlagged predictors
+prod.mod.gam.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time, 
+              na.action="na.fail", family=Gamma, data=dat_prod)
+summary(prod.mod.gam.1)
+
+# dredge
+prod.dredge.gam.1 <- dredge(prod.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
+write.csv(prod.dredge.gam.1, file="Results/Macroeconomics/Dredge/prod.dredge.gam.1.csv")
+
+
+## The gaussian distribution produces the better models
+
+## model averaging
+# AICc < 6
+prod.modAv.aicc6 <- model.avg(prod.dredge.gaus.1, subset = delta < 6, fit = TRUE)
+summary(prod.modAv.aicc6)
+
+
+# Predict with the AICc<6 set
+
+# prod_rub
+prod_rub.newdata <- expand.grid(prod_rub = seq(min(dat_prod$prod_rub), max(dat_prod$prod_rub), 
+                                                 length=100),
+                          prod_cass = mean(dat_prod$prod_cass),
+                          prod_corn = mean(dat_prod$prod_corn),
+                          prod_sug = mean(dat_prod$prod_sug),
+                          time = mean(dat_prod$time))
+prod_rub.predict <- predict(prod.modAv.aicc6, newdata=prod_rub.newdata, se.fit=TRUE)
+prod_rub.predict <- data.frame(prod_rub.predict)
+prod_rub.predict$lwr <- prod_rub.predict$fit-2*prod_rub.predict$se.fit
+prod_rub.predict$upr <- prod_rub.predict$fit+2*prod_rub.predict$se.fit
+prod_rub.predict <- cbind(prod_rub.predict, prod_rub.newdata)
+
+
+# plot
+prod_rub_plot <- ggplot(data=prod_rub.predict, aes(x=prod_rub, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Rubber producer price at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.png", prod_rub_plot, width = 30, 
+       height = 20, units = "cm", dpi=300)
+
+
+# prod_cass
+prod_rice.newdata <- expand.grid(prod_rice = seq(min(dat_prod$prod_rice), max(dat_prod$prod_rice), 
+                                                 length=100),
+                          prod_rub = mean(dat_prod$prod_rub),
+                          prod_cass = mean(dat_prod$prod_cass),
+                          prod_corn = mean(dat_prod$prod_corn),
+                          prod_sug = mean(dat_prod$prod_sug),
+                          time = mean(dat_prod$time))
+prod_rice.predict <- predict(prod.modAv.aicc6, newdata=prod_rice.newdata, se.fit=TRUE)
+prod_rice.predict <- data.frame(prod_rice.predict)
+prod_rice.predict$lwr <- prod_rice.predict$fit-2*prod_rice.predict$se.fit
+prod_rice.predict$upr <- prod_rice.predict$fit+2*prod_rice.predict$se.fit
+prod_rice.predict <- cbind(prod_rice.predict, prod_rice.newdata)
+
+
+# plot
+prod_rice_plot <- ggplot(data=prod_rice.predict, aes(x=prod_rice, y=fit))+
+              geom_line(color="#339900", size=1)+
+              geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              ylim(0,1500)+
+              xlab("Rice producer price at time t")+
+              ylab("Amount of forest lost (ha) at time t")+
+              theme(text = element_text(size=15))+
+              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(),axis.line = element_line(colour = "black"))
+ggsave(file="Results/Macroeconomics/Plots/prod_rice_plot.png", prod_rice_plot, width = 30, 
+       height = 20, units = "cm", dpi=300)
