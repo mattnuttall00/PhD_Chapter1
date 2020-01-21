@@ -2082,7 +2082,7 @@ library('tidyverse')
 ### This section below is a result of talking to Nils about how to deal with all of the 0's in percent change.  I have decided I am not interested in Communes that have no forest cover in 2010 (and therefore cannot physically lose any forest between 2010 and 2011).  However, I AM interested in Communes that start with forest cover, but do not lose any between 2010 and 2011.  I have discussed with Nils the idea of using a zero-inflated model, which will deal with all the 0's.  Therefore what I have done with LC_dat1 (starting row 2138) below is now not appropriate.  
 
 # Load data that only has forested communes
-LC_dat_forest <- read_csv("CCI_ForCov_Commune_forest.csv")
+LC_dat_forest <- read_csv("Data/commune/CCI_ForCov_Commune_forest.csv")
 LC_dat_forest$CommCode <- as.character(LC_dat_forest$CommCode)
 
 # Load data for commune centre xy coords
@@ -2102,7 +2102,7 @@ str(LC_dat_forest)
 ## This section below is the result of the meeting with Nils and Jeroen in January 2019.  I need to get all raw forest cover data (forested only) from 2010 - 2015.  When I say raw I mean the raw amount of forest (in pixels or km2 etc.) rather than % change or rate of change as I was using before.  Jeroen reckons using GLM and raw difference values plus an offset to account for different starting values of forest cover in 2010, is the way to go.
 
 # Load raw data
-dat_raw_10_15 <- read.csv("CCI_ForCov_CommuneForest_2010-15.csv", header = TRUE)
+dat_raw_10_15 <- read.csv("Data/commune/CCI_ForCov_CommuneForest_2010-15.csv", header = TRUE)
 str(dat_raw_10_15)
 head(dat_raw_10_15)
 
