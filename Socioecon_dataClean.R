@@ -48,6 +48,8 @@ socioecon.dat <- socioecon.dat[ ,-39]
 
 socioecon.dat <- as_tibble(socioecon.dat)
 
+# NEED TO ACCOUNT FOR YEARS
+
 # variables that need to be summed
 dat2 <- socioecon.dat %>% 
    
@@ -73,10 +75,10 @@ dat5 <- left_join(dat2,dat3,by = "commGIS")
 dat6 <- left_join(dat5, dat4, by = "commGIS")
 
 # Aggregate the admin variables up to the Commune level
-admindat <- dat2 %>% 
-  select(CommCode,Province, Commune) %>% 
-  group_by(CommCode) %>% 
-  distinct(CommCode, .keep_all=TRUE)
+admindat <- socioecon.dat %>% 
+  dplyr::select(commGIS,Province, Commune) %>% 
+  group_by(commGIS) %>% 
+  distinct(commGIS, .keep_all=TRUE)
 
 # Join tables
 dat_master <- left_join(admindat, dat7, by = "CommCode")
