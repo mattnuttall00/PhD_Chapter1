@@ -49,30 +49,59 @@ socioecon.dat <- socioecon.dat[ ,-39]
 socioecon.dat <- as_tibble(socioecon.dat)
 
 # NEED TO ACCOUNT FOR YEARS
+# before aggregating - split up by year.  Run aggregation code for each year df, then rbind together. Then have another look at the admin aggregation as that is not correct now 
 
-# variables that need to be summed
-dat2 <- socioecon.dat %>% 
-   
-  dplyr::select(commGIS,tot_pop,family,male_18_60,fem_18_60,pop_over61,tot_ind,numPrimLivFarm,land_confl,Pax_migt_in,Pax_migt_out) %>%  
+# split by year
+dat.07 <- socioecon.dat[socioecon.dat$Year=="2007", ]
+dat.08 <- socioecon.dat[socioecon.dat$Year=="2008", ]
+dat.09 <- socioecon.dat[socioecon.dat$Year=="2009", ]
+dat.10 <- socioecon.dat[socioecon.dat$Year=="2010", ]
+dat.11 <- socioecon.dat[socioecon.dat$Year=="2011", ]
+dat.12 <- socioecon.dat[socioecon.dat$Year=="2012", ]
+
+# function to aggregate
+aggFun <- function(dat){
+  
+  # sum
+  datSumF <- dat %>% 
+    dplyr::select(commGIS,tot_pop,family,male_18_60,fem_18_60,pop_over61,tot_ind,numPrimLivFarm,land_confl,
+                  Pax_migt_in,Pax_migt_out) %>%  
   group_by(commGIS) %>%
-  summarise_all(funs(sum)) 
-
-# variables that need to be meaned
-dat3 <- socioecon.dat %>% 
-  dplyr::select(commGIS,prop_ind,F6_24_sch,M6_24_sch,F15_45_ill,M15_45_ill,propPrimLivFarm,propPrimSec,propSecSec,propTerSec,propQuatSec,
-         Les1_R_Land,Les1_F_Land,buff_fam,pig_fam,garbage,crim_case,inf_mort,U5_mort) %>% 
+  summarise_all(funs(sum))
+  
+  # mean
+  datMeanF <- dat %>% 
+    dplyr::select(commGIS,prop_ind,F6_24_sch,M6_24_sch,F15_45_ill,M15_45_ill,propPrimLivFarm,propPrimSec,
+                  propSecSec,propTerSec,propQuatSec,Les1_R_Land,Les1_F_Land,buff_fam,pig_fam,garbage,
+                  crim_case,inf_mort,U5_mort) %>% 
   group_by(commGIS) %>%
-  summarise_all(funs(mean)) 
-
-# variables where median needed
-dat4 <- socioecon.dat %>% 
-  dplyr::select(commGIS, dist_sch,KM_Comm, KM_Heal_cent) %>% 
+  summarise_all(funs(mean))
+    
+  # Median
+  datMedF <- dat %>% 
+    dplyr::select(commGIS, dist_sch,KM_Comm, KM_Heal_cent) %>% 
   group_by(commGIS) %>% 
   summarise_all(funs(median))
+  
+  left_join(datSumF,datMeanF,datMedF, by="commGIS")
+  
+}
 
-# Join all of the above                
-dat5 <- left_join(dat2,dat3,by = "commGIS")
-dat6 <- left_join(dat5, dat4, by = "commGIS")
+dat.07.agg <- aggFun(dat.07)
+
+# Check the number of resulting rows in dat.07.agg is correct (i.e. it has the correct number of unique combinations of Province and Commune). This is necessary because when you check the number of unique commune names in dat.07 you are not accounting for communes in different provinces that have the same commune name. 
+dat.07$ComProv <- paste(dat.07$Province, dat.07$Commune, sep="_") 
+head(dat.07$ComProv)
+length(unique(dat.07$ComProv))
+# Function appears to be working correctly
+
+# run function for the other years
+dat.08.agg <- aggFun(dat.08)
+dat.09.agg <- aggFun(dat.09)
+dat.10.agg <- aggFun(dat.10)
+dat.11.agg <- aggFun(dat.11)
+dat.12.agg <- aggFun(dat.12)
+
 
 # Aggregate the admin variables up to the Commune level
 admindat <- socioecon.dat %>% 
