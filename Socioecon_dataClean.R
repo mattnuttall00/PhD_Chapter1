@@ -59,6 +59,8 @@ dat.10 <- socioecon.dat[socioecon.dat$Year=="2010", ]
 dat.11 <- socioecon.dat[socioecon.dat$Year=="2011", ]
 dat.12 <- socioecon.dat[socioecon.dat$Year=="2012", ]
 
+
+
 # function to aggregate
 aggFun <- function(dat){
   
@@ -83,6 +85,8 @@ aggFun <- function(dat){
   group_by(commGIS) %>% 
   summarise_all(funs(median))
   
+ 
+  
   left_join(datSumF,datMeanF,datMedF, by="commGIS")
   
 }
@@ -93,7 +97,7 @@ dat.07.agg <- aggFun(dat.07)
 dat.07$ComProv <- paste(dat.07$Province, dat.07$Commune, sep="_") 
 head(dat.07$ComProv)
 length(unique(dat.07$ComProv))
-# Function appears to be working correctly
+# Function appears to be working correctly i.e. there are 1590 rows in dat.07$ComProv and 1590 rows in dat.07.agg
 
 # run function for the other years
 dat.08.agg <- aggFun(dat.08)
@@ -102,13 +106,19 @@ dat.10.agg <- aggFun(dat.10)
 dat.11.agg <- aggFun(dat.11)
 dat.12.agg <- aggFun(dat.12)
 
-
-# Aggregate the admin variables up to the Commune level
+ # Aggregate the admin variables up to the Commune level
 admindat <- socioecon.dat %>% 
   dplyr::select(commGIS,Province, Commune) %>% 
   group_by(commGIS) %>% 
   distinct(commGIS, .keep_all=TRUE)
 
+dat.07.agg <- left_join(dat.07.agg,admindat, by="commGIS")
+dat.08.agg <- left_join(dat.08.agg,admindat, by="commGIS")
+dat.09.agg <- left_join(dat.09.agg,admindat, by="commGIS")
+dat.10.agg <- left_join(dat.10.agg,admindat, by="commGIS")
+dat.11.agg <- left_join(dat.11.agg,admindat, by="commGIS")
+dat.12.agg <- left_join(dat.12.agg,admindat, by="commGIS")
+
 # Join tables
-dat_master <- left_join(admindat, dat7, by = "CommCode")
+dat_master <- rbind(dat.07.agg,dat.08.agg,dat.09.agg,dat.10.agg,dat.11.agg,dat.12.agg)
 str(dat_master)
