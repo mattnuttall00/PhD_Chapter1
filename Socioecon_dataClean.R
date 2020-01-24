@@ -1,4 +1,4 @@
-#### This is the data aggregating and data cleaning code for the socioeconomic analysis of chapter 2 (data chapter 1) in my PhD.  The data are from the Commune Database of Cambodia for the years 2007-2012.
+#### This is the data aggregating and data cleaning code for the socioeconomic analysis of chapter 2 (data chapter 1) in my PhD.  The data are from the Commune Database of Cambodia for the years 2007-2012. The land cover data are from the European Space Agency Climate Change Initiative satellite.
 
 #### Load libraries ####
 
@@ -14,7 +14,8 @@ library('ggmap')
 library('mapview')
 library('tmap')
 
-#### Load socioeconomic variable and commune data ####
+#### Socioeconomic data -----------------------------------------------------------------
+### Load socioeconomic variable and commune data ####
 
 socioecon.dat <- read.csv("Data/commune/socioecon_vars_07-12.csv", header=T) 
 
@@ -28,7 +29,7 @@ commDat$province <- as.character(commDat$province)
 commDat$commune <- as.character(commDat$commune)
 str(commDat)
 
-#### Assign commune code ####
+### Assign commune code ####
 
 # what is the difference in number of communes between years?
 length(unique(socioecon.dat[socioecon.dat$Year==2007, ]$Commune))
@@ -44,7 +45,7 @@ str(socioecon.dat)
 socioecon.dat <- socioecon.dat[ ,-39]
 
 
-#### Aggregate to commune level ####
+### Aggregate to commune level ####
 
 socioecon.dat <- as_tibble(socioecon.dat)
 
@@ -122,3 +123,37 @@ dat.12.agg <- left_join(dat.12.agg,admindat, by="commGIS")
 # Join tables
 dat_master <- rbind(dat.07.agg,dat.08.agg,dat.09.agg,dat.10.agg,dat.11.agg,dat.12.agg)
 str(dat_master)
+
+
+#### Land cover data -------------------------------------------------------------------
+### Load in data ####
+
+# CCI raster layer
+CCI <- brick("Spatial_data/ESACCI_clip_KH/CCI_clip.tif")
+
+# set CRS to UTM zone 48, Indian 1960
+proj4string(CCI) <- CRS("+init=epsg:3148")
+
+# explore raster
+str(CCI)
+CCI
+hist(CCI)
+plot(CCI$CCI_clip.1)
+CCI@data@values
+
+
+# Commune shapefile
+com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
+
+# set CRS to UTM zone 48, Indian 1960
+proj4string(com.shp) <- CRS("+init=epsg:3148")
+
+plot(com.shp, bg="transparent", add=T)
+length(com.shp$KHUM_NAME)
+
+
+## count the number of forested pixels in each commune polygon
+
+# extract raster values for each commune polygon for each year. 
+ext <- extract(CCI,com.shp)
+
