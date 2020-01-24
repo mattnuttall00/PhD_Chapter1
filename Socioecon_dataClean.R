@@ -128,7 +128,16 @@ str(dat_master)
 #### Land cover data -------------------------------------------------------------------
 ### Load in data ####
 
-# CCI raster layer
+# CCI layer (unclipped)
+CCI_full <- brick("Spatial_data/CCI_Ind1960.tif")
+proj4string(CCI_full) <- CRS("+init=epsg:3148")
+plot(CCI_full$CCI_Ind1960.1)
+
+# clip to com.shp using mask
+CCI_KH <- mask(CCI_full, com.shp)
+plot(CCI_KH$CCI_Ind1960.1)
+
+# CCI raster layer (KH clip) - done in QGIS
 CCI <- brick("Spatial_data/ESACCI_clip_KH/CCI_clip.tif")
 
 # set CRS to UTM zone 48, Indian 1960
@@ -148,12 +157,38 @@ com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
 # set CRS to UTM zone 48, Indian 1960
 proj4string(com.shp) <- CRS("+init=epsg:3148")
 
+# explore shapefile
 plot(com.shp, bg="transparent", add=T)
 length(com.shp$KHUM_NAME)
+nrow(com.shp)
+summary(com.shp)
+head(com.shp@data)
+
+# are there any polygons with area=0
+length(com.shp$AREA[com.shp$AREA==0])
+length(com.shp$AREA[com.shp$AREA<5000])
 
 
 ## count the number of forested pixels in each commune polygon
 
 # extract raster values for each commune polygon for each year. 
 ext <- extract(CCI,com.shp)
+summary(ext)
+length(ext[[200]][ ,1])
 
+# output as data frame
+ext2 <- extract(CCI_KH, com.shp, df=T)
+str(ext2)
+head(ext2)
+length(ext2$ID[ext2$ID==1])
+
+# remove unwanted years
+ext3 <- ext2[ ,c(1,16:21)]
+head(ext3)
+length(unique(ext3$ID))
+
+# first I have to remove all communes that aren't majority forest
+# ext3 %>% group_by(ID) %>% select(ID,CCI_clip.15) %>% 
+# remove all of the rows where the cell value is not a forest value
+# forest values are 50, 60, 61, 62, 70, 80, 90, 100
+#
