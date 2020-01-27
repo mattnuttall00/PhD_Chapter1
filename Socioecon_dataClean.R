@@ -128,6 +128,8 @@ str(dat_master)
 #### Land cover data -------------------------------------------------------------------
 ### Load in data ####
 
+  ## CCI raster ####
+
 # CCI layer (unclipped)
 CCI_full <- brick("Spatial_data/CCI_Ind1960.tif")
 proj4string(CCI_full) <- CRS("+init=epsg:3148")
@@ -150,6 +152,7 @@ hist(CCI)
 plot(CCI$CCI_clip.1)
 CCI@data@values
 
+  ## Commune shapefile ####
 
 # Commune shapefile
 com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
@@ -159,7 +162,7 @@ proj4string(com.shp) <- CRS("+init=epsg:3148")
 
 # explore shapefile
 plot(com.shp, bg="transparent", add=T)
-length(com.shp$KHUM_NAME)
+length(com.shp$CODEKHUM)
 nrow(com.shp)
 summary(com.shp)
 head(com.shp@data)
@@ -168,27 +171,26 @@ head(com.shp@data)
 length(com.shp$AREA[com.shp$AREA==0])
 length(com.shp$AREA[com.shp$AREA<5000])
 
+  ## Calculate forested pixels in each commune (not working) ####
 
-## count the number of forested pixels in each commune polygon
+## count the number of forested pixels in each commune polygon. The code below kind of works, but for some reason the number of communes in the shapefile (1687) is not matching the number of unique IDs (which should represent communes) in the resulting ext3 (1681). Therefore I am getting the forest pixel data from QGIS instead.
 
-# extract raster values for each commune polygon for each year. 
-ext <- extract(CCI,com.shp)
-summary(ext)
-length(ext[[200]][ ,1])
-
-# output as data frame
+# extract raster values for each commune polygon for each year. output as data frame
 ext2 <- extract(CCI_KH, com.shp, df=T)
 str(ext2)
 head(ext2)
 length(ext2$ID[ext2$ID==1])
 
-# remove unwanted years
+# remove unwanted years (check column selection)
 ext3 <- ext2[ ,c(1,16:21)]
 head(ext3)
 length(unique(ext3$ID))
+write.csv(ext3, file = "ext3.csv")
 
-# first I have to remove all communes that aren't majority forest
-# ext3 %>% group_by(ID) %>% select(ID,CCI_clip.15) %>% 
-# remove all of the rows where the cell value is not a forest value
-# forest values are 50, 60, 61, 62, 70, 80, 90, 100
-#
+  ## Forest cover data ####
+
+forest_dat <- read.csv("Data/commune/forest_cover_07-13.csv", header=TRUE)
+str(forest_dat)
+
+# there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data
+length(forest_dat$khum_name[forest_dat$khum_name=="NA"])
