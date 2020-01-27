@@ -107,18 +107,24 @@ dat.10.agg <- aggFun(dat.10)
 dat.11.agg <- aggFun(dat.11)
 dat.12.agg <- aggFun(dat.12)
 
- # Aggregate the admin variables up to the Commune level
+ # Aggregate the admin variables up to the Commune level & add year
 admindat <- socioecon.dat %>% 
   dplyr::select(commGIS,Province, Commune) %>% 
   group_by(commGIS) %>% 
   distinct(commGIS, .keep_all=TRUE)
 
 dat.07.agg <- left_join(dat.07.agg,admindat, by="commGIS")
+dat.07.agg$year <- "2007"
 dat.08.agg <- left_join(dat.08.agg,admindat, by="commGIS")
+dat.08.agg$year <- "2008"
 dat.09.agg <- left_join(dat.09.agg,admindat, by="commGIS")
+dat.09.agg$year <- "2009"
 dat.10.agg <- left_join(dat.10.agg,admindat, by="commGIS")
+dat.10.agg$year <- "2010"
 dat.11.agg <- left_join(dat.11.agg,admindat, by="commGIS")
+dat.11.agg$year <- "2011"
 dat.12.agg <- left_join(dat.12.agg,admindat, by="commGIS")
+dat.12.agg$year <- "2012"
 
 # Join tables
 dat_master <- rbind(dat.07.agg,dat.08.agg,dat.09.agg,dat.10.agg,dat.11.agg,dat.12.agg)
@@ -190,7 +196,144 @@ write.csv(ext3, file = "ext3.csv")
   ## Forest cover data ####
 
 forest_dat <- read.csv("Data/commune/forest_cover_07-13.csv", header=TRUE)
+forest_dat$khum_name <- as.factor(forest_dat$khum_name)
+colnames(forest_dat)[2] <- "commGIS"
+str(forest_dat)
+head(forest_dat)
+
+  ## Names ####
+
+# there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data 
+sum(is.na(forest_dat$khum_name)) # 216
+
+# try and match the comm codes with dat_master and pull out the commune names
+dat_master$Commune <- as.character(dat_master$Commune)
+forest_dat$khum_name[is.na(forest_dat$khum_name)] <- dat_master$Commune[match(forest_dat$codekhum,
+                                                                              dat_master$commGIS)]
+sum(is.na(forest_dat$khum_name)) # now 16
+
+forest_dat %>% filter(is.na(khum_name))
+# there are some that are only NA in certain years which means the name exists in other years
+
+forest_dat %>% filter(codekhum==90607)
+dat_master %>% filter(commGIS==90607)
+dat_master %>% filter(Commune=="Boeng Kak Muoy")
+
+forest_dat <- forest_dat %>% 
+              mutate(khum_name = ifelse(khum_name == is.na(khum_name),
+                                  dat_master$Commune[match(dat_master$commGIS,forest_dat$codekhum)],
+                                  khum_name))
+
+forest_dat <- forest_dat %>% 
+              mutate(khum_name = ifelse(khum_name == is.na(khum_name),
+                                    replace(
+                                    khum_name,
+                                    is.na(khum_name),
+                                    dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)]),
+                                  khum_name))
+
+forest_dat <- forest_dat %>% 
+              mutate(khum_name = replace(khum_name,
+                                    is.na(khum_name),
+                                    dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)]))
+
+forest_dat$khum_name <- ifelse(is.na(forest_dat$khum_name),
+                               dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)],
+                               forest_dat$khum_name)
+
+forest_dat %>% filter(is.na(khum_name))
+dat_master %>% filter(commGIS==10102)
+
+df1 <- data.frame(year = rep(c(2007,2008,2009,2010,2011), each=2),
+                  comm_name = c("a","b",NA,"d","e",NA,"g","h",NA,"j"),
+                  code_com = c(1:10))
+
+df2 <- data.frame(comCode = c(1:10),
+                  comm_name = letters[1:10])
+
+df1$comm_name[is.na(df1$comm_name)] <- df2$comm_name[match(df1$code_com,df2$comCode)]
+
+df1$comm_name <- ifelse(is.na(df1$comm_name),
+                        df2$comm_name[match(df2$comCode,df1$code_com)],
+                        df1$comm_name)
+df1
+
+df1$comm_name <- replace(df1$comm_name, is.na(df1$comm_name), 
+                         df2$comm_name[match(df1$code_com,df2$comCode)])
+
+df1 <- df1 %>% mutate(comm_name = ifelse(is.na(df1$comm_name),
+                                        df2$comm_name[match(df1$code_com,df2$comCode)],
+                                        comm_name))
+
+df1 <- df1 %>% mutate(comm_name = ifelse(is.na(df1$comm_name),
+                                        replace(comm_name, is.na(comm_name),
+                                          df2$comm_name[match(df1$code_com,df2$comCode)]),
+                                        comm_name))
+
+df1$comm_name[is.na(df1$comm_name)] = df2$comm_name[match(df1$code_com, df2$comCode)]
+df1
+
+  ## Matching socioeconoimc and forest data sets ####
+
+
+## I need to match the socioeconomic data (dat_master) to the forest cover data (forest_dat) so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. Although I need to check with Nils about what to do with afforestation
+
+# I am expecting there to be more communes in the forest data than in any of the socioeconomic data as the forest data is probably the most up to date and "complete" set of communes. The data from the commune database is older, and had a lot of missing data.
+str(dat_master)
 str(forest_dat)
 
-# there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data
-length(forest_dat$khum_name[forest_dat$khum_name=="NA"])
+# I think I need to identify the "minimum set".  This is the year in dat_master that has the fewest communes able to be matched to the forest data.  Then I will need to match all other years to that minimum set. This will ensure I have no "missing" data between years when it comes to the modelling - i.e. all years will have exactly the same communes. 
+
+# 2007
+forest07 <- forest_dat[forest_dat$year=="2007", ]
+missing.07 <- anti_join(forest07,dat.07.agg, by="commGIS")
+str(missing.07) 
+# 121 communes missing from socioeconomic data in 2007 compared with the forest data
+
+# 2008
+forest08 <- forest_dat[forest_dat$year=="2008",]
+missing.08 <- anti_join(forest08, dat.08.agg, by="commGIS") 
+str(missing.08)
+# 110 communes missing
+
+# 2009
+forest09 <- forest_dat[forest_dat$year=="2009",]
+missing.09 <- anti_join(forest09, dat.09.agg, by="commGIS") 
+str(missing.09)
+# 110 communes missing
+
+# 2010
+forest10 <- forest_dat[forest_dat$year=="2010",]
+missing.10 <- anti_join(forest10, dat.10.agg, by="commGIS") 
+str(missing.10)
+# 110 communes missing
+
+# 2011
+forest11 <- forest_dat[forest_dat$year=="2011",]
+missing.11 <- anti_join(forest11, dat.11.agg, by="commGIS") 
+str(missing.11)
+# 311 communes missing. This was expected.  2011 was missing a lot of data in the commune database
+
+# 2012
+forest12 <- forest_dat[forest_dat$year=="2012",]
+missing.12 <- anti_join(forest12, dat.12.agg, by="commGIS") 
+str(missing.12)
+# 311 communes missing here too.
+
+# check to see if the 310 missing communes in 2011 and 2012 are the same
+compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
+# They are the same missing communes
+
+# SO I need to subset forest_dat to match 2011 (or 2012), and then match all the other years to that
+merge11 <- inner_join(dat.11.agg,forest11, by="commGIS")
+length(dat.11.agg$commGIS)
+length(merge11$commGIS)
+# There were also apparently some communes in the CD data that weren't in the forest data
+str(merge11)
+
+merge11 <- merge11 %>% dplyr::select(-year.y,-khum_name) %>% rename(year = year.x)
+
+# need to subset 2012 socioecon data to 2011 data, then merge with 2012 forest data
+sub12 <- semi_join(dat.12.agg, merge11, by="commGIS")
+
+# maybe I need to check the number of rows left once I've matched all socioecon years to forest data in order to find the minimum set
