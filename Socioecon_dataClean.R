@@ -196,7 +196,7 @@ write.csv(ext3, file = "ext3.csv")
   ## Forest cover data ####
 
 forest_dat <- read.csv("Data/commune/forest_cover_07-13.csv", header=TRUE)
-forest_dat$khum_name <- as.factor(forest_dat$khum_name)
+forest_dat$khum_name <- as.character(forest_dat$khum_name)
 colnames(forest_dat)[2] <- "commGIS"
 str(forest_dat)
 head(forest_dat)
@@ -206,72 +206,20 @@ head(forest_dat)
 # there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data 
 sum(is.na(forest_dat$khum_name)) # 216
 
-# try and match the comm codes with dat_master and pull out the commune names
+# Use the "Commune" column in dat_master to fill in the missing commune names in forest_dat
+# first make sure "Commune" is a character
 dat_master$Commune <- as.character(dat_master$Commune)
-forest_dat$khum_name[is.na(forest_dat$khum_name)] <- dat_master$Commune[match(forest_dat$codekhum,
-                                                                              dat_master$commGIS)]
-sum(is.na(forest_dat$khum_name)) # now 16
 
-forest_dat %>% filter(is.na(khum_name))
-# there are some that are only NA in certain years which means the name exists in other years
+df3 <- left_join(forest_dat, dat_master, by="commGIS") %>% 
+        mutate(newCommune = coalesce(khum_name, Commune)) 
+df3 <-  df3[ , c("year.x", "commGIS", "area", "diffPix", "Province", "newCommune")]
 
-forest_dat %>% filter(codekhum==90607)
-dat_master %>% filter(commGIS==90607)
-dat_master %>% filter(Commune=="Boeng Kak Muoy")
+sum(is.na(df3$newCommune)) # now 150. There are obviously some communes that are not found in dat_master
 
-forest_dat <- forest_dat %>% 
-              mutate(khum_name = ifelse(khum_name == is.na(khum_name),
-                                  dat_master$Commune[match(dat_master$commGIS,forest_dat$codekhum)],
-                                  khum_name))
-
-forest_dat <- forest_dat %>% 
-              mutate(khum_name = ifelse(khum_name == is.na(khum_name),
-                                    replace(
-                                    khum_name,
-                                    is.na(khum_name),
-                                    dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)]),
-                                  khum_name))
-
-forest_dat <- forest_dat %>% 
-              mutate(khum_name = replace(khum_name,
-                                    is.na(khum_name),
-                                    dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)]))
-
-forest_dat$khum_name <- ifelse(is.na(forest_dat$khum_name),
-                               dat_master$Commune[match(forest_dat$codekhum,dat_master$commGIS)],
-                               forest_dat$khum_name)
-
-forest_dat %>% filter(is.na(khum_name))
-dat_master %>% filter(commGIS==10102)
-
-df1 <- data.frame(year = rep(c(2007,2008,2009,2010,2011), each=2),
-                  comm_name = c("a","b",NA,"d","e",NA,"g","h",NA,"j"),
-                  code_com = c(1:10))
-
-df2 <- data.frame(comCode = c(1:10),
-                  comm_name = letters[1:10])
-
-df1$comm_name[is.na(df1$comm_name)] <- df2$comm_name[match(df1$code_com,df2$comCode)]
-
-df1$comm_name <- ifelse(is.na(df1$comm_name),
-                        df2$comm_name[match(df2$comCode,df1$code_com)],
-                        df1$comm_name)
-df1
-
-df1$comm_name <- replace(df1$comm_name, is.na(df1$comm_name), 
-                         df2$comm_name[match(df1$code_com,df2$comCode)])
-
-df1 <- df1 %>% mutate(comm_name = ifelse(is.na(df1$comm_name),
-                                        df2$comm_name[match(df1$code_com,df2$comCode)],
-                                        comm_name))
-
-df1 <- df1 %>% mutate(comm_name = ifelse(is.na(df1$comm_name),
-                                        replace(comm_name, is.na(comm_name),
-                                          df2$comm_name[match(df1$code_com,df2$comCode)]),
-                                        comm_name))
-
-df1$comm_name[is.na(df1$comm_name)] = df2$comm_name[match(df1$code_com, df2$comCode)]
-df1
+forest_dat <- df3
+forest_dat <- forest_dat %>% mutate(Commune = newCommune)
+forest_dat <- forest_dat %>% mutate(year = year.x)
+forest_dat <- forest_dat %>% select(year,commGIS, Province, Commune, area, diffPix)
 
   ## Matching socioeconoimc and forest data sets ####
 
