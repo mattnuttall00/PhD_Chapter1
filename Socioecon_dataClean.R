@@ -67,8 +67,8 @@ aggFun <- function(dat){
   
   # sum
   datSumF <- dat %>% 
-    dplyr::select(commGIS,tot_pop,family,male_18_60,fem_18_60,pop_over61,tot_ind,numPrimLivFarm,land_confl,
-                  Pax_migt_in,Pax_migt_out) %>%  
+    dplyr::select(commGIS,tot_pop,family,male_18_60,fem_18_60,pop_over61,tot_ind,numPrimLivFarm,
+                  land_confl,Pax_migt_in,Pax_migt_out) %>%  
   group_by(commGIS) %>%
   summarise_all(funs(sum))
   
@@ -201,7 +201,7 @@ colnames(forest_dat)[2] <- "commGIS"
 str(forest_dat)
 head(forest_dat)
 
-  ## Names ####
+  ## Names (not working - DO NOT RUN) ####
 
 # there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data 
 sum(is.na(forest_dat$khum_name)) # 216
@@ -221,16 +221,53 @@ forest_dat <- forest_dat %>% mutate(Commune = newCommune)
 forest_dat <- forest_dat %>% mutate(year = year.x)
 forest_dat <- forest_dat %>% select(year,commGIS, Province, Commune, area, diffPix)
 
-  ## Matching socioeconoimc and forest data sets ####
+  ## Correcting duplicate communes in forest_dat ####
+
+# In the commune shapefile, some communes have multiple ploygons because of things like island groups.  This causes issues down the line as you end up with duplicate rows with the same commune code.  Therefore I need to identify these communes, and aggregate them into one row each
+
+# first split them into years
+forest07 <- forest_dat[forest_dat$year=="2007", ]
+forest08 <- forest_dat[forest_dat$year=="2008", ]
+forest09 <- forest_dat[forest_dat$year=="2008", ]
+forest10 <- forest_dat[forest_dat$year=="2010", ]
+forest11 <- forest_dat[forest_dat$year=="2011", ]
+forest12 <- forest_dat[forest_dat$year=="2012", ]
+
+# group rows by commGIS and sum the area and diffPix. If the commune only has one row then the results should remain the same
+forest07.agg <- forest07 %>% group_by(commGIS) %>% summarise_at(c("area","diffPix"),sum)
+length(forest07$commGIS)
+length(forest07.agg$commGIS)
+length(forest07.agg)
+length(forest07.agg$commGIS[duplicated(forest07.agg$commGIS)]) # 0
+
+ForAggFun <- function(dat) {
+  
+  dat %>% group_by(commGIS) %>% summarise_at(c("area","diffPix"), sum)
+}
+
+forest08.agg <- ForAggFun(forest08)
+forest09.agg <- ForAggFun(forest09)
+forest10.agg <- ForAggFun(forest10)
+forest11.agg <- ForAggFun(forest11)
+forest12.agg <- ForAggFun(forest12)
+
+# merge together to make a corrected forest_dat
+forest_dat <- rbind(forest07.agg,forest08.agg,forest09.agg,forest10.agg,forest11.agg,forest12.agg)
+length(forest_dat$commGIS)
+length(unique(forest_dat$commGIS))
+
+## Matching socioeconoimc and forest data sets ####
 
 
-## I need to match the socioeconomic data (dat_master) to the forest cover data (forest_dat) so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. Although I need to check with Nils about what to do with afforestation
+## I need to match the socioeconomic data (dat_master) to the forest cover data (forest_dat) so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. After meeting with Nils, I think I need to make sure the final dataset:
+# 1) all communes need to exist in the forest_dat data i.e. they need to have a commune code and diffPix value (i.e. a response variable value and exist in the GIS data)
+# 2) They can have missing communes in certain years in the socioecon data. Therefore I don't need to subset all of the years to fit the minimum set.    
 
 # I am expecting there to be more communes in the forest data than in any of the socioeconomic data as the forest data is probably the most up to date and "complete" set of communes. The data from the commune database is older, and had a lot of missing data.
 str(dat_master)
 str(forest_dat)
 
-# I think I need to identify the "minimum set".  This is the year in dat_master that has the fewest communes able to be matched to the forest data.  Then I will need to match all other years to that minimum set. This will ensure I have no "missing" data between years when it comes to the modelling - i.e. all years will have exactly the same communes. 
+## How many communes are missing from the different years?
 
 # 2007
 forest07 <- forest_dat[forest_dat$year=="2007", ]
@@ -272,16 +309,46 @@ str(missing.12)
 compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 # They are the same missing communes
 
-# SO I need to subset forest_dat to match 2011 (or 2012), and then match all the other years to that
-merge11 <- inner_join(dat.11.agg,forest11, by="commGIS")
-length(dat.11.agg$commGIS)
-length(merge11$commGIS)
-# There were also apparently some communes in the CD data that weren't in the forest data
-str(merge11)
 
-merge11 <- merge11 %>% dplyr::select(-year.y,-khum_name) %>% rename(year = year.x)
+## Now I will join each year of socioeconoimc data to the corresponding year of forest data
 
-# need to subset 2012 socioecon data to 2011 data, then merge with 2012 forest data
-sub12 <- semi_join(dat.12.agg, merge11, by="commGIS")
+# 2007
+join07 <- inner_join(forest07, dat.07.agg, by="commGIS")
+join07 <- join07 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join07$ProvCom <- paste(join07$Province, join07$Commune, sep="_")
+join07$ProvCom <- as.factor(join07$ProvCom)
+length(forest07$commGIS)
+length(dat.07.agg$commGIS)
+length(join07$commGIS)
+head(join07)
+str(join07)
+join07$Commune <- factor(join07$Commune)
+join07$commGIS <- as.factor(join07$commGIS)
+length(unique(join07$commGIS))
+dup07 <- join07[duplicated(join07$commGIS),]
+length(dup07$commGIS)
+dup07[ ,c("commGIS", "Province", "Commune")]
+dup07.2 <- dat.07.agg[duplicated(dat.07.agg$commGIS),]
+length(dup07.2$commGIS) 
+dat.07.agg %>% filter(commGIS==150206)
 
-# maybe I need to check the number of rows left once I've matched all socioecon years to forest data in order to find the minimum set
+# 2008
+join08 <- inner_join(forest08, dat.08.agg, by="commGIS")
+join08 <- join08 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+
+# 2009
+join09 <- inner_join(forest09, dat.09.agg, by="commGIS")
+join09 <- join09 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+
+# 2010
+join10 <- inner_join(forest10, dat.10.agg, by="commGIS")
+join10 <- join10 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+
+# 2011
+join11 <- inner_join(forest11, dat.11.agg, by="commGIS")
+join11 <- join11 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+
+# 2012
+join12 <- inner_join(forest12, dat.12.agg, by="commGIS")
+join12 <- join12 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+
