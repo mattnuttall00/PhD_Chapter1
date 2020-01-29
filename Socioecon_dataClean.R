@@ -374,11 +374,27 @@ dat_forest[dat_forest$ForPix==0, ]
 
 
 #### Additional variables --------------------------------------------------------------
-  ## Add population density ####
+  ## population density ####
 
 # now that I have merged the forest data and socioeconoimc data I have total population and commune area, and so can calculate population density
 
 # convert area from m2 to km2
 dat_merge$areaKM <- dat_merge$area / 1000000
 dat_merge$pop_den <- dat_merge$areaKM / dat_merge$tot_pop
+str(dat_merge)
+
+  ## elevation ####
+
+# load mean and median elevation data
+elevation <- read.csv("Data/commune/commune_elevation.csv")
+str(elevation)
+elevation <- elevation %>% rename(commGIS=CODEKHUM)
+elevation <- elevation %>% select(-med_elev)
+
+# First correct for communes with multiple rows (due to multiple polygons per commune)
+# group rows by commGIS and mean the elevation. 
+elevation <- elevation %>% group_by(commGIS) %>% summarise_at("mean_elev", mean)
+
+# attach to dat_merge
+dat_merge <- inner_join(dat_merge, elevation, by="commGIS")
 str(dat_merge)
