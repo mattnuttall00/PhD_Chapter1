@@ -270,39 +270,39 @@ str(forest_dat)
 forest07 <- forest_dat[forest_dat$year=="2007", ]
 missing.07 <- anti_join(forest07,dat.07.agg, by="commGIS")
 str(missing.07) 
-# 121 communes missing from socioeconomic data in 2007 compared with the forest data
+# 106 communes missing from socioeconomic data in 2007 compared with the forest data
 
 # 2008
 forest08 <- forest_dat[forest_dat$year=="2008",]
 missing.08 <- anti_join(forest08, dat.08.agg, by="commGIS") 
 str(missing.08)
-# 110 communes missing
+# 98 communes missing
 
 # 2009
 forest09 <- forest_dat[forest_dat$year=="2009",]
 missing.09 <- anti_join(forest09, dat.09.agg, by="commGIS") 
 str(missing.09)
-# 110 communes missing
+# 98 communes missing
 
 # 2010
 forest10 <- forest_dat[forest_dat$year=="2010",]
 missing.10 <- anti_join(forest10, dat.10.agg, by="commGIS") 
 str(missing.10)
-# 110 communes missing
+# 98 communes missing
 
 # 2011
 forest11 <- forest_dat[forest_dat$year=="2011",]
 missing.11 <- anti_join(forest11, dat.11.agg, by="commGIS") 
 str(missing.11)
-# 311 communes missing. This was expected.  2011 was missing a lot of data in the commune database
+# 293 communes missing. This was expected.  2011 was missing a lot of data in the commune database
 
 # 2012
 forest12 <- forest_dat[forest_dat$year=="2012",]
 missing.12 <- anti_join(forest12, dat.12.agg, by="commGIS") 
 str(missing.12)
-# 311 communes missing here too.
+# 293 communes missing here too.
 
-# check to see if the 310 missing communes in 2011 and 2012 are the same
+# check to see if the 293 missing communes in 2011 and 2012 are the same
 compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 # They are the same missing communes
 
@@ -310,42 +310,30 @@ compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 ## Now I will join each year of socioeconoimc data to the corresponding year of forest data
 
 # 2007
-join07 <- inner_join(forest07, dat.07.agg, by="commGIS")
-join07 <- join07 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
-join07$ProvCom <- paste(join07$Province, join07$Commune, sep="_")
-join07$ProvCom <- as.factor(join07$ProvCom)
-length(forest07$commGIS)
-length(dat.07.agg$commGIS)
-length(join07$commGIS)
-head(join07)
-str(join07)
-join07$Commune <- factor(join07$Commune)
-join07$commGIS <- as.factor(join07$commGIS)
-length(unique(join07$commGIS))
-dup07 <- join07[duplicated(join07$commGIS),]
-length(dup07$commGIS)
-dup07[ ,c("commGIS", "Province", "Commune")]
-dup07.2 <- dat.07.agg[duplicated(dat.07.agg$commGIS),]
-length(dup07.2$commGIS) 
-dat.07.agg %>% filter(commGIS==150206)
+join07 <- inner_join(dat.07.agg, forest07, by="commGIS")
+join07 <- join07 %>% select(-year.y) %>% rename(year=year.x)
 
 # 2008
-join08 <- inner_join(forest08, dat.08.agg, by="commGIS")
-join08 <- join08 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join08 <- inner_join(dat.08.agg, forest08, by="commGIS")
+join08 <- join08 %>% select(-year.y) %>% rename(year=year.x)
 
 # 2009
-join09 <- inner_join(forest09, dat.09.agg, by="commGIS")
-join09 <- join09 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join09 <- inner_join(dat.09.agg, forest09, by="commGIS")
+join09 <- join09 %>% select(-year.y) %>% rename(year=year.x)
 
 # 2010
-join10 <- inner_join(forest10, dat.10.agg, by="commGIS")
-join10 <- join10 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join10 <- inner_join(dat.10.agg, forest10, by="commGIS")
+join10 <- join10 %>% select(-year.y) %>% rename(year=year.x)
 
 # 2011
-join11 <- inner_join(forest11, dat.11.agg, by="commGIS")
-join11 <- join11 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join11 <- inner_join(dat.11.agg, forest11, by="commGIS")
+join11 <- join11 %>% select(-year.y) %>% rename(year=year.x)
 
 # 2012
-join12 <- inner_join(forest12, dat.12.agg, by="commGIS")
-join12 <- join12 %>% select(-khum_name, -year.y) %>% rename(year=year.x)
+join12 <- inner_join(dat.12.agg, forest12, by="commGIS")
+join12 <- join12 %>% select(-year.y) %>% rename(year=year.x)
+
+# merge datasets
+dat_merge <- rbind(join07,join08,join09,join10,join11,join12)
+str(dat_merge)
 
