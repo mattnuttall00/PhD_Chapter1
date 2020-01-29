@@ -133,7 +133,6 @@ str(dat_master)
 
 #### Land cover data -------------------------------------------------------------------
 ### Load in data ####
-
   ## CCI raster ####
 
 # CCI layer (unclipped)
@@ -201,27 +200,7 @@ colnames(forest_dat)[2] <- "commGIS"
 str(forest_dat)
 head(forest_dat)
 
-  ## Names (not working - DO NOT RUN) ####
-
-# there are some missing commune names in the forest cover data. I will first try and get those names from the socioeconomic data 
-sum(is.na(forest_dat$khum_name)) # 216
-
-# Use the "Commune" column in dat_master to fill in the missing commune names in forest_dat
-# first make sure "Commune" is a character
-dat_master$Commune <- as.character(dat_master$Commune)
-
-df3 <- left_join(forest_dat, dat_master, by="commGIS") %>% 
-        mutate(newCommune = coalesce(khum_name, Commune)) 
-df3 <-  df3[ , c("year.x", "commGIS", "area", "diffPix", "Province", "newCommune")]
-
-sum(is.na(df3$newCommune)) # now 150. There are obviously some communes that are not found in dat_master
-
-forest_dat <- df3
-forest_dat <- forest_dat %>% mutate(Commune = newCommune)
-forest_dat <- forest_dat %>% mutate(year = year.x)
-forest_dat <- forest_dat %>% select(year,commGIS, Province, Commune, area, diffPix)
-
-  ## Correcting duplicate communes in forest_dat ####
+## Correcting duplicate communes in forest_dat ####
 
 # In the commune shapefile, some communes have multiple ploygons because of things like island groups.  This causes issues down the line as you end up with duplicate rows with the same commune code.  Therefore I need to identify these communes, and aggregate them into one row each
 
@@ -253,7 +232,7 @@ forest_dat <- rbind(forest07.agg,forest08.agg,forest09.agg,forest10.agg,forest11
 length(forest_dat$commGIS)
 length(unique(forest_dat$commGIS))
 
-## Matching socioeconoimc and forest data sets ####
+### Matching socioeconoimc and forest data sets ####
 
 
 ## I need to match the socioeconomic data (dat_master) to the forest cover data (forest_dat) so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. After meeting with Nils, I think I need to make sure the final dataset:
@@ -337,3 +316,69 @@ join12 <- join12 %>% select(-year.y) %>% rename(year=year.x)
 dat_merge <- rbind(join07,join08,join09,join10,join11,join12)
 str(dat_merge)
 
+
+### Removing false zeros ####
+
+# false zeros are 0's that cannot contribute to your hypothesis. In this context that means communes that have no forest to start with. If they have no forest, then they cannot lose any
+
+# load forest pixels data
+for_pix <- read.csv("Data/commune/forested_pixels_07-12.csv")
+str(for_pix)
+for_pix$year <- as.character(for_pix$year)
+
+
+# First correct for communes with multiple rows (due to multiple polygons per commune)
+# first split them into years
+pix07 <- for_pix[for_pix$year=="2007", ]
+pix08 <- for_pix[for_pix$year=="2008", ]
+pix09 <- for_pix[for_pix$year=="2008", ]
+pix10 <- for_pix[for_pix$year=="2010", ]
+pix11 <- for_pix[for_pix$year=="2011", ]
+pix12 <- for_pix[for_pix$year=="2012", ]
+
+# group rows by commGIS and sum the area and diffPix. If the commune only has one row then the results should remain the same
+
+PixAggFun <- function(dat,Year) {
+  
+  dat %>% group_by(commGIS) %>% summarise_at(c("ForPix"), sum) %>% 
+  mutate(year = Year) 
+}
+
+pix07.agg <- PixAggFun(pix07, 2007)
+pix08.agg <- PixAggFun(pix08, 2008)
+pix09.agg <- PixAggFun(pix09, 2009)
+pix10.agg <- PixAggFun(pix10, 2010)
+pix11.agg <- PixAggFun(pix11, 2011)
+pix12.agg <- PixAggFun(pix12, 2012)
+
+# merge together to make a corrected for_pix
+for_pix <- rbind(pix07.agg,pix08.agg,pix09.agg,pix10.agg,pix11.agg,pix12.agg)
+for_pix$year <- as.character(for_pix$year)
+length(forest_dat$commGIS)
+length(unique(forest_dat$commGIS))
+
+
+# attach to dat_merge
+dat_merge <- inner_join(dat_merge, for_pix, by=c("year", "commGIS"))
+str(dat_merge2)
+
+
+# Now I need to remove all communes that have 0 forest in 2007
+dat_forest <- dat_merge[dat_merge$ForPix >0, ]
+str(dat_forest)
+
+# Now check to see if there are any communes that had forest in 2007 but have none in subsequent years (i.e. had forest but lost it all)
+dat_forest %>% filter(ForPix==0)
+dat_forest[dat_forest$ForPix==0, ]
+# none. That makes it simpler
+
+
+#### Additional variables --------------------------------------------------------------
+  ## Add population density ####
+
+# now that I have merged the forest data and socioeconoimc data I have total population and commune area, and so can calculate population density
+
+# convert area from m2 to km2
+dat_merge$areaKM <- dat_merge$area / 1000000
+dat_merge$pop_den <- dat_merge$areaKM / dat_merge$tot_pop
+str(dat_merge)
