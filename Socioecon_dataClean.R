@@ -234,22 +234,19 @@ forest11 <- forest_dat[forest_dat$year=="2011", ]
 forest12 <- forest_dat[forest_dat$year=="2012", ]
 
 # group rows by commGIS and sum the area and diffPix. If the commune only has one row then the results should remain the same
-forest07.agg <- forest07 %>% group_by(commGIS) %>% summarise_at(c("area","diffPix"),sum)
-length(forest07$commGIS)
-length(forest07.agg$commGIS)
-length(forest07.agg)
-length(forest07.agg$commGIS[duplicated(forest07.agg$commGIS)]) # 0
 
-ForAggFun <- function(dat) {
+ForAggFun <- function(dat,Year) {
   
-  dat %>% group_by(commGIS) %>% summarise_at(c("area","diffPix"), sum)
+  dat %>% group_by(commGIS) %>% summarise_at(c("area","diffPix"), sum) %>% 
+  mutate(year = Year) 
 }
 
-forest08.agg <- ForAggFun(forest08)
-forest09.agg <- ForAggFun(forest09)
-forest10.agg <- ForAggFun(forest10)
-forest11.agg <- ForAggFun(forest11)
-forest12.agg <- ForAggFun(forest12)
+forest07.agg <- ForAggFun(forest07, 2007)
+forest08.agg <- ForAggFun(forest08, 2008)
+forest09.agg <- ForAggFun(forest09, 2009)
+forest10.agg <- ForAggFun(forest10, 2010)
+forest11.agg <- ForAggFun(forest11, 2011)
+forest12.agg <- ForAggFun(forest12, 2012)
 
 # merge together to make a corrected forest_dat
 forest_dat <- rbind(forest07.agg,forest08.agg,forest09.agg,forest10.agg,forest11.agg,forest12.agg)
