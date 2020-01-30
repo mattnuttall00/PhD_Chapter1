@@ -398,3 +398,19 @@ elevation <- elevation %>% group_by(commGIS) %>% summarise_at("mean_elev", mean)
 # attach to dat_merge
 dat_merge <- inner_join(dat_merge, elevation, by="commGIS")
 str(dat_merge)
+
+  ## distance to border ####
+
+# this is the distance from the centre of each commune to the nearest border (in KM)
+
+dist_border <- read.csv("Data/commune/dist_border.csv")
+
+# First correct for communes with multiple rows (due to multiple polygons per commune)
+# group rows by commGIS and mean the distance. 
+dist_border <- dist_border %>% group_by(commGIS) %>% summarise_at("distancekm", mean)
+str(dist_border)
+
+# attach to dat_merge
+dat_merge <- inner_join(dat_merge, dist_border, by="commGIS")
+str(dat_merge)
+dat_merge <- dat_merge %>% rename(dist_border=distancekm)
