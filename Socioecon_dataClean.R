@@ -472,35 +472,21 @@ hab12 <- hab12 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2,
 
 # create new column with the most frequent habitat type for that row
 hab08$habitat <- colnames(hab08[ ,2:18])[max.col(hab08[ ,2:18],ties.method="random")]
-hab08.red <- hab08 %>% group_by(commGIS) %>% 
-            mutate(habitat = colnames(hab08[ ,2:18])[max.col(hab08[ ,2:18],ties.method="random")]) %>% 
-            summarise_at("habitat")
-
 
 # for the rows that are duplicated (due to multiple commune polygons), select the most frequent habitat
-hab08 <- hab08 %>% group_by(commGIS) %>% summarise(habitat = names(which.max(table(habitat))))
+hab08.red <- hab08 %>% 
+              group_by(commGIS, habitat) %>%
+              dplyr::mutate(new_col = n()) %>%
+              arrange(commGIS, desc(new_col)) %>%
+              group_by(commGIS) %>%
+              filter(row_number()==1) %>% 
+              ungroup()
 
 
-hab08 %>% group_by(commGIS) %>% summarise(Modehabitat = Mode(habitat))
-hab08 %>% count(commGIS, habitat) %>% slice(which.max(n))
-hab07$habitat <- as.factor(hab07$habitat)
-levels(hab07$habitat)
 
-test <- data.frame(letters = c("a","a","a","b","c","d","e","e","f","g"),
-                   b = c(1:10),
-                   c = c(2,1,3,5,4,5,8,9,11,11))
-test
-test <- test %>% mutate("1" = b, "2" = c)
-test$habitat <- colnames(test[ ,4:5])[max.col(test[ ,4:5],ties.method="random")]
-test %>% group_by(letters) %>% summarise_at(c("1","2"), max) %>% 
-  mutate(habitat2 = )
 
-table %>% group_by(letters) %>% table(test$letters, test$habitat)
-test$habitat <- colnames(test[ ,2:3])[max.col(test[ ,2:3],ties.method="random")]
-test %>% group_by(letters) %>% max.col(test[,4], ties.method = "random")
 
-testtable <- table(test$letters, test$habitat) 
-nms <- colnames(testtable[apply(., 1, max)])
+
 
 
   ## Distance to provincial captial (any) ####
