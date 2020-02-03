@@ -3,6 +3,7 @@
 #### Load libraries ####
 
 library('tidyverse')
+library('plyr')
 library('cowplot')
 library('raster')
 library('rgdal')
@@ -191,6 +192,7 @@ ext3 <- ext2[ ,c(1,16:21)]
 head(ext3)
 length(unique(ext3$ID))
 write.csv(ext3, file = "ext3.csv")
+
 
   ## Forest cover data ####
 
@@ -414,3 +416,108 @@ str(dist_border)
 dat_merge <- inner_join(dat_merge, dist_border, by="commGIS")
 str(dat_merge)
 dat_merge <- dat_merge %>% rename(dist_border=distancekm)
+length(dat_merge$dist_border)
+
+  ## Dominant habitat ####
+
+# load and tidy data
+hab07 <- read.csv("Data/commune/habitat_07.csv", header=TRUE)
+hab07 <- hab07 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+hab08 <- read.csv("Data/commune/habitat_08.csv", header=TRUE)
+hab08 <- hab08 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+hab09 <- read.csv("Data/commune/habitat_09.csv", header=TRUE)
+hab09 <- hab09 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+hab10 <- read.csv("Data/commune/habitat_10.csv", header=TRUE)
+hab10 <- hab10 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+hab11 <- read.csv("Data/commune/habitat_11.csv", header=TRUE)
+hab11 <- hab11 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+hab12 <- read.csv("Data/commune/habitat_12.csv", header=TRUE)
+hab12 <- hab12 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2, -CP.3) %>% 
+                   mutate(FBD = FBD + FBD.1 + FBD.2) %>% select(-FBD.1, -FBD.2) %>% 
+                   mutate(MTSH = MTSH + MTSH.1) %>% select(-MTSH.1) %>% 
+                   mutate(SL = SL + SL.1) %>% select(-SL.1) %>% 
+                   mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
+                   mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
+
+
+# create new column with the most frequent habitat type for that row
+hab08$habitat <- colnames(hab08[ ,2:18])[max.col(hab08[ ,2:18],ties.method="random")]
+hab08.red <- hab08 %>% group_by(commGIS) %>% 
+            mutate(habitat = colnames(hab08[ ,2:18])[max.col(hab08[ ,2:18],ties.method="random")]) %>% 
+            summarise_at("habitat")
+
+
+# for the rows that are duplicated (due to multiple commune polygons), select the most frequent habitat
+hab08 <- hab08 %>% group_by(commGIS) %>% summarise(habitat = names(which.max(table(habitat))))
+
+
+hab08 %>% group_by(commGIS) %>% summarise(Modehabitat = Mode(habitat))
+hab08 %>% count(commGIS, habitat) %>% slice(which.max(n))
+hab07$habitat <- as.factor(hab07$habitat)
+levels(hab07$habitat)
+
+test <- data.frame(letters = c("a","a","a","b","c","d","e","e","f","g"),
+                   b = c(1:10),
+                   c = c(2,1,3,5,4,5,8,9,11,11))
+test
+test <- test %>% mutate("1" = b, "2" = c)
+test$habitat <- colnames(test[ ,4:5])[max.col(test[ ,4:5],ties.method="random")]
+test %>% group_by(letters) %>% summarise_at(c("1","2"), max) %>% 
+  mutate(habitat2 = )
+
+table %>% group_by(letters) %>% table(test$letters, test$habitat)
+test$habitat <- colnames(test[ ,2:3])[max.col(test[ ,2:3],ties.method="random")]
+test %>% group_by(letters) %>% max.col(test[,4], ties.method = "random")
+
+testtable <- table(test$letters, test$habitat) 
+nms <- colnames(testtable[apply(., 1, max)])
+
+
+  ## Distance to provincial captial (any) ####
+
+# This variable is the distance from the centre of each commune to the nearest provincial capital. I have decided to use any provincial capital as some communes will be closer to a provincial capital of a different province, but the effects of urbanisation, access to services, transport networks, markets, government buildings etc. will be the same regardless of which capital it is. 
+
+# load data
+dist_provCap <- read.csv("Data/commune/dist_provCap.csv", header=T)
+str(dist_provCap)
+
+# First correct for communes with multiple rows (due to multiple polygons per commune)
+# group rows by commGIS and mean the distance. 
+dist_provCap <- dist_provCap %>% group_by(commGIS) %>% summarise_at("Distance", mean)
+str(dist_provCap)
+
+# attach to dat_merge
+dat_merge <- inner_join(dat_merge, dist_provCap, by="commGIS")
+str(dat_merge)
+dat_merge <- dat_merge %>% dplyr::rename(dist_provCap = Distance)
+length(dat_merge$dist_provCap)
