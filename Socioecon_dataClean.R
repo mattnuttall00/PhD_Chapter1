@@ -469,25 +469,36 @@ hab12 <- hab12 %>% mutate(CP = CP + CP.1 + CP.2 + CP.3) %>% select(-CP.1, -CP.2,
                    mutate(NF = NF + NF.1 + NF.2) %>% select(-NF.1, -NF.2) %>% 
                    mutate(B = B + B.1 + B.2) %>% select(-B.1, -B.2)
 
-
-# create new column with the most frequent habitat type for that row
-hab08$habitat <- colnames(hab08[ ,2:18])[max.col(hab08[ ,2:18],ties.method="random")]
-
-# for the rows that are duplicated (due to multiple commune polygons), select the most frequent habitat
-hab08.red <- hab08 %>% 
-              group_by(commGIS, habitat) %>%
+# function to add habitat variable and then remove multiple rows from communes that had multiple polygons, by taking the most frequently occurring habitat category
+DomHabFun <- function(dat, Year){
+  
+  dat$habitat <- colnames(dat[ ,2:18])[max.col(dat[ ,2:18],ties.method="random")]
+  
+  dat %>% 
+    group_by(commGIS, habitat) %>%
               dplyr::mutate(new_col = n()) %>%
               arrange(commGIS, desc(new_col)) %>%
               group_by(commGIS) %>%
               filter(row_number()==1) %>% 
-              ungroup()
+              ungroup() %>% 
+              select(-new_col) %>% 
+              mutate(year = Year)
+  
+}
 
+hab07.red <- DomHabFun(hab07, 2007)
+hab08.red <- DomHabFun(hab08, 2008)
+hab09.red <- DomHabFun(hab09, 2009)
+hab10.red <- DomHabFun(hab10, 2010)
+hab11.red <- DomHabFun(hab11, 2011)
+hab12.red <- DomHabFun(hab12, 2012)
 
+hab_all_yrs <- rbind(hab07.red,hab08.red,hab09.red,hab10.red,hab11.red,hab12.red)
+hab_all_yrs$year <- as.character(hab_all_yrs$year)
+hab_all_yrs <- hab_all_yrs[ ,c(1,19:20)]
 
-
-
-
-
+# merge with main data
+dat_merge <- left_join(dat_merge, hab_all_yrs, by = c("year", "commGIS"))
 
   ## Distance to provincial captial (any) ####
 
