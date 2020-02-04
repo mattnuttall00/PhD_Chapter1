@@ -518,3 +518,6 @@ dat_merge <- inner_join(dat_merge, dist_provCap, by="commGIS")
 str(dat_merge)
 dat_merge <- dat_merge %>% dplyr::rename(dist_provCap = Distance)
 length(dat_merge$dist_provCap)
+
+
+write.csv(dat_merge, file="Data/commune/dat_merge.csv")
