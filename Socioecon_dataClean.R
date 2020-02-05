@@ -519,5 +519,44 @@ str(dat_merge)
 dat_merge <- dat_merge %>% dplyr::rename(dist_provCap = Distance)
 length(dat_merge$dist_provCap)
 
+  ## ELC presence ####
 
-write.csv(dat_merge, file="Data/commune/dat_merge.csv")
+# This variable is a dummy variable (0,1) that indicated whether a commune had an ELC granted (based on contract dates) in that year, or any previous year (including 2006 for 2007). I have assumed that if a commune had an ELC in a previous year, then that ELC remained (i.e. wasn't cancelled) in all subsequent years.
+
+# load in data
+elc_dat <- read.csv("Data/commune/ELC_in_communes_yrs.csv", header=T)
+str(elc_dat)
+
+# First correct for communes with multiple rows (due to multiple polygons per commune)
+# group rows by commGIS and take the maximum value (so if there is a 1 then the value will be 1). 
+
+# split up the years
+elc_07 <- elc_dat %>% filter(year==2007)
+elc_08 <- elc_dat %>% filter(year==2008)
+elc_09 <- elc_dat %>% filter(year==2008)
+elc_10 <- elc_dat %>% filter(year==2010)
+elc_11 <- elc_dat %>% filter(year==2011)
+elc_12 <- elc_dat %>% filter(year==2012)
+
+# remove duplicate rows
+elcFun <- function(dat, Year){
+  
+  dat %>% group_by(commGIS) %>% summarise_at("elc", max) %>% mutate(year=Year)
+  
+}
+
+elc_07 <- elcFun(elc_07, 2007)
+elc_08 <- elcFun(elc_08, 2008)
+elc_09 <- elcFun(elc_09, 2009)
+elc_10 <- elcFun(elc_10, 2010)
+elc_11 <- elcFun(elc_11, 2011)
+elc_12 <- elcFun(elc_12, 2012)
+
+# join back together
+elc_dat_clean <- rbind(elc_07, elc_08, elc_09, elc_10, elc_11, elc_12)
+str(elc_dat_clean)
+elc_dat_clean$year <- as.character(elc_dat_clean$year)
+
+
+# merge with main data
+dat_merge <- left_join(dat_merge, elc_dat_clean, by = c("year", "commGIS"))
