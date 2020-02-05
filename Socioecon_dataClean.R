@@ -557,6 +557,39 @@ elc_dat_clean <- rbind(elc_07, elc_08, elc_09, elc_10, elc_11, elc_12)
 str(elc_dat_clean)
 elc_dat_clean$year <- as.character(elc_dat_clean$year)
 
-
 # merge with main data
 dat_merge <- left_join(dat_merge, elc_dat_clean, by = c("year", "commGIS"))
+
+  ## Protected areas ####
+
+# I will create two variables here.  The first will be a dummy (0,1) variable that wil represent whether a commune is partly or entirely inside ANY kind of PA.  The second will be a factor, with the levels representing the different category of PA. There are a few cases where a PA has been created in a year within the study period. Therefore I have had to include all years as there are difference between years
+
+# load data
+pa_dat <- read.csv("Data/commune/Communes_in_PAs.csv", header=T)
+str(pa_dat)
+head(pa_dat)
+
+
+# test coalesce
+test <- as.tibble(pa_dat[1:10, 1:8])
+test <- tibble(test)
+
+test1 <- test %>% mutate(PA_cat = do.call(coalesce(, .[3:n])))
+
+test$PA_cat <- coalesce(test$MULTI,test$MUA,test$NP,test$PL,test$RMS,test$WS) 
+
+multi <- test[ ,3]
+mua <- test[ ,4]                         
+np <- test[ ,5]
+pl <- test[ ,6]
+rms <- test[ ,7]
+ws <- test[ ,8]
+all <- coalesce(multi,mua,np,pl,rms,ws)
+
+y <- c(1, 2, NA, NA, 5)
+z <- c(NA, NA, 3, NA, 5)
+z2 <- c(0, 0, 0, 0, 0)
+
+df <- tibble(y = y, z = z, z2 = z2)
+
+df$t <-  coalesce(df$z, df$z2)
