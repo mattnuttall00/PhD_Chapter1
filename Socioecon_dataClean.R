@@ -569,27 +569,50 @@ pa_dat <- read.csv("Data/commune/Communes_in_PAs.csv", header=T)
 str(pa_dat)
 head(pa_dat)
 
+# merge all columns into one
+pa_dat[] <- t(apply(pa_dat, 1, function(x) c(x[!is.na(x)], x[is.na(x)])))
 
-# test coalesce
-test <- as.tibble(pa_dat[1:10, 1:8])
-test <- tibble(test)
+# remove unwanted columns and rename others
+pa_dat <- pa_dat %>% select(year, commGIS, PA_cat = MULTI)
 
-test1 <- test %>% mutate(PA_cat = do.call(coalesce(, .[3:n])))
+# replace NAs with "none"
+pa_dat$PA_cat[is.na(pa_dat$PA_cat)] <- "none" 
 
-test$PA_cat <- coalesce(test$MULTI,test$MUA,test$NP,test$PL,test$RMS,test$WS) 
+# PA_cat to factor
+pa_dat$PA_cat <- as.factor(pa_dat$PA_cat)
 
-multi <- test[ ,3]
-mua <- test[ ,4]                         
-np <- test[ ,5]
-pl <- test[ ,6]
-rms <- test[ ,7]
-ws <- test[ ,8]
-all <- coalesce(multi,mua,np,pl,rms,ws)
+# split into years and remove duplicate rows caused by multiple polygons
 
-y <- c(1, 2, NA, NA, 5)
-z <- c(NA, NA, 3, NA, 5)
-z2 <- c(0, 0, 0, 0, 0)
+PAFun <- function(dat, Year){
+  
 
-df <- tibble(y = y, z = z, z2 = z2)
+  dat %>% 
+    filter(year==Year) %>% 
+    group_by(commGIS, PA_cat) %>%
+              dplyr::mutate(new_col = n()) %>%
+              arrange(commGIS, desc(new_col)) %>%
+              group_by(commGIS) %>%
+              filter(row_number()==1) %>% 
+              ungroup() %>% 
+              select(-new_col) 
+              
+}
 
-df$t <-  coalesce(df$z, df$z2)
+pa07 <- PAFun(pa_dat, 2007)
+pa08 <- PAFun(pa_dat, 2008)
+pa09 <- PAFun(pa_dat, 2009)
+pa10 <- PAFun(pa_dat, 2010)
+pa11 <- PAFun(pa_dat, 2011)
+pa12 <- PAFun(pa_dat, 2012)
+
+# merge years back together
+pa_dat_red <- rbind(pa07, pa08, pa09, pa10, pa11, pa12)
+str(pa_dat_red)
+
+# add dummy variable (i.e. 1 = PA, 0 = no PA)
+pa_dat_red$PA <- ifelse(pa_dat_red$PA_cat != "none", 1, 0)
+
+# merge with main data
+pa_dat_red$commGIS <- as.integer(pa_dat_red$commGIS)
+dat_merge <- left_join(dat_merge, pa_dat_red, by = c("year", "commGIS"))
+str(dat_merge)
