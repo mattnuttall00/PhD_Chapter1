@@ -616,3 +616,17 @@ pa_dat_red$PA <- ifelse(pa_dat_red$PA_cat != "none", 1, 0)
 pa_dat_red$commGIS <- as.integer(pa_dat_red$commGIS)
 dat_merge <- left_join(dat_merge, pa_dat_red, by = c("year", "commGIS"))
 str(dat_merge)
+
+#### Clean, format, and error check data -----------------------------------------------
+
+# load working version of the data
+dat_merge <- read.csv("Data/commune/dat_merge.csv")
+
+# change area from m2 to km2
+dat_merge <- dat_merge %>% mutate(area = area/1000000)
+
+# year to factor
+dat_merge$year <- as.factor(dat_merge$year)
+
+# habitat to factor
+dat_merge$habitat <- as.factor(dat_merge$habitat)
