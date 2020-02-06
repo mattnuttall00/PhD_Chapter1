@@ -89,7 +89,7 @@ aggFun <- function(dat){
   
  
   
-  left_join(datSumF,datMeanF,datMedF, by="commGIS")
+  left_join(datSumF,datMeanF, by="commGIS") %>% left_join(., datMedF, by="commGIS")
   
 }
 
@@ -107,6 +107,7 @@ dat.09.agg <- aggFun(dat.09)
 dat.10.agg <- aggFun(dat.10)
 dat.11.agg <- aggFun(dat.11)
 dat.12.agg <- aggFun(dat.12)
+
 
  # Aggregate the admin variables up to the Commune level & add year
 admindat <- socioecon.dat %>% 
@@ -292,27 +293,27 @@ compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 
 # 2007
 join07 <- inner_join(dat.07.agg, forest07, by="commGIS")
-join07 <- join07 %>% select(-year.y) %>% rename(year=year.x)
+join07 <- join07 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2008
 join08 <- inner_join(dat.08.agg, forest08, by="commGIS")
-join08 <- join08 %>% select(-year.y) %>% rename(year=year.x)
+join08 <- join08 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2009
 join09 <- inner_join(dat.09.agg, forest09, by="commGIS")
-join09 <- join09 %>% select(-year.y) %>% rename(year=year.x)
+join09 <- join09 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2010
 join10 <- inner_join(dat.10.agg, forest10, by="commGIS")
-join10 <- join10 %>% select(-year.y) %>% rename(year=year.x)
+join10 <- join10 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2011
 join11 <- inner_join(dat.11.agg, forest11, by="commGIS")
-join11 <- join11 %>% select(-year.y) %>% rename(year=year.x)
+join11 <- join11 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2012
 join12 <- inner_join(dat.12.agg, forest12, by="commGIS")
-join12 <- join12 %>% select(-year.y) %>% rename(year=year.x)
+join12 <- join12 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # merge datasets
 dat_merge <- rbind(join07,join08,join09,join10,join11,join12)
@@ -362,7 +363,9 @@ length(unique(forest_dat$commGIS))
 
 # attach to dat_merge
 dat_merge <- inner_join(dat_merge, for_pix, by=c("year", "commGIS"))
-str(dat_merge2)
+str(dat_merge)
+
+
 
 
 # Now I need to remove all communes that have 0 forest in 2007
@@ -621,12 +624,15 @@ str(dat_merge)
 
 # load working version of the data
 dat_merge <- read.csv("Data/commune/dat_merge.csv")
-
-# change area from m2 to km2
-dat_merge <- dat_merge %>% mutate(area = area/1000000)
+str(dat_merge)
+dat_merge <- dat_merge %>% select(-X)
 
 # year to factor
 dat_merge$year <- as.factor(dat_merge$year)
 
-# habitat to factor
-dat_merge$habitat <- as.factor(dat_merge$habitat)
+# re-arrange variables into their sets.  The sets are:
+# 1) Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind) #7
+# 2) Education (F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill) #4
+# 3) Employment (numPrimLivFarm, propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec) #6
+# 4) Economic security (Les1_R_Land, Les1_F_Land, buff_fam, pig_fam) #4
+# 5) Access to services ()
