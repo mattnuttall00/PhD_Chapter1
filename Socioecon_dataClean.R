@@ -705,3 +705,57 @@ dat_merge %>% filter(diffPix < -800) %>% select(year, Province, Commune, commGIS
 
 # check
 dat_merge %>% filter(commGIS==60705) %>% select(year, Province, Commune, commGIS, diffPix, ForPix)
+# Checked forest cover layer in QGIS and this looks correct
+
+# check other large losses
+dat_merge %>% filter(diffPix < -400) %>% select(year, Province, Commune, commGIS, diffPix)
+# These are correct
+
+# what proportion of observations are 0? (total obs = 4244)
+length(dat_merge$diffPix[dat_merge$diffPix==0])
+3631/4244*100
+# 85.5% of observations are zero. 
+
+# which communes have a positive change in forest cover
+dat_merge %>% filter(diffPix >0) %>% select(year, Province, Commune, commGIS, diffPix)
+# most are only a few pixels. The largest gains are in Mondulkiri, and are pre most ELCs. Becuase the Bunong practise rotational agriculture this is not unbelievable 
+
+
+    # tot_pop ####
+
+hist(dat_merge$tot_pop)
+
+dat_merge %>% filter(tot_pop < 500)
+# one commune with a population less than 500 - Chumnoab.  It has an area of 572km2. Is that a small commune?
+dat_merge %>% filter(areaKM <600)
+# no - most communes are smaller than that
+summary(dat_merge$areaKM)
+# I have checked in GIS.  I don't have any reason not to believe the data
+
+summary(dat_merge$tot_pop)
+
+# where are the communes with the largest populations
+dat_merge %>% filter(tot_pop > 20000) %>% select(year, commGIS, Province, Commune, tot_pop)
+# Ii can believe these. Kampong Cham, Kandal are both around Phnom Penh, Battambang is the third largest city, Siem Reap is the secon largest, and Otdar Meanchey is on the Thai border
+
+    # family ####
+
+hist(dat_merge$family)
+# same shape as tot_pop which is reassuring
+
+# check there are no stupidly small values
+dat_merge %>% filter(family < 100) %>% select(commGIS,Province, Commune,family,tot_pop)
+# same commune that had the smallest popualtion
+
+# check that total population and number of families are closely related
+plot(dat_merge$family, dat_merge$tot_pop)
+# yes
+
+id <- identify(dat_merge$family, dat_merge$tot_pop) # outlier points are 590,763,1325,2063,3663
+
+dat_merge[c(590,763,1325,2063,3663), c(1:4,8:9)]
+# interesting.  these outliers are Siem Reap (x3), Battambang and Kampong Cham. Siem Reap and Battambang are large cities with industry and tourism. My guess is that lots of people are temporary economic in-migrants who don't necessarily have/take family with them. Their families likely stay out in the provinces.
+
+    # M18_60 ####
+
+
