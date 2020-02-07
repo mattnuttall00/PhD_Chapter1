@@ -528,8 +528,9 @@ dist_provCap <- dist_provCap %>% group_by(commGIS) %>% summarise_at("Distance", 
 str(dist_provCap)
 
 # attach to dat_merge
-dat_merge <- inner_join(dat_merge, dist_provCap, by="commGIS")
+dat_merge <- left_join(dat_merge, dist_provCap, by="commGIS")
 str(dat_merge)
+length(dat_merge$Distance[is.na(dat_merge$Distance)])
 dat_merge <- dat_merge %>% dplyr::rename(dist_provCap = Distance)
 length(dat_merge$dist_provCap)
 
@@ -573,10 +574,11 @@ elc_dat_clean$year <- as.character(elc_dat_clean$year)
 
 # merge with main data
 dat_merge <- left_join(dat_merge, elc_dat_clean, by = c("year", "commGIS"))
+length(dat_merge$elc[is.na(dat_merge$elc)])
 
   ## Protected areas ####
 
-# I will create two variables here.  The first will be a dummy (0,1) variable that wil represent whether a commune is partly or entirely inside ANY kind of PA.  The second will be a factor, with the levels representing the different category of PA. There are a few cases where a PA has been created in a year within the study period. Therefore I have had to include all years as there are difference between years
+# I will create two variables here.  The first will be a dummy (0,1) variable that will represent whether a commune is partly or entirely inside ANY kind of PA.  The second will be a factor, with the levels representing the different category of PA. There are a few cases where a PA has been created in a year within the study period. Therefore I have had to include all years as there are difference between years
 
 # load data
 pa_dat <- read.csv("Data/commune/Communes_in_PAs.csv", header=T)
@@ -630,11 +632,13 @@ pa_dat_red$PA <- ifelse(pa_dat_red$PA_cat != "none", 1, 0)
 pa_dat_red$commGIS <- as.integer(pa_dat_red$commGIS)
 dat_merge <- left_join(dat_merge, pa_dat_red, by = c("year", "commGIS"))
 str(dat_merge)
+length(dat_merge$PA_cat[is.na(dat_merge$PA_cat)])
+length(dat_merge$PA[is.na(dat_merge$PA)])
 
 #### Clean, format, and error check data -----------------------------------------------
 
 # load working version of the data
-dat_merge <- read.csv("Data/commune/dat_merge.csv")
+dat_merge <- read.csv("Data/commune/dat_merge.csv", header=T)
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
 
