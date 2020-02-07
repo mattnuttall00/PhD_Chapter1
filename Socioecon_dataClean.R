@@ -208,7 +208,7 @@ head(forest_dat)
 # first split them into years
 forest07 <- forest_dat[forest_dat$year=="2007", ]
 forest08 <- forest_dat[forest_dat$year=="2008", ]
-forest09 <- forest_dat[forest_dat$year=="2008", ]
+forest09 <- forest_dat[forest_dat$year=="2009", ]
 forest10 <- forest_dat[forest_dat$year=="2010", ]
 forest11 <- forest_dat[forest_dat$year=="2011", ]
 forest12 <- forest_dat[forest_dat$year=="2012", ]
@@ -647,7 +647,9 @@ dat_merge <- dat_merge %>% select(-X)
 # year to factor
 dat_merge$year <- as.factor(dat_merge$year)
 
-## re-arrange variables into their sets.  The sets are:
+### re-arrange variables into their sets ####  
+
+# The sets are:
 
 # 1) Reference vars (year,Province, Commune, commGIS, areaKM) #5
 # 2) Response vars (ForPix, diffPix) #2
@@ -675,3 +677,24 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
                                   Pax_migt_in, Pax_migt_out,
                                   mean_elev, habitat,
                                   dist_border, dist_provCap, elc, PA, PA_cat)
+
+### Error checking ####
+
+# load dat_merge
+dat_merge <- read.csv("Data/commune/dat_merge.csv", header = T)
+
+# area
+hist(dat_merge$areaKM)
+dat_merge %>% filter(areaKM >2000)
+# some very large communes - I have checked - they are in Mondulkiri are are correct
+
+# ForPix
+length(dat_merge$ForPix[is.na(dat_merge$ForPix)])
+hist(dat_merge$ForPix)
+dat_merge %>% filter(ForPix < 10) %>% select(year, Province, Commune, ForPix)
+# Lots of communes with small number of forest pixels.
+
+# diffPix
+length(dat_merge$diffPix[is.na(dat_merge$diffPix)])
+hist(dat_merge$diffPix)
+dat_merge %>% filter(diffPix < -800) %>% select(year, Province, Commune, commGIS, diffPix)
