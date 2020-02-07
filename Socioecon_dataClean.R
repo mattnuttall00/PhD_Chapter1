@@ -128,10 +128,6 @@ dat.11.agg$year <- "2011"
 dat.12.agg <- left_join(dat.12.agg,admindat, by="commGIS")
 dat.12.agg$year <- "2012"
 
-# Join tables
-dat_master <- rbind(dat.07.agg,dat.08.agg,dat.09.agg,dat.10.agg,dat.11.agg,dat.12.agg)
-str(dat_master)
-
 
 #### Land cover data -------------------------------------------------------------------
 ### Load in data ####
@@ -230,15 +226,10 @@ forest10.agg <- ForAggFun(forest10, 2010)
 forest11.agg <- ForAggFun(forest11, 2011)
 forest12.agg <- ForAggFun(forest12, 2012)
 
-# merge together to make a corrected forest_dat
-forest_dat <- rbind(forest07.agg,forest08.agg,forest09.agg,forest10.agg,forest11.agg,forest12.agg)
-length(forest_dat$commGIS)
-length(unique(forest_dat$commGIS))
-
 ### Matching socioeconoimc and forest data sets ####
 
 
-## I need to match the socioeconomic data (dat_master) to the forest cover data (forest_dat) so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. After meeting with Nils, I think I need to make sure the final dataset:
+## I need to match the socioeconomic data to the forest cover data so that I only have communes that have a code and name matching in each dataset, and that have non-zero forest cover. After meeting with Nils, I think I need to make sure the final dataset:
 # 1) all communes need to exist in the forest_dat data i.e. they need to have a commune code and diffPix value (i.e. a response variable value and exist in the GIS data)
 # 2) They can have missing communes in certain years in the socioecon data. Therefore I don't need to subset all of the years to fit the minimum set.    
 
@@ -292,27 +283,27 @@ compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 ## Now I will join each year of socioeconoimc data to the corresponding year of forest data
 
 # 2007
-join07 <- inner_join(dat.07.agg, forest07, by="commGIS")
+join07 <- inner_join(dat.07.agg, forest07.agg, by="commGIS")
 join07 <- join07 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2008
-join08 <- inner_join(dat.08.agg, forest08, by="commGIS")
+join08 <- inner_join(dat.08.agg, forest08.agg, by="commGIS")
 join08 <- join08 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2009
-join09 <- inner_join(dat.09.agg, forest09, by="commGIS")
+join09 <- inner_join(dat.09.agg, forest09.agg, by="commGIS")
 join09 <- join09 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2010
-join10 <- inner_join(dat.10.agg, forest10, by="commGIS")
+join10 <- inner_join(dat.10.agg, forest10.agg, by="commGIS")
 join10 <- join10 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2011
-join11 <- inner_join(dat.11.agg, forest11, by="commGIS")
+join11 <- inner_join(dat.11.agg, forest11.agg, by="commGIS")
 join11 <- join11 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2012
-join12 <- inner_join(dat.12.agg, forest12, by="commGIS")
+join12 <- inner_join(dat.12.agg, forest12.agg, by="commGIS")
 join12 <- join12 %>% select(-year.y) %>% dplyr::rename(year=year.x)
 
 # merge datasets
@@ -354,9 +345,36 @@ pix10.agg <- PixAggFun(pix10, 2010)
 pix11.agg <- PixAggFun(pix11, 2011)
 pix12.agg <- PixAggFun(pix12, 2012)
 
+# before merging together, I need to remove false zeros, starting with 2007
+pix07.agg <- pix07.agg %>% filter(ForPix >0)
+
+# Now I need to remove those communes from all the other years too
+pix08.agg <- semi_join(pix08.agg, pix07.agg, by="commGIS")
+pix09.agg <- semi_join(pix09.agg, pix07.agg, by="commGIS")
+pix10.agg <- semi_join(pix10.agg, pix07.agg, by="commGIS")
+pix11.agg <- semi_join(pix11.agg, pix07.agg, by="commGIS")
+pix12.agg <- semi_join(pix12.agg, pix07.agg, by="commGIS")
+
+# now check to see if there are any further false zeros in subsequent years. e.g. there is a commune that had forest in 2010 but lost it all by 2011. That loss will still be accounted for in the 2010 diffPix, but we don't want that zero to carry over into the 2011 diffPix as there wa already no forest in 2011.
+pix08.agg %>% filter(ForPix==0) # none
+pix09.agg %>% filter(ForPix==0) # none
+pix10.agg %>% filter(ForPix==0) # none
+pix11.agg %>% filter(ForPix==0) # 1 commune
+
+# remove that 1 commune
+pix11.agg <- pix11.agg %>% filter(ForPix >0)
+
+# subset 2012 to match
+pix12.agg <- semi_join(pix12.agg, pix11.agg, by = "commGIS")
+
+# check 2012
+pix12.agg %>% filter(ForPix==0) # none
+
+
 # merge together to make a corrected for_pix
 for_pix <- rbind(pix07.agg,pix08.agg,pix09.agg,pix10.agg,pix11.agg,pix12.agg)
 for_pix$year <- as.character(for_pix$year)
+str(for_pix)
 length(forest_dat$commGIS)
 length(unique(forest_dat$commGIS))
 
@@ -368,16 +386,6 @@ str(dat_merge)
 
 
 
-# Now I need to remove all communes that have 0 forest in 2007
-dat_forest <- dat_merge[dat_merge$ForPix >0, ]
-str(dat_forest)
-
-# Now check to see if there are any communes that had forest in 2007 but have none in subsequent years (i.e. had forest but lost it all)
-dat_forest %>% filter(ForPix==0)
-dat_forest[dat_forest$ForPix==0, ]
-# none. That makes it simpler
-
-
 #### Additional variables --------------------------------------------------------------
   ## population density ####
 
@@ -386,6 +394,7 @@ dat_forest[dat_forest$ForPix==0, ]
 # convert area from m2 to km2
 dat_merge$areaKM <- dat_merge$area / 1000000
 dat_merge$pop_den <- dat_merge$areaKM / dat_merge$tot_pop
+dat_merge <- dat_merge %>% select(-area)
 str(dat_merge)
 
   ## elevation ####
@@ -393,7 +402,7 @@ str(dat_merge)
 # load mean and median elevation data
 elevation <- read.csv("Data/commune/commune_elevation.csv")
 str(elevation)
-elevation <- elevation %>% rename(commGIS=CODEKHUM)
+elevation <- elevation %>% dplyr::rename(commGIS=CODEKHUM)
 elevation <- elevation %>% select(-med_elev)
 
 # First correct for communes with multiple rows (due to multiple polygons per commune)
@@ -401,8 +410,9 @@ elevation <- elevation %>% select(-med_elev)
 elevation <- elevation %>% group_by(commGIS) %>% summarise_at("mean_elev", mean)
 
 # attach to dat_merge
-dat_merge <- inner_join(dat_merge, elevation, by="commGIS")
+dat_merge <- left_join(dat_merge, elevation, by="commGIS")
 str(dat_merge)
+length(dat_merge$mean_elev[is.na(dat_merge$mean_elev)])
 
   ## distance to border ####
 
@@ -416,9 +426,10 @@ dist_border <- dist_border %>% group_by(commGIS) %>% summarise_at("distancekm", 
 str(dist_border)
 
 # attach to dat_merge
-dat_merge <- inner_join(dat_merge, dist_border, by="commGIS")
+dat_merge <- left_join(dat_merge, dist_border, by="commGIS")
 str(dat_merge)
-dat_merge <- dat_merge %>% rename(dist_border=distancekm)
+length(dat_merge$distancekm[is.na(dat_merge$distancekm)])
+dat_merge <- dat_merge %>% dplyr::rename(dist_border=distancekm)
 length(dat_merge$dist_border)
 
   ## Dominant habitat ####
