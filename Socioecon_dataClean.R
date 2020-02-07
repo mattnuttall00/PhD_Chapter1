@@ -756,6 +756,31 @@ id <- identify(dat_merge$family, dat_merge$tot_pop) # outlier points are 590,763
 dat_merge[c(590,763,1325,2063,3663), c(1:4,8:9)]
 # interesting.  these outliers are Siem Reap (x3), Battambang and Kampong Cham. Siem Reap and Battambang are large cities with industry and tourism. My guess is that lots of people are temporary economic in-migrants who don't necessarily have/take family with them. Their families likely stay out in the provinces.
 
-    # M18_60 ####
+    # male_18_60 ####
 
+hist(dat_merge$male_18_60)
 
+# make sure there are no stupidly low numbers
+dat_merge %>% filter(male_18_60 <500)
+# 372 
+
+# of those above, what are the proprtions of males to the total population
+dat_merge %>% filter(male_18_60 <500) %>% select(Province,Commune,tot_pop,male_18_60) %>% 
+  mutate(prop_males = male_18_60/tot_pop*100) 
+# vast majority are between 20-30% of the population are males. The provinces tend to be rural provinces. I would guess that a lot of the working age males head to the cities for work.
+
+# make sure there are no weird values where there are more males than the total population
+dat_merge %>% filter(male_18_60 > tot_pop)
+# no
+
+    # fem_18_60 ####
+
+hist(dat_merge$fem_18_60)
+# some oddly large numbers
+
+max(dat_merge$tot_pop) # 39,117
+max(dat_merge$fem_18_60) # 51,691
+
+# clearly some errors
+dat_merge %>% filter(fem_18_60 > 39117)
+# 2008 - Kampong Cham (x3), Siem Reap (x1)
