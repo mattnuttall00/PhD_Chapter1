@@ -327,7 +327,7 @@ for_pix$year <- as.character(for_pix$year)
 # first split them into years
 pix07 <- for_pix[for_pix$year=="2007", ]
 pix08 <- for_pix[for_pix$year=="2008", ]
-pix09 <- for_pix[for_pix$year=="2008", ]
+pix09 <- for_pix[for_pix$year=="2009", ]
 pix10 <- for_pix[for_pix$year=="2010", ]
 pix11 <- for_pix[for_pix$year=="2011", ]
 pix12 <- for_pix[for_pix$year=="2012", ]
@@ -638,6 +638,7 @@ length(dat_merge$PA_cat[is.na(dat_merge$PA_cat)])
 length(dat_merge$PA[is.na(dat_merge$PA)])
 
 #### Clean, format, and error check data -----------------------------------------------
+  ## Load working version of data ####
 
 # load working version of the data
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header=T)
@@ -647,7 +648,7 @@ dat_merge <- dat_merge %>% select(-X)
 # year to factor
 dat_merge$year <- as.factor(dat_merge$year)
 
-### re-arrange variables into their sets ####  
+  ## re-arrange variables into their sets ####  
 
 # The sets are:
 
@@ -678,23 +679,29 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
                                   mean_elev, habitat,
                                   dist_border, dist_provCap, elc, PA, PA_cat)
 
-### Error checking ####
+  ## Error checking ####
 
 # load dat_merge
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header = T)
 
-# area
+    # area ####
 hist(dat_merge$areaKM)
 dat_merge %>% filter(areaKM >2000)
 # some very large communes - I have checked - they are in Mondulkiri are are correct
 
-# ForPix
+    # ForPix ####
 length(dat_merge$ForPix[is.na(dat_merge$ForPix)])
 hist(dat_merge$ForPix)
 dat_merge %>% filter(ForPix < 10) %>% select(year, Province, Commune, ForPix)
+dat_merge %>% filter(ForPix == 0) %>% select(year, Province, Commune, ForPix)
 # Lots of communes with small number of forest pixels.
 
-# diffPix
+    # diffPix ####
+
 length(dat_merge$diffPix[is.na(dat_merge$diffPix)])
 hist(dat_merge$diffPix)
 dat_merge %>% filter(diffPix < -800) %>% select(year, Province, Commune, commGIS, diffPix)
+# one commune with large losses
+
+# check
+dat_merge %>% filter(commGIS==60705) %>% select(year, Province, Commune, commGIS, diffPix, ForPix)
