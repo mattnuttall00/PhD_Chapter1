@@ -1,5 +1,7 @@
 #### This is the data aggregating and data cleaning code for the socioeconomic analysis of chapter 2 (data chapter 1) in my PhD.  The data are from the Commune Database of Cambodia for the years 2007-2012. The land cover data are from the European Space Agency Climate Change Initiative satellite.
 
+##  To skip data aggregation process load 'dat_merge' file from "clean, format, and error check data" section (line 640) 
+
 #### Load libraries ####
 
 library('tidyverse')
@@ -645,9 +647,31 @@ dat_merge <- dat_merge %>% select(-X)
 # year to factor
 dat_merge$year <- as.factor(dat_merge$year)
 
-# re-arrange variables into their sets.  The sets are:
-# 1) Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind) #7
-# 2) Education (F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill) #4
-# 3) Employment (numPrimLivFarm, propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec) #6
-# 4) Economic security (Les1_R_Land, Les1_F_Land, buff_fam, pig_fam) #4
-# 5) Access to services ()
+## re-arrange variables into their sets.  The sets are:
+
+# 1) Reference vars (year,Province, Commune, commGIS, areaKM) #5
+# 2) Response vars (ForPix, diffPix) #2
+# 3) Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind,
+                            # pop_den) #8
+# 4) Education (F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill) #4
+# 5) Employment (numPrimLivFarm, propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec) #6
+# 6) Economic security (Les1_R_Land, Les1_F_Land, buff_fam, pig_fam) #4
+# 7) Access to services (dist_sch, garbage, KM_Comm, KM_Heal_cent) #4
+# 8) Social justice (land_confl, crim_case) #2
+# 9) Health (inf_mort, U5_mort) #2 
+# 10) Migration (Pax_migt_in, Pax_migt_out) #2
+# 11) Environmental additional (mean_elev, habitat) #2
+# 12) Human additional (dist_border, dist_provCap, elc, PA, PA_cat) #5
+
+dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
+                                  ForPix, diffPix,
+                          tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind, pop_den,
+                                  F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill,
+                      numPrimLivFarm, propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec,
+                                  Les1_R_Land, Les1_F_Land, buff_fam, pig_fam,
+                                  dist_sch, garbage, KM_Comm, KM_Heal_cent,
+                                  land_confl, crim_case,
+                                  inf_mort, U5_mort,
+                                  Pax_migt_in, Pax_migt_out,
+                                  mean_elev, habitat,
+                                  dist_border, dist_provCap, elc, PA, PA_cat)
