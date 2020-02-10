@@ -791,3 +791,47 @@ hist(dat_merge$fem_18_60)
 hist(dat_merge$pop_over61)
 
 dat_merge %>% filter(pop_over61 > 3000) %>% select(year,Province,Commune,pop_over61,tot_pop)
+# well below tot_pop so no reason to doubt it
+
+    # tot_ind & prop_ind ####
+
+hist(dat_merge$tot_ind)
+dat_merge %>% filter(tot_ind>tot_pop) %>% select(year,Province,Commune,tot_pop,tot_ind)
+# There are 30 communes where tot_ind is greater than tot_pop.  I have checked in the raw data and the issues are in the raw data, not in my summaries.  There is not much I can do about that, except align the two values (tot_pop and tot_ind) so that the indigenous values are not greater than the total population. THis will give a prop_ind of 1, but seeing as the tot_ind is so high, this isn't ridiculous
+
+# I will use the larger indigenous total as the "correct" value.
+
+# create test dataset to test the code
+test <- dat_merge %>% filter(prop_ind>0.5) %>% select(year,Province, Commune,tot_ind,tot_pop)
+
+test <- test %>% 
+          mutate(tot_pop = replace(tot_pop, tot_pop<tot_ind, tot_ind[tot_pop<tot_ind]))
+# that works
+
+# do on the main dataset
+dat_merge <- dat_merge %>% 
+              mutate(tot_pop = replace(tot_pop, tot_pop<tot_ind, tot_ind[tot_pop<tot_ind]))
+
+# check
+dat_merge %>% filter(tot_ind>tot_pop) # 0 rows
+
+
+## now for prop_ind
+dat_merge %>% filter(prop_ind>1) %>% select(year,Province,Commune,prop_ind,tot_pop,tot_ind)
+# 44 occasions. But becuase of what I have done above, I can correct these
+
+# first create new prop_ind using corrected tot_pop and tot_ind, then replace prop_ind values
+dat_merge <- dat_merge %>% 
+              mutate(new_prop_ind = tot_ind/tot_pop) %>% 
+              mutate(prop_ind = replace(prop_ind, prop_ind>1, new_prop_ind[prop_ind>1])) %>% 
+              select(-new_prop_ind)
+# check
+dat_merge %>% filter(prop_ind>1) # 0 rows
+
+
+    # Comparing demographics ####
+
+# Now I want to check to make sure the totals for the demographic categories aren't greater than tot_pop
+
+demog <- dat_merge %>% select(year,Province,Commune,commGIS,
+                              tot_pop,family,male_18_60,fem_18_60,pop_over61)
