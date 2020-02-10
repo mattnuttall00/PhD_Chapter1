@@ -28,8 +28,8 @@ socioecon.dat$Year <- as.factor(socioecon.dat$Year)
 socioecon.dat$VillGis <- as.factor(socioecon.dat$VillGis)
 
 commDat <- read.csv("Data/commune/commGIS.csv")
-commDat$province <- as.character(commDat$province)
-commDat$commune <- as.character(commDat$commune)
+commDat$Province <- as.character(commDat$Province)
+commDat$Commune <- as.character(commDat$Commune)
 str(commDat)
 
 ### Assign commune code ####
@@ -683,6 +683,8 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
 
 # load dat_merge
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header = T)
+str(dat_merge)
+dat_merge <- dat_merge[ ,-1]
 
     # area ####
 hist(dat_merge$areaKM)
@@ -690,11 +692,14 @@ dat_merge %>% filter(areaKM >2000)
 # some very large communes - I have checked - they are in Mondulkiri are are correct
 
     # ForPix ####
+
+
 length(dat_merge$ForPix[is.na(dat_merge$ForPix)])
 hist(dat_merge$ForPix)
 dat_merge %>% filter(ForPix < 10) %>% select(year, Province, Commune, ForPix)
 dat_merge %>% filter(ForPix == 0) %>% select(year, Province, Commune, ForPix)
 # Lots of communes with small number of forest pixels.
+
 
     # diffPix ####
 
@@ -775,12 +780,14 @@ dat_merge %>% filter(male_18_60 > tot_pop)
 
     # fem_18_60 ####
 
+# I identified some errors in the raw data for this variable in 2008. I have gone back and corrected them.
+
 hist(dat_merge$fem_18_60)
-# some oddly large numbers
 
-max(dat_merge$tot_pop) # 39,117
-max(dat_merge$fem_18_60) # 51,691
+# I think all errors in the raw data now fixed  
 
-# clearly some errors
-dat_merge %>% filter(fem_18_60 > 39117)
-# 2008 - Kampong Cham (x3), Siem Reap (x1)
+    # pop_over61 ####
+
+hist(dat_merge$pop_over61)
+
+dat_merge %>% filter(pop_over61 > 3000) %>% select(year,Province,Commune,pop_over61,tot_pop)
