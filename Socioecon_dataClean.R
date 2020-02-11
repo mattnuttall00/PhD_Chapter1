@@ -798,7 +798,7 @@ hist(dat_merge$pop_over61)
 dat_merge %>% filter(pop_over61 > 3000) %>% select(year,Province,Commune,pop_over61,tot_pop)
 # well below tot_pop so no reason to doubt it
 
-    # tot_ind & prop_ind ####
+    # tot_ind & prop_ind (RUN) ####
 
 hist(dat_merge$tot_ind)
 dat_merge %>% filter(tot_ind>tot_pop) %>% select(year,Province,Commune,tot_pop,tot_ind)
@@ -893,8 +893,40 @@ new.demog.2008 %>% filter(totals>tot_pop)
     # pop_den ####
 
 hist(dat_merge$pop_den)
-# these values seem low
+# a few larger values
 
-summary(dat_merge$pop_den)
+dat_merge %>% filter(pop_den>2000) %>% select(Province,Commune,commGIS,pop_den,areaKM,tot_pop) 
+# Phnom Penh. Acceptable
 
-# I am now worried about the raw values for population. The totals are way lower than they should be, and therefore so is the pop_den. 
+dat_merge %>% filter(pop_den>1500) %>% select(Province,Commune,commGIS,pop_den,areaKM,tot_pop) 
+# mostly Phnom Penh, plus Sihanouk and Kampong Cham. Believable 
+
+# check the small values
+dat_merge %>% filter(pop_den<1) %>% select(year,Province,Commune,commGIS,pop_den,areaKM,tot_pop)
+# Koh Kong and Mondulkiri - fine.
+
+    # F6_24_sch ####
+
+# are there any with propotion > 1
+dat_merge %>% filter(F6_24_sch>1) %>% select(year,Province,Commune,commGIS) # none
+
+# any super low?
+dat_merge %>% filter(F6_24_sch < 0.1) %>% select(year,Province,Commune,commGIS)
+# only a handful each year.  Rattankiri and Stung Treng. Probably the two most remote and rural provinces. Believable
+
+    # M6_24_sch ####
+
+# are there any with propotion > 1
+dat_merge %>% filter(M6_24_sch>1) %>% select(year,Province,Commune,commGIS,M6_24_sch) # 223
+dat_merge %>% filter(M6_24_sch>1, year==2009) %>% select(year,Province,Commune,commGIS,M6_24_sch)
+
+# there were errors, but I have fixed them in the raw data 
+
+
+
+
+
+
+
+
+
