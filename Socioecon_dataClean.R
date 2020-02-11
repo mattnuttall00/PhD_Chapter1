@@ -395,7 +395,7 @@ str(dat_merge)
 
 # convert area from m2 to km2
 dat_merge$areaKM <- dat_merge$area / 1000000
-dat_merge$pop_den <- dat_merge$areaKM / dat_merge$tot_pop
+dat_merge$pop_den <- dat_merge$tot_pop / dat_merge$areaKM
 dat_merge <- dat_merge %>% select(-area)
 str(dat_merge)
 
@@ -743,6 +743,11 @@ summary(dat_merge$tot_pop)
 dat_merge %>% filter(tot_pop > 20000) %>% select(year, commGIS, Province, Commune, tot_pop)
 # Ii can believe these. Kampong Cham, Kandal are both around Phnom Penh, Battambang is the third largest city, Siem Reap is the secon largest, and Otdar Meanchey is on the Thai border
 
+
+
+
+
+
     # family ####
 
 hist(dat_merge$family)
@@ -831,7 +836,65 @@ dat_merge %>% filter(prop_ind>1) # 0 rows
 
     # Comparing demographics ####
 
-# Now I want to check to make sure the totals for the demographic categories aren't greater than tot_pop
 
+## NO NEED TO RE-RUN THE BELOW CODE. I CORRECTED THE ERRORS IN THE RAW DATA AND HAVE RE-MADE dat_merge. I HAVE KEPT THE BELOW CODE IN JUST FOR REFERENCE.
+
+# Now I want to check to make sure the totals for the demographic categories aren't greater than tot_pop
 demog <- dat_merge %>% select(year,Province,Commune,commGIS,
-                              tot_pop,family,male_18_60,fem_18_60,pop_over61)
+                              tot_pop,family,male_18_60,fem_18_60,pop_over61,tot_ind)
+
+demog <- demog %>% mutate(totals = male_18_60+fem_18_60+pop_over61)
+demog %>% filter(totals>tot_pop) 
+# there are 727 cases where the sum of the individial demography variables are greater than the tot_pop
+
+# by how much are they off?
+demog.diff <- demog %>% filter(totals>tot_pop) 
+demog.diff <- demog.diff %>% mutate(difference = totals-tot_pop)
+summary(demog.diff$difference)
+# some very large differences
+
+demog.diff %>% filter(difference==15420)
+length(demog.diff$year[demog.diff$year==2008])
+# Ok, they are all 2008.  Something dodgy has happened to 2008. 
+
+# lets look at the village level data
+str(socioecon.dat)
+demog.vill <- socioecon.dat %>% filter(Year=="2008") %>% select(Province, Commune,tot_pop,
+                                                                male_18_60,fem_18_60,pop_over61)
+
+demog.vill <- demog.vill %>% mutate(totals = male_18_60+fem_18_60+pop_over61) 
+demog.vill %>% filter(totals>tot_pop)                
+# 13725 villages in the raw data have tot_pop less than the sum of the others. There are only 13939 villages in the the 2008 data, so this is not great.
+
+# I will import the raw data taken straight from the CDB file (rather than my collated data) and see if the issues is with the actualy data or whether I have made a mistake
+vill.demog.08 <- read.csv("Data/commune/2008_vill_demog.csv", header=T)
+str(vill.demog.08)
+vill.demog.08 <- vill.demog.08 %>% 
+                  mutate(tot_pop = FEM_TOT+MAL_TOT) %>% 
+                  mutate(m18_60 = MAL_18_24+MAL_25_35+MAL_36_45+MAL_46_60) %>% 
+                  mutate(f18_60 = FEM_18_24+FEM_25_35+FEM_36_45+FEM_46_60) %>% 
+                  mutate(pop_over61 = M_over61+F_over61)
+
+vill.demog.08 <- vill.demog.08 %>% mutate(totals = m18_60+f18_60+pop_over61)
+vill.demog.08 %>% filter(totals>tot_pop)
+# ok so the raw data is fine.  I have done something wrong when extracting
+
+# I have now re-extracted the demog data from the 2008 CDB.  I will check it
+new.demog.2008 <- read.csv("Data/commune/2008_new_demog.csv", header=TRUE)
+str(new.demog.2008)
+
+new.demog.2008 <- new.demog.2008 %>% mutate(totals=m_18_60+f_18_60+pop_over61)
+new.demog.2008 %>% filter(totals>tot_pop)
+# ok so that has worked.  There are no cases when the sum of the individual categories are greater than tot_pop.  I will therefore replace those variables in the master data
+
+
+
+
+    # pop_den ####
+
+hist(dat_merge$pop_den)
+# these values seem low
+
+summary(dat_merge$pop_den)
+
+# I am now worried about the raw values for population. The totals are way lower than they should be, and therefore so is the pop_den. 
