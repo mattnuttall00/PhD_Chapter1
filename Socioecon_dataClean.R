@@ -920,13 +920,75 @@ dat_merge %>% filter(F6_24_sch < 0.1) %>% select(year,Province,Commune,commGIS)
 dat_merge %>% filter(M6_24_sch>1) %>% select(year,Province,Commune,commGIS,M6_24_sch) # 223
 dat_merge %>% filter(M6_24_sch>1, year==2009) %>% select(year,Province,Commune,commGIS,M6_24_sch)
 
-# there were errors, but I have fixed them in the raw data 
+# there were errors, but I have fixed them in the raw data
+
+    # F15_45_ill ####
+
+hist(dat_merge$F15_45_ill)
+
+# are there any over 1?
+dat_merge %>% filter(F15_45_ill > 1) %>% select(Province, Commune)
+# no
+
+# highest values
+dat_merge %>% filter(F15_45_ill > 0.9) %>% select(Province, Commune)
+# there are 11 communes with values higher than 0.9.  The majority are in Rattanikiri, and a couple in Preah Vihear.  This makes sense - they are two of the poorest and most remote provinces where illiteracy is likely to be high
 
 
+    # M15_45_ill ####
 
+hist(dat_merge$M15_45_ill)
+# similar shape to F15_45_ill
 
+# are there any over 1?
+dat_merge %>% filter(M15_45_ill > 1) %>% select(Province, Commune)
+# no
 
+# highest values
+dat_merge %>% filter(M15_45_ill > 0.9) %>% select(Province, Commune)
+# 3 communes - again Rattanikiri and Preah Vihear
 
+    # numPrimLivFarm (RUN) ####
 
+hist(dat_merge$numPrimLivFarm)
+# a few large values
 
+dat_merge %>% filter(numPrimLivFarm > 10000) %>% select(Province, Commune, numPrimLivFarm)
+# 5 communes with large values.  Kampong Cham, and Pursat I can believe - they are the agricultural provinces.  Otdar Meanchey I'm not sure about
+
+# check the values are not larger than tot_pop
+dat_merge %>% filter(numPrimLivFarm > 10000) %>% select(year,Province, Commune, numPrimLivFarm, tot_pop)
+# no
+
+# one commune (Kor) is large in 2011 and 2012, but the other one (Kraek) is only large in 2011.  I want to check the values for the other years
+dat_merge %>% filter(Province=="Kampong Cham", Commune=="Kraek") %>% select(year, numPrimLivFarm)
+# As I suspected, the value for 2011 is wildly different to the other years. And it goes back down in 2012 so I don't believe it. 
+
+# plot it
+ggplot(dat_merge, aes(x=year, y=numPrimLivFarm))+
+  geom_point(data=subset(dat_merge, Commune=="Kraek"))+
+  ylim(0,16000)
+# 2011 is clearly an error.  There appears to be an upward trend, so I will correct the value to fall between the 2010 and 2012 values
+
+# replace value
+dat_merge$numPrimLivFarm[dat_merge$year==2011 & dat_merge$Commune=="Kraek"] <- 7500
+
+# now check the other large values - Kampong Cham > Kor
+dat_merge %>% filter(Province=="Kampong Cham", Commune=="Kor") %>% select(year, numPrimLivFarm)
+# it seems odd that the value shoots up from 5513 in 2010 to 12821 in 2011, and then backdown to 12346 in 2012.  But I am not sure whether this is an error or not, so hard to know what to do. I will leave it as it is
+
+# other large values - Pursat > Ta Lou
+dat_merge %>% filter(Province=="Pursat", Commune=="Ta Lou") %>% select(year, numPrimLivFarm)
+# a very large jump between 2010 and 2011. Maybe I'll check all numPrimLivFarm values between those years to see if this is a national trend
+
+ggplot(dat_merge, aes(x=year, y=numPrimLivFarm))+
+  geom_point()
+# This appears to be a national trend.  I will just double check the raw data to make sure this is represented in the raw data, and that it's not just an error made by me
+
+# Ok so I think the issue is that 2007-2010 the question actually refers to "number of families" whereas in 2011 and 2012 is refers to individuals.  So the numbers are obviously going to be larger. I think I can deal with this because I have the raw values (numPrimLivFarm) and the reference values ("family" and "male_18_60" & "fem_18_60"). Therefore I can get propPrimLivFarm in 2007-2010 by dividing numPrimLivFarm by family, and in 2011-2012 by dividing numPrimLivFarm by the sum of male_18_60 and fem_18_60. That should give me the correct propPrimLivFarm values (although I will miss anyone over the age of 60 who is still a farmer). I will then need to remove numPrimvLivFarm.
+
+# first let me check to see if propPrimLivFarm has the same pattern
+ggplot(dat_merge,aes(x=year, y=propPrimLivFarm))+
+  geom_point()
+# hmm.  odd
 
