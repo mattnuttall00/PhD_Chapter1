@@ -992,3 +992,59 @@ ggplot(dat_merge,aes(x=year, y=propPrimLivFarm))+
   geom_point()
 # hmm.  odd
 
+# lets try the fix above
+
+# for 2007 - 2010 I will divide numPrimLivFarm by family
+# pull out data
+farmdat <- dat_merge[ ,c("year","commGIS","numPrimLivFarm","family","male_18_60","fem_18_60")]
+
+# split years
+farmdat_07_10 <- farmdat[farmdat$year=="2007"|farmdat$year=="2008"|farmdat$year=="2009"|farmdat$year=="2010", ]
+farmdat_11_12 <- farmdat[farmdat$year=="2011"|farmdat$year=="2012", ]
+
+# create new propPrimLivFarm 2007-2010
+farmdat_07_10$propPrimLivFarm <- farmdat_07_10$numPrimLivFarm / farmdat_07_10$family
+
+# sum male_18_60 and fem_18_60 for 2011 and 2012
+farmdat_11_12$pop <- farmdat_11_12$male_18_60 + farmdat_11_12$fem_18_60
+
+# create new propPrimLivFarm 2011 and 2012
+farmdat_11_12$propPrimLivFarm <- farmdat_11_12$numPrimLivFarm / farmdat_11_12$pop
+
+# remove pop so the number of columns match
+farmdat_11_12 <- farmdat_11_12[ ,-7]
+
+# put back together
+farmdat.new <- rbind(farmdat_07_10, farmdat_11_12)
+str(farmdat.new)
+
+# check what the new variable looks like
+ggplot(farmdat.new, aes(x=year, y=propPrimLivFarm))+
+  geom_point()
+# better than before, but 2011 and 2012 have quite a few values over 1. This will probably be because there are people who identify as farmers who are under 18 or over 60.  The only thing I can do is change any values >1 to 1.  
+
+# change values >1 to 1
+farmdat.new <- farmdat.new %>% 
+                mutate(propPrimLivFarm = replace(propPrimLivFarm, propPrimLivFarm>1, 1))
+str(farmdat.new)
+
+# remove unwanted columns
+farmdat.new <- farmdat.new %>% select(year, commGIS, propPrimLivFarm_new = propPrimLivFarm)
+
+# merge with main dataset
+dat_merge <- left_join(dat_merge, farmdat.new, by = c("year", "commGIS"))
+str(dat_merge)
+
+# replace propPrimLivFarm
+dat_merge <- dat_merge %>% select(-propPrimLivFarm) %>% 
+              dplyr::rename(propPrimLivFarm = propPrimLivFarm_new)
+
+# remove numPrimLivFarm, as this is no longer a useable variable because of the differences in questions
+dat_merge <- dat_merge %>% select(-numPrimLivFarm)
+
+# save file
+write.csv(dat_merge, file="Data/commune/dat_merge.csv")
+
+    # LOAD LATEST VERSION ####
+
+dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
