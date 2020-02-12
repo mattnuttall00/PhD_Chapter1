@@ -176,6 +176,11 @@ head(com.shp@data)
 length(com.shp$AREA[com.shp$AREA==0])
 length(com.shp$AREA[com.shp$AREA<5000])
 
+# subset shapefile for forested communes only
+comCode <- dat_merge$commGIS
+forest.shp <- subset(com.shp, CODEKHUM %in% comCode)
+plot(forest.shp)
+
   ## Calculate forested pixels in each commune (not working) ####
 
 ## count the number of forested pixels in each commune polygon. The code below kind of works, but for some reason the number of communes in the shapefile (1687) is not matching the number of unique IDs (which should represent communes) in the resulting ext3 (1681). Therefore I am getting the forest pixel data from QGIS instead.
