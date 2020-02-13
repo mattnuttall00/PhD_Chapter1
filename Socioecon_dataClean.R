@@ -953,7 +953,7 @@ dat_merge %>% filter(M15_45_ill > 1) %>% select(Province, Commune)
 dat_merge %>% filter(M15_45_ill > 0.9) %>% select(Province, Commune)
 # 3 communes - again Rattanikiri and Preah Vihear
 
-    # numPrimLivFarm (RUN) ####
+    # numPrimLivFarm & propPrimLivFarm (RUN) ####
 
 hist(dat_merge$numPrimLivFarm)
 # a few large values
@@ -1053,3 +1053,52 @@ write.csv(dat_merge, file="Data/commune/dat_merge.csv")
     # LOAD LATEST VERSION ####
 
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
+
+
+    # propPrimSec ####
+
+hist(dat_merge$propPrimSec)
+# some values > 1
+
+dat_merge %>% filter(propPrimSec>1) %>% select(year,Province,Commune,tot_pop,propPrimSec)
+# 198 records.  All 2011 and 2012. Appears to be large chunks of entire provinces.  I'm guessing a mismatch with tot_pop.
+
+# I've checked the raw data and the errors are in the raw data, not in my summaries. None of the values are much over 1, so I will just change them to 1
+dat_merge <- dat_merge %>% mutate(propPrimSec = replace(propPrimSec, propPrimSec>1, 1))
+str(dat_merge)
+
+# histogram has an odd hump around 0.2. 
+dat_merge %>% filter(propPrimSec >0.1 & propPrimSec <0.3) %>% select(year,Province,Commune,tot_pop,propPrimSec)
+# 764 records. Seems to be a lot in 2008
+
+dat_merge %>% filter(year=="2008") %>% 
+  filter(propPrimSec >0.1 & propPrimSec <0.3) %>% 
+  select(year,Province,Commune,tot_pop,propPrimSec)
+# 713 are from 2008
+
+
+
+
+
+
+
+# response histogram
+hist(dat_merge$diffPix)
+
+# response (non-zero) histogram
+hist(dat_merge$diffPix[dat_merge$diffPix != 0])
+
+# raw pixels histogram
+hist(dat_merge$ForPix)
+
+
+# packages for hurdle models
+# pscl
+# glmmTMB - hurdle mixed effects models
+
+
+# plots
+ggplot(dat_merge, aes(x=tot_pop, y=diffPix))+
+   geom_point(data = subset(dat_merge, diffPix > -750)) + 
+   stat_smooth(method = "lm") +
+   facet_grid(. ~ year)
