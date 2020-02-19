@@ -1,6 +1,6 @@
 #### This is the data aggregating and data cleaning code for the socioeconomic analysis of chapter 2 (data chapter 1) in my PhD.  The data are from the Commune Database of Cambodia for the years 2007-2012. The land cover data are from the European Space Agency Climate Change Initiative satellite.
 
-##  To skip data aggregation process load 'dat_merge' file from "clean, format, and error check data" section (line 640) 
+##  To skip data aggregation process load 'dat_merge' file from "LOAD LATEST VERSION" line 1060
 
 #### Load libraries ####
 
@@ -176,10 +176,17 @@ head(com.shp@data)
 length(com.shp$AREA[com.shp$AREA==0])
 length(com.shp$AREA[com.shp$AREA<5000])
 
-# subset shapefile for forested communes only
+# try to subset shapefile for only forested communes
+str(com.shp@data)
+
+# pull out commGIS
 comCode <- dat_merge$commGIS
+
+# subset
 forest.shp <- subset(com.shp, CODEKHUM %in% comCode)
+str(forest.shp@data)
 plot(forest.shp)
+
 
   ## Calculate forested pixels in each commune (not working) ####
 
@@ -1067,6 +1074,8 @@ dat_merge %>% filter(propPrimSec>1) %>% select(year,Province,Commune,tot_pop,pro
 dat_merge <- dat_merge %>% mutate(propPrimSec = replace(propPrimSec, propPrimSec>1, 1))
 str(dat_merge)
 
+# BELOW ISSUE WAS WITH THE RAW DATA - NOW FIXED. BELOW CODE LEFT FOR REFERENCE
+
 # histogram has an odd hump around 0.2. 
 dat_merge %>% filter(propPrimSec >0.1 & propPrimSec <0.3) %>% select(year,Province,Commune,tot_pop,propPrimSec)
 # 764 records. Seems to be a lot in 2008
@@ -1076,8 +1085,15 @@ dat_merge %>% filter(year=="2008") %>%
   select(year,Province,Commune,tot_pop,propPrimSec)
 # 713 are from 2008
 
+# check histogram for just 2008
+primsec.08 <- dat_merge %>% filter(year==2008) %>% select(Province,Commune,propPrimSec, tot_pop)
+hist(primsec.08$propPrimSec)
 
-
+# compare 2008 histogram with other years
+ggplot(data = dat_merge, aes(dat_merge$propPrimSec))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# There is clearly something wrong with 2008.  I'll check the raw data
 
 
 
