@@ -1118,3 +1118,52 @@ ggplot(dat_merge, aes(x=tot_pop, y=diffPix))+
    geom_point(data = subset(dat_merge, diffPix > -750)) + 
    stat_smooth(method = "lm") +
    facet_grid(. ~ year)
+
+    # propSecSec ####
+
+hist(dat_merge$propSecSec)
+# very low numbers. Not that surprising.  Cambodia is an agricultural economy (and society), and so I wouldn't expect high numbers here.
+
+# Check the high numbers 
+dat_merge %>% filter(propSecSec > 0.6) %>% select(year,Province,Commune,propSecSec)
+# one commune with all the high values in 2007, 2009, 2010
+
+# plot all the years for that commune
+ggplot(dat_merge, aes(x=year,y=propSecSec))+
+  geom_point(data = subset(dat_merge, Commune=="Kaoh Dach"))
+# 2011 and 2012 are missing
+
+dat_merge %>% filter(Commune=="Kaoh Dach") %>% select(year,Province, Commune,propSecSec)
+# 2011 and 2012 missing
+
+# check village data
+socioecon.dat %>% filter(Commune=="Kaoh Dach") %>% select(Year,Province, Commune)
+# It's not in the village data so I must have removed it previously.
+
+# I will double check the 2008 raw data as it's the anomoly
+
+# I have made a mistake in the 2008 data, which I have now corrected
+
+# load in corrected data
+propSecSec_08_vill <- read.csv("Data/commune/propSecSec_2008.csv", header=T)
+str(propSecSec_08_vill)
+
+# assign commune code
+propSecSec_08 <- merge(propSecSec_08_vill, commDat, by = c("Province", "Commune"))
+str(propSecSec_08)
+
+# aggregate to commune level
+propSecSec_08 <- propSecSec_08 %>% 
+                  group_by(commGIS) %>% 
+                  summarise_at(., vars("propSecSec"), mean)
+str(propSecSec_08)
+
+# add year
+propSecSec_08$year <- 2008
+
+# replace propSecSec values for 2008 in dat_merge with new data
+
+# test
+test <- dat_merge %>% filter(year==2008 | year==2009) %>% select(year,Province,Commune,propSecSec, commGIS)
+
+test <- test %>% mutate(propSecSec = replace(propSecSec, ))
