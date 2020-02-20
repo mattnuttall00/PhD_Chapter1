@@ -1150,3 +1150,53 @@ write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
+
+    # propTerSec ####
+
+hist(dat_merge$propTerSec)
+# this looks fine
+
+# check larger values
+dat_merge %>% filter(propTerSec > 0.3) %>% select(year,Province,Commune)
+
+# plot the values for Kracheh > Chhloung
+ggplot(dat_merge, aes(x=year,y=propTerSec))+
+  geom_point(data = subset(dat_merge, Commune=="Chhloung"))
+# 2008 looks dodgy again. Looks much lower than the other years and not in line with the trend
+
+# plot histograms of propTerSec for each year to check if 2008 is weird
+ggplot(dat_merge, aes(dat_merge$propTerSec))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# it's not wildly different, but different enough to warrant another look at the raw data.
+
+
+    # propQuatSec ####
+
+hist(dat_merge$propQuatSec)
+# some values over 1
+
+# which values are over 1
+dat_merge %>% filter(propQuatSec >1) %>% select(year,Province,Commune,propQuatSec)
+# 7 communes, values only slightly over 1.  Must be mismatch between summed people in this sector and the tot_pop value.  I will change them to 1
+
+dat_merge <- dat_merge %>% mutate(propQuatSec = replace(propQuatSec, propQuatSec>1, 1))
+
+# what are the other high values
+dat_merge %>% filter(propQuatSec > 0.7) %>% select(year,Province,Commune,propQuatSec)
+
+# check some of the communes
+ggplot(dat_merge,aes(x=year,y=propQuatSec))+
+  geom_point(data = subset(dat_merge, Commune=="Chob"))
+# fucking 2008 again
+
+ggplot(dat_merge,aes(x=year,y=propQuatSec))+
+  geom_point(data = subset(dat_merge, Commune=="Setbou"))
+# 2008
+
+# plot all propQuatSec values per year to compare 2008 with the other years
+
+ggplot(dat_merge, aes(dat_merge$propQuatSec))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# 2008 has totally different shape to the other years.  I'll need to check this in the raw data.
