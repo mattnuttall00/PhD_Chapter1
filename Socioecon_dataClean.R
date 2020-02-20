@@ -755,9 +755,11 @@ summary(dat_merge$tot_pop)
 dat_merge %>% filter(tot_pop > 20000) %>% select(year, commGIS, Province, Commune, tot_pop)
 # Ii can believe these. Kampong Cham, Kandal are both around Phnom Penh, Battambang is the third largest city, Siem Reap is the secon largest, and Otdar Meanchey is on the Thai border
 
-
-
-
+# check histo per year
+ggplot(dat_merge, aes(dat_merge$tot_pop))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# slight dip in 2011 and 2012
 
 
     # family ####
@@ -778,6 +780,11 @@ id <- identify(dat_merge$family, dat_merge$tot_pop) # outlier points are 590,763
 dat_merge[c(590,763,1325,2063,3663), c(1:4,8:9)]
 # interesting.  these outliers are Siem Reap (x3), Battambang and Kampong Cham. Siem Reap and Battambang are large cities with industry and tourism. My guess is that lots of people are temporary economic in-migrants who don't necessarily have/take family with them. Their families likely stay out in the provinces.
 
+# check histo per year
+ggplot(dat_merge, aes(dat_merge$family))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
     # male_18_60 ####
 
 hist(dat_merge$male_18_60)
@@ -795,13 +802,24 @@ dat_merge %>% filter(male_18_60 <500) %>% select(Province,Commune,tot_pop,male_1
 dat_merge %>% filter(male_18_60 > tot_pop)
 # no
 
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$male_18_60))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
+
     # fem_18_60 ####
 
 # I identified some errors in the raw data for this variable in 2008. I have gone back and corrected them.
 
 hist(dat_merge$fem_18_60)
 
-# I think all errors in the raw data now fixed  
+# I think all errors in the raw data now fixed 
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$fem_18_60))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
 
     # pop_over61 ####
 
@@ -809,6 +827,11 @@ hist(dat_merge$pop_over61)
 
 dat_merge %>% filter(pop_over61 > 3000) %>% select(year,Province,Commune,pop_over61,tot_pop)
 # well below tot_pop so no reason to doubt it
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$pop_over61))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
 
     # tot_ind & prop_ind (RUN) ####
 
@@ -844,6 +867,11 @@ dat_merge <- dat_merge %>%
               select(-new_prop_ind)
 # check
 dat_merge %>% filter(prop_ind>1) # 0 rows
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$prop_ind))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
 
 
     # Comparing demographics ####
@@ -917,6 +945,12 @@ dat_merge %>% filter(pop_den>1500) %>% select(Province,Commune,commGIS,pop_den,a
 dat_merge %>% filter(pop_den<1) %>% select(year,Province,Commune,commGIS,pop_den,areaKM,tot_pop)
 # Koh Kong and Mondulkiri - fine.
 
+# check histo per year
+ggplot(dat_merge, aes(dat_merge$pop_den))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
+
     # F6_24_sch ####
 
 # are there any with propotion > 1
@@ -926,6 +960,11 @@ dat_merge %>% filter(F6_24_sch>1) %>% select(year,Province,Commune,commGIS) # no
 dat_merge %>% filter(F6_24_sch < 0.1) %>% select(year,Province,Commune,commGIS)
 # only a handful each year.  Rattankiri and Stung Treng. Probably the two most remote and rural provinces. Believable
 
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$F6_24_sch))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
     # M6_24_sch ####
 
 # are there any with propotion > 1
@@ -933,6 +972,12 @@ dat_merge %>% filter(M6_24_sch>1) %>% select(year,Province,Commune,commGIS,M6_24
 dat_merge %>% filter(M6_24_sch>1, year==2009) %>% select(year,Province,Commune,commGIS,M6_24_sch)
 
 # there were errors, but I have fixed them in the raw data
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$M6_24_sch))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
 
     # F15_45_ill ####
 
@@ -945,6 +990,11 @@ dat_merge %>% filter(F15_45_ill > 1) %>% select(Province, Commune)
 # highest values
 dat_merge %>% filter(F15_45_ill > 0.9) %>% select(Province, Commune)
 # there are 11 communes with values higher than 0.9.  The majority are in Rattanikiri, and a couple in Preah Vihear.  This makes sense - they are two of the poorest and most remote provinces where illiteracy is likely to be high
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$F15_45_ill))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
 
 
     # M15_45_ill ####
@@ -959,6 +1009,12 @@ dat_merge %>% filter(M15_45_ill > 1) %>% select(Province, Commune)
 # highest values
 dat_merge %>% filter(M15_45_ill > 0.9) %>% select(Province, Commune)
 # 3 communes - again Rattanikiri and Preah Vihear
+
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$M15_45_ill))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
 
     # numPrimLivFarm & propPrimLivFarm (RUN) ####
 
@@ -1057,6 +1113,12 @@ dat_merge <- dat_merge %>% select(-numPrimLivFarm)
 # save file
 write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 
+# check histo for years
+ggplot(dat_merge, aes(dat_merge$propPrimLivFarm))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# slightly different shape in 2011 and 2012. 
+
     # propPrimSec (RUN) ####
 
 hist(dat_merge$propPrimSec)
@@ -1091,28 +1153,6 @@ ggplot(data = dat_merge, aes(dat_merge$propPrimSec))+
 # There is clearly something wrong with 2008.  I'll check the raw data
 
 
-
-
-# response histogram
-hist(dat_merge$diffPix)
-
-# response (non-zero) histogram
-hist(dat_merge$diffPix[dat_merge$diffPix != 0])
-
-# raw pixels histogram
-hist(dat_merge$ForPix)
-
-
-# packages for hurdle models
-# pscl
-# glmmTMB - hurdle mixed effects models
-
-
-# plots
-ggplot(dat_merge, aes(x=tot_pop, y=diffPix))+
-   geom_point(data = subset(dat_merge, diffPix > -750)) + 
-   stat_smooth(method = "lm") +
-   facet_grid(. ~ year)
 
     # propSecSec ####
 
@@ -1244,3 +1284,22 @@ ggplot(dat_merge, aes(x=year, y=Les1_F_Land))+
 # Either there is a massive jump in the number of people losing farming land, or the data is dodgy.  I can't think of a reasonable explanation for why there would be such a spike.
 
 # I will double check the raw data for 2011 and 2012, but if the raw data and my extractions are correct, I will need to drop this variable.
+
+    # buff_fam ####
+
+hist(dat_merge$buff_fam)
+# no obvious problems
+
+dat_merge %>% filter(buff_fam > 1)
+# none
+
+# check histo for each year
+ggplot(dat_merge, aes(dat_merge$buff_fam))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# WOAH.  Something very dodgy here.  2007, 2009, 2010 all look vaguely similar. 2008 and 2011 are fucked.  2012 looks believable but totally different to the other years. 
+
+# Need to check 2008 and 2011 raw data first.  If the raw data says this then I will need to drop the variable.  
+# To check ####
+
+# There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions.  
