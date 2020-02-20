@@ -682,7 +682,7 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
                                   ForPix, diffPix,
                           tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind, pop_den,
                                   F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill,
-                      numPrimLivFarm, propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec,
+                      propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec,
                                   Les1_R_Land, Les1_F_Land, buff_fam, pig_fam,
                                   dist_sch, garbage, KM_Comm, KM_Heal_cent,
                                   land_confl, crim_case,
@@ -1057,12 +1057,7 @@ dat_merge <- dat_merge %>% select(-numPrimLivFarm)
 # save file
 write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 
-    # LOAD LATEST VERSION ####
-
-dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
-
-
-    # propPrimSec ####
+    # propPrimSec (RUN) ####
 
 hist(dat_merge$propPrimSec)
 # some values > 1
@@ -1142,28 +1137,16 @@ socioecon.dat %>% filter(Commune=="Kaoh Dach") %>% select(Year,Province, Commune
 
 # I will double check the 2008 raw data as it's the anomoly
 
-# I have made a mistake in the 2008 data, which I have now corrected
+# I had made a mistake in the 2008 data, which I have now corrected. Check that 2008 histogram is similar to other years
+ggplot(dat_merge, aes(dat_merge$propSecSec))+
+  geom_histogram()+
+  facet_grid(cols=vars(year))
 
-# load in corrected data
-propSecSec_08_vill <- read.csv("Data/commune/propSecSec_2008.csv", header=T)
-str(propSecSec_08_vill)
 
-# assign commune code
-propSecSec_08 <- merge(propSecSec_08_vill, commDat, by = c("Province", "Commune"))
-str(propSecSec_08)
+    # LOAD LATEST VERSION ####
 
-# aggregate to commune level
-propSecSec_08 <- propSecSec_08 %>% 
-                  group_by(commGIS) %>% 
-                  summarise_at(., vars("propSecSec"), mean)
-str(propSecSec_08)
+write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 
-# add year
-propSecSec_08$year <- 2008
-
-# replace propSecSec values for 2008 in dat_merge with new data
-
-# test
-test <- dat_merge %>% filter(year==2008 | year==2009) %>% select(year,Province,Commune,propSecSec, commGIS)
-
-test <- test %>% mutate(propSecSec = replace(propSecSec, ))
+dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
+str(dat_merge)
+dat_merge <- dat_merge %>% select(-X)
