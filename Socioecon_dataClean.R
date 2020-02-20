@@ -1171,7 +1171,7 @@ ggplot(dat_merge, aes(dat_merge$propTerSec))+
 # it's not wildly different, but different enough to warrant another look at the raw data.
 
 
-    # propQuatSec ####
+    # propQuatSec (RUN) ####
 
 hist(dat_merge$propQuatSec)
 # some values over 1
@@ -1200,3 +1200,47 @@ ggplot(dat_merge, aes(dat_merge$propQuatSec))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 # 2008 has totally different shape to the other years.  I'll need to check this in the raw data.
+    # Les1_R_Land (RUN) ####
+
+hist(dat_merge$Les1_R_Land)
+# values over 1
+
+dat_merge %>% filter(Les1_R_Land >1) %>% select(year, Province, Commune, Les1_R_Land)
+# only 1 commune in one year.  I will change it to 1
+
+dat_merge <- dat_merge %>% mutate(Les1_R_Land = replace(Les1_R_Land, Les1_R_Land>1, 1))
+
+# check histograms by year
+ggplot(dat_merge, aes(dat_merge$Les1_R_Land))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# Looks ok
+
+    # Les1_F_Land ####
+
+hist(dat_merge$Les1_F_Land)
+# very different shape to Les1_R_Land. I suppose far fewer people will have absolutely no land to plant anything.  Most people will have a small vegetabloe patch or garden, even if they don't have enough land to plant rice.
+
+# check no values above 1
+dat_merge %>% filter(Les1_F_Land >1)
+# none
+
+# check histogram for each year
+ggplot(dat_merge, aes(dat_merge$Les1_F_Land))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+# 2011 and 2012 have different histo shapes. I'm a bit worried that the change in the question types in the CDB is causing issues in classification. This might cause jumps in values from 2010 to 2011
+
+# take a sample from dat_merge
+spl <- dat_merge %>% filter(Commune=="Sochet"|Commune=="Mukh Paen"|Commune=="Svay Chek"|Commune=="Phluk")
+
+ggplot(spl, aes(x=year, y=Les1_F_Land))+
+  geom_point()+
+  facet_wrap(~Commune, ncol = 2)
+# I think in a lot of cases the values are 0 for 2007-2010 and then big spike in 2011 and 2012.
+
+ggplot(dat_merge, aes(x=year, y=Les1_F_Land))+
+  geom_point()
+# Either there is a massive jump in the number of people losing farming land, or the data is dodgy.  I can't think of a reasonable explanation for why there would be such a spike.
+
+# I will double check the raw data for 2011 and 2012, but if the raw data and my extractions are correct, I will need to drop this variable.
