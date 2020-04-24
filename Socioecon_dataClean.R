@@ -53,7 +53,7 @@ socioecon.dat <- socioecon.dat[ ,-39]
 socioecon.dat <- as_tibble(socioecon.dat)
 
 # NEED TO ACCOUNT FOR YEARS
-# before aggregating - split up by year.  Run aggregation code for each year df, then rbind together. Then have another look at the admin aggregation as that is not correct now 
+# before aggregating - split up by year.  Run aggregation code for each year df, then rbind together.  
 
 # split by year
 dat.07 <- socioecon.dat[socioecon.dat$Year=="2007", ]
@@ -294,7 +294,7 @@ compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 # They are the same missing communes
 
 
-## Now I will join each year of socioeconoimc data to the corresponding year of forest data
+## Now I will join each year of socioeconomic data to the corresponding year of forest data
 
 # 2007
 join07 <- inner_join(dat.07.agg, forest07.agg, by="commGIS")
@@ -651,6 +651,8 @@ length(dat_merge$PA[is.na(dat_merge$PA)])
 
 #### Clean, format, and error check data -----------------------------------------------
   ## Load working version of data ####
+
+
 
 # load working version of the data
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header=T)
@@ -1016,8 +1018,9 @@ ggplot(dat_merge, aes(dat_merge$M15_45_ill))+
   facet_grid(cols = vars(year))
 
 
-    # numPrimLivFarm & propPrimLivFarm (RUN) ####
+    # numPrimLivFarm & propPrimLivFarm ####
 
+hist(dat_merge$propPrimLivFarm)
 hist(dat_merge$numPrimLivFarm)
 # a few large values
 
@@ -1202,13 +1205,13 @@ dat_merge %>% filter(propTerSec > 0.3) %>% select(year,Province,Commune)
 # plot the values for Kracheh > Chhloung
 ggplot(dat_merge, aes(x=year,y=propTerSec))+
   geom_point(data = subset(dat_merge, Commune=="Chhloung"))
-# 2008 looks dodgy again. Looks much lower than the other years and not in line with the trend
+# previously there was an issue with 2008, which was due to my error in data extraction. This has been fixed. Now 2007, 2011, and 2012 look odd. 
 
-# plot histograms of propTerSec for each year to check if 2008 is weird
+# plot histograms of propTerSec for each year 
 ggplot(dat_merge, aes(dat_merge$propTerSec))+
   geom_histogram()+
   facet_grid(cols = vars(year))
-# it's not wildly different, but different enough to warrant another look at the raw data.
+# histograms don't look too bad. Definitely a change in shape in 2011 and 2012. I will need to keep an eye on this variable and remove it if necessary.
 
 
     # propQuatSec (RUN) ####
@@ -1228,18 +1231,19 @@ dat_merge %>% filter(propQuatSec > 0.7) %>% select(year,Province,Commune,propQua
 # check some of the communes
 ggplot(dat_merge,aes(x=year,y=propQuatSec))+
   geom_point(data = subset(dat_merge, Commune=="Chob"))
-# fucking 2008 again
+# 2011 and 2012 again looking different 
 
 ggplot(dat_merge,aes(x=year,y=propQuatSec))+
   geom_point(data = subset(dat_merge, Commune=="Setbou"))
-# 2008
+# same
 
 # plot all propQuatSec values per year to compare 2008 with the other years
 
 ggplot(dat_merge, aes(dat_merge$propQuatSec))+
   geom_histogram()+
   facet_grid(cols = vars(year))
-# 2008 has totally different shape to the other years.  I'll need to check this in the raw data.
+# 2011 and 2012 seem to have a large increase in low values
+
     # Les1_R_Land (RUN) ####
 
 hist(dat_merge$Les1_R_Land)
@@ -1256,7 +1260,7 @@ ggplot(dat_merge, aes(dat_merge$Les1_R_Land))+
   facet_grid(cols = vars(year))
 # Looks ok
 
-    # Les1_F_Land ####
+    # Les1_F_Land (RUN) ####
 
 hist(dat_merge$Les1_F_Land)
 # very different shape to Les1_R_Land. I suppose far fewer people will have absolutely no land to plant anything.  Most people will have a small vegetabloe patch or garden, even if they don't have enough land to plant rice.
@@ -1285,6 +1289,10 @@ ggplot(dat_merge, aes(x=year, y=Les1_F_Land))+
 
 # I will double check the raw data for 2011 and 2012, but if the raw data and my extractions are correct, I will need to drop this variable.
 
+# I have double checked the raw data and I haven't made any errors in extraction or conversio to proportions. Therefore I think there are potentially changes in the questions or data collection methods in 2011.  Therefore I will remove this variable. 
+
+dat_merge <- dat_merge %>% select(-Les1_F_Land)
+
     # buff_fam ####
 
 hist(dat_merge$buff_fam)
@@ -1297,9 +1305,93 @@ dat_merge %>% filter(buff_fam > 1)
 ggplot(dat_merge, aes(dat_merge$buff_fam))+
   geom_histogram()+
   facet_grid(cols = vars(year))
-# WOAH.  Something very dodgy here.  2007, 2009, 2010 all look vaguely similar. 2008 and 2011 are fucked.  2012 looks believable but totally different to the other years. 
+# WOAH.  Something very dodgy here.  2007, 2008, 2009, 2010 all look vaguely similar. 2011 is fucked (so wa 2008 but that was an error on my part which I have fixed in the raw data).  2012 looks believable but totally different to the other years. 
 
-# Need to check 2008 and 2011 raw data first.  If the raw data says this then I will need to drop the variable.  
+# I've re-done the 2011 data extraction and this is what the raw data says. Therefore I will drop this variable
+
+dat_merge <- dat_merge %>% select(-buff_fam)
+
+
+    # LOAD LATEST VERSION ####
+
+write.csv(dat_merge, file="Data/commune/dat_merge.csv")
+
+dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
+str(dat_merge)
+dat_merge <- dat_merge %>% select(-X)
+
+    # pig_fam (still to fix)####
+
+hist(dat_merge$pig_fam)
+# looks sensible
+
+dat_merge %>% filter(pig_fam > 1)
+# none
+
+# histo for each year
+ggplot(dat_merge, aes(dat_merge$pig_fam))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
+# goddamit 2008()
+
+    # dist_sch ####
+
+hist(dat_merge$dist_sch)
+# surprisingly not totally unreasonable
+
+# check where the larger values are from
+dat_merge %>% filter(dist_sch > 60) %>% select(year,Province,Commune,dist_sch)
+# mostly the same commune just different years - Mondulkiri province which is believable 
+
+dat_merge %>% filter(dist_sch > 40) %>% select(year,Province,Commune,dist_sch)
+# Mondulkiri, Rattankiri, Preah Vihear, Stung Streng - all believable
+
+
+
+    # garbage ####
+
+hist(dat_merge$garbage)
+# not many folk with access to garbage collection.  I would be surprised with anything else
+
+dat_merge %>% filter(garbage>1)
+# none
+
+# check communes with high values
+dat_merge %>% filter(garbage>0.6) %>% select(year,Province, Commune,garbage)
+# what I was expecing - phnom penh mostly
+
+
+    # KM_Comm ####
+
+hist(dat_merge$KM_Comm)
+# looks fine
+
+max(dat_merge$KM_Comm)
+
+# check where high values are from
+dat_merge %>% filter(KM_Comm > 30) %>% select(year,Province,Commune,KM_Comm)
+# mostly same two places, over the years.  A couple of new places appear in 2011 but there is no way t verify this really - it is perfectly feasible that the comune office moved or a new one was built elsewhere. That happens a lot
+
+    # KM_Heal_cent ####
+
+hist(dat_merge$KM_Heal_cent)
+# some quite large value here, but not necessarily wrong
+
+# check loactions of high values
+dat_merge %>% filter(KM_Heal_cent>50) %>% select(Province,Commune,KM_Heal_cent)
+# again it's all the large, remote provinces - Mondulkiri, PReah Vihear, Stung Treng etc. Not implausible, and no real way of checking or correcting.
+
+    # land_confl ####
+
+hist(dat_merge$land_confl)
+# handful of very large values. Not sure how to check this, but I will look at the proportion to the population
+
+
+
+
+
 # To check ####
 
-# There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions.  
+# There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions. 
+
