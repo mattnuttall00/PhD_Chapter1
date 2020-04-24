@@ -763,6 +763,10 @@ ggplot(dat_merge, aes(dat_merge$tot_pop))+
   facet_grid(cols = vars(year))
 # slight dip in 2011 and 2012
 
+# plot all populatins
+ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
+  geom_line()+
+  theme(legend.position="none")
 
     # family ####
 
@@ -1387,9 +1391,86 @@ dat_merge %>% filter(KM_Heal_cent>50) %>% select(Province,Commune,KM_Heal_cent)
 hist(dat_merge$land_confl)
 # handful of very large values. Not sure how to check this, but I will look at the proportion to the population
 
+dat_merge %>% filter(land_confl > 100) %>% select(year,Province,Commune,land_confl,tot_pop)
+# all the communes with high values have relatively large populations, so there is no reason to doubt the numbers
+
+    # crim_case ####
+
+hist(dat_merge$crim_case)
+# Mostly very low, which I can believe. Cambodia has a relatively low crime rate, plus what crime there is a lot will go un-reported
+
+# check high values
+dat_merge %>% filter(crim_case > 0.05) %>% select(year,Province,Commune,crim_case,tot_pop)
+# Pailin is on the Thai border, Battambang is a very large city, Kampong Cham in what Phnom Penh sprawls into. Same with Kampong Speu.  Sihanouk - no surprises there. All those make sens to me.  Not sure about Rattanikiri or Kracheh though.  NO way of verifying or checking though, so will have to go with it.
+
+    # inf_mort (RUN) ####
+
+hist(dat_merge$inf_mort)
+# very low values, which is a good thing I suppose.  
+
+dat_merge %>% filter(inf_mort ==0) %>% select(year,Province, Commune, inf_mort)
+#  hmmm, this smells like bullshit to me.  1645 communes had zero infant deaths in a given year.  No chance.  This will be poor/under/no reporting.  NO doubt there will be taboos about reporting such things, and in the rural provinces, there won't be any mechanism or requirement for reporting, as most births will be at home with traditional midwives.
+
+# I will drop this variable as I just don't believe it
+
+dat_merge <- dat_merge %>% select(-inf_mort)
 
 
+    # U5_mort (RUN) ####
 
+hist(dat_merge$U5_mort)
+# looks similar to inf_mort
+
+dat_merge %>% filter(U5_mort == 0) %>% select(year,Province,Commune)
+# 1443 communes with zero under 5 deaths.  The problem here is that a lot of the communes are in the really remote provinces, which suggests to me that this is a reporting problem.
+
+# drop the variable as I don't trust it
+
+dat_merge <- dat_merge %>% select(-U5_mort)
+
+
+    # Pax_migt_in ####
+
+hist(dat_merge$Pax_migt_in)
+
+# check outlier
+dat_merge %>% filter(Pax_migt_in > 5000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
+# This is dfo an error - the number of migrants is more than 2000 people larger than the total population
+
+# check the value for the rest of the province
+dat_merge %>% filter(Province=="Kampong Cham" & year==2011) %>% 
+              select(year,Commune,Pax_migt_in) 
+# the rest of the communes seem reasonable. I will replace the value for Cheyyou with the Province mean
+
+paxmean <- mean(dat_merge$Pax_migt_in[dat_merge$Province=="Kampong Cham"|dat_merge$year==2011])
+dat_merge <- mutate(dat_merge, Pax_migt_in = replace(Pax_migt_in, Pax_migt_in==16341, paxmean))
+
+
+# check other outliers
+dat_merge %>% filter(Pax_migt_in > 3000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
+# this could be true, if it wasn't for the fact that the values are identical for 2008 and 2010
+
+dat_merge %>% filter(Province=="Pailin" & Commune=="Stueng Kach") %>% select(year,Pax_migt_in,tot_pop)
+# those two years look like errors - they don't fit the rest of the values, and are identical which is clearly wrong. I will set the two Pax values to the provincial mean for each year
+
+pailin08 <- mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2008])
+pailin10 <- mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2010])
+# hmm ok so the reason the values are the same is because the Pax_migt_in values for the province are the identical for those two years. 
+
+dat_merge %>% filter(Province=="Pailin" & Commune=="Stueng Kach") %>% select(year,Pax_migt_in,tot_pop)
+# ok so instead I am going to set those two values as the mean for the commune acorss all years, excluding the two dogy values
+
+# mean for
+(293+468+292+368)/4
+
+# replace values
+dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in,Pax_migt_in==4018, 355)) 
+
+dat_merge %>% filter(Province=="Pailin") %>% select(year,Commune,tot_pop)
+
+# check other outliers
+dat_merge %>% filter(Pax_migt_in > 2000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
+# looks like a similar issue with Trapeang Prasat in Otdar Meanchey
 
 # To check ####
 
