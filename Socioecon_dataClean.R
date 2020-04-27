@@ -695,6 +695,19 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
 
   ## Error checking ####
 
+# If I/you have had to change the raw data (e.g. to fix any error(s) in the raw data), then you need to re-run the code above that creates dat_merge. You then need to run all the below chunks that have RUN in the header.  Don't just run the whole chunk though - open the chunk and check which lines need to be run. If the raw data has not changed, just load dat_merge from the latest "LOAD LATEST VERSION" chunk (i.e the lowest down the list)
+
+## the code that creates dat_merge are in the following chunks:
+
+# Load socioeconomic variable and commune data
+# Assign commune code
+# Aggregate to commune level
+# Forest cover data
+# Correcting duplicate communes in forest_dat
+# Matching socioeconoimc and forest data sets
+# Removing false zeros
+# Additional variables (and sub chunks)
+
 # load dat_merge
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header = T)
 str(dat_merge)
@@ -1361,7 +1374,7 @@ ggplot(dat_merge, aes(x=year, y=Les1_F_Land))+
 
 dat_merge <- dat_merge %>% select(-Les1_F_Land)
 
-    # buff_fam ####
+    # buff_fam (RUN) ####
 
 hist(dat_merge$buff_fam)
 # no obvious problems
@@ -1388,7 +1401,7 @@ dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
 
-    # pig_fam (still to fix)####
+    # pig_fam ####
 
 hist(dat_merge$pig_fam)
 # looks sensible
@@ -1401,7 +1414,7 @@ ggplot(dat_merge, aes(dat_merge$pig_fam))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
-# goddamit 2008
+# there was an issue with the 2008 raw data - fixed now
 
     # dist_sch ####
 
@@ -1493,7 +1506,7 @@ dat_merge %>% filter(U5_mort == 0) %>% select(year,Province,Commune)
 dat_merge <- dat_merge %>% select(-U5_mort)
 
 
-    # Pax_migt_in ####
+    # Pax_migt_in (RUN) ####
 
 hist(dat_merge$Pax_migt_in)
 
@@ -1517,8 +1530,8 @@ dat_merge %>% filter(Pax_migt_in > 3000) %>%  select(year,Province,Commune,Pax_m
 dat_merge %>% filter(Province=="Pailin" & Commune=="Stueng Kach") %>% select(year,Pax_migt_in,tot_pop)
 # those two years look like errors - they don't fit the rest of the values, and are identical which is clearly wrong. I will set the two Pax values to the provincial mean for each year
 
-pailin08 <- mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2008])
-pailin10 <- mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2010])
+mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2008])
+mean(dat_merge$Pax_migt_in[dat_merge$Province=="Pailin"|dat_merge$year==2010])
 # hmm ok so the reason the values are the same is because the Pax_migt_in values for the province are the identical for those two years. 
 
 dat_merge %>% filter(Province=="Pailin" & Commune=="Stueng Kach") %>% select(year,Pax_migt_in,tot_pop)
@@ -1546,13 +1559,13 @@ ggplot(dat_merge[dat_merge$Commune=="Trapeang Prasat",], aes(x=year, y=tot_pop))
 # plot doesn't make it look unreasonable, but the identical numbers do. The rest of the migration figures suggest decreasing migration. I will set the populatin and migration values for those two years to be the mean of the two years either side
 
 # Pax_migt_in
-dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
+(dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
                                                         which(Pax_migt_in==2584 & year==2008),
                                                         880))
 
 dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
                                                         which(Pax_migt_in==2584 & year==2010),
-                                                        521))
+                                                        521)))
 
 # I will change the population in the tot_pop section
 
@@ -1584,6 +1597,14 @@ ggplot(dat_merge, aes(x=year, y=mean_elev, group=Commune))+
   geom_line()+
   facet_wrap(dat_merge$Province,nrow=2, ncol=12)
 # No communes have changing elevation which is good!  All look fine
+
+    # LOAD LATEST VERSION ####
+
+write.csv(dat_merge, file="Data/commune/dat_merge.csv")
+
+dat_merge <- read.csv("Data/commune/dat_merge.csv")
+str(dat_merge)
+dat_merge <- dat_merge %>% select(-X)
 
     # habitat ####
 
