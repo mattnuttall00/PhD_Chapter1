@@ -1401,7 +1401,7 @@ ggplot(dat_merge, aes(dat_merge$pig_fam))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
-# goddamit 2008()
+# goddamit 2008
 
     # dist_sch ####
 
@@ -1558,6 +1558,29 @@ dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in,
 
 # all the other large Pax_migt_in values (> 2000 look reasonable)
 
+    # Pax_migt_out ####
+
+hist(dat_merge$Pax_migt_out)
+# some large values that need checking
+
+dat_merge %>% filter(Pax_migt_out > 2000) %>% select(year,Province,Commune,Pax_migt_out,tot_pop)
+# actually don't look unreasonable. Not ridiculously large relative to the total population.  All in Banteay Meanchey though
+# plot the province
+
+ggplot(dat_merge[dat_merge$Province=="Banteay Meanchey",], aes(x=year, y=tot_pop, group=Commune))+
+  geom_line()+
+  geom_line(aes(y=Pax_migt_out))
+# doesn't look unreasonable. Jsut looks like a large increase in migration out of the province in 2010 onwards, but it is consistent across all communes
+
+# check more large values
+dat_merge %>% filter(Pax_migt_out > 1500) %>% select(year,Province,Commune,Pax_migt_out,tot_pop)
+# no obvious errors jumping out at me
+
+    # mean_elev ####
+
+hist(dat_merge$)
+
+#
 # To check ####
 
 # There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions. 
