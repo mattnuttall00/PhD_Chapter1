@@ -1578,7 +1578,16 @@ dat_merge %>% filter(Pax_migt_out > 1500) %>% select(year,Province,Commune,Pax_m
 
     # mean_elev ####
 
-hist(dat_merge$)
+hist(dat_merge$mean_elev)
+
+ggplot(dat_merge, aes(x=year, y=mean_elev, group=Commune))+
+  geom_line()+
+  facet_wrap(dat_merge$Province,nrow=2, ncol=12)
+# No communes have changing elevation which is good!  All look fine
+
+    # habitat ####
+
+
 
 #
 # To check ####
