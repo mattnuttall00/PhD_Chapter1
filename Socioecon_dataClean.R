@@ -1646,6 +1646,30 @@ dat_merge %>% filter(Province=="Pursat" & dist_border < 25) %>%
 # ok this is also fine. Pursat has only a few, large, communes.  Thma Da and ANlong Reab are the two closest to the coast. 
 
 #
+    # dist_provCap ####
+
+hist(dat_merge$dist_provCap)
+# check some of the larger values
+
+dat_merge %>% filter(dist_provCap >70) %>% select(year,Province,Commune,dist_provCap)
+
+# plot histograms for provinces with large values
+pvs <- c("Kampong Cham","Koh Kong","Kracheh","Mondul Kiri",
+          "Pursat","Preah Vihear","Stung Treng","Otdar Meanchey")
+provCapProv <- dat_merge %>% filter(Province %in% pvs)
+
+ggplot(provCapProv, aes(dist_provCap))+
+  geom_histogram()+
+  facet_wrap(provCapProv$Province, nrow=2, ncol=4)
+# when the provincial histograms are examined along with the map in QGIS with the provincial captials, these all make sense. They are due to the shapes of the provinces and the locations of the provincial captials
+
+
+# plot all provinces
+ggplot(dat_merge, aes(y=dist_provCap))+
+  geom_boxplot()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+
+
 # To check ####
 
 # There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions. 
