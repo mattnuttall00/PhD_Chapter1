@@ -1608,7 +1608,42 @@ dat_merge <- dat_merge %>% select(-X)
 
     # habitat ####
 
+ggplot(dat_merge, aes(x=year, y=habitat, group=Province))+
+  geom_count()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+# can't see any obvious issues
 
+    # dist_border ####
+
+hist(dat_merge$dist_border)
+unique(dat_merge$Province[dat_merge$dist_border>100])
+
+ggplot(dat_merge, aes(y=dist_border))+
+  geom_boxplot()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+# some potential outliers worth investigating
+
+dat_merge %>% filter(Province=="Koh Kong" & dist_border > 50) %>% select(year,Commune,dist_border)
+dat_merge %>% filter(Province=="Koh Kong") %>% select(Commune,dist_border)
+hist(dat_merge$dist_border[dat_merge$Province=="Koh Kong"])
+# Koh Kong looks fine - the shape of the province means the data make sense
+
+dat_merge %>% filter(Province=="Mondul Kiri" & dist_border > 75) %>% select(year,Commune,dist_border)
+# Makes sense after checking commune map on QGIS
+
+dat_merge %>% filter(Province=="Prey Veng" & dist_border > 50) %>% select(year,Commune,dist_border)
+hist(dat_merge$dist_border[dat_merge$Province=="Prey Veng"])
+# slightly odd gap in distances between the largest and the next largest
+
+dat_merge %>% filter(Province=="Prey Veng" & dist_border > 40) %>% 
+  select(year,Commune,dist_border) %>% 
+  arrange(dist_border)
+# ok so I think the issue is that not all of the communes are present (probably because the missing ones didn't have any forest (false zeros)). So this is fine
+
+dat_merge %>% filter(Province=="Pursat" & dist_border < 25) %>% 
+  select(year,Commune,dist_border) %>% 
+  arrange(dist_border)
+# ok this is also fine. Pursat has only a few, large, communes.  Thma Da and ANlong Reab are the two closest to the coast. 
 
 #
 # To check ####
