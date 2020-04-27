@@ -773,7 +773,7 @@ ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
   geom_line()+
   facet_wrap(vars(Province), nrow = 2, ncol=12)+
   theme(legend.position="none")
-# MOst obvious strange one is in Battambang
+# Most obvious strange one is in Battambang
 
 # find the dodgy one in Battambang
 dat_merge %>% filter(Province=="Battambang" & tot_pop > 30000) %>% select(Province,Commune,tot_pop)
@@ -819,6 +819,17 @@ dat_merge <- dat_merge %>% filter(Commune != "Sangkat lek Bei")
 dat_merge %>% filter(Province=="Siem Reap" & tot_pop > 35000) %>% select(year, Commune,tot_pop)
 dat_merge %>% filter(Province=="Siem Reap" & Commune=="Kouk Chak") %>% select(year,tot_pop)
 # right so what I think has happened is that the Commune Svay Dangkum was merged with Kouk Chak in 2010, because the former had a very high population previously, but then disappears in 2010, and the Kouk Chak suddenly shoots up the same population size as the one that has disappeared.  
+
+# changing Trapeang Prasat as 2008 and 2010 have identical values (see Pax_migt_in section below for reasons). I will change them to the mean of the two years either side
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, 
+                                                    which(tot_pop==16356 & year==2008),
+                                                    14167))
+
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, 
+                                                    which(tot_pop==16356 & year==2010),
+                                                    18506))
+
+
 
 
     # family ####
@@ -1488,7 +1499,7 @@ hist(dat_merge$Pax_migt_in)
 
 # check outlier
 dat_merge %>% filter(Pax_migt_in > 5000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
-# This is dfo an error - the number of migrants is more than 2000 people larger than the total population
+# This is defo an error - the number of migrants is more than 2000 people larger than the total population
 
 # check the value for the rest of the province
 dat_merge %>% filter(Province=="Kampong Cham" & year==2011) %>% 
@@ -1524,6 +1535,28 @@ dat_merge %>% filter(Province=="Pailin") %>% select(year,Commune,tot_pop)
 # check other outliers
 dat_merge %>% filter(Pax_migt_in > 2000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
 # looks like a similar issue with Trapeang Prasat in Otdar Meanchey
+
+# check the commune
+dat_merge %>% filter(Commune=="Trapeang Prasat") %>%  select(year,Commune,Pax_migt_in,tot_pop)
+
+# plot it
+ggplot(dat_merge[dat_merge$Commune=="Trapeang Prasat",], aes(x=year, y=tot_pop))+
+  geom_line()+
+  geom_line(aes(y=Pax_migt_in))
+# plot doesn't make it look unreasonable, but the identical numbers do. The rest of the migration figures suggest decreasing migration. I will set the populatin and migration values for those two years to be the mean of the two years either side
+
+# Pax_migt_in
+dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
+                                                        which(Pax_migt_in==2584 & year==2008),
+                                                        880))
+
+dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
+                                                        which(Pax_migt_in==2584 & year==2010),
+                                                        521))
+
+# I will change the population in the tot_pop section
+
+# all the other large Pax_migt_in values (> 2000 look reasonable)
 
 # To check ####
 
