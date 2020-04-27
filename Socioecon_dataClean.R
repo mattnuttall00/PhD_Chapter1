@@ -740,7 +740,7 @@ dat_merge %>% filter(diffPix >0) %>% select(year, Province, Commune, commGIS, di
 # most are only a few pixels. The largest gains are in Mondulkiri, and are pre most ELCs. Becuase the Bunong practise rotational agriculture this is not unbelievable 
 
 
-    # tot_pop ####
+    # tot_pop (RUN) ####
 
 hist(dat_merge$tot_pop)
 
@@ -763,10 +763,63 @@ ggplot(dat_merge, aes(dat_merge$tot_pop))+
   facet_grid(cols = vars(year))
 # slight dip in 2011 and 2012
 
-# plot all populatins
+# plot all populations
 ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
   geom_line()+
   theme(legend.position="none")
+
+# Plot populations by province
+ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Province), nrow = 2, ncol=12)+
+  theme(legend.position="none")
+# MOst obvious strange one is in Battambang
+
+# find the dodgy one in Battambang
+dat_merge %>% filter(Province=="Battambang" & tot_pop > 30000) %>% select(Province,Commune,tot_pop)
+# Boeng Pring
+
+dat_merge %>% filter(Commune=="Boeng Pring") %>% select
+# Clearly an error here. I will change the 2008 and 2010 values to the mean of the two years either side
+
+# check there are no other tot_pop values that are the same
+dat_merge %>% filter(tot_pop == 33525) %>% select(Province, Commune, tot_pop)
+# no
+
+# replace values
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, which(tot_pop==33525 & year==2008), 9390))
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, which(tot_pop==33525 & year==2010), 9614))
+
+
+# find the massive increase in Kampong Cham
+dat_merge %>% filter(Province=="Kampong Cham" & tot_pop >25000) %>% select(year,Commune,tot_pop)
+dat_merge %>% filter(Province=="Kampong Cham" & Commune=="Kaoh Roka") %>% select(year,Commune,tot_pop)
+# going from 8400 to 30,000 in one year is ridiculous.  There was a steady increase in population over th years, with a bigger incrase between 2010 and 2011.  It looks suspiciously like a typo - if the "2" wasn't there then tot_pop would be 9724 which would fit. However I don't know that so I will replace the value with the mean
+
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, tot_pop==29784, 7489))
+
+# check the huge drop in tot_pop in Battambang
+ggplot(dat_merge[dat_merge$Province=="Battambang",], 
+       aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
+       geom_line()
+
+dat_merge %>% filter(Province=="Battambang") %>% select(year,Commune,tot_pop)
+dat_merge %>% filter(Province=="Battambang" & Commune=="Sdau") %>% 
+              select(year,Commune,tot_pop)
+# it is a large drop in population, but the numbers are not identical or repeated (often a giveaway that it is an error), and I can't see any obvious suggestion that it is not correct.  I will leave it as it is
+
+
+# Find the odd "peak" in Sihanouk
+dat_merge %>% filter(Province=="Preah Sihanouk" & Commune=="Sangkat lek Bei") %>% select(year,tot_pop)
+# Sangkat lek Bei only exists in 2008, 2009, 2010. I can't find any evidence of the commune on the internet, so I think this is a historic one that no longer exists. Becasue of this, plus the odd shape (varying populatin of > 5000 between years) I will remove it.
+
+dat_merge <- dat_merge %>% filter(Commune != "Sangkat lek Bei")
+
+# find massive spike in Siem Reap
+dat_merge %>% filter(Province=="Siem Reap" & tot_pop > 35000) %>% select(year, Commune,tot_pop)
+dat_merge %>% filter(Province=="Siem Reap" & Commune=="Kouk Chak") %>% select(year,tot_pop)
+# right so what I think has happened is that the Commune Svay Dangkum was merged with Kouk Chak in 2010, because the former had a very high population previously, but then disappears in 2010, and the Kouk Chak suddenly shoots up the same population size as the one that has disappeared.  
+
 
     # family ####
 
