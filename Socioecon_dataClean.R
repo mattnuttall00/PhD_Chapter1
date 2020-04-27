@@ -1670,7 +1670,32 @@ ggplot(dat_merge, aes(y=dist_provCap))+
   facet_wrap(dat_merge$Province, nrow=2, ncol=12)
 
 
-# To check ####
+    # elc ####
 
-# There are issues with all of the livelihood variables.  there are differences in histogram shapes between the years pre-2011 and 2011 and 2012.  I think this is due to the structure of the CDB questions - they are much more detailed in 2011 and 2012, so perhaps this introduces more errors, or the way I am grouping them doesn't match the way the pre-2011 data were grouped in the questions. 
+ggplot(dat_merge, aes(x=year, y=elc))+
+  geom_count()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+
+
+# although in QGIS there are two ELCs in Battambang, the communes are not in the dat-merge dataset, therefore were removed at an earlier stage (e.g because of no forest)
+
+# All of the rest with no ELCs have none in the GIS layer so are correct. 
+
+    # PA ####
+
+ggplot(dat_merge, aes(x=year, y=PA))+
+  geom_count()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+
+# checked against GIS - all correct
+
+    # PA_cat ####
+
+ggplot(dat_merge, aes(x=year, y=PA_cat, colour=PA_cat))+
+  geom_count()+
+  facet_wrap(dat_merge$Province, nrow=2, ncol=12)
+# all look fine
+
+
+
 
