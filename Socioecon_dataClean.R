@@ -1710,21 +1710,24 @@ ggplot(dat_merge, aes(x=year, y=PA_cat, colour=PA_cat))+
 
 
 # Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, 
-# tot_ind, prop_ind, pop_den)
+                        # tot_ind, prop_ind, pop_den)
 
 popDenCor <- cor(dat_merge[8:15], use = "complete.obs")
 
-# as expected, total population, famliy, male, female, and over 61 population are all highly correlated with each other.
+# as expected, total population, famliy, male, female, and over 61 population are all highly correlated with each other. 
 
-# total indigneous and proportion indigenous are obviously correlated with each other, but not really with anything else which is good. I think proportion indigenous is the more important variable here, as it is proprtional to the population of the commune.
+# total indigneous and proportion indigenous are obviously correlated with each other, but not really with anything else which is good. I think proportion indigenous is the more important variable here, as it describes the ethnic makeup of the commune.
 
-# population density is also not highly correlated with anything.
+# population density is also not highly correlated with anything. This is becasue commune size is so variable and is nothing to do with total population. 
 
 # plot all
 datPop <- dat_merge %>% select(tot_pop,family,male_18_60,fem_18_60, pop_over61)
 pairs(datPop)
 
-# lets use PCA to see which variables out of the population ones above explain the most variation 
+# One argument would be to use the population of males, as in this cultural setting males are the most likely to be engaged in activities that might cause deforestation. But in reality, if there are more males then there will be more females and families (as we see in the correlation plots). And total population will also provide information about unrecorded "factors" such as urbanisation, resource demand, expansion of villages and towns etc. 
+
+
+# I think tot_pop is the most appropriate, but lets use PCA to see which variables out of the population ones above explain the most variation 
 datPop <- dat_merge %>% select(tot_pop,family,male_18_60,fem_18_60, pop_over61)
 popPCA <-  PCA(datPop, scale.unit=TRUE, ncp=5, graph=TRUE)
 
@@ -1763,6 +1766,21 @@ Popvars_plot_corrContrib
 ## population demographic variables selected are tot_pop, prop_ind, pop_den.
 
 
+  # Education ####
+
+
+# Education (F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill)
+datEdu <- dat_merge %>% select(F6_24_sch, M6_24_sch, F15_45_ill, M15_45_ill)
+
+EduCor <- cor(datEdu, use = "complete.obs")
+# as I expected, these are all correlated. 
+
+# plot all
+pairs(datEdu)
+
+# so really, all I actually need is one of the variables. I am going to use M6_24_sch, becasue in this cultural context, males are by far the most likely to be conducting activities that contribute to forest loss (land clearance, logging etc).  Because of the highly correlated nature of the set, I can say with quite a lot of confidence that when there are more males in school, there are also more females. And the more males that are in school, the higher the literacy rates are for boys and girls.  
+
+#
   # Employment ####
 
 
@@ -1772,7 +1790,7 @@ EmpCor <- cor(dat_merge[20:24], use = "complete.obs")
 
 # negative correlation between propPrimSec and propTerSec, and propPrimSec and propQuatSec
 
-# This makes sense - as the proportion of people employed in the primary sector increases, the proportion of people in the tertiary sector decreases - the proportions of these variables altogether make up the theoretical "whole" popopulation, and so as one decreases, some of the others must increase.  
+# This makes sense - as the proportion of people employed in the primary sector increases, the proportion of people in the tertiary and quaternary sector decreases - the proportions of these variables altogether make up the theoretical "whole" popopulation, and so as one decreases, some of the others must increase, and vice versa.  In the more rural provinces, I am expecting higher proprtions of people in the primary sector, and fewer people in the other sectors, whereas in more urban/developed provinces I will expect the opposite. I also expect that in communes/provinces with higher population density (generally more urbanised areas), I will see higher proportions of secondary, tertiary, and quaternary.
 
 # plot the relationships
 datEmp <- dat_merge[ ,20:24]
@@ -1814,8 +1832,27 @@ Empvars_plot_corrContrib <- fviz_pca_var(empPCA, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 Empvars_plot_corrContrib
 
-## propPrimSec and propSecSec have emerged as the winners. This is good - propPrimSec is probably the most intuitivel useful variable, and becasue of the correlation with TerSec and QuatSec we can say certain things about them even if they are not included.  Not sure whether SecSec will end up being useful, but it is not correlated with anything so no harm in including it. 
+## propPrimSec and propSecSec have emerged as the winners. This is good - propPrimSec is probably the most intuitively useful variable, and becasue of the correlation with TerSec and QuatSec we can say certain things about them even if they are not included.  Not sure whether SecSec will end up being useful, but it is not correlated with anything so no harm in including it. 
 
 ### employment variables selected are propPrimSec and propSecSec
 
 
+
+  # Economic security ####
+
+# Economic security (Les1_R_Land, pig_fam). Les_1_F_Land and buff_fam had to be removed as they were unreliable (See data cleaning section)
+
+datEcSec <- dat_merge %>% select(Les1_R_Land, pig_fam)
+
+# I imagine that these two variables will be slightly correlated - the communes with more people that have little or no rice land are likely to be the more urbanised areas, where they are also less likely to keep pigs. Likewise, if a family has pigs, they are also likely to have some land for rice, and vice versa.  
+
+EcSeccorr <- cor(datEcSec, use = "complete.obs")
+# huh, ok, perhaps not.
+
+# plot
+plot(datEcSec)
+# wow, that is literally the least amount of correlation I have ever seen. Interestingly, there a a bunch of communes where families have no rice land at all, but do keep pigs. Could these represent pig farms, where the primary income is raising pigs and therefore no need for cultivated land? 
+
+# This makes the decision easy - both variables are retained. 
+
+# one thing to keep in mind is the issue of families libing in cities or urbanised areas, but still having "family" farms out in the provinces. The commune databse doesn't specifiy whether the question relates to families having no rice land in the commune they reside in, or whether they have no rice land AT ALL.  If it is the former, you could expect that there will be a low proportion of families with no rice land even in urban areas, becasue the families are reporting that they do have rice land elsewhere.
