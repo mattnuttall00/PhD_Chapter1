@@ -1856,3 +1856,151 @@ plot(datEcSec)
 # This makes the decision easy - both variables are retained. 
 
 # one thing to keep in mind is the issue of families libing in cities or urbanised areas, but still having "family" farms out in the provinces. The commune databse doesn't specifiy whether the question relates to families having no rice land in the commune they reside in, or whether they have no rice land AT ALL.  If it is the former, you could expect that there will be a low proportion of families with no rice land even in urban areas, becasue the families are reporting that they do have rice land elsewhere.
+
+  # Access to services ####
+
+
+# Access to services (dist_sch, garbage, KM_Comm, KM_Heal_cent)
+
+datAccSec <- dat_merge %>% select(dist_sch, garbage, KM_Comm, KM_Heal_cent) 
+
+# I reckon that dist_sch, KM_Comm, and KM_Heal_cent may be in some way correlated, as distances to all of these things are likely to be large for communes in larger, more, remote, more sparsley populated Provinces. First because these provinces tend to be the more rural, poorer provinces and so access to services will be lower, but also because in these larger provinces, the communes tend to be larger too, meaning distances will be larger. garbage basically doesn't really exist outisde of the major urban centres, so not really sure about this one.
+
+AccSeccorr <- cor(datAccSec, use = "complete.obs")
+# distance to school and distance to health centre are correlated
+
+# plot them
+pairs(datAccSec)
+# If I had to choose one to pick with no other information, I would probably select dist_sch. This is becuase so much of the illegal forest clearance and logging is done by young lads, who are not in school.  Large distances to school I would imagine being a factor in them not going.  I'll run the PCA anyway and see what it looks like
+
+# PCA
+AccSecPCA <-  PCA(datAccSec, scale.unit=TRUE, ncp=5, graph=TRUE)
+
+# eigenvalues
+eig.val <- get_eigenvalue(AccSecPCA)
+
+# scree plot
+AccSecScree <- fviz_eig(AccSecPCA, addlabels = TRUE, ylim = c(0, 80))
+AccSecvars <- get_pca_var(AccSecPCA)
+
+# scree plot with cos2
+AccSecvars_plot_CorrCos2 <- fviz_pca_var(AccSecPCA, col.var = "cos2",
+                                       gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+                                       repel = TRUE)
+AccSecvars_plot_CorrCos2
+
+# cos2 values
+AccSecvars_cos2 <-corrplot(AccSecvars$cos2, is.corr=FALSE)
+
+# bar plot of cos2
+AccSecvars_cos2Bar <- fviz_cos2(AccSecPCA, choice = "var", axes = 1:2)
+
+# Contributions of variables to PC1
+AccSecvars_contrib_PC1 <- fviz_contrib(AccSecPCA, choice = "var", axes = 1)
+
+# Contributions of variables to PC2
+AccSecvars_contrib_PC2 <- fviz_contrib(AccSecPCA, choice = "var", axes = 2)
+
+# scree plot with colours by contribution
+AccSecvars_plot_corrContrib <- fviz_pca_var(AccSecPCA, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+AccSecvars_plot_corrContrib
+
+## Take home message is that ideally I choose to drop either dist_sch or KM_Heal_cen. Garbage and KM_Comm can stay for now.  For the reasons I describe above, I am going to selet dist_sch to move forward with
+
+## Final access to services variables are dist_sch, KM_Comm, garbage
+  # Social justice ####
+
+# Social justice (land_confl, crim_case)
+
+# I don't necesarily think that these two will be correlated.  I imagine that criminal cases will be higher in more densely populated, urban communes, whereas land conflicts will be in more rural areas.
+
+datSocJus <- dat_merge %>% select(land_confl, crim_case)
+
+# check correlation
+SocJuscorr <- cor(datSocJus, use = "complete.obs")
+# no correlation
+
+# plot
+ggplot(datSocJus, aes(x=land_confl, y=crim_case))+
+  geom_point()
+# some quite large outliers here
+
+## this means both variables will be taken forward
+
+  # Health ####
+
+# this no longer exists as I had to remove both variables due to poor data quality
+
+  # Migration ####
+
+# Migration (Pax_migt_in, Pax_migt_out)
+
+# I don't think these will be correlated because if a commune has a lot of in-migration then surely there wouldn't be much out-migration because people are normally pulled into an area for work, and so if an area has a lot of available opportunitie then not many people would be leaving.  I imagine that a lot of the more urban communes will have in-migration, although there will be some more rural areas that will be pulling people in because of things like land concessions that require a lot of man-power (and associated services)
+
+datMig <- dat_merge %>% select(Pax_migt_in, Pax_migt_out)
+
+# correlation
+migCorr <- cor(datMig, use = "complete.obs")
+# not entirely uncorrelated, but nothing major
+
+# plot them
+ggplot(datMig, aes(x=Pax_migt_in, y=Pax_migt_out))+
+  geom_point()
+# although the R is fairly low, there is a slight relationship in the form that I predicted - as in-migration increases, generally out-migration decreases.
+
+### both variables are selected to go forward
+  # Environmental additional ####
+
+# Environmental additional (mean_elev, habitat) 
+
+# no need to worry about correlation here, but interesting to plot them
+
+datEnv <- dat_merge %>% select(mean_elev, habitat)
+
+ggplot(datEnv, aes(x=habitat, y=mean_elev))+
+  geom_boxplot()
+
+# the highest elevation cluster of communes are broadleaved, evergreen forest. This is what I would expect becuase of places like Seima, the Cardamoms, and Stung Treng.  The habitat with the highest median elevation is mosaic (natural), i.e. mosaic of natural and cropland but natural cover is >50%.  no data (ND) and grassland (GL) have virtually no points, so I wonder whether I will need to take these communes out at some point.  Mosaic (inclusing trees, shrubs, herbaceous cover etc.) has the second highest meadiun elevation and also the second highest cluster of high elevation communes. Cropland (CP) has generally low elevation communes (low median), although it does have a cluster of higher elevation communes, between 100 and 200m.  Shrubland and broadleaved evergreen forest appear to have the most number of communes. 
+
+hist(datEnv$mean_elev)
+
+  # Human additional ####
+
+# Human additional (dist_border, dist_provCap, elc, PA, PA_cat)
+
+datHum <- dat_merge %>% select(dist_border, dist_provCap, elc, PA, PA_cat)
+# I don't think I can see any reason why dist_border and dist_ProvCap would be correlated. Distance to border will be affected by the location of the commune within the province,and the location of the province in the country. Whereas distance to provincial capital will be mostly affected by the size of the province, and the location of the commune within it.  I don't really see a relationship between size of province and location of province either.  
+
+# correlation for 2 continous vars
+Humcorr <- cor(datHum[ ,1:2], use = "complete.obs")
+# no correlation
+
+# plot 2 continuous vars
+ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
+  geom_point()
+# absolutely nowt
+
+# now include elc
+ggplot(datHum, aes(x=dist_border, y=dist_provCap, group=elc, colour=elc))+
+  geom_point()
+
+# facet wrap
+ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
+  geom_point()+
+  facet_wrap(datHum$elc, nrow=2)
+# no obvious relationship
+
+# now include PA
+ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
+  geom_point()+
+  facet_wrap(datHum$PA, nrow=2)
+
+# now include PA_cat
+ggplot(datHum, aes(x=dist_border, y=dist_provCap, group=PA_cat, colour=PA_cat))+
+  geom_point()
+
+# facet wrap
+ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
+  geom_point()+
+  facet_wrap(datHum$PA_cat, nrow=4)
