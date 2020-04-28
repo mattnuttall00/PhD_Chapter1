@@ -16,6 +16,9 @@ library('sf')
 library('ggmap')
 library('mapview')
 library('tmap')
+library("FactoMineR")
+library("factoextra")
+library("corrplot")
 
 #### Socioeconomic data -----------------------------------------------------------------
 ### Load socioeconomic variable and commune data ####
@@ -1697,5 +1700,66 @@ ggplot(dat_merge, aes(x=year, y=PA_cat, colour=PA_cat))+
 # all look fine
 
 
+#### Correlations ---------------------------------------------------------------------
+
+# lets look at the correlations within the different sets
+
+# Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, 
+# tot_ind, prop_ind, pop_den)
+
+popDenCor <- cor(dat_merge[8:15], use = "complete.obs")
+
+# as expected, total population, famliy, male, female, and over 61 population are all highly correlated with each other.
+
+# total indigneous and proportion indigenous are obviously correlated with each other, but not really with anything else which is good. I think proportion indigenous is the more important variable here, as it is proprtional to the population of the commune.
+
+# population density is also not highly correlated with anything.
+
+# lets use PCA to see which variables out of the population ones above explain the most variation 
+datPop <- dat_merge %>% select(tot_pop,family,male_18_60,fem_18_60, pop_over61)
+popPCA <-  PCA(datPop, scale.unit=TRUE, ncp=5, graph=TRUE)
+
+# eigenvalues
+eig.val <- get_eigenvalue(popPCA)
+
+# scree plot
+PopScree <- fviz_eig(popPCA, addlabels = TRUE, ylim = c(0, 80))
+Popvars <- get_pca_var(popPCA)
+
+# scree plot with cos2
+Popvars_plot_CorrCos2 <- fviz_pca_var(popPCA, col.var = "cos2",
+                                       gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+                                       repel = TRUE)
+Popvars_plot_CorrCos2
+
+# cos2 values
+Popvars_cos2 <-corrplot(Popvars$cos2, is.corr=FALSE)
+
+# bar plot of cos2
+Popvars_cos2Bar <- fviz_cos2(popPCA, choice = "var", axes = 1:2)
+
+# Contributions of variables to PC1
+Popvars_contrib_PC1 <- fviz_contrib(popPCA, choice = "var", axes = 1)
+
+# scree plot with colours by contribution
+Popvars_plot_corrContrib <- fviz_pca_var(popPCA, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+Popvars_plot_corrContrib
 
 
+# PCA on population variables using princomp() to get loadings
+prin_comp_pop <- prcomp(datPop, scale.=T)
+prin_comp_pop$rotation
+biplot(prin_comp_pop, scale=0)
+prin_comp_pop$x
+
+# rotate via varimax
+varimax <- varimax(prin_comp_pop$rotation)
+
+# rotate via varimax and get new scores (taken from https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r)
+rawLoadings     <- prin_comp_pop$rotation[,1:5] %*% diag(prin_comp_pop$sdev, 5, 5)
+scores <- scale(prin_comp_pop$x[,1:5]) %*% varimax(rawLoadings)$rotmat
+print(scores[1:5,])
+
+
+## tot_pop is the most powerful variable in the set. It contributes the most to PC1 (which is the only PC that has any power). This makes sense really - all of the other variables are simply different sections within tot_pop, and so by definition tot_pop will contain all of the information of the others.  
