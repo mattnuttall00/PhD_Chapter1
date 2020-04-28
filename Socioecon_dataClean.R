@@ -1700,9 +1700,14 @@ ggplot(dat_merge, aes(x=year, y=PA_cat, colour=PA_cat))+
 # all look fine
 
 
-#### Correlations ---------------------------------------------------------------------
+#### Variable selection - correlations & PCA -------------------------------------------
 
-# lets look at the correlations within the different sets
+
+# I will look at the correlations within the different sets.  If there are correlated variables (>0.5) then those variables will be put into a PCA, and the variable that contributes the most to the top priciple component will be selected. 
+
+
+  # Population demographics ####
+
 
 # Population demographics (tot_pop, family, male_18_60, fem_18_60, pop_over61, 
 # tot_ind, prop_ind, pop_den)
@@ -1714,6 +1719,10 @@ popDenCor <- cor(dat_merge[8:15], use = "complete.obs")
 # total indigneous and proportion indigenous are obviously correlated with each other, but not really with anything else which is good. I think proportion indigenous is the more important variable here, as it is proprtional to the population of the commune.
 
 # population density is also not highly correlated with anything.
+
+# plot all
+datPop <- dat_merge %>% select(tot_pop,family,male_18_60,fem_18_60, pop_over61)
+pairs(datPop)
 
 # lets use PCA to see which variables out of the population ones above explain the most variation 
 datPop <- dat_merge %>% select(tot_pop,family,male_18_60,fem_18_60, pop_over61)
@@ -1747,19 +1756,66 @@ Popvars_plot_corrContrib <- fviz_pca_var(popPCA, col.var = "contrib",
 Popvars_plot_corrContrib
 
 
-# PCA on population variables using princomp() to get loadings
-prin_comp_pop <- prcomp(datPop, scale.=T)
-prin_comp_pop$rotation
-biplot(prin_comp_pop, scale=0)
-prin_comp_pop$x
-
-# rotate via varimax
-varimax <- varimax(prin_comp_pop$rotation)
-
-# rotate via varimax and get new scores (taken from https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r)
-rawLoadings     <- prin_comp_pop$rotation[,1:5] %*% diag(prin_comp_pop$sdev, 5, 5)
-scores <- scale(prin_comp_pop$x[,1:5]) %*% varimax(rawLoadings)$rotmat
-print(scores[1:5,])
-
-
 ## tot_pop is the most powerful variable in the set. It contributes the most to PC1 (which is the only PC that has any power). This makes sense really - all of the other variables are simply different sections within tot_pop, and so by definition tot_pop will contain all of the information of the others.  
+
+
+
+## population demographic variables selected are tot_pop, prop_ind, pop_den.
+
+
+  # Employment ####
+
+
+# Employment (propPrimLivFarm, propPrimSec, propSecSec, propTerSec, propQuatSec)
+
+EmpCor <- cor(dat_merge[20:24], use = "complete.obs")
+
+# negative correlation between propPrimSec and propTerSec, and propPrimSec and propQuatSec
+
+# This makes sense - as the proportion of people employed in the primary sector increases, the proportion of people in the tertiary sector decreases - the proportions of these variables altogether make up the theoretical "whole" popopulation, and so as one decreases, some of the others must increase.  
+
+# plot the relationships
+datEmp <- dat_merge[ ,20:24]
+pairs(datEmp)
+# despite a low R value, there is a clear relationship between propPrimLivFarm and propPrimSec, which is what I was expecting - the two variables are covering the same thing, just propPrimSec includes extra information (fishing, NTFP etc.).  Because propPrimSec includes more information of interest, I am inclinde to use this variable. But I will have a lok at the PCA results. 
+
+# I will also need to see the PCA results for propTerSec and propQuatSec, as they are correlated with propPrimSec.  Again, I am inclined to just use PropPrimSec, as this includes information on occupations that are relevant to deforestation, and I can now say that as propPrimSec goes up (down) the other sectors are likely to down (up).
+
+# PCA
+empPCA <-  PCA(datEmp, scale.unit=TRUE, ncp=5, graph=TRUE)
+
+# eigenvalues
+eig.val <- get_eigenvalue(empPCA)
+
+# scree plot
+EmpScree <- fviz_eig(empPCA, addlabels = TRUE, ylim = c(0, 80))
+Empvars <- get_pca_var(empPCA)
+
+# scree plot with cos2
+Empvars_plot_CorrCos2 <- fviz_pca_var(empPCA, col.var = "cos2",
+                                       gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+                                       repel = TRUE)
+Empvars_plot_CorrCos2
+
+# cos2 values
+Empvars_cos2 <-corrplot(Empvars$cos2, is.corr=FALSE)
+
+# bar plot of cos2
+Empvars_cos2Bar <- fviz_cos2(empPCA, choice = "var", axes = 1:2)
+
+# Contributions of variables to PC1
+Empvars_contrib_PC1 <- fviz_contrib(empPCA, choice = "var", axes = 1)
+
+# Contributions of variables to PC2
+Empvars_contrib_PC2 <- fviz_contrib(empPCA, choice = "var", axes = 2)
+
+# scree plot with colours by contribution
+Empvars_plot_corrContrib <- fviz_pca_var(empPCA, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+Empvars_plot_corrContrib
+
+## propPrimSec and propSecSec have emerged as the winners. This is good - propPrimSec is probably the most intuitivel useful variable, and becasue of the correlation with TerSec and QuatSec we can say certain things about them even if they are not included.  Not sure whether SecSec will end up being useful, but it is not correlated with anything so no harm in including it. 
+
+### employment variables selected are propPrimSec and propSecSec
+
+
