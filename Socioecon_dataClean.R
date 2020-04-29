@@ -1780,6 +1780,7 @@ pairs(datEdu)
 
 # so really, all I actually need is one of the variables. I am going to use M6_24_sch, becasue in this cultural context, males are by far the most likely to be conducting activities that contribute to forest loss (land clearance, logging etc).  Because of the highly correlated nature of the set, I can say with quite a lot of confidence that when there are more males in school, there are also more females. And the more males that are in school, the higher the literacy rates are for boys and girls.  
 
+# education var selected is  M6_24_sch
 #
   # Employment ####
 
@@ -1855,7 +1856,7 @@ plot(datEcSec)
 
 # This makes the decision easy - both variables are retained. 
 
-# one thing to keep in mind is the issue of families libing in cities or urbanised areas, but still having "family" farms out in the provinces. The commune databse doesn't specifiy whether the question relates to families having no rice land in the commune they reside in, or whether they have no rice land AT ALL.  If it is the former, you could expect that there will be a low proportion of families with no rice land even in urban areas, becasue the families are reporting that they do have rice land elsewhere.
+# one thing to keep in mind is the issue of families living in cities or urbanised areas, but still having "family" farms out in the provinces. The commune databse doesn't specifiy whether the question relates to families having no rice land in the commune they reside in, or whether they have no rice land AT ALL.  If it is the former, you could expect that there will be a low proportion of families with no rice land even in urban areas, becasue the families are reporting that they do have rice land elsewhere.
 
   # Access to services ####
 
@@ -1950,6 +1951,8 @@ ggplot(datMig, aes(x=Pax_migt_in, y=Pax_migt_out))+
 # although the R is fairly low, there is a slight relationship in the form that I predicted - as in-migration increases, generally out-migration decreases.
 
 ### both variables are selected to go forward
+
+
   # Environmental additional ####
 
 # Environmental additional (mean_elev, habitat) 
@@ -2042,5 +2045,29 @@ ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   facet_wrap(datHum$PA_cat, nrow=4)
 # gap in communes with MUA between 30-75km from a border.  Communes with more than one category (MULTI) tend to have higher values of distance to capital. This could suggest that communes with multiple PAs are in more remote communes in the larger, more remote provinces. This fits with my expectation. National parks and Ramsar sites do not exit in communes further away from the border than 100kmm which means they all exist in provinces close to a border, than than in the middle of the country. For wildlife sanctuaries, there are two "groups" of communes. The first group includes communes that are close to a border (generally <50km), and they have a wider spread of dist_ProvCap values. The second group have larger dist_border values (>75km) and also higher dist_ProvCap values. 
 
+#### FINAL DATASET ----------------------------------------------------------------------
 
 
+str(dat_merge)
+
+# based on the above variable exploration and selection, I will remove the vars I don't want
+dat_use <- dat_merge %>% select(year,Province, Commune,commGIS,areaKM,ForPix,diffPix,
+                                tot_pop, prop_ind, pop_den,
+                                M6_24_sch,
+                                propPrimSec, propSecSec,
+                                Les1_R_Land, pig_fam,
+                                dist_sch, garbage, KM_Comm,
+                                land_confl, crim_case,
+                                Pax_migt_in, Pax_migt_out,
+                                mean_elev, habitat,
+                                dist_border, dist_provCap, elc, PA, PA_cat)
+
+str(dat_use)
+
+# re-classify the variables
+dat_use$year <- as.factor(dat_use$year)
+dat_use$elc <- as.factor(dat_use$elc)
+dat_use$PA <- as.factor(dat_use$PA)
+
+# write file
+write.csv(dat_use, file="Data/commune/dat_use.csv")
