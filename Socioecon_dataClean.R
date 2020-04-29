@@ -1981,26 +1981,66 @@ ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   geom_point()
 # absolutely nowt
 
-# now include elc
+### ELC
+
+# Two continous vars split by elc
 ggplot(datHum, aes(x=dist_border, y=dist_provCap, group=elc, colour=elc))+
   geom_point()
 
-# facet wrap
+# boxplot with dist_border and ELC presence
+ggplot(datHum, aes(x=as.factor(elc), y=dist_border))+
+  geom_boxplot()
+# in general, communes with ELCs are closer to a border. This is what I expected - ELCs tend to be placed in the more remote, rural provinces (which also have the most forest and natural cover).
+
+# boxplot with dist_ProvCap and ELC presence
+ggplot(datHum, aes(x=as.factor(elc), y=dist_provCap))+
+  geom_boxplot()
+# communes with ELCs on average are further away from provincial capitals. ELcs tend to be placed in more remote, forested areas, so this doesn't come as a big surprise. 
+
+# count plot comparing ELC presence and PA presence
+ggplot(datHum, aes(x=as.factor(elc), y=as.factor(PA)))+
+  geom_count()
+# Interesting. Obviously most communes have neither ELC nor PA.  But then next biggest category is communes with no ELC and a PA.  I suppose this is a good thing!  The next biggest category is communes with and ELC and no PA.  I suppose this is also a good thing!
+
+# facet wrap contunous vars, split by ELC presence
 ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   geom_point()+
   facet_wrap(datHum$elc, nrow=2)
-# no obvious relationship
+# no obvious relationship. The only thing I can see is that there is slightly more variation (spread) in distance to provincial capital in communes that are close to the border. One explanation for this would be that the communes closer to a border are larger, and so the avergae distance to the capital is larger. Although this doesn't explain the spread in the other direction.  Perhaps it's just that there are more communes with small dist_border values and so there is more deviation jsut because there are more points.
 
-# now include PA
+
+### PA 
+
+# continuous vars split by PA presence
 ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   geom_point()+
   facet_wrap(datHum$PA, nrow=2)
+# slight wiggly shape in the communes with no PA. No obvious other pattern though
 
 # now include PA_cat
 ggplot(datHum, aes(x=dist_border, y=dist_provCap, group=PA_cat, colour=PA_cat))+
   geom_point()
 
-# facet wrap
+# boxplot of dist_border and PA presence
+ggplot(datHum, aes(x=as.factor(PA), y=dist_border))+
+  geom_boxplot()
+# interestingly, there is no real difference here
+
+# boxplot of dist_ProvCap and PA presence
+ggplot(datHum, aes(x=as.factor(PA), y=dist_provCap))+
+  geom_boxplot()
+# This is probably what I would expect - communes with PAs are more remote and further away from urban centres.  They are also more likely to be in the larger, more remote provinces where ditances in general are larger. 
+
+# count plot of PA and PA_cat
+ggplot(datHum, aes(x=as.factor(PA), y=PA_cat))+
+  geom_count()
+# most PAs are wildlife sanctuaries, followed by multi-use areas, then National Parks
+
+# plot both continuous vars split by PA_cat
 ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   geom_point()+
   facet_wrap(datHum$PA_cat, nrow=4)
+# gap in communes with MUA between 30-75km from a border.  Communes with more than one category (MULTI) tend to have higher values of distance to capital. This could suggest that communes with multiple PAs are in more remote communes in the larger, more remote provinces. This fits with my expectation. National parks and Ramsar sites do not exit in communes further away from the border than 100kmm which means they all exist in provinces close to a border, than than in the middle of the country. For wildlife sanctuaries, there are two "groups" of communes. The first group includes communes that are close to a border (generally <50km), and they have a wider spread of dist_ProvCap values. The second group have larger dist_border values (>75km) and also higher dist_ProvCap values. 
+
+
+
