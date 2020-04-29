@@ -2064,10 +2064,5 @@ dat_use <- dat_merge %>% select(year,Province, Commune,commGIS,areaKM,ForPix,dif
 
 str(dat_use)
 
-# re-classify the variables
-dat_use$year <- as.factor(dat_use$year)
-dat_use$elc <- as.factor(dat_use$elc)
-dat_use$PA <- as.factor(dat_use$PA)
-
 # write file
 write.csv(dat_use, file="Data/commune/dat_use.csv")
