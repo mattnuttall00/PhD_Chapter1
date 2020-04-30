@@ -465,3 +465,109 @@ summary(glm.prim_sec_year_in)
 plot_model(glm.prim_sec_year_in, type="int")
 
 # Not sure what is really happening here. There's clearly an odd relatinonship between the two variables. There is only really an interaction in 2008 and 2010. I would probably be inclinde to just drop propSecSec, as I'm not really sure what it contributes to my hypotheses. 
+
+  ## Economic security ####
+    # Les_1_R_Land ####
+
+# plot var
+ggplot(dat, aes(x=Les1_R_Land, y=ForPix))+
+  geom_point()
+# looks like as proportion of people with less than 1 ha of rice land increases, the amount of forest in the commune decreases
+
+# split by year
+ggplot(dat, aes(x=Les1_R_Land, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+
+# simple model
+glm.rice <- glm(ForPix ~ Les1_R_Land, data=dat, family=poisson)
+summary(glm.rice)
+# negative effect
+
+
+# create new data for plotting
+newricedat <- data.frame(Les1_R_Land = seq(0,1,length.out = 100))
+
+# predict
+glm.rice.pred <- predict(glm.rice, newdata = newricedat, type="response", se=T)
+newricedat <- cbind(newricedat, glm.rice.pred)
+newricedat <- newricedat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newricedat, aes(x=Les1_R_Land, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=Les1_R_Land, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newricedat, size=1)
+
+
+# add year
+glm.rice_year <- glm(ForPix ~ Les1_R_Land + year, data=dat, family=poisson)
+summary(glm.rice_year)
+# varying effects of year
+
+# create new data
+newriceYeardat <- expand.grid(year = c("2007","2008","2009","2010","2011","2012"),
+                              Les1_R_Land = seq(0,1,length.out = 100))
+
+# predict
+riceYearpred <- predict(glm.rice_year, newdata=newriceYeardat, type = "response", se=T)
+newriceYeardat <- cbind(newriceYeardat,riceYearpred)
+
+# plot
+ggplot(newriceYeardat, aes(x=Les1_R_Land, y=fit, group=year, colour=year))+
+  geom_line()
+# 2011 and 2012 look different to the earlier years. 
+
+# interaction with year
+glm.rice_year_int <- glm(ForPix ~ Les1_R_Land*year, data=dat, family=poisson)
+summary(glm.rice_year_int)
+# the effect of Les1_R_Land gets larger with each subsequent year
+
+# compare models
+anova(glm.rice_year,glm.rice_year_int, test="Chisq")
+# interaction model is better
+
+# plot
+plot_model(glm.rice_year_int, type="int")
+# So for example, in 2007 if you have no people with no rice land then forest cover is high, and as you increase the proportion of people with no rice land, the amount of forest cover drops more steeply. Then in 2011, the forest cover starts lower with no people with no rice land, but doesn't drop nearly as quickly as you increase the proportion of people with no rice land. In 2012, forest cover starts high when you have no people with no rice land, and has a slope somewhere in the middle of 2007 and 2011.  
+
+# main point here is that as you increase the proportion of people with less than 1ha of rice land, you will have less forest. This could reflect the fact that in more urbanised areas, that have less forest, you have fewer people with agricultural land.
+
+    # pig_fam ####
+
+# plot var
+ggplot(dat, aes(x=pig_fam, y=ForPix))+
+  geom_point()
+# not much of a pattern here that I can see
+
+# split by year
+ggplot(dat, aes(x=pig_fam, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# no discernable difference
+
+# simple model
+glm.pig <- glm(ForPix ~ pig_fam, data=dat, family=poisson)
+summary(glm.pig)
+# positive effect
+
+
+# create new data for plotting
+newpigdat <- data.frame(pig_fam = seq(0,1,length.out = 100))
+
+# predict
+glm.rice.pred <- predict(glm.rice, newdata = newricedat, type="response", se=T)
+newricedat <- cbind(newricedat, glm.rice.pred)
+newricedat <- newricedat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newricedat, aes(x=Les1_R_Land, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=Les1_R_Land, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newricedat, size=1)
