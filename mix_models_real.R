@@ -254,3 +254,214 @@ plot_model(glm.demog_totDen_int, type="int")
 
 # mmm ok.  So I think what is happening here is that when population density is very high, then it is irrelevant what the total population is - there is no forest (see the pop_den plots). This reflects generally smaller, urban communes, cities etc.  But when population density is very low, then total population seems to have a positive effect. I think this may be because communes that have larger absolute populations but very low densities, these are the large, remote communes which probably have quite a lot of forest. The total populations are relatively "large" just because they are geographically large communes (many villages), but their density is actually very low.  These are probably the communes in Mondulkiri, Rattanikiri, Stung Treng, Koh Kong etc. where there is a lot of forest. 
 # The pop_den data isn't very nice, so I wonder whether later on if I include commune size as an offset, then this will acount for the issue above without the need to incluide pop_den.
+  ## Education ####
+    # M6_24_sch ####
+
+# only one variables in this set as they were all highly correlated. See data clean script for more details
+
+# plot the variable against ForPix
+ggplot(dat, aes(x=M6_24_sch, y=ForPix))+
+  geom_point()
+# Communes with very low proportion of boys in school and very high proportions of boys in school tend to have less forest. The communes with between 50-75% of boys in school tend to have the most forest.
+
+# lets see what a simple model says (no year)
+glm.edu <- glm(ForPix ~ M6_24_sch, data=dat, family=poisson)
+summary(glm.edu)
+# negative effect
+
+# create new data for plotting
+newEdudat <- data.frame(M6_24_sch = seq(0,1,length.out = 100))
+
+# predict
+glm.edu.pred <- predict(glm.edu, newdata = newEdudat, type="response", se=T)
+newEdudat <- cbind(newEdudat, glm.edu.pred)
+newEdudat <- newEdudat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newEdudat, aes(x=M6_24_sch, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=M6_24_sch, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newEdudat, size=1)
+# pretty shitty fit
+
+# add year
+glm.edu_year <- glm(ForPix ~ M6_24_sch + year, data=dat, family=poisson)
+summary(glm.edu_year)
+# asuming M6_24_sch == 0, 2008, 2009, and 2010 have a positive effect on forest relative to 2007, but 2011 and 2012 have negative effects relative to 2007
+
+# interaction
+glm.edu_year_int <- glm(ForPix ~ M6_24_sch*year, data=dat, family=poisson)
+summary(glm.edu_year_int)
+# the effect of year on the effect of M6_24_sch varies depending on the year
+
+# plot it
+plot_model(glm.edu_year_int, type="int")
+# again 2011 and 2012 have more forest relative to earlier years at lower values of education.  If I'm honest, I am not really sure what this means.
+
+# take home message for now is that communes with more children in school have less forest. This is probably reflecting that fact that school attendance is going to be much lower in remote, forested communes compared with higher attendance in urbanised communes, that don't have much forest
+  ## Employment ####
+    # propPrimSec ####
+
+# plot the var
+ggplot(dat, aes(x=propPrimSec, y=ForPix))+
+  geom_point()
+# communes with a higher proprtion of people employed in the primary sector tend to have more forest. This makes sense as the more rural, remote communes tend to have more forest, and these are the communes where more people are going to be farmers, fisherman etc.
+
+# split by year
+ggplot(dat, aes(x=propPrimSec, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+
+# simple model, no year
+glm.primsec <- glm(ForPix ~ propPrimSec, data=dat, family=poisson)
+summary(glm.primsec)
+# as expected, positive effect
+
+# create new data for plotting
+newPrimSecdat <- data.frame(propPrimSec = seq(0.01,1,length.out = 100))
+
+# predict
+glm.PrimSec.pred <- predict(glm.primsec, newdata = newPrimSecdat, type="response", se=T)
+newPrimSecdat <- cbind(newPrimSecdat, glm.PrimSec.pred)
+newPrimSecdat <- newPrimSecdat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newPrimSecdat, aes(x=propPrimSec, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=propPrimSec, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newPrimSecdat, size=1)
+# not a massive effect
+
+# include year
+glm.PrimSec_year <- glm(ForPix ~ propPrimSec + year, data=dat, family=poisson)
+summary(glm.PrimSec_year)
+# assuming propPrimSec == 0, subsequent years have a negative effect on forest relative to 2007, until 2011 and 2012 where it becomes positive
+
+# interaction
+glm.PrimSec_year_int <- glm(ForPix ~ propPrimSec * year, data=dat, family=poisson)
+summary(glm.PrimSec_year_int)
+# now the effect of year (when propPrimSec ==  0) relative to 2007 are all negative. In each subsequent year, the effect of propPrimSec gets larger
+
+# compare models
+anova(glm.PrimSec_year,glm.PrimSec_year_int, test="Chisq")
+# interaction model is better
+
+# plot interaction
+plot_model(glm.PrimSec_year_int, type="int")
+# don't have an explanation for this yet
+
+    # propSecSec ####
+
+# plot var
+ggplot(dat, aes(x=propSecSec, y=ForPix))+
+  geom_point()
+# opposite of PrimSec. This makes sense I suppose - in communes with more people employed in the production sector, you are probably talking about more urbanised communes that will have less forest. Ugly data though - most communes have very small values for propSecSec
+
+# plot split by year
+ggplot(dat, aes(x=propSecSec, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# different shape of data in 2011 and 2012. This could be an artefact of the changing questions in the commune database...
+
+# simple model
+glm.SecSec <- glm(ForPix ~ propSecSec, data=dat, family = poisson)
+summary(glm.SecSec)
+# as expected - negative effect
+
+# create new data for plotting
+newSecSecdat <- data.frame(propSecSec = seq(0,0.85,length.out = 100))
+
+# predict
+glm.SecSec.pred <- predict(glm.SecSec, newdata = newSecSecdat, type="response", se=T)
+newSecSecdat <- cbind(newSecSecdat, glm.SecSec.pred)
+newSecSecdat <- newSecSecdat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newSecSecdat, aes(x=propSecSec, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=propSecSec, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newSecSecdat, size=1)
+
+
+# model with year
+glm.SecSec_year <- glm(ForPix ~ propSecSec + year, data=dat, family=poisson)
+summary(glm.SecSec_year)
+# assuming propSecSec==0, then subsequent years have negative effect on forest, relative to 2007
+
+# interacion with year
+glm.SecSec_year_int <- glm(ForPix ~ propSecSec * year, data=dat, family=poisson)
+summary(glm.SecSec_year_int)
+# the effect of propSecSec gets larger (i.e. more negative) in subsequent years
+
+# compare models
+anova(glm.SecSec_year, glm.SecSec_year_int, test="Chisq")
+# interaction model is better
+
+# plot
+plot_model(glm.SecSec_year_int, type="int")
+# 2007:2010 all have virtually identical effects. Big difference in effect of 2011 and 2012 on the effect of propSecSec.  In these later two years the effect of propSecSec becomes much larger. In the eariler years, propSecSec actually has very little effect on forest cover. I am concerned this is because of the changes in the questions in the commune database in 2011
+
+    # All employment vars ####
+
+# fit simple model with both vars
+glm.Emp <- glm(ForPix ~ propPrimSec + propSecSec, data=dat, family=poisson)
+summary(glm.Emp)
+# the effect of propSecSec has reversed direction (from negative to positive)
+
+# include year
+glm.Emp_year <- glm(ForPix ~ propPrimSec + propSecSec + year, data=dat, family=poisson)
+summary(glm.Emp_year)
+# including year has increased the effect size of PrimSec, but reducd the effect size of SecSec
+
+# create new data for plotting
+newprimdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
+                          propPrimSec = seq(0.01,1, length.out = 100),
+                          propSecSec = 0)
+
+newsecdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
+                          propPrimSec = 0,
+                          propSecSec = seq(0,0.85,length.out = 100))
+
+# predict
+glm.Prim_year_pred <- predict(glm.Emp_year, newdata=newprimdata, type="response", se=T)
+newprimdata <- cbind(newprimdata,glm.Prim_year_pred)
+
+glm.Sec_year_pred <- predict(glm.Emp_year, newdata=newsecdata, type="response", se=T)
+newsecdata <- cbind(newsecdata,glm.Sec_year_pred)
+
+# plot propPrimSec
+ggplot(newprimdata, aes(x=propPrimSec, y=fit, group=year, colour=year))+
+  geom_line()
+
+# plot propSecSec
+ggplot(newsecdata, aes(x=propSecSec, y=fit, group=year, colour=year))+
+  geom_line()
+
+# the partial effect of propSecSec is completely opposite to the effect of the variable when modelled alone. Let's check what the interaction between the two vars looks like
+
+# model with interaction between propPrimSec and propSecSec
+glm.prim_sec_int <- glm(ForPix ~ propPrimSec*propSecSec, data=dat, family=poisson)
+summary(glm.prim_sec_int)
+# the effect size of PrimSec on forest increases with unit increase of SecSec
+
+# plot interaction
+plot_model(glm.prim_sec_int, type="int")
+# hmm, this looks dodgy
+
+# test 3-way interaciton with year
+glm.prim_sec_year_in <- glm(ForPix ~ propPrimSec*propSecSec*year, data=dat, family=poisson)
+summary(glm.prim_sec_year_in)
+
+# plot 3-way interaction
+plot_model(glm.prim_sec_year_in, type="int")
+
+# Not sure what is really happening here. There's clearly an odd relatinonship between the two variables. There is only really an interaction in 2008 and 2010. I would probably be inclinde to just drop propSecSec, as I'm not really sure what it contributes to my hypotheses. 
