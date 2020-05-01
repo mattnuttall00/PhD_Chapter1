@@ -425,10 +425,10 @@ summary(glm.Emp_year)
 # create new data for plotting
 newprimdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
                           propPrimSec = seq(0.01,1, length.out = 100),
-                          propSecSec = 0)
+                          propSecSec = 0.008)
 
 newsecdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
-                          propPrimSec = 0,
+                          propPrimSec = 0.87,
                           propSecSec = seq(0,0.85,length.out = 100))
 
 # predict
@@ -559,15 +559,110 @@ summary(glm.pig)
 newpigdat <- data.frame(pig_fam = seq(0,1,length.out = 100))
 
 # predict
-glm.rice.pred <- predict(glm.rice, newdata = newricedat, type="response", se=T)
-newricedat <- cbind(newricedat, glm.rice.pred)
-newricedat <- newricedat %>% rename(ForPix = fit)
+glm.pig.pred <- predict(glm.pig, newdata = newpigdat, type="response", se=T)
+newpigdat <- cbind(newpigdat, glm.pig.pred)
+newpigdat <- newpigdat %>% rename(ForPix = fit)
 
 # plot the fit by iteslf
-ggplot(newricedat, aes(x=Les1_R_Land, y=ForPix))+
+ggplot(newpigdat, aes(x=pig_fam, y=ForPix))+
   geom_line()
 
 # plot the fit with the points
-ggplot(NULL, aes(x=Les1_R_Land, y=ForPix))+
+ggplot(NULL, aes(x=pig_fam, y=ForPix))+
   geom_point(data=dat)+
-  geom_line(data=newricedat, size=1)
+  geom_line(data=newpigdat, size=1)
+# not an overwhelming relationship. But as the proportion of families with pigs increase, so does forest cover
+
+
+# include year
+glm.pig_year <- glm(ForPix ~ pig_fam + year, data=dat, family=poisson)
+summary(glm.pig_year)
+# The intercept for the fit for each year would be slightly higher in each year relative to 2007
+
+# create new data
+newpigYeardat <- expand.grid(year = c("2007","2008","2009","2010","2011","2012"),
+                              pig_fam = seq(0,1,length.out = 100))
+
+# predict
+pigYearpred <- predict(glm.pig_year, newdata=newpigYeardat, type = "response", se=T)
+newpigYeardat <- cbind(newpigYeardat,pigYearpred)
+
+# plot
+ggplot(newpigYeardat, aes(x=pig_fam, y=fit, group=year, colour=year))+
+  geom_line()
+
+
+# year as interaction
+glm.pig_year_int <- glm(ForPix ~ pig_fam * year, data=dat, family = poisson)
+summary(glm.pig_year_int)
+# this changes the direction the intercepts move relative to 2007. Year has a positive effect on the effect of pig_fam i.e. with each year, the effect size of pig_fam gets larger
+
+# plot
+plot_model(glm.pig_year_int, type="int")
+# the stand out year here is 2012 - with low values of pig_fam, you have less forest, but as pig_fam increases, the slope is much steeper than the other years
+    # All economic security vars ####
+
+# simple model with both vars
+glm.pigrice <- glm(ForPix ~ pig_fam + Les1_R_Land, data=dat, family=poisson)
+summary(glm.pigrice)
+# both directions of effects are the same as they were in individual models, but the effect size of rice has decreased
+
+# plot partial effects
+
+# create new data
+pigricedat <- expand.grid(pig_fam =  seq(0,1,length.out = 100),
+                          Les1_R_Land = mean(dat$Les1_R_Land))
+
+ricepigdat <- expand.grid(Les1_R_Land = seq(0,1,length.out = 100),
+                          pig_fam = mean(dat$pig_fam))
+
+# predict
+pigrice_pred <- predict(glm.pigrice, newdata = pigricedat, type="response", se=T)
+pigricedat <- cbind(pigricedat,pigrice_pred)
+ricepig_pred <- predict(glm.pigrice, newdata = ricepigdat, type="response", se=T)
+ricepigdat <- cbind(ricepigdat,ricepig_pred)
+
+# plot
+ggplot(pigricedat, aes(x=pig_fam, y=fit))+
+  geom_line()
+
+ggplot(ricepigdat, aes(x=Les1_R_Land, y=fit))+
+  geom_line()
+
+
+# test interaction between vars
+glm.pigrice_int <- glm(ForPix ~ pig_fam * Les1_R_Land, data=dat, family=poisson)
+summary(glm.pigrice_int)
+# significant interaction - with every unit increase of pig_fam, the effect size of rice decreases
+
+# plot
+plot_model(glm.pigrice_int, type="int")
+# so when rice land is low, pig_fam has a much larger effect on forest. When rice is high, the effect of pig_fam is much less
+
+# plot other way around
+plot_model(glm.pigrice_int, type="pred", terms = c("Les1_R_Land","pig_fam"))
+# when pig_fam is low, the effect size of rice land is lower, and vice versa. 
+
+# add year
+glm.pigrice_year <- glm(ForPix ~ pig_fam + Les1_R_Land + year, data=dat, family=poisson)
+summary(glm.pigrice_year)
+# not very disimilar to the previous individual models with year
+
+# plot
+plot_model(glm.pigrice_year, type="pred", terms = c("Les1_R_Land","pig_fam","year"))
+# looks like 2011 and 2012 are different
+
+# test interactions
+glm.pigriceyear_int <- glm(ForPix ~ pig_fam * Les1_R_Land * year, data=dat, family=poisson)
+summary(glm.pigriceyear_int)
+
+# plot
+plot_model(glm.pigriceyear_int, type="int")
+plot_model(glm.pigriceyear_int, type="pred", terms = c("Les1_R_Land","pig_fam","year"))
+
+# compare models
+anova(glm.pigrice_year,glm.pigriceyear_int, test="Chisq")
+# model with interactions is better
+
+# summary here is that when lots of people have less than 1ha of rice land, then the proportion of families who keep pigs has a much larger effect on predicting forest cover. The size of the effects and teh differences in the effects of the interaction changes between years.
+# When the proportion of families with pigs is very high, in 2007 and 2009 this causes a stonger effect of rice land on predicting forest cover. This interaction doesn't seem to have much of an effect in the other years.  
