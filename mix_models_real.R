@@ -666,3 +666,91 @@ anova(glm.pigrice_year,glm.pigriceyear_int, test="Chisq")
 
 # summary here is that when lots of people have less than 1ha of rice land, then the proportion of families who keep pigs has a much larger effect on predicting forest cover. The size of the effects and teh differences in the effects of the interaction changes between years.
 # When the proportion of families with pigs is very high, in 2007 and 2009 this causes a stonger effect of rice land on predicting forest cover. This interaction doesn't seem to have much of an effect in the other years.  
+
+  ## Access to services ####
+
+# dist_sch, garbage, KM_Comm
+
+    # dist_sch ####
+
+# plot var
+ggplot(dat, aes(x=dist_sch, y=ForPix))+
+  geom_point()
+# this looks like a positive trend - as median distance to school increases, so does forest cover
+
+# split by year
+ggplot(dat, aes(x=dist_sch, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# no obvious difference
+
+# simple model
+glm.school <- glm(ForPix ~ dist_sch, data=dat, family=poisson)
+summary(glm.school)
+# sig positive relationship
+
+# plot
+plot_model(glm.school, type="pred")
+
+
+# add year
+glm.sch_year <- glm.school <- glm(ForPix ~ dist_sch + year, data=dat, family=poisson)
+summary(glm.sch_year)
+# intercepts are sig differnet from 2007, and move up
+
+# plot 
+plot_model(glm.sch_year, type="pred", terms = c("dist_sch","year"))
+# in each subsequent year, amount of forest increases more with each extra km to a school. This is interesting becausse I doubt the distances to school within a given commune change that much over time (some will change as schools get built or moved etc). So I'm not really sure why this would be
+
+# add interaction
+glm.sch_year_int <- glm(ForPix ~ dist_sch * year, data=dat, family=poisson)
+summary(glm.sch_year_int)
+# in each subsequent year the effect of distance to school increases relative to 2007, except for 2009, when it is lower
+
+# plot
+plot_model(glm.sch_year_int, type="int")
+
+
+    # garbage ####
+
+# plot var
+ggplot(dat, aes(x=garbage, y=ForPix))+
+  geom_point()
+# not pretty
+
+# simple model
+glm.garbage <- glm(ForPix ~ garbage, data=dat, family=poisson)
+summary(glm.garbage)
+# negative effect
+
+# plot
+plot_model(glm.garbage, type="pred")
+
+
+# add year
+glm.garbage_year <- glm(ForPix ~ garbage + year, data=dat, family=poisson)
+summary(glm.garbage_year)
+# year has a negative effect
+
+# plot
+plot_model(glm.garbage_year, type="pred", terms = c("garbage","year"))
+# virtually no difference
+
+# test interaction
+glm.garbage_year_int <- glm(ForPix ~ garbage * year, data=dat, family=poisson)
+summary(glm.garbage_year_int)
+# in 2008 the effect of garbage on forest cover goes down (relative to 2007), in all other years it goes up
+
+# plot
+plot_model(glm.garbage_year_int, type="int")
+# so in 2007 and 2008, the effect of garbage on forest cover is larger - the slopes are much steeper. All the other years have much flatter curves
+
+# commues with more people who have access to garbage have less forest cover - again this is reflecting urbanised areas I think
+
+    # KM_Comm ####
+
+# plot var
+ggplot(dat, aes(x=KM_Comm, y=ForPix))+
+  geom_point()
+
+# hang on - is this variable appropriate
