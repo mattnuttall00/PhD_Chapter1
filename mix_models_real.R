@@ -840,4 +840,24 @@ summary(glm.AccServ_int_year)
 plot_model(glm.AccServ_int_year, type="int")
 
 
+# test 3-way interactions
+glm.AccServ_int_year2 <- glm(ForPix ~  dist_sch * KM_Comm * year, 
+                            data=dat, family=poisson)
+summary(glm.AccServ_int_year2)
 
+plot_model(glm.AccServ_int_year2, type="int")
+#  when distances to KM_Comm are high, distance to school has a small, negative effect on forest cover. When distances to KM_Comm are low, distance to school has a larger, positive effect on forest cover. year doesn't have a huge impact on the shape of the relationship, except for 2009
+
+glm.AccServ_int_year3 <- glm(ForPix ~  dist_sch * garbage * year, 
+                            data=dat, family=poisson)
+summary(glm.AccServ_int_year3)
+
+plot_model(glm.AccServ_int_year3, type="int")
+# distance to school and garbage don't really have a relationship
+
+glm.AccServ_int_year4 <- glm(ForPix ~ KM_Comm * garbage * year, 
+                            data=dat, family=poisson)
+summary(glm.AccServ_int_year4)
+
+plot_model(glm.AccServ_int_year4, type="int")
+# this model is throwing an error I don't understand when I try to plot it
