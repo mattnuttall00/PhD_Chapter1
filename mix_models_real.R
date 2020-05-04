@@ -752,5 +752,92 @@ plot_model(glm.garbage_year_int, type="int")
 # plot var
 ggplot(dat, aes(x=KM_Comm, y=ForPix))+
   geom_point()
+# looks like a positive relationship here
 
-# hang on - is this variable appropriate
+# split by year
+ggplot(dat, aes(x=KM_Comm, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# doesn't look differnet, which is what I was expecting. The vast majority of villages won't get a different distance to the commmune office, as neither village nor office changes over time. Of course in a few cases they will (ie if the office moves), but this should be rare
+
+# simple model
+glm.Comm <- glm(ForPix ~ KM_Comm, data=dat, family=poisson)
+summary(glm.Comm)
+# positive effect
+
+# plot
+plot_model(glm.Comm, type="pred")
+
+# add year
+glm.Comm_year <- glm(ForPix ~ KM_Comm + year, data=dat, family=poisson)
+summary(glm.Comm_year)
+# effect of year is negative for each year relative to 2007
+
+# plot 
+plot_model(glm.Comm_year, type="pred", terms = c("KM_Comm","year"))
+# very little difference - 2012 (and maybe 2011?) are slightly different from the rest
+
+# add interaction
+glm.Comm_year_int <- glm(ForPix ~ KM_Comm * year, data=dat, family=poisson)
+summary(glm.Comm_year_int)
+# variation in effects - some years make the effect of KM_Comm larger, some smaller
+
+# plot
+plot_model(glm.Comm_year_int, type="int")
+# not a huge interaction, but the slopes do change in the different years
+
+## take home message - the communes where the median distance from a given village to the commune office is large, have more forest.  This probably, to some degree, reflects the fact that the more remote communes that are larger and in larger provinces, do tend to have more forest.
+
+    # All access to services vars ####
+
+# simple model with all vars
+glm.AccServ <- glm(ForPix ~ dist_sch + garbage + KM_Comm, data=dat, family=poisson)
+summary(glm.AccServ)
+# similar effect for dist_sch (small, positive), similar effect for garbage but reduced effect size (negative), similar effect for KM_Comm (small, positive)
+
+# plot partial effects
+plot_model(glm.AccServ, type="pred")
+
+# add year
+glm.AccServ_year <- glm(ForPix ~ dist_sch + garbage + KM_Comm + year, data=dat, family=poisson)
+summary(glm.AccServ_year)
+# years have small positive effects relative to 2007
+
+# plot
+plot_model(glm.AccServ_year, type="pred", terms=c("dist_sch","year"))
+plot_model(glm.AccServ_year, type="pred", terms=c("garbage","year"))
+plot_model(glm.AccServ_year, type="pred", terms=c("KM_Comm","year"))
+
+# test interactions between vars (no year)
+glm.AccServ_int <- glm(ForPix ~  dist_sch * garbage * KM_Comm, data=dat, family=poisson)
+summary(glm.AccServ_int)
+
+# plot
+plot_model(glm.AccServ_int, type="int")
+
+# simplify
+glm.AccServ_int2 <- glm(ForPix ~  dist_sch * garbage + KM_Comm, data=dat, family=poisson)
+summary(glm.AccServ_int2)
+
+# compare
+anova(glm.AccServ_int,glm.AccServ_int2, test="Chisq")
+# complex model better
+
+# simplify
+glm.AccServ_int3 <- glm(ForPix ~  dist_sch + garbage * KM_Comm, data=dat, family=poisson)
+summary(glm.AccServ_int3)
+
+# compare
+anova(glm.AccServ_int,glm.AccServ_int3, test="Chisq")
+# complex model better
+
+# interactions with year
+glm.AccServ_int_year <- glm(ForPix ~  dist_sch*year + KM_Comm*year + garbage*year, 
+                            data=dat, family=poisson)
+summary(glm.AccServ_int_year)
+
+# plot
+plot_model(glm.AccServ_int_year, type="int")
+
+
+
