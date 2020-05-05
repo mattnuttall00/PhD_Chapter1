@@ -1,6 +1,8 @@
 #### This is the data aggregating and data cleaning code for the socioeconomic analysis of chapter 2 (data chapter 1) in my PhD.  The data are from the Commune Database of Cambodia for the years 2007-2012. The land cover data are from the European Space Agency Climate Change Initiative satellite.
 
-##  To skip data aggregation process load 'dat_merge' file from "LOAD LATEST VERSION" line 1060
+##  To skip data aggregation & cleaning process load 'dat_merge' file from "LOAD LATEST VERSION" line 1610
+
+## If errors are detected in raw data, they must be fixed in socioecon_vars_07-12.csv and then all data aggregation and cleaning must be run again and the corrected version saved as dat_merge. 
 
 #### Load libraries ####
 
@@ -19,6 +21,9 @@ library('tmap')
 library("FactoMineR")
 library("factoextra")
 library("corrplot")
+
+# make sure select() is dplyr, not MASS otherwise loads of code won't work
+select <- dplyr::select
 
 #### Socioeconomic data -----------------------------------------------------------------
 ### Load socioeconomic variable and commune data ####
@@ -301,27 +306,27 @@ compare11_12 <- anti_join(missing.11, missing.12, by="commGIS")
 
 # 2007
 join07 <- inner_join(dat.07.agg, forest07.agg, by="commGIS")
-join07 <- join07 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join07 <- join07 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2008
 join08 <- inner_join(dat.08.agg, forest08.agg, by="commGIS")
-join08 <- join08 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join08 <- join08 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2009
 join09 <- inner_join(dat.09.agg, forest09.agg, by="commGIS")
-join09 <- join09 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join09 <- join09 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2010
 join10 <- inner_join(dat.10.agg, forest10.agg, by="commGIS")
-join10 <- join10 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join10 <- join10 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2011
 join11 <- inner_join(dat.11.agg, forest11.agg, by="commGIS")
-join11 <- join11 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join11 <- join11 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # 2012
 join12 <- inner_join(dat.12.agg, forest12.agg, by="commGIS")
-join12 <- join12 %>% select(-year.y) %>% dplyr::rename(year=year.x)
+join12 <- join12 %>% dplyr::select(-year.y) %>% dplyr::rename(year=year.x)
 
 # merge datasets
 dat_merge <- rbind(join07,join08,join09,join10,join11,join12)
@@ -1479,6 +1484,14 @@ dat_merge %>% filter(land_confl > 100) %>% select(year,Province,Commune,land_con
 hist(dat_merge$crim_case)
 # Mostly very low, which I can believe. Cambodia has a relatively low crime rate, plus what crime there is a lot will go un-reported
 
+# split by year
+ggplot(dat_merge, aes(pop_den))+
+  geom_histogram()+
+  facet_wrap(dat_merge$year, nrow=2)
+# 2009 looks odd compared to the other years. I will check in the raw data
+
+# error with raw data in 2009 - fixed now.
+
 # check high values
 dat_merge %>% filter(crim_case > 0.05) %>% select(year,Province,Commune,crim_case,tot_pop)
 # Pailin is on the Thai border, Battambang is a very large city, Kampong Cham in what Phnom Penh sprawls into. Same with Kampong Speu.  Sihanouk - no surprises there. All those make sens to me.  Not sure about Rattanikiri or Kracheh though.  NO way of verifying or checking though, so will have to go with it.
@@ -1562,13 +1575,13 @@ ggplot(dat_merge[dat_merge$Commune=="Trapeang Prasat",], aes(x=year, y=tot_pop))
 # plot doesn't make it look unreasonable, but the identical numbers do. The rest of the migration figures suggest decreasing migration. I will set the populatin and migration values for those two years to be the mean of the two years either side
 
 # Pax_migt_in
-(dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
+dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
                                                         which(Pax_migt_in==2584 & year==2008),
                                                         880))
 
 dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in, 
                                                         which(Pax_migt_in==2584 & year==2010),
-                                                        521)))
+                                                        521))
 
 # I will change the population in the tot_pop section
 
@@ -1608,6 +1621,7 @@ write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 dat_merge <- read.csv("Data/commune/dat_merge.csv")
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
+dat_merge$year <- as.factor(dat_merge$year)
 
     # habitat ####
 
