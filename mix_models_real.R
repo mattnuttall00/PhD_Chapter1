@@ -1206,7 +1206,7 @@ ggplot(dat, aes(x=mean_elev, y=ForPix))+
   geom_point()
 # looks like a positive relationship
 
-# should.t change over time but plot anyway
+# shouldn't change over time but plot anyway
 ggplot(dat, aes(x=mean_elev, y=ForPix))+
   geom_point()+
   facet_wrap(dat$year, nrow=2)
@@ -1248,4 +1248,85 @@ summary(glm.elev_year_int)
 plot_model(glm.elev_year_int, type="int")
 # hmm, not really much of an interaction there
 
-# basically, the higher elevation communes have more forest cover. This is what I was expecting
+# basically, the higher elevation communes have more forest cover. This is what I was expecting - Koh Kong, Mondulkiri, Rattanikiri etc. 
+
+    # habitat ####
+
+# I am unsure about habitat. It made sense when I was using forest loss as a response (ie difference in pixels between years), because habitat could predict where forest was lost. But now I am using just raw forest cover, I am not really sure what habitat would be telling me? Surely it will just be telling me what kind of forest is dominant in forested communes, and what level of mosaic is in less forested communes?
+
+# plot
+ggplot(dat, aes(x=habitat, y=ForPix))+
+  geom_point()
+
+# split by year
+ggplot(dat, aes(x=habitat, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# doesn't look like much change
+
+# simple model
+glm.hab <- glm(ForPix ~ habitat, data=dat, family=poisson)
+summary(glm.hab)
+# all habitats have larger intercept than cropland (unsurprisingly), except grassland. But GL only has one point I think
+
+# plot
+plot_model(glm.hab, type="pred")
+# Not sure this is telling me much
+
+# add year
+glm.hab_year <- glm(ForPix ~ habitat + year, data=dat, family=poisson)
+summary(glm.hab_year)
+# intercepts for 2008:2011 are larger than 2007. 2012 is lower
+
+# plot
+plot_model(glm.hab_year, type="pred", terms=c("habitat","year"))
+# virtually no difference between years
+
+# interaction
+glm.hab_year_int <- glm(ForPix ~ habitat * year, data=dat, family=poisson)
+summary(glm.hab_year_int)
+
+# plot
+plot_model(glm.hab_year_int, type="int")
+# the only potentially interesting thing here is that the number of forest pixels in a commune that is predominanlty deciduous broadleaf forest goes down in 2011 and 2012. 
+
+
+    # All environmental vars ####
+
+# simple model
+glm.env <- glm(ForPix ~ mean_elev + habitat, data=dat, family=poisson)
+summary(glm.env)
+# slightly reduced effect size for elevation. Habitat looks similar 
+
+# plot
+plot_model(glm.env, type="pred", terms=c("mean_elev","habitat"))
+# elevation has no effect unless the commune is broadleaved, or mosaic of natural cover.  Looks like a farily strong interaction
+
+# interaction
+glm.env_int <- glm(ForPix ~ mean_elev * habitat, data=dat[!(dat$habitat=="nd" | dat$habitat=="NF"),], 
+                   family=poisson)
+summary(glm.env_int)
+# had to remove nd (no data) and NF (flooded forest) as they were sending the plot haywire and I coudln't see what was going on with the rest
+
+# plot
+plot_model(glm.env_int, type="int", terms = c("mean_elev","habitat"))
+# so elevation is actually only useful for predicting forest cover when the communes is predominantly crop land, water, or broadleaved deciduous. In communes with other habitats/land covers, elevation makes no difference. This is potentially interesting/useful
+
+# interaction with year too
+glm.env_year_int <- glm(ForPix ~ mean_elev * habitat * year, 
+                        data=dat[!(dat$habitat=="nd" | dat$habitat=="NF"| dat$habitat=="W"),], 
+                        family=poisson)
+summary(glm.env_year_int)
+# That's a silly number of coefficients
+
+# plot
+plot_model(glm.env_year_int, type="int")
+# Interesting. So as above, elevation is a good predictor of forest cover only when the commune is predominantly cropland or BLD, until 2011 and 2012. In 2011 and 2012 this effect dramaticlly reduces for BLD communes 
+
+# interaction between vars and year
+glm.env_year_int2 <- glm(ForPix ~ mean_elev*year + habitat*year, data=dat, family=poisson)
+summary(glm.env_year_int2)
+
+# plot
+plot_model(glm.env_year_int2, type="int")
+# not much difference from the plots in the individual variable sections
