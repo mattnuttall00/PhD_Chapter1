@@ -1197,3 +1197,55 @@ plot_model(glm.migration_year_int, type="int")
 
 
 ## so accounting for year is really important for in-migration - the direction of the effect changes in 2011.  Year also has an important impact on the effect size of out-migration.  In earlier years, communes with high in-migration were the communes with lots of forest. After 2011, the communes with higher levels of in-migration had low forest cover. I wonder if this reflects a shift in migration patterns from people migrating out to the provinces for work (perhaps to work on plantations?), to people migrating to urban areas to work (textiles? industry?). Across all years, communes with more people migrating out tend to have more forest cover. This what I expected - people leaving the remote, rural communes to move into urban areas in search of work. 
+
+  ## Environmental variables ####
+    # mean_elev ####
+
+# plot
+ggplot(dat, aes(x=mean_elev, y=ForPix))+
+  geom_point()
+# looks like a positive relationship
+
+# should.t change over time but plot anyway
+ggplot(dat, aes(x=mean_elev, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+
+# simple model
+glm.elev <- glm(ForPix ~ mean_elev, data=dat, family=poisson)
+summary(glm.elev)
+# positive relationship
+
+# plot
+elev_plot <- plot_model(glm.elev, type="pred")
+
+# extract data from above
+newelevdat <- data.frame(ForPix = elev_plot$mean_elev$data$predicted,
+                          mean_elev = elev_plot$mean_elev$data$x)
+                          
+
+# plot the fit with the points
+ggplot(NULL, aes(x=mean_elev, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newelevdat, size=1)
+# not a great model fit but quite a large effect
+
+# add year
+glm.elev_year <- glm(ForPix ~ mean_elev + year, data=dat, family=poisson)
+summary(glm.elev_year)
+# intercept goes down each year
+
+# plot
+plot_model(glm.elev_year, type="pred", terms=c("mean_elev","year"))
+# not much change
+
+# interaction
+glm.elev_year_int <- glm(ForPix ~ mean_elev * year, data=dat, family=poisson)
+summary(glm.elev_year_int)
+# years from 2008:2010 increase the effect of elevation, 2011 and 2012 decrease it
+
+# plot
+plot_model(glm.elev_year_int, type="int")
+# hmm, not really much of an interaction there
+
+# basically, the higher elevation communes have more forest cover. This is what I was expecting
