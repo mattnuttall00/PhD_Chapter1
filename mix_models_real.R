@@ -838,6 +838,7 @@ summary(glm.AccServ_int_year)
 
 # plot
 plot_model(glm.AccServ_int_year, type="int")
+# Partial effects with interaction with year shows that as distance to school increases, so does forest cover, with variation in slope between years (particularly 2009 and 2007). As distance to commune office increases, so does forest cover (2007, 2008, 2010 effects are similar, and 2009, 2011, 2012 are similar). As the proportion of families with access to garbage collection increases, forest cover decreases. Some year effects - 2007, 2008 and 2009 have much steeper negative slopes than 2010:2012.
 
 
 # test 3-way interactions
@@ -861,3 +862,125 @@ summary(glm.AccServ_int_year4)
 
 plot_model(glm.AccServ_int_year4, type="int")
 # this model is throwing an error I don't understand when I try to plot it
+  ## Social justice ####
+    # crim_case ####
+
+# plot var
+ggplot(dat, aes(x=crim_case, y=ForPix))+
+  geom_point()
+# Looks like a negative slope
+
+# split by year
+ggplot(dat, aes(x=crim_case, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# no obvious differences between years. 2011 maybe slightly different
+
+# simple model
+glm.crim <- glm(ForPix ~ crim_case, data=dat, family=poisson)
+summary(glm.crim)
+# hmm positive effect. I think this might be the outliers
+
+visreg(glm.crim)
+
+# create new data for plotting
+newcrimdat <- data.frame(crim_case = seq(0,0.054,length.out = 100))
+
+# predict
+glm.crim.pred <- predict(glm.crim, newdata = newcrimdat, type="response", se=T)
+newcrimdat <- cbind(newcrimdat, glm.crim.pred)
+newcrimdat <- newcrimdat %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newcrimdat, aes(x=crim_case, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=crim_case, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newcrimdat, size=1)
+# I think there is one outlier that is skewing the fit
+
+# ID the outlier
+dat %>% filter(crim_case > 0.03 & ForPix > 10000) %>% select(year,Province,Commune,crim_case,ForPix)
+# 2009 -> Kracheh -> Boeng Char
+
+# remove the outlier
+test_crim <- dat[!(dat$year == "2009" & dat$Commune == "Boeng Char"), ]
+test_crim %>% filter(year=="2009" & Commune=="Boeng Char")
+
+# fit new model
+glm.crim_sub <- glm(ForPix ~ crim_case, data=test_crim, family=poisson)
+summary(glm.crim_sub)
+# still positive
+
+# new data
+newcrimdat2 <- data.frame(crim_case = seq(0,0.054,length.out = 100))
+
+# predict
+glm.crim.pred2 <- predict(glm.crim_sub, newdata = newcrimdat2, type="response", se=T)
+newcrimdat2 <- cbind(newcrimdat2, glm.crim.pred2)
+newcrimdat2 <- newcrimdat2 %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newcrimdat2, aes(x=crim_case, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=crim_case, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newcrimdat2, size=1)
+# same fit!  ok, remove the other outliers
+
+
+# remove other outliers
+test_crim2 <- test_crim %>% filter(!crim_case > 0.035)
+
+# fit new model
+glm.crim_sub2 <- glm(ForPix ~ crim_case, data=test_crim2, family=poisson)
+summary(glm.crim_sub2)
+# even larger positive effect...
+
+# new data
+newcrimdat3 <- data.frame(crim_case = seq(0,0.054,length.out = 100))
+
+# predict
+glm.crim.pred3 <- predict(glm.crim_sub2, newdata = newcrimdat3, type="response", se=T)
+newcrimdat3 <- cbind(newcrimdat3, glm.crim.pred3)
+newcrimdat3 <- newcrimdat3 %>% rename(ForPix = fit)
+
+# plot the fit by iteslf
+ggplot(newcrimdat3, aes(x=crim_case, y=ForPix))+
+  geom_line()
+
+# plot the fit with the points
+ggplot(NULL, aes(x=crim_case, y=ForPix))+
+  geom_point(data=test_crim2)+
+  geom_line(data=newcrimdat3, size=1)
+# ok, so it wasn't the outliers!
+
+
+# test year (back to original data)
+glm.crim_year <- glm(ForPix ~ crim_case + year, data=dat, family=poisson)
+summary(glm.crim_year)
+# woah. When year is accounted for, effect of crim_case is massive. each year has a negative effect relative to 2007
+
+plot_model(glm.crim_year, type="pred", terms=c("crim_case","year"))
+# very little difference between years
+
+# test interaction
+glm.crim_year_int <- glm(ForPix ~ crim_case * year, data=dat, family = poisson)
+summary(glm.crim_year_int)
+# so 2008:2010 reduce the effect size of crim_case, but 2011 ans 2012 massively increase the effect size
+
+# plot
+plot_model(glm.crim_year_int, type="int")
+# 2012 having a very large influence. Doesn't seem to match with what I was expecting based on the scatter plots....2012 data didn't look massively different
+
+## main message at the moment is that as the criminal case per captia increases, so does forest cover. This is the opposite of what I was expecting. I was expecting the more densely populated, urban areas with less forest to have higher per capita crime.
+
+# plot crim_case split by province to check my hypithesis
+ggplot(dat, aes(crim_case))+
+  geom_histogram()+
+  facet_wrap(dat$Province, nrow=4)
+# ok so provinces like Koh Kong, Rattanikiri, Stung Treng do have crim-case values that look higher than say, Phmom Penh.  
