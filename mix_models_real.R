@@ -983,7 +983,9 @@ plot_model(glm.crim_year_int, type="int")
 ggplot(dat, aes(crim_case))+
   geom_histogram()+
   facet_wrap(dat$Province, nrow=4)
-# ok so provinces like Koh Kong, Rattanikiri, Stung Treng do have crim-case values that look higher than say, Phmom Penh.  
+# ok so provinces like Koh Kong, Rattanikiri, Stung Treng do have crim-case values that look higher than say, Phmom Penh. 
+
+
     # land_confl ####
 
 # plot
@@ -1065,3 +1067,133 @@ summary(glm.SocJus_year_int)
 # plot
 plot_model(glm.SocJus_year_int, type="int")
 # 2012 is very different to all other years.
+  ## Migration ####
+    # Pax_migt_in ####
+
+# plot
+ggplot(dat, aes(x=Pax_migt_in, y=ForPix))+
+  geom_point()
+
+# split by year
+ggplot(dat, aes(x=Pax_migt_in, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# 2011 and 2012 look slightly different - more communes with higher migration but lower forest
+
+# simple model
+glm.migin <- glm(ForPix ~ Pax_migt_in, data=dat, family=poisson)
+summary(glm.migin)
+# negative effect - as in-migraion increases, forest cover decreases
+
+# plot
+migin_plot <- plot_model(glm.migin, type="pred")
+
+# extract data from above
+newmigindat <- data.frame(ForPix = migin_plot$Pax_migt_in$data$predicted,
+                          Pax_migt_in = migin_plot$Pax_migt_in$data$x)
+                          
+
+# plot the fit with the points
+ggplot(NULL, aes(x=Pax_migt_in, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newmigindat, size=1)
+
+
+# add year
+glm.migin_year <- glm(ForPix ~ Pax_migt_in + year, data=dat, family=poisson)
+summary(glm.migin_year)
+# 2008, 2011, and 2012 have higher intercept relative to 2007, but 2009 and 2010 are lower
+
+# plot
+plot_model(glm.migin_year, type="pred", terms=c("Pax_migt_in","year"))
+
+# add interaction
+glm.migin_year_int <- glm(ForPix ~ Pax_migt_in * year, data=dat, family=poisson)
+summary(glm.migin_year_int)
+# direciton of effect changes to positive, and each year from 2008:2010 adds to the effect, but 2011 and 2012 reverse it
+
+# plot
+plot_model(glm.migin_year_int, type="int")
+# Interesting. So pre-2011, as the number of in-migrants to a commune increases, so does the forest cover. But in 2011 and 2012, this completely changes - as the number of in-migrants increase in a commune, the forest cover decreases so far that once you get beyond ~1000 migrants, forest cover = 0. I wonder if this reflects a surge in migration to urban areas that have no forest cover in 2011 onwards
+
+
+    # Pax_migt_out ####
+
+# plot
+ggplot(dat, aes(x=Pax_migt_out, y=ForPix))+
+  geom_point()
+
+# split by year
+ggplot(dat, aes(x=Pax_migt_out, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# 2011 and 2012 show a different pattern - more communes with high levels of out-migration and very low forest cover
+
+# simple model
+glm.migout <- glm(ForPix ~ Pax_migt_out, data=dat, family=poisson)
+summary(glm.migout)
+# negative effect
+
+# plot
+migout_plot <- plot_model(glm.migout, type="pred")
+
+# extract data from above
+newmigoutdat <- data.frame(ForPix = migout_plot$Pax_migt_out$data$predicted,
+                          Pax_migt_out = migout_plot$Pax_migt_out$data$x)
+                          
+
+# plot the fit with the points
+ggplot(NULL, aes(x=Pax_migt_out, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newmigoutdat, size=1)
+# very sharp decline in forest cover as out-migration increases. As soon as you get more than 1000 ou-migrants, forest cover is essentially 0
+
+# add year
+glm.migout_year <- glm(ForPix ~ Pax_migt_out + year, data=dat, family=poisson)
+summary(glm.migout_year)
+# variable effects of year - 2008, 2011, 2012 larger intercepts than 2007, whereas 2009 and 2010 are lower
+
+# plot
+plot_model(glm.migout_year, type="pred", terms=c("Pax_migt_out","year"))
+# not huge differences
+
+# add interaction
+glm.migout_year_int <- glm(ForPix ~ Pax_migt_out * year, data=dat, family=poisson)
+summary(glm.migout_year_int)
+# year reduces the steepness of the slope to varying degrees
+
+# plot
+plot_model(glm.migout_year_int, type="int")
+# 2007 and 2009 very steep slopes, 2011 in the middle, 2008, 2010, 2012 are a bit flatter
+
+    # All migration vars ####
+
+# simple model
+glm.migration <- glm(ForPix ~ Pax_migt_in + Pax_migt_out, data=dat, family = poisson)
+summary(glm.migration)
+# in-migration direction reversed to small positive. out-mig effect very similar
+
+# plot partial effects
+plot_model(glm.migration, type="pred")
+
+# add year
+glm.migration_year <- glm(ForPix ~ Pax_migt_in + Pax_migt_out + year, data=dat, family = poisson)
+summary(glm.migration_year)
+# main effects are similar. variable effect of year on intercept
+
+# plot partial effects with year
+plot_model(glm.migration_year, type="pred", terms=c("Pax_migt_in","year"))
+# larger effect of 2011 and 2012 than other years
+plot_model(glm.migration_year, type="pred", terms=c("Pax_migt_out","year"))
+# still not much apparent difference between years
+
+# interaction with year
+glm.migration_year_int <- glm(ForPix ~ Pax_migt_in*year + Pax_migt_out*year, data=dat, family=poisson)
+summary(glm.migration_year_int)
+# so for in-migration, each subsequent year makes the positive slope a bit steeper until 2011 and 2012 after which the direction of the effect changes. With each year the effect of out-migration gets less (flatter curve)
+
+# plot
+plot_model(glm.migration_year_int, type="int")
+
+
+## so accounting for year is really important for in-migration - the direction of the effect changes in 2011.  Year also has an important impact on the effect size of out-migration.  In earlier years, communes with high in-migration were the communes with lots of forest. After 2011, the communes with higher levels of in-migration had low forest cover. I wonder if this reflects a shift in migration patterns from people migrating out to the provinces for work (perhaps to work on plantations?), to people migrating to urban areas to work (textiles? industry?). Across all years, communes with more people migrating out tend to have more forest cover. This what I expected - people leaving the remote, rural communes to move into urban areas in search of work. 
