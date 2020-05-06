@@ -21,7 +21,7 @@ dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TR
 dat <- dat[ ,-1]
 
 # re-classify the variables
-dat$year <- as.factor(dat$year)
+dat$year <- as.numeric(dat$year)
 dat$elc <- as.factor(dat$elc)
 dat$PA <- as.factor(dat$PA)
 
@@ -726,6 +726,9 @@ summary(glm.garbage)
 # plot
 plot_model(glm.garbage, type="pred")
 
+# convert year to continuous
+dat$year <- as.numeric(as.character(dat$year))
+str(dat)
 
 # add year
 glm.garbage_year <- glm(ForPix ~ garbage + year, data=dat, family=poisson)
@@ -734,6 +737,7 @@ summary(glm.garbage_year)
 
 # plot
 plot_model(glm.garbage_year, type="pred", terms = c("garbage","year"))
+plot_model(glm.garbage_year, type="pred", terms = c("year","garbage"))
 # virtually no difference
 
 # test interaction
@@ -742,7 +746,7 @@ summary(glm.garbage_year_int)
 # in 2008 the effect of garbage on forest cover goes down (relative to 2007), in all other years it goes up
 
 # plot
-plot_model(glm.garbage_year_int, type="int")
+plot_model(glm.garbage_year_int, type="pred", terms=c("year","garbage"))
 # so in 2007 and 2008, the effect of garbage on forest cover is larger - the slopes are much steeper. All the other years have much flatter curves
 
 # commues with more people who have access to garbage have less forest cover - again this is reflecting urbanised areas I think
@@ -1330,3 +1334,214 @@ summary(glm.env_year_int2)
 # plot
 plot_model(glm.env_year_int2, type="int")
 # not much difference from the plots in the individual variable sections
+  ## Human additional variables ####
+    # dist_border ####
+
+# plot
+ggplot(dat, aes(x=dist_border, y=ForPix))+
+  geom_point()
+# doesn't look like much of a pattern here
+
+# split by year
+ggplot(dat, aes(x=dist_border, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+# some minor changes perhaps
+
+# simple model
+glm_border <- glm(ForPix ~ dist_border, data=dat, family=poisson)
+summary(glm_border)
+# small negative effect
+
+# plot
+border_plot <- plot_model(glm_border, type="pred")
+# this suggests that communes closer to an international border tend to have more forest cover. This is what I was expecting (e.g. mondulkiri, rattankiri, koh kong, preah vihear, stung treng etc)
+
+# extract data from above
+newborderdat <- data.frame(ForPix = border_plot$dist_border$data$predicted,
+                          dist_border = border_plot$dist_border$data$x)
+                          
+
+# plot the fit with the points
+ggplot(NULL, aes(x=dist_border, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newborderdat, size=1)
+
+
+# add year
+glm_border_year <- glm(ForPix ~ dist_border + year, data=dat, family=poisson)
+summary(glm_border_year)
+# intercept value goes down in each subsequent year from 2007
+
+# plot
+plot_model(glm_border_year, type="pred", terms=c("dist_border","year"))
+# This suggests the amount of forest cover is decreasing over time (as distance to border doesn't change)
+
+# interaction
+glm_border_year_int <- glm(ForPix ~ dist_border * year, data=dat, family=poisson)
+summary(glm_border_year_int)
+
+# plot
+plot_model(glm_border_year_int, type="int")
+# not really much of an interaction
+
+    # dist_provCap ####
+
+# plot
+ggplot(dat, aes(x=dist_provCap, y=ForPix))+
+  geom_point()
+# looks like a positive effect
+
+# split by year
+ggplot(dat, aes(x=dist_provCap, y=ForPix))+
+  geom_point()+
+  facet_wrap(dat$year, nrow=2)
+
+# simple model
+glm.provCap <- glm(ForPix ~ dist_provCap, data=dat, family=poisson)
+summary(glm.provCap)
+# positive effect - i.e. communes further away from the provincial capital have more forest cover
+
+# plot
+provCap_plot <- plot_model(glm.provCap, type="pred")
+
+# extract data from above
+newprovCapdat <- data.frame(ForPix = provCap_plot$dist_provCap$data$predicted,
+                          dist_provCap = provCap_plot$dist_provCap$data$x)
+                          
+
+# plot the fit with the points
+ggplot(NULL, aes(x=dist_provCap, y=ForPix))+
+  geom_point(data=dat)+
+  geom_line(data=newprovCapdat, size=1)
+# remote communes (far away from provincial capital) have way more forest 
+
+# add year
+glm.provCap_year <- glm(ForPix ~ dist_provCap + year, data=dat, family=poisson)
+summary(glm.provCap_year)
+# year has negative effect on intercept relative to 2007
+
+# plot 
+plot_model(glm.provCap_year, type="pred", terms=c("dist_provCap","year"))
+# very little difference
+
+# interaction
+glm.provCap_year_int <- glm(ForPix ~ dist_provCap * year, data=dat, family=poisson)
+summary(glm.provCap_year_int)
+# each year increases the effect size of dist_provCap by a very small amount
+
+# plot
+plot_model(glm.provCap_year_int, type="int")
+# 2011 and 2012 have larger effect on slope than other years
+    # elc ####
+
+# plot
+ggplot(dat, aes(x=elc, y=ForPix))+
+  geom_boxplot()
+# unsurprisingly, communes with lots of forest are more likely to have ELCs
+
+# split by year
+ggplot(dat, aes(x=elc, y=ForPix))+
+  geom_boxplot()+
+  facet_wrap(dat$year, nrow=2)
+# I think you can see an increase in communes with ELCs over time, and that those communes tend to be more forested
+
+# simple model
+glm.elc <- glm(ForPix ~ elc, data=dat, family=poisson)
+summary(glm.elc)
+# positive relationship between elc==1 and forest cover
+
+# plot
+plot_model(glm.elc, type="pred")
+
+# add year
+glm.elc_year <- glm(ForPix ~ elc + year, data=dat, family=poisson)
+summary(glm.elc_year)
+# intercept goes down in subsequent years
+
+# plot
+plot_model(glm.elc_year, type="pred", terms=c("elc","year"))
+# this is interesting. I think this shows that generally forest cover is decreasing over time, but that it is decreasing faster in communes with ELCs. This is not a surprise, but nice to see it in the data
+
+# interaction
+glm.elc_year_int <- glm(ForPix ~ elc * year, data=dat, family=poisson)
+summary(glm.elc_year_int)
+# 2008 and 2009 reduce the effect size of ELC, but 2010:2012 increase it
+
+# plot
+plot_model(glm.elc_year_int, type="int")
+# changes the interpretation a bit. 
+    # PA ####
+
+# plot 
+ggplot(dat, aes(x=PA, y=ForPix))+
+  geom_boxplot()
+# this is what I expected. Although does show that there are a lot of forested communes outside of PAs
+
+# split by year
+ggplot(dat, aes(x=PA, y=ForPix))+
+  geom_boxplot()+
+  facet_wrap(dat$year, nrow=2)
+# can't see any big changes
+
+# simple model
+glm.pa <- glm(ForPix ~ PA, data=dat, family=poisson)
+summary(glm.pa)
+# PA ==1 has positive effect on forest cover
+
+# plot
+plot_model(glm.pa, type="pred")
+
+# add year
+glm.pa_year <- glm(ForPix ~ PA + year, data=dat, family=poisson)
+summary(glm.pa_year)
+# year has negative impact on intercept
+
+# plot
+plot_model(glm.pa_year, type="pred", terms=c("PA","year"))
+# this also seems to show forest loss over time, but interestingly suggests that forest loss is greatest in communes with PAs
+
+# interaction
+glm.pa_year_int <- glm(ForPix ~ PA * year, data=dat, family=poisson)
+summary(glm.pa_year_int)
+# 2008:2010 year has positive impact on effect of PA, 2011 and 2012 have negative
+
+# plot
+plot_model(glm.pa_year_int, type="int")
+# in communes with no PA, year has no real effect. In communes with PAs, this suggests that 2010, 2011 and 2012 had increased forest loss that in previous years
+
+    # PA_cat ####
+
+# plot
+ggplot(dat, aes(x=PA_cat, y=ForPix))+
+  geom_boxplot()
+# this shows that communes with multiple PA categories have the most forest, followed by WIldlife Sanctuaries and national parks. Protected landscapes and multiple-use areas don't look that different to None, but I think this is beacause the are used to protect areas like the Tonle Sap, where there isn't much forest cover. 
+
+# split by year
+ggplot(dat, aes(x=PA_cat, y=ForPix))+
+  geom_boxplot()+
+  facet_wrap(dat$year, nrow=2)
+# we can see the number of communes with MULTI categories increases in 2010 (reducing median forest cover). Ramsar sites change in 2011, pulling median forest cover up. national parks and wildlife sanctuaries don't change much
+
+# simple model
+glm.pacat <- glm(ForPix ~ PA_cat, data=dat, family=poisson)
+summary(glm.pacat)
+
+# plot
+plot_model(glm.pacat, type="pred")
+# MULTI predicts most forest, then WS, NP, RMS, None, MUA, PL
+
+# add year
+glm.pacat_year <- glm(ForPix ~ PA_cat + year, data=dat, family=poisson)
+summary(glm.pacat_year)
+
+# plot
+plot_model(glm.pacat_year, type="pred", terms=c("PA_cat", "year"))
+# the categories that predict the most forest (MULTI,WS,NP,RMS) predict lower forest cover in subsequent years, suggesting forest loss in these communes
+
+# interaction
+glm.pacat_year_int <- glm(ForPix ~ PA_cat * year, data=dat, family=poisson)
+summary(glm.pacat_year_int)
+
+# plot
+plot_model(glm.pacat_year_int, type="int")
