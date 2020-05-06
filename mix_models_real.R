@@ -51,58 +51,45 @@ ggplot(dat, aes(x=tot_pop, y=ForPix))+
 ggplot(dat, aes(x=tot_pop, y=ForPix, group=year, colour=year))+
   geom_point()
 
-# simple linear model
-lm.tot_pop <- lm(ForPix ~ tot_pop, data=dat)
-summary(lm.tot_pop)
-# tot_pop is significant in predicting the amount of forest in a commune
+# simple model
+glm.tot_pop <- glm(ForPix ~ tot_pop, data=dat, family=poisson)
+summary(glm.tot_pop)
+# negative effect
 
-# lets see if year makes a difference
-lm.tot_pop_year <- lm(ForPix ~ tot_pop + year, data=dat)
-summary(lm.tot_pop_year)
-# year doesn't appear to make any difference. This could be because the total population of communes don't change dramatically over time
+# plot
+totpop_plot <- plot_model(glm.tot_pop, type="pred")
 
-# lets plot it
-visreg(lm.tot_pop_year)
-visreg(lm.tot_pop_year, xvar = "tot_pop", by = "year")
-# definite downward trend, although we can see it is predicting negative ForPix values which is not correct
+# extract above data
+newtotpopdat <- data.frame(ForPix = totpop_plot$tot_pop$data$predicted,
+                           tot_pop = totpop_plot$tot_pop$data$x)
 
-# try glm with poisson structure
-glm.tot_pop_year <- glm(ForPix ~ tot_pop + year, data=dat, family = poisson)
-summary(glm.tot_pop_year)
-# All intercepts for the different factor levels are different from level 1 (2007), but by very small amounts. 2010 has a very small difference and relatively larger SE.
-
-# predict
-newpopdat <- expand.grid(tot_pop = seq(279,39117,length.out = 100),
-                         year = c("2007","2008","2009","2010","2011","2012"))  
-glm.tot_pop_year.predict <- predict(glm.tot_pop_year, newdata = newpopdat, type="response", se=T)
-newpopdat <- cbind(newpopdat,glm.tot_pop_year.predict)
-newpopdat <- newpopdat %>% rename(ForPix = fit)
-
-# plot just fit lines
-ggplot(newpopdat, aes(x=tot_pop, y=ForPix, group=year, colour=year))+
-  geom_line()
-
-# plot results with original points
+# plot with original points
 ggplot(NULL, aes(x=tot_pop, y=ForPix))+
   geom_point(data=dat)+
-  geom_line(data=newpopdat, aes(group=year, colour=year), size=1)
+  geom_line(data=newtotpopdat, size=1)
+
+# add year
+glm.tot_pop_year <- glm(ForPix ~ tot_pop + year, data=dat, family = poisson)
+summary(glm.tot_pop_year)
+# tot_pop effect not changed much. Year has a positive effect
+
+# plot partial effects
+plot_model(glm.tot_pop_year, type="pred", terms=c("tot_pop","year"))
+plot_model(glm.tot_pop_year, type="pred", terms=c("year","tot_pop[279,7762,39117]"))
+# not much difference in tot_pop effect across years.  Partial year effect is positive, so forest cover increases over time when population is accounted for. For communes with low populations, forest cover increases more quickly over time, whereas in communes with large populations, the slope is basically flat. The slopes are diffferent and so there is likely an interaction 
 
 
 # check model with interaction
 glm.tot_pop_year_int <- glm(ForPix ~ tot_pop * year, data=dat, family=poisson)
 summary(glm.tot_pop_year_int)
 
-anova(glm.tot_pop_year_int, glm.tot_pop_year, test="Chisq")
-# model with interaction is better
 
-# plot marginal effects
+# plot marginal effects with interaction
 plot_model(glm.tot_pop_year_int, type="pred", terms = c("tot_pop","year"))
-# Interesting. The shape is the same for all years - the lower the population of the communes, the more forest there is. However, in earlier years communes with lower populations have more forest than communes with an equivalent population in later years (i.e forest is being lost overall, over time).  But in earlier years (07,09,10), the amount of forest drops more quickly with increasing population size. When the population of a commune reaches >4000, the commune is more likely to have more forest in 2011 and 2012 than in earlier years (ie. the lines cross). 
+plot_model(glm.tot_pop_year_int, type="pred", terms = c("year","tot_pop[279,7762,39117]"))
+# Interesting. The interactions has reversed the slope for communes with low populations. So if a communes has a low population, then over time forest cover has gone down. Communes with high population, forest cover basically hasn't changed. For communes with mean population size, forest cover has gone up. 
 
-
-## take home message here is that communes with low total populations tend to have more forest. The decrease in forest with increasing population is steep in communes with low populations, but once you get to population sizes of around 10,000, the slope gets less steep. Once you get to a population size of 20,000 you have very little forest, and the slope flattens right out. Interestingly year does seem to make a differnce, although not a huge difference. Could this interaction be showing reforestation / plantation expansion in later years?
-
-# Kez had a good idea - because commune populations change over time, perhaps the difference in the slopes for different years is reflecting an increase in population of communes that retain their forest cover over time.  So those communes are being shifted right on the plot (i.e. increasing populations) but are not being shifted down (i.e. not losing forest). This would explain the "flatter" slope in later years.
+## The relationship between forest cover and population size depends on year and the population of the communes
 
     # prop_ind ####
 
@@ -139,19 +126,25 @@ ggplot(NULL, aes(x=prop_ind, y=ForPix))+
   geom_point(data=dat)+
   geom_line(data=newinddat, size=1)
 
+# add year
+glm.propind_year <- glm(ForPix ~ prop_ind + year, data=dat, family=poisson)
+summary(glm.propind_year)
+
+# plot
+plot_model(glm.propind_year, type="pred", terms=c("prop_ind", "year"))
+plot_model(glm.propind_year, type="pred", terms=c("year","prop_ind[0,0.09,1]"))
+# maybe a small interaction.
+
 
 # now check model with year as an interaction term
 glm.prop_ind_year <- glm(ForPix ~ prop_ind * year, data=dat, family=poisson)
 summary(glm.prop_ind_year)
-# some variation in the direction of effects of prop_ind between years
 
-# compare models
-anova(glm.prop_ind_year, glm.prop_ind, test="Chisq")
-# model with interaction term is better
 
-# plot marginal effects
+# plot marginal effects of interaction
 plot_model(glm.prop_ind_year, type="pred", terms = c("prop_ind","year"))
-# The trend is the same shape as the model without year.  And in a similar vein to tot_pop, the later years (2011, 2012) are slightly separated from the earlier years. In this case they have more forest in communes with higher prop_ind values
+plot_model(glm.prop_ind_year, type="pred", terms = c("year","prop_ind[0,0.09,1]"))
+# so prop_ind has an important relationship to forest cover over time - 
 
     # pop_den ####
 
