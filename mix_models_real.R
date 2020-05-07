@@ -15,6 +15,7 @@ library(cowplot)
 library(visreg)
 library(car)
 library(ggeffects)
+library(plotly)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -144,8 +145,23 @@ summary(glm.prop_ind_year)
 # plot marginal effects of interaction
 plot_model(glm.prop_ind_year, type="pred", terms = c("prop_ind","year"))
 plot_model(glm.prop_ind_year, type="pred", terms = c("year","prop_ind[0,0.09,1]"))
-# so prop_ind has an important relationship to forest cover over time - 
+# so prop_ind has an important relationship to forest cover but time doesn't really
 
+# try 3d plot
+propind_plot <- plot_model(glm.prop_ind_year, type="pred", terms = c("year","prop_ind[0,0.09,1]"))
+head(propind_plot$data)
+
+propindnewdata <- expand.grid(year = seq(from=2007, to=2012, by=1),
+                              prop_ind = seq(from=0, to=1, length=6))
+
+prop_ind_pred <- predict(glm.prop_ind_year, newdata=propindnewdata, type="response", se=T)
+propindnewdata <- cbind(propindnewdata,prop_ind_pred)
+
+plot_ly(propindnewdata, x=~year, y=~fit, z=~prop_ind) %>% 
+  group_by(prop_ind) %>% 
+  add_lines()
+    
+#
     # pop_den ####
 
 
