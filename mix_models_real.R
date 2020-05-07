@@ -246,28 +246,26 @@ summary(glm.demog)
 # add year
 glm.demog_year <- glm(ForPix ~ tot_pop + prop_ind + pop_den + year, data=dat, family=poisson)
 summary(glm.demog_year)
-# assuming all vars set to 0, subsequent years have small positive effect
+# tot_pop now positive, prop_ind still positive, pop_den still negative, year positive
 
 # allow interactions between all vars and year
-glm.demog_yaer_int <- glm(ForPix ~ tot_pop*year + prop_ind*year + pop_den*year, data=dat, family=poisson)
-summary(glm.demog_yaer_int)
+glm.demog_year_int <- glm(ForPix ~ year*tot_pop + year*prop_ind + year*pop_den, 
+                          data=dat, family=poisson)
+summary(glm.demog_year_int)
 
-# plot
-plot_model(glm.demog_yaer_int, type="int")
-# the direction of the effect of tot_pop has been completely reversed which is confusing
+# plot partial effects with interactions
+plot_model(glm.demog_year_int, type="int")
+# small interaction between year and pop_den - year has no effect on forest in communes with high pop_den (but the communes basically have no forest to start with), but communes with low pop_den values start with a lot more forest, and there is a small negative slope over time.  Not really much of an interaction at all between year and prop_ind - the lines are essentially parallel.  There is an interaction between tot_pop and year - confusingly in communes with large populations, forest cover is predicted to increase over time, as is forest in communes with low population (but much flatter slope)
 
 # remove pop_den to see if direction of effect of tot_pop changes
-glm.demog_nopopden <- glm(ForPix ~ tot_pop*year + prop_ind*year, data=dat, family=poisson)
+glm.demog_nopopden <- glm(ForPix ~ year*tot_pop + year*prop_ind, data=dat, family=poisson)
 summary(glm.demog_nopopden)
 # yes - so tot_pop is a negative slope again
 
 # plot
 plot_model(glm.demog_nopopden, type="int")
+# more of an interaction effect with prop_ind and year with pop_den removed. relationship between tot_pop and ForPix makes much more sense now - decreasing in communes with low populations, and jsut flat low starting value) for communes with large population
 
-
-# compare models with and without pop_den
-anova(glm.demog_yaer_int,glm.demog_nopopden, test="Chisq")
-# more complex model is better
 
 # test interaction between tot_pop and pop_den
 glm.demog_totDen_int <- glm(ForPix ~ tot_pop*pop_den, data=dat, family = poisson)
@@ -277,7 +275,9 @@ summary(glm.demog_totDen_int)
 plot_model(glm.demog_totDen_int, type="int")
 
 # mmm ok.  So I think what is happening here is that when population density is very high, then it is irrelevant what the total population is - there is no forest (see the pop_den plots). This reflects generally smaller, urban communes, cities etc.  But when population density is very low, then total population seems to have a positive effect. I think this may be because communes that have larger absolute populations but very low densities, these are the large, remote communes which probably have quite a lot of forest. The total populations are relatively "large" just because they are geographically large communes (many villages), but their density is actually very low.  These are probably the communes in Mondulkiri, Rattanikiri, Stung Treng, Koh Kong etc. where there is a lot of forest. 
+
 # The pop_den data isn't very nice, so I wonder whether later on if I include commune size as an offset, then this will acount for the issue above without the need to incluide pop_den.
+
   ## Education ####
     # M6_24_sch ####
 
@@ -314,18 +314,23 @@ ggplot(NULL, aes(x=M6_24_sch, y=ForPix))+
 # add year
 glm.edu_year <- glm(ForPix ~ M6_24_sch + year, data=dat, family=poisson)
 summary(glm.edu_year)
-# asuming M6_24_sch == 0, 2008, 2009, and 2010 have a positive effect on forest relative to 2007, but 2011 and 2012 have negative effects relative to 2007
+# M6_24_sch effect not really changed. year has negative effect
+
+# plot
+plot_model(glm.edu_year, type="pred", terms=c("year","M6_24_sch"))
+# forest cover decreasing over time, and communes with lower proportions of males in school start with higher values. Doesn't look like much of an interaction effect
 
 # interaction
-glm.edu_year_int <- glm(ForPix ~ M6_24_sch*year, data=dat, family=poisson)
+glm.edu_year_int <- glm(ForPix ~ year*M6_24_sch, data=dat, family=poisson)
 summary(glm.edu_year_int)
-# the effect of year on the effect of M6_24_sch varies depending on the year
+# the effect of year decreases with increasing proportion of males in school
 
 # plot it
 plot_model(glm.edu_year_int, type="int")
-# again 2011 and 2012 have more forest relative to earlier years at lower values of education.  If I'm honest, I am not really sure what this means.
+# large interaction effect - communes with a low number of males in school will have increasing forest cover over time, whereas communes with high proportions of males in school will have decreasing forest cover. This is counterintuitive, so not really sure what's happening.
 
 # take home message for now is that communes with more children in school have less forest. This is probably reflecting that fact that school attendance is going to be much lower in remote, forested communes compared with higher attendance in urbanised communes, that don't have much forest
+
   ## Employment ####
     # propPrimSec ####
 
