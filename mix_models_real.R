@@ -16,6 +16,7 @@ library(visreg)
 library(car)
 library(ggeffects)
 library(plotly)
+library(patchwork)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -148,18 +149,19 @@ plot_model(glm.prop_ind_year, type="pred", terms = c("year","prop_ind[0,0.09,1]"
 # so prop_ind has an important relationship to forest cover but time doesn't really
 
 # try 3d plot
-propind_plot <- plot_model(glm.prop_ind_year, type="pred", terms = c("year","prop_ind[0,0.09,1]"))
-head(propind_plot$data)
 
+# create new data
 propindnewdata <- expand.grid(year = seq(from=2007, to=2012, by=1),
                               prop_ind = seq(from=0, to=1, length=6))
 
+# predict
 prop_ind_pred <- predict(glm.prop_ind_year, newdata=propindnewdata, type="response", se=T)
 propindnewdata <- cbind(propindnewdata,prop_ind_pred)
 
-plot_ly(propindnewdata, x=~year, y=~fit, z=~prop_ind) %>% 
-  group_by(prop_ind) %>% 
-  add_lines()
+
+p <- plot_ly(propindnewdata, x=~prop_ind, y=~year, z=~fit, opacity=0.6) %>% 
+  add_markers()
+# So we can see that year doesn't have much of an effect, but that at very high values of prop_ind, year has a slightly positive effect
     
 #
     # pop_den ####
@@ -205,20 +207,33 @@ ggplot(NULL, aes(x=pop_den, y=ForPix))+
 # test model with year (no interaction)
 glm.pop_den_year <- glm(ForPix ~ pop_den + year, data=dat, family=poisson)
 summary(glm.pop_den_year)
-# subsequent years have small positive effects on forest cover relative to 2007, assuming pop_den==0
+# pop_den coefficient doesn't change. year has a positive effect
+
+# plot
+plot_model(glm.pop_den_year, type="pred")
 
 # model with year as interaction
 glm.pop_den_year.int <- glm(ForPix ~ pop_den * year, data=dat, family=poisson)
 summary(glm.pop_den_year.int)
-# the effect of population density on forest cover is higher in subsequent years compared to 2007
-
-# compare models
-anova(glm.pop_den_year,glm.pop_den_year.int, test="Chisq")
-# interaction model is better
+# pop_den is negative, year is positive, and year has a positive impact on the pop_den effect
 
 # plot interaction model
-plot_model(glm.pop_den_year.int, type="pred", terms = c("pop_den","year"))
-# can't see any difference
+plot_model(glm.pop_den_year.int, type="pred", terms = c("year","pop_den[0.3,127,2201]"))
+# very weak interaction
+
+# 3D plot
+# create new data
+popdennewdata <- expand.grid(year = seq(from=2007, to=2012, by=1),
+                              pop_den = seq(from=0, to=2201, length=6))
+
+# predict
+popden_pred <- predict(glm.pop_den_year.int, newdata=popdennewdata, type="response", se=T)
+popdennewdata <- cbind(popdennewdata,popden_pred)
+
+
+plot_ly(popdennewdata, x=~pop_den, y=~year, z=~fit, opacity=0.6) %>% 
+  add_markers()
+
 
     # All demographic vars ####
 
