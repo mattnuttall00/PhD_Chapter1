@@ -1101,20 +1101,20 @@ ggplot(NULL, aes(x=Pax_migt_in, y=ForPix))+
 # add year
 glm.migin_year <- glm(ForPix ~ Pax_migt_in + year, data=dat, family=poisson)
 summary(glm.migin_year)
-# 2008, 2011, and 2012 have higher intercept relative to 2007, but 2009 and 2010 are lower
+# similar effect of migt it, year is positive
 
 # plot
-plot_model(glm.migin_year, type="pred", terms=c("Pax_migt_in","year"))
+plot_model(glm.migin_year, type="pred", terms=c("year","Pax_migt_in[0,117,2553]"))
+# in communes with low/mean in-migration, forest cover start high and increases. In communes with very high in migration, forest cover is low but very slowly increases
 
 # add interaction
-glm.migin_year_int <- glm(ForPix ~ Pax_migt_in * year, data=dat, family=poisson)
+glm.migin_year_int <- glm(ForPix ~ year * Pax_migt_in, data=dat, family=poisson)
 summary(glm.migin_year_int)
-# direciton of effect changes to positive, and each year from 2008:2010 adds to the effect, but 2011 and 2012 reverse it
+# direciton of migt effect changes to positive, and migt has a negative impact on the effect of year
 
 # plot
-plot_model(glm.migin_year_int, type="int")
-# Interesting. So pre-2011, as the number of in-migrants to a commune increases, so does the forest cover. But in 2011 and 2012, this completely changes - as the number of in-migrants increase in a commune, the forest cover decreases so far that once you get beyond ~1000 migrants, forest cover = 0. I wonder if this reflects a surge in migration to urban areas that have no forest cover in 2011 onwards
-
+plot_model(glm.migin_year_int, type="pred", terms=c("year","Pax_migt_in[0,117,2553]"))
+# Interesting. now in communes with very high in migration the effect of year is strongly negative, and in communes with min migt, effect is weakly positive, and with mean migt there is no year effect
 
     # Pax_migt_out ####
 
@@ -1148,22 +1148,22 @@ ggplot(NULL, aes(x=Pax_migt_out, y=ForPix))+
 # very sharp decline in forest cover as out-migration increases. As soon as you get more than 1000 ou-migrants, forest cover is essentially 0
 
 # add year
-glm.migout_year <- glm(ForPix ~ Pax_migt_out + year, data=dat, family=poisson)
+glm.migout_year <- glm(ForPix ~ year + Pax_migt_out, data=dat, family=poisson)
 summary(glm.migout_year)
-# variable effects of year - 2008, 2011, 2012 larger intercepts than 2007, whereas 2009 and 2010 are lower
+# migt still negative, year positive
 
 # plot
-plot_model(glm.migout_year, type="pred", terms=c("Pax_migt_out","year"))
-# not huge differences
+plot_model(glm.migout_year, type="pred", terms=c("year","Pax_migt_out[0,86,3132]"))
+
 
 # add interaction
-glm.migout_year_int <- glm(ForPix ~ Pax_migt_out * year, data=dat, family=poisson)
+glm.migout_year_int <- glm(ForPix ~ year * Pax_migt_out, data=dat, family=poisson)
 summary(glm.migout_year_int)
-# year reduces the steepness of the slope to varying degrees
+# migt negative effect size larger
 
 # plot
-plot_model(glm.migout_year_int, type="int")
-# 2007 and 2009 very steep slopes, 2011 in the middle, 2008, 2010, 2012 are a bit flatter
+plot_model(glm.migout_year_int, type="pred", terms=c("year","Pax_migt_out[0,86,3132]"))
+# communes with very high out-migration have low forest cover and year has no effect. in communes with low/mean out-migt then year has a positive effect
 
     # All migration vars ####
 
@@ -1176,26 +1176,27 @@ summary(glm.migration)
 plot_model(glm.migration, type="pred")
 
 # add year
-glm.migration_year <- glm(ForPix ~ Pax_migt_in + Pax_migt_out + year, data=dat, family = poisson)
+glm.migration_year <- glm(ForPix ~ year + Pax_migt_in + Pax_migt_out, 
+                          data=dat, family = poisson)
 summary(glm.migration_year)
-# main effects are similar. variable effect of year on intercept
+
 
 # plot partial effects with year
-plot_model(glm.migration_year, type="pred", terms=c("Pax_migt_in","year"))
-# larger effect of 2011 and 2012 than other years
-plot_model(glm.migration_year, type="pred", terms=c("Pax_migt_out","year"))
-# still not much apparent difference between years
+plot_model(glm.migration_year, type="pred", terms=c("year","Pax_migt_in[0,117,2553]"))
+# year now has positive effect for all values of migt in
+plot_model(glm.migration_year, type="pred", terms=c("year","Pax_migt_out[0,86,3132]"))
+# high values of migt out mean year has no effect, low/mean value make year have positive effect
 
 # interaction with year
-glm.migration_year_int <- glm(ForPix ~ Pax_migt_in*year + Pax_migt_out*year, data=dat, family=poisson)
+glm.migration_year_int <- glm(ForPix ~ year*Pax_migt_in + year*Pax_migt_out, 
+                              data=dat, family=poisson)
 summary(glm.migration_year_int)
-# so for in-migration, each subsequent year makes the positive slope a bit steeper until 2011 and 2012 after which the direction of the effect changes. With each year the effect of out-migration gets less (flatter curve)
 
-# plot
+
+# plot partial effects with interaction
 plot_model(glm.migration_year_int, type="int")
+# migt out means year has no effect at all, high migt in values makes year have neg effect, low values make year have slightly positive effect
 
-
-## so accounting for year is really important for in-migration - the direction of the effect changes in 2011.  Year also has an important impact on the effect size of out-migration.  In earlier years, communes with high in-migration were the communes with lots of forest. After 2011, the communes with higher levels of in-migration had low forest cover. I wonder if this reflects a shift in migration patterns from people migrating out to the provinces for work (perhaps to work on plantations?), to people migrating to urban areas to work (textiles? industry?). Across all years, communes with more people migrating out tend to have more forest cover. This what I expected - people leaving the remote, rural communes to move into urban areas in search of work. 
 
   ## Environmental variables ####
     # mean_elev ####
@@ -1230,28 +1231,26 @@ ggplot(NULL, aes(x=mean_elev, y=ForPix))+
 # not a great model fit but quite a large effect
 
 # add year
-glm.elev_year <- glm(ForPix ~ mean_elev + year, data=dat, family=poisson)
+glm.elev_year <- glm(ForPix ~ year + mean_elev, data=dat, family=poisson)
 summary(glm.elev_year)
-# intercept goes down each year
+# year negative, elev positive
 
 # plot
-plot_model(glm.elev_year, type="pred", terms=c("mean_elev","year"))
-# not much change
+plot_model(glm.elev_year, type="pred", terms=c("year","mean_elev[3,72,740]"))
+# at low/mean elevations there is no effect over time, but high elevation give year a negative effect
 
 # interaction
-glm.elev_year_int <- glm(ForPix ~ mean_elev * year, data=dat, family=poisson)
+glm.elev_year_int <- glm(ForPix ~ year * mean_elev, data=dat, family=poisson)
 summary(glm.elev_year_int)
-# years from 2008:2010 increase the effect of elevation, 2011 and 2012 decrease it
+
 
 # plot
-plot_model(glm.elev_year_int, type="int")
-# hmm, not really much of an interaction there
+plot_model(glm.elev_year_int, type="pred", terms=c("year","mean_elev[3,72,740]"))
+# same as above
 
-# basically, the higher elevation communes have more forest cover. This is what I was expecting - Koh Kong, Mondulkiri, Rattanikiri etc. 
+# basically, the higher elevation communes have more forest cover. This is what I was expecting - Koh Kong, Mondulkiri, Rattanikiri etc. And it is these communes that are losing forest over time, whereas lower elevation communes don't have that much forest in the first place, and the loss is less
 
     # habitat ####
-
-# I am unsure about habitat. It made sense when I was using forest loss as a response (ie difference in pixels between years), because habitat could predict where forest was lost. But now I am using just raw forest cover, I am not really sure what habitat would be telling me? Surely it will just be telling me what kind of forest is dominant in forested communes, and what level of mosaic is in less forested communes?
 
 # plot
 ggplot(dat, aes(x=habitat, y=ForPix))+
@@ -1273,21 +1272,21 @@ plot_model(glm.hab, type="pred")
 # Not sure this is telling me much
 
 # add year
-glm.hab_year <- glm(ForPix ~ habitat + year, data=dat, family=poisson)
+glm.hab_year <- glm(ForPix ~ year + habitat, data=dat, family=poisson)
 summary(glm.hab_year)
-# intercepts for 2008:2011 are larger than 2007. 2012 is lower
+# year has negative effect
 
 # plot
-plot_model(glm.hab_year, type="pred", terms=c("habitat","year"))
-# virtually no difference between years
+plot_model(glm.hab_year, type="pred", terms=c("year","habitat"))
+# habitat has no impact on the effect of year by the looks of it
 
 # interaction
-glm.hab_year_int <- glm(ForPix ~ habitat * year, data=dat, family=poisson)
+glm.hab_year_int <- glm(ForPix ~ year * habitat, data=dat, family=poisson)
 summary(glm.hab_year_int)
 
 # plot
-plot_model(glm.hab_year_int, type="int")
-# the only potentially interesting thing here is that the number of forest pixels in a commune that is predominanlty deciduous broadleaf forest goes down in 2011 and 2012. 
+plot_model(glm.hab_year_int, type="pred", terms=c("year","habitat"))
+# some weak looking interactions.  Interestingly, broadleaved deciduous forest causes year to have a negative effect, as does flooded natural cover, and to a lesser degree natuarl mosaic. Surprisingly broadleaved evergreen has small positive effect 
 
 
     # All environmental vars ####
@@ -1299,7 +1298,7 @@ summary(glm.env)
 
 # plot
 plot_model(glm.env, type="pred", terms=c("mean_elev","habitat"))
-# elevation has no effect unless the commune is broadleaved, or mosaic of natural cover.  Looks like a farily strong interaction
+# elevation has large effect when habitat is FBD, FBE, Mosaic, and a lesser effect if habitat is MC, MN, NF, CP. GL has no effect which makes sense
 
 # interaction
 glm.env_int <- glm(ForPix ~ mean_elev * habitat, data=dat[!(dat$habitat=="nd" | dat$habitat=="NF"),], 
@@ -1319,16 +1318,18 @@ summary(glm.env_year_int)
 # That's a silly number of coefficients
 
 # plot
-plot_model(glm.env_year_int, type="int")
-# Interesting. So as above, elevation is a good predictor of forest cover only when the commune is predominantly cropland or BLD, until 2011 and 2012. In 2011 and 2012 this effect dramaticlly reduces for BLD communes 
+plot_model(glm.env_year_int, type="pred", terms=c("year", "mean_elev[3,72,740]", "habitat"))
+# I think I'd need to change the y-axis scale to see whats going on. But, you can see that in high elevation cropland, year has a positive effect, and in high elevation FBD year has a negatvie effect 
 
 # interaction between vars and year
-glm.env_year_int2 <- glm(ForPix ~ mean_elev*year + habitat*year, data=dat, family=poisson)
+glm.env_year_int2 <- glm(ForPix ~ year*mean_elev + year*habitat, data=dat, family=poisson)
 summary(glm.env_year_int2)
 
 # plot
-plot_model(glm.env_year_int2, type="int")
-# not much difference from the plots in the individual variable sections
+plot_model(glm.env_year_int2, type="pred", terms=c("year", "mean_elev[3,72,740]", "habitat"))
+# Ok this makes more sense. year has no real effect at any elevation, unless it is FBD, FBE, Mosaic natural (or no data). 
+
+
   ## Human additional variables ####
     # dist_border ####
 
