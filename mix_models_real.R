@@ -1547,3 +1547,8 @@ summary(glm.pacat_year_int)
 # plot
 plot_model(glm.pacat_year_int, type="pred", terms=c("year","PA_cat"))
 # ok so in communes with MULTI, year has strong negative effect.  WS very small negative, and NP very small positive, RMS positive.  PL also positive, and MUA small negative.
+
+
+
+
+### Need to look properly to see if there are any communes that gain forest pixels over time
