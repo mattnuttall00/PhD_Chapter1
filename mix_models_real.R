@@ -959,21 +959,20 @@ ggplot(NULL, aes(x=crim_case, y=ForPix))+
 
 
 # test year (back to original data)
-glm.crim_year <- glm(ForPix ~ crim_case + year, data=dat, family=poisson)
+glm.crim_year <- glm(ForPix ~  year + crim_case, data=dat, family=poisson)
 summary(glm.crim_year)
-# woah. When year is accounted for, effect of crim_case is massive. each year has a negative effect relative to 2007
+# woah. When year is accounted for, effect of crim_case is massive. year effect is negative
 
-plot_model(glm.crim_year, type="pred", terms=c("crim_case","year"))
-# very little difference between years
+plot_model(glm.crim_year, type="pred", terms=c("year","crim_case[0,0.002,0.05]"))
+# no differnece in slopes, but communes with higher values of crim_case have more forest
 
 # test interaction
-glm.crim_year_int <- glm(ForPix ~ crim_case * year, data=dat, family = poisson)
+glm.crim_year_int <- glm(ForPix ~ year * crim_case, data=dat, family = poisson)
 summary(glm.crim_year_int)
-# so 2008:2010 reduce the effect size of crim_case, but 2011 ans 2012 massively increase the effect size
 
 # plot
-plot_model(glm.crim_year_int, type="int")
-# 2012 having a very large influence. Doesn't seem to match with what I was expecting based on the scatter plots....2012 data didn't look massively different
+plot_model(glm.crim_year_int, type="pred", terms=c("year","crim_case[0,0.002,0.05]"))
+# when crim_case values are low/mean then year has no effect (very small negative), but when crim_case values are high, year has very strong positive effect on forest
 
 ## main message at the moment is that as the criminal case per captia increases, so does forest cover. This is the opposite of what I was expecting. I was expecting the more densely populated, urban areas with less forest to have higher per capita crime.
 
@@ -981,7 +980,7 @@ plot_model(glm.crim_year_int, type="int")
 ggplot(dat, aes(crim_case))+
   geom_histogram()+
   facet_wrap(dat$Province, nrow=4)
-# ok so provinces like Koh Kong, Rattanikiri, Stung Treng do have crim-case values that look higher than say, Phmom Penh. 
+# ok so provinces like Koh Kong, Rattanikiri, Stung Treng do have crim-case values that look higher than say, Phnom Penh. 
 
 
     # land_confl ####
@@ -1017,24 +1016,23 @@ ggplot(NULL, aes(x=land_confl, y=ForPix))+
 # pretty weak trend
 
 # add year
-glm.confl_year <- glm(ForPix ~ land_confl + year, data=dat, family=poisson)
+glm.confl_year <- glm(ForPix ~ year + land_confl, data=dat, family=poisson)
 summary(glm.confl_year)
-# adding year increases the effect size of land_confl. Each year has a negative effect relative to 2007
 
 # plot
-plot_model(glm.confl_year, type="pred", terms=c("land_confl","year"))
-# 2011 and 2012 slightly separate from other years
+plot_model(glm.confl_year, type="pred", terms=c("year","land_confl[0,16,318]"))
+# communes with low land conflict have more forest, but year has negative effect. Comunes with high land conflict have less forest, and year has a very small negative effect
 
 # add interaction
-glm.confl_year_int <- glm(ForPix ~ land_confl * year, data=dat, family=poisson)
+glm.confl_year_int <- glm(ForPix ~ year * land_confl, data=dat, family=poisson)
 summary(glm.confl_year_int)
-# 2008 and 2010 make the negative slope steeper. All the other years flatten it
+
 
 # plot
-plot_model(glm.confl_year_int, type="int")
-# what the actual fuck 2012.  
+plot_model(glm.confl_year_int, type="pred", terms=c("year","land_confl[0,16,318]"))
+# with the interaction, now communes with high land conflict have positive effect over time
 
-## so generally, as the number of land conflicts increase, the amount of forest decreases.  Unless of course it is 2012, in which case the opposite is true. There are a couple of outlier points in 2012 which I think are causing this effect in 2012
+
 
 
     # All social justice vars ####
@@ -1048,23 +1046,26 @@ summary(glm.SocJus)
 plot_model(glm.SocJus, type="pred")
 
 # add year
-glm.SocJus_year <- glm(ForPix ~ crim_case + land_confl + year, data=dat, family=poisson)
+glm.SocJus_year <- glm(ForPix ~ year + crim_case + land_confl, data=dat, family=poisson)
 summary(glm.SocJus_year)
 # same trends
 
 # plot partial effects with year
-plot_model(glm.SocJus_year, type="pred", terms=c("crim_case","year"))
-plot_model(glm.SocJus_year, type="pred", terms=c("land_confl","year"))
+plot_model(glm.SocJus_year, type="pred", terms=c("year","crim_case"))
+plot_model(glm.SocJus_year, type="pred", terms=c("year","land_confl"))
 
 
 # add interactions with year
-glm.SocJus_year_int <- glm(ForPix ~ crim_case*year + land_confl*year, data=dat, family=poisson)
+glm.SocJus_year_int <- glm(ForPix ~ year*crim_case + year*land_confl, data=dat, family=poisson)
 summary(glm.SocJus_year_int)
-# So 2008:2010 the positive effect of crim_case is reduced by year, but in 2011 and 2012 the effect is increased (by a huge amount in 2012). in 2008 and 2010 the negative effect of land_confl is made steeper by year, but in 2009, 2011, and 2012 the negative slope is flattened (by a huge amount in 2012).
 
 # plot
-plot_model(glm.SocJus_year_int, type="int")
-# 2012 is very different to all other years.
+plot_model(glm.SocJus_year_int, type="pred", 
+           terms=c("year", "land_confl[0,16,318]","crim_case[0,0.002,0.05]"))
+# When crim_case is low or mean, year has little effect, regardles of land conflict. But when crim_cases are high, year has a large positive effect, with differences in starting values and slopes depending on land conflict.
+
+
+
   ## Migration ####
     # Pax_migt_in ####
 
