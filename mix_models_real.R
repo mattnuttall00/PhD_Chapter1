@@ -721,16 +721,16 @@ plot_model(glm.school, type="pred")
 
 
 # add year
-glm.sch_year <- glm.school <- glm(ForPix ~ dist_sch + year, data=dat, family=poisson)
+glm.sch_year <- glm(ForPix ~ dist_sch + year, data=dat, family=poisson)
 summary(glm.sch_year)
-# intercepts are sig differnet from 2007, and move up
+# dist_sch and year both positive
 
 # plot 
-plot_model(glm.sch_year, type="pred", terms = c("dist_sch","year"))
-# in each subsequent year, amount of forest increases more with each extra km to a school. This is interesting becausse I doubt the distances to school within a given commune change that much over time (some will change as schools get built or moved etc). So I'm not really sure why this would be
+plot_model(glm.sch_year, type="pred", terms = c("year","dist_sch[0,8.5,83]"))
+# small distances to schools mean time has positive effect on forest, but mean and max distance values mean year has negligble effects
 
 # add interaction
-glm.sch_year_int <- glm(ForPix ~ dist_sch * year, data=dat, family=poisson)
+glm.sch_year_int <- glm(ForPix ~  year * dist_sch , data=dat, family=poisson)
 summary(glm.sch_year_int)
 # in each subsequent year the effect of distance to school increases relative to 2007, except for 2009, when it is lower
 
@@ -753,10 +753,6 @@ summary(glm.garbage)
 # plot
 plot_model(glm.garbage, type="pred")
 
-# convert year to continuous
-dat$year <- as.numeric(as.character(dat$year))
-str(dat)
-
 # add year
 glm.garbage_year <- glm(ForPix ~ garbage + year, data=dat, family=poisson)
 summary(glm.garbage_year)
@@ -765,18 +761,17 @@ summary(glm.garbage_year)
 # plot
 plot_model(glm.garbage_year, type="pred", terms = c("garbage","year"))
 plot_model(glm.garbage_year, type="pred", terms = c("year","garbage"))
-# virtually no difference
+# virtually no difference in slope
 
 # test interaction
-glm.garbage_year_int <- glm(ForPix ~ garbage * year, data=dat, family=poisson)
+glm.garbage_year_int <- glm(ForPix ~ year * garbage, data=dat, family=poisson)
 summary(glm.garbage_year_int)
-# in 2008 the effect of garbage on forest cover goes down (relative to 2007), in all other years it goes up
+
 
 # plot
-plot_model(glm.garbage_year_int, type="pred", terms=c("year","garbage"))
-# so in 2007 and 2008, the effect of garbage on forest cover is larger - the slopes are much steeper. All the other years have much flatter curves
+plot_model(glm.garbage_year_int, type="pred", terms=c("year","garbage[0,0.006,1]"))
+# so at low/mean values of garbage, time has small negative effect on forest cover.  At max levels of garbage, time has a slight positive effect, particulalry after 2010
 
-# commues with more people who have access to garbage have less forest cover - again this is reflecting urbanised areas I think
 
     # KM_Comm ####
 
@@ -800,24 +795,24 @@ summary(glm.Comm)
 plot_model(glm.Comm, type="pred")
 
 # add year
-glm.Comm_year <- glm(ForPix ~ KM_Comm + year, data=dat, family=poisson)
+glm.Comm_year <- glm(ForPix ~ year + KM_Comm , data=dat, family=poisson)
 summary(glm.Comm_year)
-# effect of year is negative for each year relative to 2007
+# year is negative, KM_Comm still positive
 
 # plot 
-plot_model(glm.Comm_year, type="pred", terms = c("KM_Comm","year"))
-# very little difference - 2012 (and maybe 2011?) are slightly different from the rest
+plot_model(glm.Comm_year, type="pred", terms = c("year","KM_Comm[0,3.3,42]"))
+# at low/mean values of KM_Comm, year has basically no effect on forest. At high values of KM_Comm, the communes start with more forest but the effect of year is negative
 
 # add interaction
-glm.Comm_year_int <- glm(ForPix ~ KM_Comm * year, data=dat, family=poisson)
+glm.Comm_year_int <- glm(ForPix ~ year * KM_Comm, data=dat, family=poisson)
 summary(glm.Comm_year_int)
-# variation in effects - some years make the effect of KM_Comm larger, some smaller
+
 
 # plot
-plot_model(glm.Comm_year_int, type="int")
-# not a huge interaction, but the slopes do change in the different years
+plot_model(glm.Comm_year_int, type="pred", terms=c("year","KM_Comm[0,3.3,42]"))
+# as above
 
-## take home message - the communes where the median distance from a given village to the commune office is large, have more forest.  This probably, to some degree, reflects the fact that the more remote communes that are larger and in larger provinces, do tend to have more forest.
+## take home message - the communes where the median distance from a given village to the commune office is large, have more forest.  This probably, to some degree, reflects the fact that the more remote communes that are larger and in larger provinces, do tend to have more forest. But these communes also lose forest over time.  In communes where the median distance to commune offfice is low, they tend to hvae very little forest and year has virtually no effect
 
     # All access to services vars ####
 
@@ -830,69 +825,41 @@ summary(glm.AccServ)
 plot_model(glm.AccServ, type="pred")
 
 # add year
-glm.AccServ_year <- glm(ForPix ~ dist_sch + garbage + KM_Comm + year, data=dat, family=poisson)
+glm.AccServ_year <- glm(ForPix ~ year + dist_sch + garbage + KM_Comm, data=dat, family=poisson)
 summary(glm.AccServ_year)
-# years have small positive effects relative to 2007
+# year has positive effect
 
 # plot
-plot_model(glm.AccServ_year, type="pred", terms=c("dist_sch","year"))
-plot_model(glm.AccServ_year, type="pred", terms=c("garbage","year"))
-plot_model(glm.AccServ_year, type="pred", terms=c("KM_Comm","year"))
+plot_model(glm.AccServ_year, type="pred", terms=c("year","dist_sch[0,8.5,83]"))
+plot_model(glm.AccServ_year, type="pred", terms=c("year","garbage[0,0.006,1]"))
+plot_model(glm.AccServ_year, type="pred", terms=c("year","KM_Comm[0,3.3,42]"))
 
 # test interactions between vars (no year)
-glm.AccServ_int <- glm(ForPix ~  dist_sch * garbage * KM_Comm, data=dat, family=poisson)
+glm.AccServ_int <- glm(ForPix ~ garbage * dist_sch * KM_Comm, data=dat, family=poisson)
 summary(glm.AccServ_int)
 
 # plot
 plot_model(glm.AccServ_int, type="int")
 
-# simplify
-glm.AccServ_int2 <- glm(ForPix ~  dist_sch * garbage + KM_Comm, data=dat, family=poisson)
-summary(glm.AccServ_int2)
-
-# compare
-anova(glm.AccServ_int,glm.AccServ_int2, test="Chisq")
-# complex model better
-
-# simplify
-glm.AccServ_int3 <- glm(ForPix ~  dist_sch + garbage * KM_Comm, data=dat, family=poisson)
-summary(glm.AccServ_int3)
-
-# compare
-anova(glm.AccServ_int,glm.AccServ_int3, test="Chisq")
-# complex model better
-
 # interactions with year
-glm.AccServ_int_year <- glm(ForPix ~  dist_sch*year + KM_Comm*year + garbage*year, 
+glm.AccServ_int_year <- glm(ForPix ~  year*dist_sch + year*KM_Comm + year*garbage, 
                             data=dat, family=poisson)
 summary(glm.AccServ_int_year)
 
 # plot
 plot_model(glm.AccServ_int_year, type="int")
-# Partial effects with interaction with year shows that as distance to school increases, so does forest cover, with variation in slope between years (particularly 2009 and 2007). As distance to commune office increases, so does forest cover (2007, 2008, 2010 effects are similar, and 2009, 2011, 2012 are similar). As the proportion of families with access to garbage collection increases, forest cover decreases. Some year effects - 2007, 2008 and 2009 have much steeper negative slopes than 2010:2012.
+# Partial effects with interaction with year shows that year has a positive effect when dist_sch is high, but no effect when it is low. This is also true of KM_Comm, although the positive effect of year when KM_Comm is high is quite strong (steep slope).when garbage values are low, ther eis a small positive effect from year, and when garbage value is low, the initial forest cover is low but there is an increasing positive effect with time.
 
 
 # test 3-way interactions
-glm.AccServ_int_year2 <- glm(ForPix ~  dist_sch * KM_Comm * year, 
+glm.AccServ_int_year2 <- glm(ForPix ~  year * dist_sch * KM_Comm, 
                             data=dat, family=poisson)
 summary(glm.AccServ_int_year2)
 
 plot_model(glm.AccServ_int_year2, type="int")
-#  when distances to KM_Comm are high, distance to school has a small, negative effect on forest cover. When distances to KM_Comm are low, distance to school has a larger, positive effect on forest cover. year doesn't have a huge impact on the shape of the relationship, except for 2009
+#  when distances to KM_Comm are low, and dist_sch values are low, time has no effect on forest. When KM_Comm values are low but dist_sch values are high, year has positive effect on forest. When KM_Comm values are high, and dist_sch values are low, year has a small positive effect on forest. When KM_Comm values are high and dist_sch values are high, year has small negative effect.  
 
-glm.AccServ_int_year3 <- glm(ForPix ~  dist_sch * garbage * year, 
-                            data=dat, family=poisson)
-summary(glm.AccServ_int_year3)
 
-plot_model(glm.AccServ_int_year3, type="int")
-# distance to school and garbage don't really have a relationship
-
-glm.AccServ_int_year4 <- glm(ForPix ~ KM_Comm * garbage * year, 
-                            data=dat, family=poisson)
-summary(glm.AccServ_int_year4)
-
-plot_model(glm.AccServ_int_year4, type="int")
-# this model is throwing an error I don't understand when I try to plot it
   ## Social justice ####
     # crim_case ####
 
