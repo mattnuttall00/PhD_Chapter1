@@ -1365,20 +1365,20 @@ ggplot(NULL, aes(x=dist_border, y=ForPix))+
 
 
 # add year
-glm_border_year <- glm(ForPix ~ dist_border + year, data=dat, family=poisson)
+glm_border_year <- glm(ForPix ~ year + dist_border, data=dat, family=poisson)
 summary(glm_border_year)
-# intercept value goes down in each subsequent year from 2007
+# dist_border still negative, year also negative
 
 # plot
-plot_model(glm_border_year, type="pred", terms=c("dist_border","year"))
-# This suggests the amount of forest cover is decreasing over time (as distance to border doesn't change)
+plot_model(glm_border_year, type="pred", terms=c("year","dist_border"))
+# demonstrates that forest cover is going down over time, and that communes in the middle of the country have less forest than those on the edges
 
 # interaction
-glm_border_year_int <- glm(ForPix ~ dist_border * year, data=dat, family=poisson)
+glm_border_year_int <- glm(ForPix ~ year * dist_border, data=dat, family=poisson)
 summary(glm_border_year_int)
 
 # plot
-plot_model(glm_border_year_int, type="int")
+plot_model(glm_border_year_int, type="pred", terms=c("year","dist_border[0.4,63,179]"))
 # not really much of an interaction
 
     # dist_provCap ####
@@ -1413,22 +1413,23 @@ ggplot(NULL, aes(x=dist_provCap, y=ForPix))+
 # remote communes (far away from provincial capital) have way more forest 
 
 # add year
-glm.provCap_year <- glm(ForPix ~ dist_provCap + year, data=dat, family=poisson)
+glm.provCap_year <- glm(ForPix ~ year + dist_provCap, data=dat, family=poisson)
 summary(glm.provCap_year)
-# year has negative effect on intercept relative to 2007
+# year has negative effect 
 
 # plot 
-plot_model(glm.provCap_year, type="pred", terms=c("dist_provCap","year"))
-# very little difference
+plot_model(glm.provCap_year, type="pred", terms=c("year","dist_provCap[1,32,92]"))
+# communes that are remote and further away from ProvCap have more forest, but negative effect of year. no real efect of year for commmunes clsoe to provcap
 
 # interaction
-glm.provCap_year_int <- glm(ForPix ~ dist_provCap * year, data=dat, family=poisson)
+glm.provCap_year_int <- glm(ForPix ~ year * dist_provCap, data=dat, family=poisson)
 summary(glm.provCap_year_int)
-# each year increases the effect size of dist_provCap by a very small amount
 
 # plot
-plot_model(glm.provCap_year_int, type="int")
-# 2011 and 2012 have larger effect on slope than other years
+plot_model(glm.provCap_year_int, type="pred", terms=c("year","dist_provCap[1,32,92]"))
+# interaction has reversed the slope for communes far away from provcap
+
+
     # elc ####
 
 # plot
@@ -1451,22 +1452,25 @@ summary(glm.elc)
 plot_model(glm.elc, type="pred")
 
 # add year
-glm.elc_year <- glm(ForPix ~ elc + year, data=dat, family=poisson)
+glm.elc_year <- glm(ForPix ~ year + elc, data=dat, family=poisson)
 summary(glm.elc_year)
-# intercept goes down in subsequent years
+# year has negative effect
 
 # plot
-plot_model(glm.elc_year, type="pred", terms=c("elc","year"))
-# this is interesting. I think this shows that generally forest cover is decreasing over time, but that it is decreasing faster in communes with ELCs. This is not a surprise, but nice to see it in the data
+plot_model(glm.elc_year, type="pred", terms=c("year","elc"))
+# year has negative effect regardless of ELC presence, but in communes where there is an ELC, the slope is steeper, which is what I would expect
+
 
 # interaction
-glm.elc_year_int <- glm(ForPix ~ elc * year, data=dat, family=poisson)
+glm.elc_year_int <- glm(ForPix ~ year * elc, data=dat, family=poisson)
 summary(glm.elc_year_int)
-# 2008 and 2009 reduce the effect size of ELC, but 2010:2012 increase it
+
 
 # plot
-plot_model(glm.elc_year_int, type="int")
-# changes the interpretation a bit. 
+plot_model(glm.elc_year_int, type="pred", terms=c("year","elc"))
+# This makes less sense. THe slope is reversed for communes with ELC, as now it is positive
+
+
     # PA ####
 
 # plot 
@@ -1489,22 +1493,22 @@ summary(glm.pa)
 plot_model(glm.pa, type="pred")
 
 # add year
-glm.pa_year <- glm(ForPix ~ PA + year, data=dat, family=poisson)
+glm.pa_year <- glm(ForPix ~ year + PA, data=dat, family=poisson)
 summary(glm.pa_year)
-# year has negative impact on intercept
+# year has negative effect
 
 # plot
-plot_model(glm.pa_year, type="pred", terms=c("PA","year"))
-# this also seems to show forest loss over time, but interestingly suggests that forest loss is greatest in communes with PAs
+plot_model(glm.pa_year, type="pred", terms=c("year","PA"))
+# Communes with PAs have more forest, but both slopes are negative
 
 # interaction
-glm.pa_year_int <- glm(ForPix ~ PA * year, data=dat, family=poisson)
+glm.pa_year_int <- glm(ForPix ~ year * PA, data=dat, family=poisson)
 summary(glm.pa_year_int)
-# 2008:2010 year has positive impact on effect of PA, 2011 and 2012 have negative
+
 
 # plot
-plot_model(glm.pa_year_int, type="int")
-# in communes with no PA, year has no real effect. In communes with PAs, this suggests that 2010, 2011 and 2012 had increased forest loss that in previous years
+plot_model(glm.pa_year_int, type="pred", terms=c("year","PA"))
+# in communes with no PA, year has no real effect. In communes with PAs, year has a negative effect, which is not a great message for conservation!
 
     # PA_cat ####
 
@@ -1528,16 +1532,18 @@ plot_model(glm.pacat, type="pred")
 # MULTI predicts most forest, then WS, NP, RMS, None, MUA, PL
 
 # add year
-glm.pacat_year <- glm(ForPix ~ PA_cat + year, data=dat, family=poisson)
+glm.pacat_year <- glm(ForPix ~ year + PA_cat, data=dat, family=poisson)
 summary(glm.pacat_year)
+# year has negative efffect
 
 # plot
-plot_model(glm.pacat_year, type="pred", terms=c("PA_cat", "year"))
-# the categories that predict the most forest (MULTI,WS,NP,RMS) predict lower forest cover in subsequent years, suggesting forest loss in these communes
+plot_model(glm.pacat_year, type="pred", terms=c("year","PA_cat"))
+# the categories that predict the most forest are MULTI, WS, NP, RMS 
 
 # interaction
-glm.pacat_year_int <- glm(ForPix ~ PA_cat * year, data=dat, family=poisson)
+glm.pacat_year_int <- glm(ForPix ~ year * PA_cat, data=dat, family=poisson)
 summary(glm.pacat_year_int)
 
 # plot
-plot_model(glm.pacat_year_int, type="int")
+plot_model(glm.pacat_year_int, type="pred", terms=c("year","PA_cat"))
+# ok so in communes with MULTI, year has strong negative effect.  WS very small negative, and NP very small positive, RMS positive.  PL also positive, and MUA small negative.
