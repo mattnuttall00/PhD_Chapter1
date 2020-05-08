@@ -370,20 +370,22 @@ ggplot(NULL, aes(x=propPrimSec, y=ForPix))+
 # include year
 glm.PrimSec_year <- glm(ForPix ~ propPrimSec + year, data=dat, family=poisson)
 summary(glm.PrimSec_year)
-# assuming propPrimSec == 0, subsequent years have a negative effect on forest relative to 2007, until 2011 and 2012 where it becomes positive
+# effect size of propPrimSec has increased. Year has a smaller, positive effect.
+
+# plot
+plot_model(glm.PrimSec_year, type="pred", terms=c("year", "propPrimSec[0.01,0.87,1]"))
+# the effect of year in commnes with low propPrimSec is very small, but as propprimSec increases, the effect gets stronger. 
+
 
 # interaction
 glm.PrimSec_year_int <- glm(ForPix ~ propPrimSec * year, data=dat, family=poisson)
 summary(glm.PrimSec_year_int)
-# now the effect of year (when propPrimSec ==  0) relative to 2007 are all negative. In each subsequent year, the effect of propPrimSec gets larger
+# The direction of the effect has reversed for both propPrimSec and year. When year increases, the propPrimSec slope gets slightly flatter
 
-# compare models
-anova(glm.PrimSec_year,glm.PrimSec_year_int, test="Chisq")
-# interaction model is better
 
 # plot interaction
-plot_model(glm.PrimSec_year_int, type="int")
-# don't have an explanation for this yet
+plot_model(glm.PrimSec_year_int, type="pred", terms=c("year","propPrimSec[0.01,0.87,1]"))
+# Quite a large interaction effect. In communes with very low propPriSec values, forest goes down over time.  In communes with higher propPrimSec values, forest is predicted to go up
 
     # propSecSec ####
 
@@ -424,20 +426,22 @@ ggplot(NULL, aes(x=propSecSec, y=ForPix))+
 # model with year
 glm.SecSec_year <- glm(ForPix ~ propSecSec + year, data=dat, family=poisson)
 summary(glm.SecSec_year)
-# assuming propSecSec==0, then subsequent years have negative effect on forest, relative to 2007
+# similar effect for propSecSec, year has ver small negative effect
+
+# plot
+plot_model(glm.SecSec_year, type="pred", terms=c("year","propSecSec[0,0.008,0.8]"))
+# doesn't look like there#s much of an interaction. Comunes with low propSecSec hve more forest
+
 
 # interacion with year
 glm.SecSec_year_int <- glm(ForPix ~ propSecSec * year, data=dat, family=poisson)
 summary(glm.SecSec_year_int)
-# the effect of propSecSec gets larger (i.e. more negative) in subsequent years
+# the propSecSec negative effect gets steeper, as does the year effect. interaction suggest as time goes on, the propSecSec slope gets less steep
 
-# compare models
-anova(glm.SecSec_year, glm.SecSec_year_int, test="Chisq")
-# interaction model is better
 
 # plot
-plot_model(glm.SecSec_year_int, type="int")
-# 2007:2010 all have virtually identical effects. Big difference in effect of 2011 and 2012 on the effect of propSecSec.  In these later two years the effect of propSecSec becomes much larger. In the eariler years, propSecSec actually has very little effect on forest cover. I am concerned this is because of the changes in the questions in the commune database in 2011
+plot_model(glm.SecSec_year_int, type="pred", terms=c("year","propSecSec[0,0.008,0.8]"))
+# woah. This is silly - something strange going on with 2011 and 2012. 
 
     # All employment vars ####
 
@@ -452,11 +456,11 @@ summary(glm.Emp_year)
 # including year has increased the effect size of PrimSec, but reducd the effect size of SecSec
 
 # create new data for plotting
-newprimdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
+newprimdata <- expand.grid(year = c(2007,2008, 2009, 2010, 2011, 2012),
                           propPrimSec = seq(0.01,1, length.out = 100),
                           propSecSec = 0.008)
 
-newsecdata <- expand.grid(year = c("2007","2008", "2009", "2010", "2011", "2012"),
+newsecdata <- expand.grid(year = c(2007,2008, 2009, 2010, 2011, 2012),
                           propPrimSec = 0.87,
                           propSecSec = seq(0,0.85,length.out = 100))
 
@@ -491,9 +495,20 @@ glm.prim_sec_year_in <- glm(ForPix ~ propPrimSec*propSecSec*year, data=dat, fami
 summary(glm.prim_sec_year_in)
 
 # plot 3-way interaction
-plot_model(glm.prim_sec_year_in, type="int")
+plot_model(glm.prim_sec_year_in, type="pred", 
+           terms=c("year","propSecSec","propPrimSec[0,0.5,1]"))
 
-# Not sure what is really happening here. There's clearly an odd relatinonship between the two variables. There is only really an interaction in 2008 and 2010. I would probably be inclinde to just drop propSecSec, as I'm not really sure what it contributes to my hypotheses. 
+# Some pretty gnarli interactions here.
+
+# interaction beteen each var and year
+glm.prim_sec_year_in2 <- glm(ForPix ~ year*propPrimSec + year*propSecSec, 
+                             data=dat, family=poisson)
+summary(glm.prim_sec_year_in2)
+  
+# plot partial effects with year interaction
+plot_model(glm.prim_sec_year_in2, type="pred", terms=c("year","propPrimSec"))
+plot_model(glm.prim_sec_year_in2, type="pred", terms=c("year","propSecSec"))
+
 
   ## Economic security ####
     # Les_1_R_Land ####
