@@ -550,10 +550,10 @@ ggplot(NULL, aes(x=Les1_R_Land, y=ForPix))+
 # add year
 glm.rice_year <- glm(ForPix ~ Les1_R_Land + year, data=dat, family=poisson)
 summary(glm.rice_year)
-# varying effects of year
+# slight incrase in rice effect. year has small positive effect
 
 # create new data
-newriceYeardat <- expand.grid(year = c("2007","2008","2009","2010","2011","2012"),
+newriceYeardat <- expand.grid(year = c(2007,2008,2009,2010,2011,2012),
                               Les1_R_Land = seq(0,1,length.out = 100))
 
 # predict
@@ -563,22 +563,18 @@ newriceYeardat <- cbind(newriceYeardat,riceYearpred)
 # plot
 ggplot(newriceYeardat, aes(x=Les1_R_Land, y=fit, group=year, colour=year))+
   geom_line()
-# 2011 and 2012 look different to the earlier years. 
+#  
 
 # interaction with year
 glm.rice_year_int <- glm(ForPix ~ Les1_R_Land*year, data=dat, family=poisson)
 summary(glm.rice_year_int)
-# the effect of Les1_R_Land gets larger with each subsequent year
+# the slope for rice gets steeper
 
-# compare models
-anova(glm.rice_year,glm.rice_year_int, test="Chisq")
-# interaction model is better
 
 # plot
-plot_model(glm.rice_year_int, type="int")
-# So for example, in 2007 if you have no people with no rice land then forest cover is high, and as you increase the proportion of people with no rice land, the amount of forest cover drops more steeply. Then in 2011, the forest cover starts lower with no people with no rice land, but doesn't drop nearly as quickly as you increase the proportion of people with no rice land. In 2012, forest cover starts high when you have no people with no rice land, and has a slope somewhere in the middle of 2007 and 2011.  
+plot_model(glm.rice_year_int, type="pred", terms=c("year","Les1_R_Land[0,0.35,1]"))
+# not much of an interaction effect.   
 
-# main point here is that as you increase the proportion of people with less than 1ha of rice land, you will have less forest. This could reflect the fact that in more urbanised areas, that have less forest, you have fewer people with agricultural land.
 
     # pig_fam ####
 
@@ -621,29 +617,22 @@ ggplot(NULL, aes(x=pig_fam, y=ForPix))+
 # include year
 glm.pig_year <- glm(ForPix ~ pig_fam + year, data=dat, family=poisson)
 summary(glm.pig_year)
-# The intercept for the fit for each year would be slightly higher in each year relative to 2007
-
-# create new data
-newpigYeardat <- expand.grid(year = c("2007","2008","2009","2010","2011","2012"),
-                              pig_fam = seq(0,1,length.out = 100))
-
-# predict
-pigYearpred <- predict(glm.pig_year, newdata=newpigYeardat, type = "response", se=T)
-newpigYeardat <- cbind(newpigYeardat,pigYearpred)
+# reduced effect size for pig, year has small positive effect
 
 # plot
-ggplot(newpigYeardat, aes(x=pig_fam, y=fit, group=year, colour=year))+
-  geom_line()
+plot_model(glm.pig_year, type="pred", terms=c("year", "pig_fam"))
 
 
 # year as interaction
 glm.pig_year_int <- glm(ForPix ~ pig_fam * year, data=dat, family = poisson)
 summary(glm.pig_year_int)
-# this changes the direction the intercepts move relative to 2007. Year has a positive effect on the effect of pig_fam i.e. with each year, the effect size of pig_fam gets larger
+# changes direction of pig_fam effect. Year has negative effect
 
 # plot
-plot_model(glm.pig_year_int, type="int")
-# the stand out year here is 2012 - with low values of pig_fam, you have less forest, but as pig_fam increases, the slope is much steeper than the other years
+plot_model(glm.pig_year_int, type="pred", terms=c("year","pig_fam"))
+# There is an interaction effect - in communes with low proportion of families keeping pigs, forest cover goes down.  Communes with medium or high proportions, forest cover goes up
+
+
     # All economic security vars ####
 
 # simple model with both vars
@@ -690,10 +679,9 @@ plot_model(glm.pigrice_int, type="pred", terms = c("Les1_R_Land","pig_fam"))
 # add year
 glm.pigrice_year <- glm(ForPix ~ pig_fam + Les1_R_Land + year, data=dat, family=poisson)
 summary(glm.pigrice_year)
-# not very disimilar to the previous individual models with year
 
 # plot
-plot_model(glm.pigrice_year, type="pred", terms = c("Les1_R_Land","pig_fam","year"))
+plot_model(glm.pigrice_year, type="pred", terms = c("year","Les1_R_Land","pig_fam"))
 # looks like 2011 and 2012 are different
 
 # test interactions
@@ -701,15 +689,10 @@ glm.pigriceyear_int <- glm(ForPix ~ pig_fam * Les1_R_Land * year, data=dat, fami
 summary(glm.pigriceyear_int)
 
 # plot
-plot_model(glm.pigriceyear_int, type="int")
-plot_model(glm.pigriceyear_int, type="pred", terms = c("Les1_R_Land","pig_fam","year"))
+plot_model(glm.pigriceyear_int, type="pred", terms = c("year","Les1_R_Land","pig_fam"))
+plot_model(glm.pigriceyear_int, type="pred", terms = c("year","pig_fam","Les1_R_Land"))
 
-# compare models
-anova(glm.pigrice_year,glm.pigriceyear_int, test="Chisq")
-# model with interactions is better
-
-# summary here is that when lots of people have less than 1ha of rice land, then the proportion of families who keep pigs has a much larger effect on predicting forest cover. The size of the effects and teh differences in the effects of the interaction changes between years.
-# When the proportion of families with pigs is very high, in 2007 and 2009 this causes a stonger effect of rice land on predicting forest cover. This interaction doesn't seem to have much of an effect in the other years.  
+# summary here is that both pig_fam and Les1_R_Land cause time to have a positive effect on forest cover. The higher the pig_fam value, the steeper the slope, although this is dampened by rice value (i.e. higher rice values have lower forest cover) 
 
   ## Access to services ####
 
