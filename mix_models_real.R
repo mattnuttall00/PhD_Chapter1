@@ -17,6 +17,7 @@ library(car)
 library(ggeffects)
 library(plotly)
 library(patchwork)
+library(lattice)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -30,9 +31,11 @@ dat$PA <- as.factor(dat$PA)
 str(dat)
 
 
-#### data exploration ####
+#### data exploration ---------------------------------------------------------------
+  ## Note ####
 
 # for the moment, and based on discussions with Nils, Jeroen, and Luc, I will use raw forest pixels as my response. This eliminates all the zeros associated with difference in pixels (the response I originally considered), and so means I don't have to mess around with zero-inflated models, and I can use a Poisson distribution
+
 
   ## population demographics ####
 
@@ -1552,3 +1555,66 @@ plot_model(glm.pacat_year_int, type="pred", terms=c("year","PA_cat"))
 
 
 ### Need to look properly to see if there are any communes that gain forest pixels over time
+#### Mixed models -----------------------------------------------------------
+  ## experimenting ####
+
+# try varying intercept model with no predictors 
+m0 <- lmer(ForPix ~ 1 + (1|Commune), data = dat)
+display(m0)
+coef(m0) # intercepts for the communes
+
+ranef(m0) # shows how much the intercept for each commune goes up or down from the mean
+
+interc <- coef(m0) # extract intercepts
+
+# put into dataframe with commune names
+interc.df <- data.frame(commune = rownames(interc$Commune),
+                        intercept = interc$Commune$`(Intercept)`)
+
+# plot
+ggplot(interc.df, aes(x=commune, y=intercept))+
+  geom_point()
+
+
+# now try with commune nested inside province
+m0.1 <- lmer(ForPix ~ 1 + (1|Province/Commune), data = dat)
+display(m0.1)
+
+interc.prov <- coef(m0.1)
+interc.prov.df <- data.frame(commune = rownames(interc.prov$Commune),
+                        intercept = interc.prov$Commune$`(Intercept)`)
+
+head(interc.prov.df)
+ggplot(interc.prov.df, aes(x=commune, y=intercept))+
+  geom_point()
+# now the intercepts seem to be able to go below 0, so is these intercepts against some reference level?
+
+
+# now try with a single predictor
+m1.tot_pop <- lmer(ForPix ~ tot_pop + (1|Province), data=dat)
+display(m1.tot_pop)
+
+coef(m1.tot_pop) # intercepts and (fixed) slopes for the Provinces
+
+fixef(m1.tot_pop) # intercept and slope for tot_pop
+ranef(m1.tot_pop) # Difference in intercept for each province from the mean
+
+# 95% CIs for the slope (which in this model does not vary by Province)
+fixef(m1.tot_pop)["tot_pop"] + c(-2,2)*se.fixef(m1.tot_pop)["tot_pop"]
+
+# extract intercepts and slopes 
+interc.prov <- coef(m1.tot_pop)
+interc.prov.df <- data.frame(province = rownames(interc.prov$Province),
+                        intercept = interc.prov$Province$`(Intercept)`,
+                        tot_pop = interc.prov$Province$tot_pop)
+interc.prov.df$fit <- predict(m1.tot_pop)
+
+
+plot(m1.tot_pop)
+hist(residuals(m1.tot_pop))
+qqnorm(residuals(m1.tot_pop))
+plot_model(m1.tot_pop, type = "diag")
+plot_model(m1.tot_pop, type="re")
+plot_model(m1.tot_pop, type="pred", terms=c("tot_pop","Province"))
+
+
