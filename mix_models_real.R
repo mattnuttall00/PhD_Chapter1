@@ -1618,3 +1618,6 @@ plot_model(m1.tot_pop, type="re")
 plot_model(m1.tot_pop, type="pred", terms=c("tot_pop","Province"))
 
 
+### to remember ####
+
+# I think all my predictors need to be mean centered
