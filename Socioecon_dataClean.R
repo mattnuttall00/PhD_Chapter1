@@ -21,6 +21,7 @@ library('tmap')
 library("FactoMineR")
 library("factoextra")
 library("corrplot")
+library("patchwork")
 
 # make sure select() is dplyr, not MASS otherwise loads of code won't work
 select <- dplyr::select
@@ -2059,10 +2060,27 @@ ggplot(datHum, aes(x=dist_border, y=dist_provCap))+
   facet_wrap(datHum$PA_cat, nrow=4)
 # gap in communes with MUA between 30-75km from a border.  Communes with more than one category (MULTI) tend to have higher values of distance to capital. This could suggest that communes with multiple PAs are in more remote communes in the larger, more remote provinces. This fits with my expectation. National parks and Ramsar sites do not exit in communes further away from the border than 100kmm which means they all exist in provinces close to a border, than than in the middle of the country. For wildlife sanctuaries, there are two "groups" of communes. The first group includes communes that are close to a border (generally <50km), and they have a wider spread of dist_ProvCap values. The second group have larger dist_border values (>75km) and also higher dist_ProvCap values. 
 
+## Correlation between all remaining variables ####
+
+# Above I have removed certain variables within sets, but now I need to ensure there is no correlation between variables in different sets (see Harrison et al 2018)
+
+# load data
+dat <- read.csv("Data/commune/dat_use.csv")
+
+# extract numeric vars to be tested
+dat1 <- dat[ ,c(9:24, 26:27)]
+
+# correaltion matrix
+allvarcor <- cor(dat1, use = "everything")
+write.csv(allvarcor, file="socioecon_vars_corr.csv")
+
+# none of the final variables are correlated with each other (max is 0.4)
+
 #### FINAL DATASET ----------------------------------------------------------------------
 
 
-str(dat_merge)
+
+str(dat)
 
 # based on the above variable exploration and selection, I will remove the vars I don't want
 dat_use <- dat_merge %>% select(year,Province, Commune,commGIS,areaKM,ForPix,diffPix,
