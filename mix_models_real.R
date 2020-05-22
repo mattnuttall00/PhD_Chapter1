@@ -1664,9 +1664,25 @@ plot_model(m1.tot_pop, type="pred", terms=c("tot_pop","Province"))
 
 # Protected area category (PA_cat) - Same as PA above
 
+# Economic land concessions (elc) - as above
+
 # surely I've got too many variables for them all to be included as interactions?!
-re.str.1 <- glmer(ForPix ~ )
+re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+pop_den*year+M6_24_sch*year+
+                    propPrimSec*year+propSecSec*year+Les1_R_Land*year+pig_fam*year+
+                    dist_sch*year+garbage*year+KM_Comm*year+land_confl*year+crim_case*year+
+                    Pax_migt_in*year+Pax_migt_out*year+mean_elev+dist_border+dist_provCap+
+                    (1|Province/Commune)+(1|year)+(1|habitat)+(1|PA)+(1|PA_cat)+
+                    (1|elc), family=poisson(link="log"), data=dat1)
+# model failed
+
+# try model with fewer fixed effecs
+re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+M6_24_sch*year+KM_Comm*year+
+                    Pax_migt_in*year+mean_elev+dist_border+dist_provCap+
+                    (1|Province/Commune)+(1|year)+(1|habitat)+(1|PA)+(1|PA_cat)+
+                    (1|elc), family=poisson(link="log"), data=dat1,REML=TRUE)
+
 
 ### to remember ####
 
 # when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when preenting final model results, use REML.  
+
