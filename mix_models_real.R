@@ -1679,10 +1679,11 @@ re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+pop_den*year+M6_24_sch*yea
 re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+M6_24_sch*year+KM_Comm*year+
                     Pax_migt_in*year+mean_elev+dist_border+dist_provCap+
                     (1|Province/Commune)+(1|year)+(1|habitat)+(1|PA)+(1|PA_cat)+
-                    (1|elc), family=poisson(link="log"), data=dat1,REML=TRUE)
+                    (1|elc), family=poisson(link="log"), data=dat1)
+# fails. Try scaling vars as well as centering
 
 
 ### to remember ####
 
-# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when preenting final model results, use REML.  
+# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when preenting final model results, use REML. Although I can't use REML if using glmer 
 
