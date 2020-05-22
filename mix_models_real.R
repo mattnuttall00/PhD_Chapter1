@@ -18,6 +18,7 @@ library(ggeffects)
 library(plotly)
 library(patchwork)
 library(lattice)
+library(reshape2)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -1555,6 +1556,35 @@ plot_model(glm.pacat_year_int, type="pred", terms=c("year","PA_cat"))
 
 
 ### Need to look properly to see if there are any communes that gain forest pixels over time
+#### Centering all variables ####
+
+# following from Harrison et al 2018 and Schielzeth 2010, I will mean centre all (numerical) input variables
+str(dat)
+
+dat1 <- dat %>% 
+        mutate(tot_pop = tot_pop-mean(tot_pop)) %>% 
+        mutate(prop_ind = prop_ind-mean(prop_ind)) %>% 
+        mutate(pop_den = pop_den-mean(pop_den)) %>% 
+        mutate(M6_24_sch = M6_24_sch-mean(M6_24_sch)) %>% 
+        mutate(propPrimSec = propPrimSec-mean(propPrimSec)) %>% 
+        mutate(propSecSec = propSecSec-mean(propSecSec)) %>% 
+        mutate(Les1_R_Land = Les1_R_Land-mean(Les1_R_Land)) %>% 
+        mutate(pig_fam = pig_fam-mean(pig_fam)) %>% 
+        mutate(dist_sch = dist_sch-mean(dist_sch)) %>% 
+        mutate(garbage = garbage-mean(garbage)) %>% 
+        mutate(KM_Comm = KM_Comm-mean(KM_Comm)) %>% 
+        mutate(land_confl = land_confl-mean(land_confl)) %>% 
+        mutate(crim_case = crim_case-mean(crim_case)) %>% 
+        mutate(Pax_migt_in = Pax_migt_in-mean(Pax_migt_in)) %>% 
+        mutate(Pax_migt_out = Pax_migt_out-mean(Pax_migt_out)) %>% 
+        mutate(mean_elev = mean_elev-mean(mean_elev)) %>% 
+        mutate(dist_border = dist_border-mean(dist_border)) %>% 
+        mutate(dist_provCap = dist_provCap-mean(dist_provCap)) 
+
+str(dat1)
+
+ggplot(melt(dat1),aes(x=value)) + geom_histogram() + facet_wrap(~variable)
+
 #### Mixed models -----------------------------------------------------------
   ## experimenting ####
 
@@ -1618,6 +1648,25 @@ plot_model(m1.tot_pop, type="re")
 plot_model(m1.tot_pop, type="pred", terms=c("tot_pop","Province"))
 
 
+  ## Random effects structure ####
+
+# according to Zuur et al 2009 and Barr et al 2015a, a good approach for establishing your random effects structure is to include all fixed effects (maximal / above optimal model) and then test different random effects structures (using REML)
+
+# Commune - this wants to be a random effect because of repreat measurements (year), because there are a LOT of levels and so would eat up a lot of degrees of freedom as a fixed effect.  My one concern is that I have read that a variable should be a random effect if it is a sample of the 'global' population, which in this case is not true - I have all of the communes in the country (where there is forest), and so this IS the gobal population. Not sure if this is something to worry about.
+
+# Province - this is a random effect, and commune should be nested inside Province (ie a commune can only feature in one Province). I wonder whether communes with the same name but in different provinces is going to be an issue here?
+
+# year - I think year needs to be a crossed randome effect, as communes appear in multiple years. But Jeoren mentioned that year should also be a fixed effect interacting with all other fixed effects to allow for the slope to vary by year
+
+# Habitat - I want to test whether intercepts and slopes vary by habitat, and so this should be a random effect. I think it should be a crossed effect, because a province (and in theory a commune) can include different habitat types
+
+# Protected area presence (PA) - like habitat, I want to test differences in intercept and slope for effects for communes with and without PAs.  And again, I think this wants to be a crossed effect
+
+# Protected area category (PA_cat) - Same as PA above
+
+# surely I've got too many variables for them all to be included as interactions?!
+re.str.1 <- glmer(ForPix ~ )
+
 ### to remember ####
 
-# I think all my predictors need to be mean centered
+# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when preenting final model results, use REML.  
