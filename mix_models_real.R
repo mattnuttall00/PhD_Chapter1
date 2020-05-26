@@ -1558,32 +1558,15 @@ plot_model(glm.pacat_year_int, type="pred", terms=c("year","PA_cat"))
 ### Need to look properly to see if there are any communes that gain forest pixels over time
 #### Centering all variables ####
 
-# following from Harrison et al 2018 and Schielzeth 2010, I will mean centre all (numerical) input variables
+# following from Harrison et al 2018 and Schielzeth 2010, I will mean centre and scale all (numerical) input variables
 str(dat)
+ 
 
 dat1 <- dat %>% 
-        mutate(tot_pop = tot_pop-mean(tot_pop)) %>% 
-        mutate(prop_ind = prop_ind-mean(prop_ind)) %>% 
-        mutate(pop_den = pop_den-mean(pop_den)) %>% 
-        mutate(M6_24_sch = M6_24_sch-mean(M6_24_sch)) %>% 
-        mutate(propPrimSec = propPrimSec-mean(propPrimSec)) %>% 
-        mutate(propSecSec = propSecSec-mean(propSecSec)) %>% 
-        mutate(Les1_R_Land = Les1_R_Land-mean(Les1_R_Land)) %>% 
-        mutate(pig_fam = pig_fam-mean(pig_fam)) %>% 
-        mutate(dist_sch = dist_sch-mean(dist_sch)) %>% 
-        mutate(garbage = garbage-mean(garbage)) %>% 
-        mutate(KM_Comm = KM_Comm-mean(KM_Comm)) %>% 
-        mutate(land_confl = land_confl-mean(land_confl)) %>% 
-        mutate(crim_case = crim_case-mean(crim_case)) %>% 
-        mutate(Pax_migt_in = Pax_migt_in-mean(Pax_migt_in)) %>% 
-        mutate(Pax_migt_out = Pax_migt_out-mean(Pax_migt_out)) %>% 
-        mutate(mean_elev = mean_elev-mean(mean_elev)) %>% 
-        mutate(dist_border = dist_border-mean(dist_border)) %>% 
-        mutate(dist_provCap = dist_provCap-mean(dist_provCap)) 
+  mutate_at(c("tot_pop","prop_ind","pop_den","M6_24_sch","propPrimSec","propSecSec","Les1_R_Land",
+              "pig_fam","dist_sch","garbage","KM_Comm","land_confl","crim_case","Pax_migt_in",
+              "Pax_migt_out","mean_elev","dist_border","dist_provCap"), ~(scale(.) %>% as.vector))
 
-str(dat1)
-
-ggplot(melt(dat1),aes(x=value)) + geom_histogram() + facet_wrap(~variable)
 
 #### Mixed models -----------------------------------------------------------
   ## experimenting ####
