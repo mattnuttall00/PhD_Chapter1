@@ -1567,6 +1567,13 @@ dat1 <- dat %>%
               "pig_fam","dist_sch","garbage","KM_Comm","land_confl","crim_case","Pax_migt_in",
               "Pax_migt_out","mean_elev","dist_border","dist_provCap"), ~(scale(.) %>% as.vector))
 
+# also add scaled year and factor year
+dat1 <- dat1 %>% mutate(year.scale = as.vector(scale(year)))
+dat1 <- dat1 %>% mutate(year.fact = as.factor(year))
+
+# merge Province and Commune into a new unique variable (to remove issue of communes with the same name)
+dat1 <- dat1 %>% mutate(Commune.u = paste(dat1$Province, dat1$Commune, sep = "_"))
+
 
 #### Mixed models -----------------------------------------------------------
   ## experimenting ####
@@ -1666,7 +1673,222 @@ re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+M6_24_sch*year+KM_Comm*yea
 # fails. Try scaling vars as well as centering
 
 
+# now vars are centered and scaled. I will try model with only 3 fixed effects that don't interact with year
+
+# set new year var to factor
+dat1$year_fac <- as.factor(dat1$year)
+
+re.st.2 <- glmer(ForPix ~ tot_pop*prop_ind*KM_Comm + 
+                          (1+tot_pop*prop_ind*KM_Comm|Province/Commune)+
+                          (1+tot_pop*prop_ind*KM_Comm|habitat/Commune)+
+                          (1+tot_pop*prop_ind*KM_Comm|PA/Commune)+
+                          (1+tot_pop*prop_ind*KM_Comm|PA_cat/Commune)+
+                          (1+tot_pop*prop_ind*KM_Comm|elc/Commune)+
+                          (1|year), family=poisson(link="log"), data=dat1)
+
+# try with different formulation
+re.st.2 <- glmer(ForPix ~ tot_pop*prop_ind*KM_Comm + 
+                (1+tot_pop|Province/Commune)+(1+prop_ind|Province/Commune)+(1+KM_Comm|Province/Commune)+
+                (1+tot_pop|habitat/Commune)+(1+prop_ind|habitat/Commune)+(1+KM_Comm|habitat/Commune)+
+                (1+tot_pop|PA/Commune)+(1+prop_ind|PA/Commune)+(1+KM_Comm|PA/Commune)+
+                (1+tot_pop|PA_cat/Commune)+(1+prop_ind|PA_cat/Commune)+(1+KM_Comm|PA_cat/Commune)+
+                (1+tot_pop|elc/Commune)+(1+prop_ind|elc/Commune)+(1+KM_Comm|elc/Commune)+
+                (1|year), family=poisson(link="log"), data=dat1)
+summary(re.st.2)
+# a bunch of warnings about convergence
+
+
+# try with no fixed effects
+re.st.3 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|PA) + (1|PA_cat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.3)
+plot_model(re.st.3, type="re")
+
+
+# PA has variance of 0 so try and remove that
+re.st.4 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|PA_cat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.4)
+plot_model(re.st.4, type="re")
+
+aic_comp <- AIC(re.st.3,re.st.4)
+
+
+# PA_cat also has variance of 0 so remove
+re.st.5 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.5)
+
+aic_comp <- AIC(re.st.3,re.st.4,re.st.5)
+
+# run above models with demographic fixed effects
+re.st.6 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
+                 (1|Province/Commune) + (1|habitat) + (1|PA) + (1|PA_cat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.6)
+plot_model(re.st.6, type="pred")
+fixef(re.st.6)
+
+# remove PA
+re.st.7 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
+                   (1|Province/Commune) + (1|habitat) + (1|PA_cat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.7)
+plot_model(re.st.7, type="pred")
+fixef(re.st.7)
+
+# remove PA_cat
+re.st.8 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
+                   (1|Province/Commune) + (1|habitat) + (1|elc),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.8)
+plot_model(re.st.8, type="pred")
+fixef(re.st.8)
+
+aic_comp <- AIC(re.st.6,re.st.7,re.st.8)
+
+# attempt to plot re.st.8
+
+# create new data
+newdat <- expand.grid(tot_pop = c(min(dat1$tot_pop),max(dat1$tot_pop)),
+                      pop_den = mean(dat1$pop_den),
+                      prop_ind = mean(dat1$prop_ind),
+                      Province = levels(dat1$Province),
+                      habitat = levels(dat1$habitat),
+                      elc = levels(dat1$elc))
+
+expand<-tidyr::expand
+newdat <- expand(dat1, 
+                 tot_pop = c(min(dat1$tot_pop),max(dat1$tot_pop)),
+                 pop_den = mean(dat1$pop_den),
+                 prop_ind = mean(dat1$prop_ind),
+                 nesting(Province, Commune, habitat, elc))
+
+
+tot_pop_pred <- predict(re.st.8, newdata=newdat, type="response", 
+                        re.form=~(1|Province/Commune)+(1|habitat)+(1|elc))
+
+totpop_pred_df <- cbind(newdat,tot_pop_pred)
+
+ggplot(totpop_pred_df, aes(x=tot_pop, y=tot_pop_pred, color=factor(habitat)))+
+  geom_line()+
+  facet_wrap(totpop_pred_df$elc, nrow=1)
+
+
+# test model with year (scaled) as random slope but not a fixed effect
+re.st.9 <- glmer(ForPix ~ tot_pop + (year.scale|Province/Commune.u),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.9)
+display(re.st.9)
+
+head(coef(re.st.9))
+head(ranef(re.st.9))
+fixef(re.st.9)
+
+
+# test model as above but with year also as a fixed effect
+re.st.10 <- glmer(ForPix ~ tot_pop + year.scale + (year.scale|Province/Commune.u),
+                 family=poisson(link="log"), data=dat1)
+summary(re.st.10)
+display(re.st.10)
+
+head(coef(re.st.10))
+head(ranef(re.st.10))
+fixef(re.st.10)
+
+plot_model(re.st.10, type="re")
+
+# test model with interaction between year and fixed effect and not in RE strucutre
+re.st.11 <- glmer(ForPix ~ tot_pop * year.scale + (1|Province/Commune.u),
+                  family=poisson(link="log"), data=dat1)
+summary(re.st.11)
+display(re.st.11)
+
+head(coef(re.st.11))
+head(ranef(re.st.11))
+fixef(re.st.11)
+
+#
+### simple test ####
+
+# becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
+
+testdat <- dat1 %>% select(year, Province, Commune, diffPix)
+head(testdat)
+
+# create new unique commmune name
+testdat$new.commune <- paste(testdat$Province,testdat$Commune, sep="_")
+head(testdat$new.commune)
+
+# create new column which sums the differnece in forest pixels over the years for each commune
+testdat1 <- testdat %>% group_by(new.commune) %>%  
+            arrange(year, .by_group=TRUE)  %>% 
+            summarise(sum = sum(diffPix))
+
+hist(testdat1$sum)
+
+# create new column "bin" (binary) - if the sum of the difference in pixels is 0 (i.e. no change) then it is 0, if the sum is greater than 0 (increase in pixels) then it is 1, if the sum of forest pixels is less than 0 (decrease in forest pixels) then it is -1
+testdat1$bin <- case_when(testdat1$sum == 0 ~  0, 
+                          testdat1$sum  > 0 ~  1,
+                          testdat1$sum  < 0 ~ -1)
+hist(testdat1$bin)
+
+
+# pull out predictor variables
+testvarsdat <- dat1 %>% select(!c(commGIS,areaKM,ForPix,diffPix,habitat,elc,PA,PA_cat,year_fac))
+
+# create new commune variable
+testvarsdat$new.commune <- paste(testvarsdat$Province,testvarsdat$Commune, sep="_")
+
+# Now create a new variable which is the mean of each variable in that commune across the years
+testvarsdat1 <- testvarsdat %>% group_by(new.commune) %>% 
+                summarise_at(c("tot_pop","prop_ind","pop_den","M6_24_sch","propPrimSec",
+                               "propSecSec","Les1_R_Land","pig_fam","dist_sch","garbage",
+                               "KM_Comm","land_confl","crim_case","Pax_migt_in","Pax_migt_out"
+                               ,"mean_elev","dist_border","dist_provCap"), mean)
+
+testdat_df <- cbind(testdat1,testvarsdat1)
+testdat_df <- testdat_df[,-4]
+head(testdat_df)
+str(testdat_df)
+
+testdat_df$bin <- as.character(testdat1$bin)
+
+plot_tot_pop <- ggplot(testdat_df, aes(x=bin,  y=tot_pop))+
+                geom_boxplot()+
+                xlab("Forest cover lost / no change / gained")+
+                ylab("total population")
+
+plot_prop_ind <- ggplot(testdat_df, aes(x=bin,  y=prop_ind))+
+                 geom_boxplot()+
+                 xlab("Forest cover lost / no change / gained")+
+                 ylab("proportion indigneous")
+
+plot_pop_den <- ggplot(testdat_df, aes(x=bin,  y=pop_den))+
+                 geom_boxplot()+
+                 xlab("Forest cover lost / no change / gained")+
+                 ylab("Population density")
+
+plot_M6_24_sch <- ggplot(testdat_df, aes(x=bin,  y=M6_24_sch))+
+                 geom_boxplot()+
+                 xlab("Forest cover lost / no change / gained")+
+                 ylab("Proportion males in school")
+
+plot_propPrimSec <- ggplot(testdat_df, aes(x=bin,  y=propPrimSec))+
+                  geom_boxplot()+
+                  xlab("Forest cover lost / no change / gained")+
+                  ylab("Proportion employed in primary sector")
+
+plot_Les1_R_Land <- ggplot(testdat_df, aes(x=bin,  y=Les1_R_Land))+
+                    geom_boxplot()+
+                    xlab("Forest cover lost / no change / gained")+
+                    ylab("Proportion population with no agricultural land")
+
+library(patchwork)
+plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les1_R_Land
+
+
 ### to remember ####
 
-# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when preenting final model results, use REML. Although I can't use REML if using glmer 
+# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when presenting final model results, use REML. Although I can't use REML if using glmer 
 
