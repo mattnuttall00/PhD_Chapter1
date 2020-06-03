@@ -1,7 +1,8 @@
 library(lme4)
+library(tidyverse)
 
 # load data
-dat <- read.csv("dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
+dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
 dat <- dat[ ,-1]
 
 # re-classify the variables
@@ -11,8 +12,17 @@ dat$PA <- as.factor(dat$PA)
 
 str(dat)
 
+dat <- dat %>% 
+  mutate_at(c("year","tot_pop","prop_ind","pop_den","M6_24_sch","propPrimSec","propSecSec",
+              "Les1_R_Land",
+              "pig_fam","dist_sch","garbage","KM_Comm","land_confl","crim_case","Pax_migt_in",
+              "Pax_migt_out","mean_elev","dist_border","dist_provCap"), ~(scale(.) %>% as.vector))
+
 dat$year.s = as.vector(scale(dat$year))
 dat$tot_pop.s = as.vector(scale(dat$tot_pop))
+
+dat <- dat %>% rename(tot_pop.s = tot_pop) %>% 
+               rename(year.s = year)
 
 m1 = glmer(ForPix ~ tot_pop.s + (year.s|Province/Commune), data = dat, family = "poisson")
 m2 = glmer(ForPix ~ tot_pop.s + year.s + (year.s|Province/Commune), data = dat, family = "poisson")
@@ -28,7 +38,7 @@ coef(m2)
 # combination. I think it's a bit more general to be able to handle/interpret the random and fixed components
 # separately, as below.
 # To try to illustrate, we can look the fixed effect estimate for year.s in m2 like this:
-fixed(m2)
+fixef(m2)
 # It also shows as significantly different from zero, but see at the very end of this script!
 summary(m2)
 # Anyway, how does this relate to the numbers reported in fixef() and ranef()?
@@ -102,7 +112,7 @@ head(m1_est)
 
 mpred_m1 = with(m1_est, {
     Iglobal+                                                      # Fixed intercept (does not vary by Province/Commune)
-    tot_pop.s*b_totpops +                                         # Fixed effect of population size (does not vary by Province/Commune)
+    tot_pop.s*b_totpops +                               # Fixed effect of population size (does not vary by Province/Commune)
     Iprovince +                                                   # Random intercept for province
     Icommune +                                                    # Random intercept for commune in province 
     year.s*(b_year_province+b_year_commune) # Random slope effect of year.s, varying by province/commune. 
