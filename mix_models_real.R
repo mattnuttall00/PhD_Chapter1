@@ -7,11 +7,10 @@ library(arm)
 library(sjPlot)
 library(DHARMa)
 library(lme4)
-library(nlme)
+#library(nlme)
 library(Matrix)
 #library(rcpp)
 library(psych)
-library(cowplot)
 library(visreg)
 library(car)
 library(ggeffects)
@@ -1563,250 +1562,58 @@ str(dat)
  
 
 dat1 <- dat %>% 
-  mutate_at(c("tot_pop","prop_ind","pop_den","M6_24_sch","propPrimSec","propSecSec","Les1_R_Land",
+  mutate_at(c("year","tot_pop","prop_ind","pop_den","M6_24_sch","propPrimSec","propSecSec","Les1_R_Land",
               "pig_fam","dist_sch","garbage","KM_Comm","land_confl","crim_case","Pax_migt_in",
               "Pax_migt_out","mean_elev","dist_border","dist_provCap"), ~(scale(.) %>% as.vector))
 
-# also add scaled year and factor year
-dat1 <- dat1 %>% mutate(year.scale = as.vector(scale(year)))
-dat1 <- dat1 %>% mutate(year.fact = as.factor(year))
 
 # merge Province and Commune into a new unique variable (to remove issue of communes with the same name)
-dat1 <- dat1 %>% mutate(Commune.u = paste(dat1$Province, dat1$Commune, sep = "_"))
+dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_"))
 
 
 #### Mixed models -----------------------------------------------------------
-  ## experimenting ####
-
-# try varying intercept model with no predictors 
-m0 <- lmer(ForPix ~ 1 + (1|Commune), data = dat)
-display(m0)
-coef(m0) # intercepts for the communes
-
-ranef(m0) # shows how much the intercept for each commune goes up or down from the mean
-
-interc <- coef(m0) # extract intercepts
-
-# put into dataframe with commune names
-interc.df <- data.frame(commune = rownames(interc$Commune),
-                        intercept = interc$Commune$`(Intercept)`)
-
-# plot
-ggplot(interc.df, aes(x=commune, y=intercept))+
-  geom_point()
-
-
-# now try with commune nested inside province
-m0.1 <- lmer(ForPix ~ 1 + (1|Province/Commune), data = dat)
-display(m0.1)
-
-interc.prov <- coef(m0.1)
-interc.prov.df <- data.frame(commune = rownames(interc.prov$Commune),
-                        intercept = interc.prov$Commune$`(Intercept)`)
-
-head(interc.prov.df)
-ggplot(interc.prov.df, aes(x=commune, y=intercept))+
-  geom_point()
-# now the intercepts seem to be able to go below 0, so is these intercepts against some reference level?
-
-
-# now try with a single predictor
-m1.tot_pop <- lmer(ForPix ~ tot_pop + (1|Province), data=dat)
-display(m1.tot_pop)
-
-coef(m1.tot_pop) # intercepts and (fixed) slopes for the Provinces
-
-fixef(m1.tot_pop) # intercept and slope for tot_pop
-ranef(m1.tot_pop) # Difference in intercept for each province from the mean
-
-# 95% CIs for the slope (which in this model does not vary by Province)
-fixef(m1.tot_pop)["tot_pop"] + c(-2,2)*se.fixef(m1.tot_pop)["tot_pop"]
-
-# extract intercepts and slopes 
-interc.prov <- coef(m1.tot_pop)
-interc.prov.df <- data.frame(province = rownames(interc.prov$Province),
-                        intercept = interc.prov$Province$`(Intercept)`,
-                        tot_pop = interc.prov$Province$tot_pop)
-interc.prov.df$fit <- predict(m1.tot_pop)
-
-
-plot(m1.tot_pop)
-hist(residuals(m1.tot_pop))
-qqnorm(residuals(m1.tot_pop))
-plot_model(m1.tot_pop, type = "diag")
-plot_model(m1.tot_pop, type="re")
-plot_model(m1.tot_pop, type="pred", terms=c("tot_pop","Province"))
-
-
   ## Random effects structure ####
 
 # according to Zuur et al 2009 and Barr et al 2015a, a good approach for establishing your random effects structure is to include all fixed effects (maximal / above optimal model) and then test different random effects structures (using REML)
 
-# Commune - this wants to be a random effect because of repreat measurements (year), because there are a LOT of levels and so would eat up a lot of degrees of freedom as a fixed effect.  My one concern is that I have read that a variable should be a random effect if it is a sample of the 'global' population, which in this case is not true - I have all of the communes in the country (where there is forest), and so this IS the gobal population. Not sure if this is something to worry about.
+# Commune - this wants to be a random effect because of repreat measurements (year), because there are a LOT of levels and so would eat up a lot of degrees of freedom as a fixed effect. .
 
-# Province - this is a random effect, and commune should be nested inside Province (ie a commune can only feature in one Province). I wonder whether communes with the same name but in different provinces is going to be an issue here?
+# Province - this is a random effect, and commune should be nested inside Province (ie a commune can only feature in one Province). Having Province in teh RE structure adds complexity to the interpretation, but there does appear to be some variance associated with province. And although I am interested in the differences between Provinces, perhaps I am not intersted in the effect of province per se, but more the way in which other things vary by province (see Jeroen's e-mail - he explains it well).
 
-# year - I think year needs to be a crossed randome effect, as communes appear in multiple years. But Jeoren mentioned that year should also be a fixed effect interacting with all other fixed effects to allow for the slope to vary by year
-
-# Habitat - I want to test whether intercepts and slopes vary by habitat, and so this should be a random effect. I think it should be a crossed effect, because a province (and in theory a commune) can include different habitat types
-
-# Protected area presence (PA) - like habitat, I want to test differences in intercept and slope for effects for communes with and without PAs.  And again, I think this wants to be a crossed effect
-
-# Protected area category (PA_cat) - Same as PA above
-
-# Economic land concessions (elc) - as above
-
-# surely I've got too many variables for them all to be included as interactions?!
-re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+pop_den*year+M6_24_sch*year+
-                    propPrimSec*year+propSecSec*year+Les1_R_Land*year+pig_fam*year+
-                    dist_sch*year+garbage*year+KM_Comm*year+land_confl*year+crim_case*year+
-                    Pax_migt_in*year+Pax_migt_out*year+mean_elev+dist_border+dist_provCap+
-                    (1|Province/Commune)+(1|year)+(1|habitat)+(1|PA)+(1|PA_cat)+
-                    (1|elc), family=poisson(link="log"), data=dat1)
-# model failed
-
-# try model with fewer fixed effecs
-re.str.1 <- glmer(ForPix ~ tot_pop*year+prop_ind*year+M6_24_sch*year+KM_Comm*year+
-                    Pax_migt_in*year+mean_elev+dist_border+dist_provCap+
-                    (1|Province/Commune)+(1|year)+(1|habitat)+(1|PA)+(1|PA_cat)+
-                    (1|elc), family=poisson(link="log"), data=dat1)
-# fails. Try scaling vars as well as centering
+# Year. This is tricky.  See e-mail conversation with Jeroen and his script "basic_analysis_fromJeroen". At the moment I am moving forward with year as a random slope, but not a fixed effect.  
 
 
-# now vars are centered and scaled. I will try model with only 3 fixed effects that don't interact with year
+  ## Population demographics ####
 
-# set new year var to factor
-dat1$year_fac <- as.factor(dat1$year)
+# model with all pop dem vars a fixed effects. Offset as areaKM is causing an errror.
+popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
+                   data=dat1, family="poisson")
 
-re.st.2 <- glmer(ForPix ~ tot_pop*prop_ind*KM_Comm + 
-                          (1+tot_pop*prop_ind*KM_Comm|Province/Commune)+
-                          (1+tot_pop*prop_ind*KM_Comm|habitat/Commune)+
-                          (1+tot_pop*prop_ind*KM_Comm|PA/Commune)+
-                          (1+tot_pop*prop_ind*KM_Comm|PA_cat/Commune)+
-                          (1+tot_pop*prop_ind*KM_Comm|elc/Commune)+
-                          (1|year), family=poisson(link="log"), data=dat1)
+summary(popdem.m1)
+# variance for Province and commune are similar. Variance for year at both levels is small, but an order of magnitude smaller for the Province level. Approximate p values are sig for tot_pop and pop_den, but not for prop_ind. tot_pop is positive effect, pop_den and prop_ind are negative. no real correlation between fixed effects.
 
-# try with different formulation
-re.st.2 <- glmer(ForPix ~ tot_pop*prop_ind*KM_Comm + 
-                (1+tot_pop|Province/Commune)+(1+prop_ind|Province/Commune)+(1+KM_Comm|Province/Commune)+
-                (1+tot_pop|habitat/Commune)+(1+prop_ind|habitat/Commune)+(1+KM_Comm|habitat/Commune)+
-                (1+tot_pop|PA/Commune)+(1+prop_ind|PA/Commune)+(1+KM_Comm|PA/Commune)+
-                (1+tot_pop|PA_cat/Commune)+(1+prop_ind|PA_cat/Commune)+(1+KM_Comm|PA_cat/Commune)+
-                (1+tot_pop|elc/Commune)+(1+prop_ind|elc/Commune)+(1+KM_Comm|elc/Commune)+
-                (1|year), family=poisson(link="log"), data=dat1)
-summary(re.st.2)
-# a bunch of warnings about convergence
+fixef(popdem.m1)
 
+ranef(popdem.m1)
 
-# try with no fixed effects
-re.st.3 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|PA) + (1|PA_cat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.3)
-plot_model(re.st.3, type="re")
+# so for this model I have a global intercept, and global slopes for tot_pop, pop_den, and prop_ind.  I also have individual intercepts for each province, and for each commune/province combination, and a random slope for year for each province and each commune.  
 
+# plot the random effects
+plot_model(popdem.m1, type="re")
 
-# PA has variance of 0 so try and remove that
-re.st.4 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|PA_cat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.4)
-plot_model(re.st.4, type="re")
+## manually calculate predictions
 
-aic_comp <- AIC(re.st.3,re.st.4)
+# first create subset data
+popdem.m1.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, year, Province, Provcomm)
+
+# add global intercept
+popdem.m1.dat$Iglobal <- fixef(popdem.m1)[["(Intercept)"]]
+
+# add RE intercepts for each Province and each commune
+popdem.m1.dat$Iprovince <- ranef(popdem.m1)$Province[,"(Intercept)"][
+                            match(popdem.m1.dat$Province, row.names(ranef(popdem.m1)$Province))]
 
 
-# PA_cat also has variance of 0 so remove
-re.st.5 <- glmer(ForPix ~ 1 + (1|Province/Commune) + (1|habitat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.5)
-
-aic_comp <- AIC(re.st.3,re.st.4,re.st.5)
-
-# run above models with demographic fixed effects
-re.st.6 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
-                 (1|Province/Commune) + (1|habitat) + (1|PA) + (1|PA_cat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.6)
-plot_model(re.st.6, type="pred")
-fixef(re.st.6)
-
-# remove PA
-re.st.7 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
-                   (1|Province/Commune) + (1|habitat) + (1|PA_cat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.7)
-plot_model(re.st.7, type="pred")
-fixef(re.st.7)
-
-# remove PA_cat
-re.st.8 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + 
-                   (1|Province/Commune) + (1|habitat) + (1|elc),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.8)
-plot_model(re.st.8, type="pred")
-fixef(re.st.8)
-
-aic_comp <- AIC(re.st.6,re.st.7,re.st.8)
-
-# attempt to plot re.st.8
-
-# create new data
-newdat <- expand.grid(tot_pop = c(min(dat1$tot_pop),max(dat1$tot_pop)),
-                      pop_den = mean(dat1$pop_den),
-                      prop_ind = mean(dat1$prop_ind),
-                      Province = levels(dat1$Province),
-                      habitat = levels(dat1$habitat),
-                      elc = levels(dat1$elc))
-
-expand<-tidyr::expand
-newdat <- expand(dat1, 
-                 tot_pop = c(min(dat1$tot_pop),max(dat1$tot_pop)),
-                 pop_den = mean(dat1$pop_den),
-                 prop_ind = mean(dat1$prop_ind),
-                 nesting(Province, Commune, habitat, elc))
-
-
-tot_pop_pred <- predict(re.st.8, newdata=newdat, type="response", 
-                        re.form=~(1|Province/Commune)+(1|habitat)+(1|elc))
-
-totpop_pred_df <- cbind(newdat,tot_pop_pred)
-
-ggplot(totpop_pred_df, aes(x=tot_pop, y=tot_pop_pred, color=factor(habitat)))+
-  geom_line()+
-  facet_wrap(totpop_pred_df$elc, nrow=1)
-
-
-# test model with year (scaled) as random slope but not a fixed effect
-re.st.9 <- glmer(ForPix ~ tot_pop + (year.scale|Province/Commune.u),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.9)
-display(re.st.9)
-
-head(coef(re.st.9))
-head(ranef(re.st.9))
-fixef(re.st.9)
-
-
-# test model as above but with year also as a fixed effect
-re.st.10 <- glmer(ForPix ~ tot_pop + year.scale + (year.scale|Province/Commune.u),
-                 family=poisson(link="log"), data=dat1)
-summary(re.st.10)
-display(re.st.10)
-
-head(coef(re.st.10))
-head(ranef(re.st.10))
-fixef(re.st.10)
-
-plot_model(re.st.10, type="re")
-
-# test model with interaction between year and fixed effect and not in RE strucutre
-re.st.11 <- glmer(ForPix ~ tot_pop * year.scale + (1|Province/Commune.u),
-                  family=poisson(link="log"), data=dat1)
-summary(re.st.11)
-display(re.st.11)
-
-head(coef(re.st.11))
-head(ranef(re.st.11))
-fixef(re.st.11)
 
 #
 ### simple test ####
@@ -1890,5 +1697,5 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 
 ### to remember ####
 
-# when testing variance components of random effects REML should be used. But when comparing models with differing fixed effects, ML should be used. But then when presenting final model results, use REML. Although I can't use REML if using glmer 
+
 
