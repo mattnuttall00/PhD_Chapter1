@@ -1704,6 +1704,10 @@ pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|P
 top5_newdat <- cbind(top5_newdat, pred_topcom1)
 
 
+## next I need to check predictions and plots for pop_den and prop_ind
+## model validation - likelihood ratio tests?
+## check with Jeroen about random slopes for the fixed effects i.e. (tot_pop|Province/Commune)
+
 #
 ### simple test ####
 
