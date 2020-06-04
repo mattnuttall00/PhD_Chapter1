@@ -1649,14 +1649,60 @@ m_popdem.m1_pred <- with(popdem.m1.dat, {
   tot_pop*b_tot_pop +
   pop_den*b_pop_den +
   prop_ind*b_prop_ind +
+  Iprovince +
+  Icommune +
   year*(b_year_prov+b_year_com)
 })
 
 # compare with predict()
-pred_popdem.m1 <- as.vector(predict(popdem.m1, type = "response"))
+pred_popdem.m1 <- predict(popdem.m1, type = "response")
 # Which it is, near enough:
 plot(exp(m_popdem.m1_pred),pred_popdem.m1)
 abline(a = 0, b = 1, col = "red")
+
+## predict for average commune for tot_pop
+
+# create new dataframe for predict
+tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                             pop_den = mean(dat1$pop_den),
+                             prop_ind = mean(dat1$prop_ind))
+
+# predict for average commune
+pred_tot_pop_av.m1 <- as.vector(predict(popdem.m1, newdata = tot_pop_newdat, type="response", re.form = NA))
+
+tot_pop_newdat <- cbind(tot_pop_newdat,pred_tot_pop_av.m1)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,50)
+  
+
+
+## Let's add some of the communes with the highest effects for tot_pop
+
+commune_re <- ranef(popdem.m1)[[1]]
+# Sort this from high to low intercept:
+commune_re <- commune_re[order(commune_re[,"(Intercept)"], decreasing = TRUE),]
+# So the top five are:
+head(commune_re, 5)
+# Save the names of these
+top5 <- row.names(head(commune_re, 5))
+
+top5_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                          pop_den = mean(dat1$pop_den),
+                          prop_ind = mean(dat1$prop_ind),
+                          year = mean(dat1$year),
+                          Province = "Kampong Chhnang",
+                          Provcomm = "Kampong Chhnang_Chieb")
+
+pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                        newdata = top5_newdat))
+
+top5_newdat <- cbind(top5_newdat, pred_topcom1)
+
 
 #
 ### simple test ####
