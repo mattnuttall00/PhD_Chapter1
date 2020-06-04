@@ -1585,12 +1585,14 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 
   ## Population demographics ####
 
-# model with all pop dem vars a fixed effects. Offset as areaKM is causing an errror.
+# model with all pop dem vars a fixed effects. Offset as areaKM to account for differences in size of communes
 popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
-                   data=dat1, family="poisson")
+                   offset = log(areaKM), data=dat1, family="poisson")
+
 
 summary(popdem.m1)
-# variance for Province and commune are similar. Variance for year at both levels is small, but an order of magnitude smaller for the Province level. Approximate p values are sig for tot_pop and pop_den, but not for prop_ind. tot_pop is positive effect, pop_den and prop_ind are negative. no real correlation between fixed effects.
+# variance for Province and commune are similar. Variance for year at both levels is small, but an order of magnitude smaller for the Province level. Approximate p values are sig for pop_den only. tot_pop is positive effect, pop_den and prop_ind are negative. no real correlation between fixed effects.
+# Note: I did run the model without offset and the variance for Province and Provcomm:Province were double what they are now that offset is included. 
 
 fixef(popdem.m1)
 
@@ -1609,11 +1611,52 @@ popdem.m1.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, year, Province
 # add global intercept
 popdem.m1.dat$Iglobal <- fixef(popdem.m1)[["(Intercept)"]]
 
-# add RE intercepts for each Province and each commune
+# add RE intercepts for each Province 
 popdem.m1.dat$Iprovince <- ranef(popdem.m1)$Province[,"(Intercept)"][
                             match(popdem.m1.dat$Province, row.names(ranef(popdem.m1)$Province))]
 
+# add Provcomm:Province name column to match the RE output
+popdem.m1.dat$Provcomm_P = paste(popdem.m1.dat$Provcomm,popdem.m1.dat$Province,sep=":")
 
+# add RE intercepts for each commune
+popdem.m1.dat$Icommune <- ranef(popdem.m1)[[1]][, "(Intercept)"][
+                            match(popdem.m1.dat$Provcomm_P, row.names(ranef(popdem.m1)[[1]]))]
+
+
+# add RE slope for year for province
+popdem.m1.dat$b_year_prov <- ranef(popdem.m1)$Province[,"year"][
+                              match(popdem.m1.dat$Province, row.names(ranef(popdem.m1)$Province))]
+
+# add random slope for year for commune
+popdem.m1.dat$b_year_com <- ranef(popdem.m1)$'Provcomm:Province'[,"year"][
+                              match(popdem.m1.dat$Provcomm_P, row.names(ranef(popdem.m1)$'Provcomm:Province'))]
+
+# now add the fixed effects of tot_pop, pop_den, prop_ind
+popdem.m1.dat$b_tot_pop <- fixef(popdem.m1)['tot_pop']
+popdem.m1.dat$b_pop_den <- fixef(popdem.m1)['pop_den']
+popdem.m1.dat$b_prop_ind <- fixef(popdem.m1)['prop_ind']
+
+head(popdem.m1.dat)
+
+# y ~ I + (Ip + Ic)|Prov/Comm + tot_pop*b1 + pop_den*b2 + prop_ind*b3 + (year*(cP + Cc)|Prov/Comm)
+
+# (global_intercept+(IProvince+Icommune)_given province/commune) + tot_pop.s*b_totpops + 
+# (year.s*(b_year_province+b_year_commune)_given province_commune).
+
+# predict manually
+m_popdem.m1_pred <- with(popdem.m1.dat, {
+  Iglobal +
+  tot_pop*b_tot_pop +
+  pop_den*b_pop_den +
+  prop_ind*b_prop_ind +
+  year*(b_year_prov+b_year_com)
+})
+
+# compare with predict()
+pred_popdem.m1 <- as.vector(predict(popdem.m1, type = "response"))
+# Which it is, near enough:
+plot(exp(m_popdem.m1_pred),pred_popdem.m1)
+abline(a = 0, b = 1, col = "red")
 
 #
 ### simple test ####
