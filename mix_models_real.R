@@ -1603,6 +1603,54 @@ ranef(popdem.m1)
 # plot the random effects
 plot_model(popdem.m1, type="re")
 
+
+    # diagnostics ####
+
+
+# USing DHARMa package for diagnostics - first calculate residuals using all RE levels
+simulationOutput <- simulateResiduals(fittedModel = popdem.m1, plot = T, 
+                                      re.form = ~(year|Province/Provcomm))
+
+plot(simulationOutput)
+# the QQ plot shows underdispersion, and the res vs pred plot looks ok (at this scale - see plotResiduals below)
+
+# QQ plot
+plotQQunif(simulationOutput)
+# According to the DHARMa vignette, this QQ plot shows underdispersion - i.e. too many value around 0.5 and not enough residuals at the tail ends of the distribution.
+
+# Another test for dispersion
+testDispersion(simulationOutput)
+# this looks pretty good to me
+
+# residual vs predcted plot
+plotResiduals(simulationOutput)
+# this to me shows fairly major heteroskedasicity - much more residual variance for small values of predicted ForPix
+hist(simulationOutput)
+
+# plot residuals from individual predictors
+par(mfrow=c(2,2))
+plotResiduals(simulationOutput, dat1$tot_pop)
+plotResiduals(simulationOutput, dat1$pop_den)
+plotResiduals(simulationOutput, dat1$prop_ind)
+
+# test uniformity, outlier, and dispersion
+testResiduals(simulationOutput)
+testUniformity(simulationOutput)
+
+
+# test temporal and spatial autocorrelation
+testTemporalAutocorrelation(simulationOutput)
+testSpatialAutocorrelation(simulationOutput)
+
+# test for zero inflation
+testZeroInflation(simulationOutput)
+
+# testing residuals per commune
+simulationOutput = recalculateResiduals(simulationOutput, dat1$year)
+
+
+    # predictions ####
+
 ## manually calculate predictions
 
 # first create subset data
@@ -1695,6 +1743,13 @@ tot_pop_newdat_off <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(da
 
 pred_popdem.m1 <- predict(popdem.m1, newdata=tot_pop_newdat, type="response", re.form=NA)
 pred_popdem.m2 <- predict(popdem.m2, newdata=tot_pop_newdat_off, type="response", re.form=NA)
+pred_popdem.m3 <- predict(popdem.m1, newdata=tot_pop_newdat, type="response", re.form=NA, offset=log(areaKM))
+
+
+# model 1 - model as above
+# model 2 - model as above but with offset of mean forest cover value
+# model 3 - GLM with above offsets 
+# predictions would be counts relative to the mean
 
 
 
