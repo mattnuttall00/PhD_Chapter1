@@ -1636,12 +1636,14 @@ popdem.m1.dat$b_tot_pop <- fixef(popdem.m1)['tot_pop']
 popdem.m1.dat$b_pop_den <- fixef(popdem.m1)['pop_den']
 popdem.m1.dat$b_prop_ind <- fixef(popdem.m1)['prop_ind']
 
+# add offset
+popdem.m1.dat$offset <- log(dat1$areaKM)[match(popdem.m1.dat$Provcomm, dat1$Provcomm)]
+
 head(popdem.m1.dat)
 
 # y ~ I + (Ip + Ic)|Prov/Comm + tot_pop*b1 + pop_den*b2 + prop_ind*b3 + (year*(cP + Cc)|Prov/Comm)
 
-# (global_intercept+(IProvince+Icommune)_given province/commune) + tot_pop.s*b_totpops + 
-# (year.s*(b_year_province+b_year_commune)_given province_commune).
+# (global_intercept+(IProvince+Icommune)_given province/commune) + tot_pop*b_totpops + pop_den*b_pop_den + prop_ind*b_prop_ind + (year.s*(b_year_province+b_year_commune)_given province_commune).
 
 # predict manually
 m_popdem.m1_pred <- with(popdem.m1.dat, {
@@ -1651,21 +1653,52 @@ m_popdem.m1_pred <- with(popdem.m1.dat, {
   prop_ind*b_prop_ind +
   Iprovince +
   Icommune +
-  year*(b_year_prov+b_year_com)
+  year*(b_year_prov+b_year_com)+
+  offset
 })
 
 # compare with predict()
 pred_popdem.m1 <- predict(popdem.m1, type = "response")
-# Which it is, near enough:
 plot(exp(m_popdem.m1_pred),pred_popdem.m1)
 abline(a = 0, b = 1, col = "red")
+# predictions match
 
-## predict for average commune for tot_pop
+# check model with offset as term to see if predictions match
+popdem.m2 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + 
+                   (year|Province/Provcomm),
+                   data=dat1, family="poisson")
 
-# create new dataframe for predict
+summary(popdem.m2)
+summary(popdem.m1)
+# estimates are identical
+
+# plot the prediction from the two models together
+pred_popdem.m2 <- predict(popdem.m2, type = "response")
+plot(pred_popdem.m1,pred_popdem.m2)
+head(pred_popdem.m1)
+head(pred_popdem.m2)
+# they're identical when predicting just the observerd data
+
+
+# try predicing with new data (tot_pop varying)
+
+# create new dataframe for predict (offset as argument, so not required here)
 tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
                              pop_den = mean(dat1$pop_den),
                              prop_ind = mean(dat1$prop_ind))
+
+# create new dataframe for predict for model with offset as term (i.e. offset required in newdata)
+tot_pop_newdat_off <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                                 pop_den = mean(dat1$pop_den),
+                                 prop_ind = mean(dat1$prop_ind),
+                                 areaKM = mean(dat1$areaKM))
+
+pred_popdem.m1 <- predict(popdem.m1, newdata=tot_pop_newdat, type="response", re.form=NA)
+pred_popdem.m2 <- predict(popdem.m2, newdata=tot_pop_newdat_off, type="response", re.form=NA)
+
+
+
+## predict for average commune for tot_pop
 
 # predict for average commune
 pred_tot_pop_av.m1 <- as.vector(predict(popdem.m1, newdata = tot_pop_newdat, type="response", re.form = NA))
@@ -1675,13 +1708,12 @@ tot_pop_newdat <- cbind(tot_pop_newdat,pred_tot_pop_av.m1)
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
   geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
   ylim(0,50)
   
 
 
-## Let's add some of the communes with the highest effects for tot_pop
+## Let's add some of the communes with the highest intercepts 
 
 commune_re <- ranef(popdem.m1)[[1]]
 # Sort this from high to low intercept:
@@ -1703,6 +1735,114 @@ pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|P
 
 top5_newdat <- cbind(top5_newdat, pred_topcom1)
 
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,50) # need to shrink y axis to even see them
+
+# next
+top5_newdat1 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                          pop_den = mean(dat1$pop_den),
+                          prop_ind = mean(dat1$prop_ind),
+                          year = mean(dat1$year),
+                          Province = "Kampot",
+                          Provcomm = "Kampot_Preaek Tnaot")
+
+pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat1))
+
+top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,50) # need to shrink y axis to even see them
+
+
+# next
+top5_newdat2 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                           pop_den = mean(dat1$pop_den),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Battambang",
+                           Provcomm = "Battambang_Chhnal Moan")
+
+pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat2))
+
+top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,50) # need to shrink y axis to even see them
+
+
+
+## add lines for communes with largest effect of year (ie. steepest slope)
+
+# order REs by year
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = TRUE),]
+head(commune_re,5)
+
+top5_newdat3 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                           pop_den = mean(dat1$pop_den),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kouk Chak")
+
+pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat3))
+
+top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
+  geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,50) # need to shrink y axis to even see them
+
+
+# order REs by year, but in reverse (largest negative slope is steeper than largest positive)
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = FALSE),]
+head(commune_re,5)
+
+top5_newdat4 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                           pop_den = mean(dat1$pop_den),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kampong Khleang")
+
+pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat4))
+
+top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
+  geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
+  geom_line(data=top5_newdat4, aes(tot_pop, y=pred_topcom5), colour="yellow", size=1)+
+  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
+  ylim(0,10) # need to shrink y axis to even see them
 
 ## next I need to check predictions and plots for pop_den and prop_ind
 ## model validation - likelihood ratio tests?
