@@ -1585,6 +1585,12 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 
   ## Population demographics ####
 
+# total population (tot_pop), population density (pop_den), proportion indigneous (prop_ind)
+
+
+    # popdem.m1 (tot_pop, pop_den, prop_ind) ####
+
+
 # model with all pop dem vars a fixed effects. Offset as areaKM to account for differences in size of communes
 popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
                    offset = log(areaKM), data=dat1, family="poisson")
@@ -1604,7 +1610,7 @@ ranef(popdem.m1)
 plot_model(popdem.m1, type="re")
 
 
-    # diagnostics ####
+      # diagnostics ####
 
 
 # USing DHARMa package for diagnostics - first calculate residuals using all RE levels
@@ -1616,11 +1622,11 @@ plot(simulationOutput)
 
 # QQ plot
 plotQQunif(simulationOutput)
-# According to the DHARMa vignette, this QQ plot shows underdispersion - i.e. too many value around 0.5 and not enough residuals at the tail ends of the distribution.
+# According to the DHARMa vignette, this QQ plot shows underdispersion - i.e. too many value around 0.5 and not enough residuals at the tail ends of the distribution. Although on the plot the dispersion test is not sig, but the deviation from the distribution is
 
 # Another test for dispersion
 testDispersion(simulationOutput)
-# this looks pretty good to me
+# this looks pretty good to me. Perhaps slightly too many in the middle and not enough at the tails
 
 # residual vs predcted plot
 plotResiduals(simulationOutput)
@@ -1630,26 +1636,55 @@ hist(simulationOutput)
 # plot residuals from individual predictors
 par(mfrow=c(2,2))
 plotResiduals(simulationOutput, dat1$tot_pop)
+# tot_pop residuals look good
 plotResiduals(simulationOutput, dat1$pop_den)
+# pop_den residuals show high variation close to zero
 plotResiduals(simulationOutput, dat1$prop_ind)
-
-# test uniformity, outlier, and dispersion
-testResiduals(simulationOutput)
-testUniformity(simulationOutput)
+# I suspect prop_ind is the problem - I guess because there are just too many 0's in the prop_ind variable
 
 
 # test temporal and spatial autocorrelation
 testTemporalAutocorrelation(simulationOutput)
+# no major problem with temporal autocorr
 testSpatialAutocorrelation(simulationOutput)
+# I haven't provided any x values. It says random values assigned. If these values were assigned in order, then this should partly work because the communes are listed by province and so communes in the same province should have similar "random" values and so should act as a proxy for x values. 
 
 # test for zero inflation
+par(mfrow=c(1,1))
 testZeroInflation(simulationOutput)
 
 # testing residuals per commune
-simulationOutput = recalculateResiduals(simulationOutput, dat1$year)
+simulationOutput.com = recalculateResiduals(simulationOutput, dat1$Provcomm)
+# QQ plot
+plotQQunif(simulationOutput.com)
+# still shows underdispersion
+
+# Another test for dispersion
+testDispersion(simulationOutput.com)
+
+# residual vs predcted plot
+plotResiduals(simulationOutput.com)
+# looks like too many small residuals at lower model predictions.
 
 
-    # predictions ####
+# testing residuals per province
+simulationOutput.prov = recalculateResiduals(simulationOutput, dat1$Province)
+# QQ plot
+plotQQunif(simulationOutput.prov)
+# Not as bad as communes
+
+# Another test for dispersion
+testDispersion(simulationOutput.prov)
+# looks pretty good to me
+
+# residual vs predcted plot
+plotResiduals(simulationOutput.prov)
+# Not really enough points but I think that looks ok!
+
+
+
+
+      # predictions (manual, observed data) ####
 
 ## manually calculate predictions
 
@@ -1711,60 +1746,28 @@ plot(exp(m_popdem.m1_pred),pred_popdem.m1)
 abline(a = 0, b = 1, col = "red")
 # predictions match
 
-# check model with offset as term to see if predictions match
-popdem.m2 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + 
-                   (year|Province/Provcomm),
-                   data=dat1, family="poisson")
-
-summary(popdem.m2)
-summary(popdem.m1)
-# estimates are identical
-
-# plot the prediction from the two models together
-pred_popdem.m2 <- predict(popdem.m2, type = "response")
-plot(pred_popdem.m1,pred_popdem.m2)
-head(pred_popdem.m1)
-head(pred_popdem.m2)
-# they're identical when predicting just the observerd data
 
 
-# try predicing with new data (tot_pop varying)
+        # predictions (newdata, tot_pop varying) ####
 
 # create new dataframe for predict (offset as argument, so not required here)
 tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
                              pop_den = mean(dat1$pop_den),
                              prop_ind = mean(dat1$prop_ind))
 
-# create new dataframe for predict for model with offset as term (i.e. offset required in newdata)
-tot_pop_newdat_off <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
-                                 pop_den = mean(dat1$pop_den),
-                                 prop_ind = mean(dat1$prop_ind),
-                                 areaKM = mean(dat1$areaKM))
-
-pred_popdem.m1 <- predict(popdem.m1, newdata=tot_pop_newdat, type="response", re.form=NA)
-pred_popdem.m2 <- predict(popdem.m2, newdata=tot_pop_newdat_off, type="response", re.form=NA)
-pred_popdem.m3 <- predict(popdem.m1, newdata=tot_pop_newdat, type="response", re.form=NA, offset=log(areaKM))
 
 
-# model 1 - model as above
-# model 2 - model as above but with offset of mean forest cover value
-# model 3 - GLM with above offsets 
-# predictions would be counts relative to the mean
-
-
-
-## predict for average commune for tot_pop
-
-# predict for average commune
+# predict for "average" commune
 pred_tot_pop_av.m1 <- as.vector(predict(popdem.m1, newdata = tot_pop_newdat, type="response", re.form = NA))
 
 tot_pop_newdat <- cbind(tot_pop_newdat,pred_tot_pop_av.m1)
 
-# plot
+# plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,50)
+  ylim(0,30)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
   
 
 
@@ -1794,8 +1797,9 @@ top5_newdat <- cbind(top5_newdat, pred_topcom1)
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
   geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,50) # need to shrink y axis to even see them
+  ylim(0,30)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
 
 # next
 top5_newdat1 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
@@ -1815,8 +1819,9 @@ ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
   geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
   geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,50) # need to shrink y axis to even see them
+  ylim(0,30)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
 
 
 # next
@@ -1838,8 +1843,9 @@ ggplot()+
   geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
   geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
   geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,50) # need to shrink y axis to even see them
+  ylim(0,30)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
 
 
 
@@ -1868,8 +1874,9 @@ ggplot()+
   geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
   geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
   geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,50) # need to shrink y axis to even see them
+  ylim(0,30)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
 
 
 # order REs by year, but in reverse (largest negative slope is steeper than largest positive)
@@ -1896,12 +1903,144 @@ ggplot()+
   geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
   geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
   geom_line(data=top5_newdat4, aes(tot_pop, y=pred_topcom5), colour="yellow", size=1)+
-  geom_point(data=dat1, aes(x=tot_pop, y=ForPix))+
-  ylim(0,10) # need to shrink y axis to even see them
+  ylim(0,10)+
+  ylab("Forest pixes per KM2")+
+  xlab("Total population (scaled)")
 
-## next I need to check predictions and plots for pop_den and prop_ind
-## model validation - likelihood ratio tests?
-## check with Jeroen about random slopes for the fixed effects i.e. (tot_pop|Province/Commune)
+
+### Main take home point here I think is that total population does not predict forest cover very well!
+
+
+        # Predictions (newdata, pop_den varying) ####
+
+# create new dataframe for predict (offset as argument, so not required here)
+pop_den_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                             tot_pop = mean(dat1$tot_pop),
+                             prop_ind = mean(dat1$prop_ind))
+
+
+
+# predict for "average" commune
+pred_pop_den_av.m1 <- as.vector(predict(popdem.m1, newdata = pop_den_newdat, type="response", re.form = NA))
+
+pop_den_newdat <- cbind(pop_den_newdat,pred_pop_den_av.m1)
+
+# plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
+p <- ggplot()+
+     geom_line(data=pop_den_newdat, aes(x=pop_den, y=pred_pop_den_av.m1), colour="red", size=1)+
+     ylim(0,10)+
+     ylab("Forest pixes per KM2")+
+     xlab("Population density (scaled)")
+
+
+
+## Let's add some of the communes with the highest intercepts 
+
+commune_re <- ranef(popdem.m1)[[1]]
+# Sort this from high to low intercept:
+commune_re <- commune_re[order(commune_re[,"(Intercept)"], decreasing = TRUE),]
+# So the top five are:
+head(commune_re, 5)
+# Save the names of these
+top5 <- row.names(head(commune_re, 5))
+
+top5_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                          tot_pop = mean(dat1$tot_pop),
+                          prop_ind = mean(dat1$prop_ind),
+                          year = mean(dat1$year),
+                          Province = "Kampong Chhnang",
+                          Provcomm = "Kampong Chhnang_Chieb")
+
+pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat))
+
+top5_newdat <- cbind(top5_newdat, pred_topcom1)
+
+# plot
+p <- p + geom_line(data=top5_newdat, aes(pop_den, y=pred_topcom1), colour="blue", size=1)
+
+# next
+top5_newdat1 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Kampot",
+                           Provcomm = "Kampot_Preaek Tnaot")
+
+
+
+pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat1))
+
+top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+
+# plot
+p <- p + geom_line(data=top5_newdat1, aes(pop_den, y=pred_topcom2), colour="green", size=1)
+
+
+# next
+top5_newdat2 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Battambang",
+                           Provcomm = "Battambang_Chhnal Moan")
+
+
+
+pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat2))
+
+top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+
+# plot
+p <- p + geom_line(data=top5_newdat2, aes(pop_den, y=pred_topcom3), colour="orange", size=1)
+
+
+
+## add lines for communes with largest effect of year (ie. steepest slope)
+
+# order REs by year
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = TRUE),]
+head(commune_re,5)
+
+top5_newdat3 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kouk Chak")
+
+
+
+pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat3))
+
+top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
+
+# plot
+p <- p + geom_line(data=top5_newdat3, aes(pop_den, y=pred_topcom4), colour="purple", size=1)
+
+
+# order REs by year, but in reverse (largest negative slope is steeper than largest positive)
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = FALSE),]
+head(commune_re,5)
+
+top5_newdat4 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           prop_ind = mean(dat1$prop_ind),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kampong Khleang")
+
+pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat4))
+
+top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
+
+# plot
+p <- p + geom_line(data=top5_newdat4, aes(pop_den, y=pred_topcom5), colour="yellow", size=1)
+
 
 #
 ### simple test ####
