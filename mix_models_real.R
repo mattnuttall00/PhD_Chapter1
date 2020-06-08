@@ -18,6 +18,7 @@ library(plotly)
 library(patchwork)
 library(lattice)
 library(reshape2)
+library(pbkrtest)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -1588,7 +1589,7 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
   # c) add on predictions from communes with highest intercepts
   # d) plot the communes within the two provinces with the highest RE intercept and lowest RE intercept. 
   # e) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid with the         global effect plus the effect for that commune
-# 8)
+# 8) run simple binomial glm (as per Jeroen's suggestion) to check that the results are vaguely plausible 
 
   ## Random effects structure ####
 
@@ -1606,7 +1607,7 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 # total population (tot_pop), population density (pop_den), proportion indigneous (prop_ind)
 
 
-    # popdem.m1 (tot_pop, pop_den, prop_ind) ####
+    # popdem.m1 (tot_pop, pop_den, prop_ind - no interactions) ####
 
 
 # model with all pop dem vars a fixed effects. Offset as areaKM to account for differences in size of communes
@@ -2061,6 +2062,181 @@ p <- p + geom_line(data=top5_newdat4, aes(pop_den, y=pred_topcom5), colour="yell
 
 
 #
+      # Predictions (newdata, prop_ind varying) ####
+
+# create new dataframe for predict (offset as argument, so not required here)
+prop_ind_newdat <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                             tot_pop = mean(dat1$tot_pop),
+                             pop_den = mean(dat1$prop_ind))
+
+
+
+# predict for "average" commune
+pred_prop_ind_av.m1 <- as.vector(predict(popdem.m1, newdata = prop_ind_newdat, type="response", re.form = NA))
+
+prop_ind_newdat <- cbind(prop_ind_newdat,pred_prop_ind_av.m1)
+
+# plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
+p <- ggplot()+
+  geom_line(data=prop_ind_newdat, aes(x=prop_ind, y=pred_prop_ind_av.m1), colour="red", size=1)+
+  ylim(0,10)+
+  ylab("Forest pixes per KM2")+
+  xlab("Proportion indigenous (scaled)")
+
+
+
+## Let's add some of the communes with the highest intercepts 
+
+commune_re <- ranef(popdem.m1)[[1]]
+# Sort this from high to low intercept:
+commune_re <- commune_re[order(commune_re[,"(Intercept)"], decreasing = TRUE),]
+# So the top five are:
+head(commune_re, 5)
+# Save the names of these
+top5 <- row.names(head(commune_re, 5))
+
+top5_newdat <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                          tot_pop = mean(dat1$tot_pop),
+                          pop_den = mean(dat1$pop_den),
+                          year = mean(dat1$year),
+                          Province = "Kampong Chhnang",
+                          Provcomm = "Kampong Chhnang_Chieb")
+
+pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat))
+
+top5_newdat <- cbind(top5_newdat, pred_topcom1)
+
+# plot
+p <- p + geom_line(data=top5_newdat, aes(prop_ind, y=pred_topcom1), colour="blue", size=1)
+
+# next
+top5_newdat1 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           pop_den = mean(dat1$pop_den),
+                           year = mean(dat1$year),
+                           Province = "Kampot",
+                           Provcomm = "Kampot_Preaek Tnaot")
+
+
+
+pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat1))
+
+top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+
+# plot
+p <- p + geom_line(data=top5_newdat1, aes(prop_ind, y=pred_topcom2), colour="green", size=1)
+
+
+# next
+top5_newdat2 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           pop_den = mean(dat1$pop_den),
+                           year = mean(dat1$year),
+                           Province = "Battambang",
+                           Provcomm = "Battambang_Chhnal Moan")
+
+
+
+pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat2))
+
+top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+
+# plot
+p <- p + geom_line(data=top5_newdat2, aes(prop_ind, y=pred_topcom3), colour="orange", size=1)
+
+
+
+## add lines for communes with largest effect of year (ie. steepest slope)
+
+# order REs by year
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = TRUE),]
+head(commune_re,5)
+
+top5_newdat3 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           pop_den = mean(dat1$pop_den),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kouk Chak")
+
+
+
+pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat3))
+
+top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
+
+# plot
+p <- p + geom_line(data=top5_newdat3, aes(prop_ind, y=pred_topcom4), colour="purple", size=1)
+
+
+# order REs by year, but in reverse (largest negative slope is steeper than largest positive)
+commune_re <- commune_re[order(commune_re[,"year"], decreasing = FALSE),]
+head(commune_re,5)
+
+top5_newdat4 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
+                           tot_pop = mean(dat1$tot_pop),
+                           pop_den = mean(dat1$pop_den),
+                           year = mean(dat1$year),
+                           Province = "Siem Reap",
+                           Provcomm = "Siem Reap_Kampong Khleang")
+
+pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
+                                  newdata = top5_newdat4))
+
+top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
+
+# plot
+p <- p + geom_line(data=top5_newdat4, aes(prop_ind, y=pred_topcom5), colour="yellow", size=1)
+
+
+### Those slopes couln't be flatter :(
+
+
+    # popdem.m2 (tot_pop, pop_den, prop_ind - interactions) ####
+
+# model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes. All interactions tested
+popdem.m2 <- glmer(ForPix ~ tot_pop * pop_den * prop_ind + (year|Province/Provcomm),
+                   offset = log(areaKM), data=dat1, family="poisson")
+
+
+summary(popdem.m2)
+# ran with convergence and eigenvector warnings.  Variances for province and commune are similar.  Year variance is very small, but order of mag smaller for the province level. tot_pop is positive, pop_den and prop_ind are negative.  As pop_den increases, the effect size of tot_pop increases (gets more positive). As prop_ind increases, effect of tot_pop increases (but by a tiny amount). As prop_ind increases the effect size of pop_den increases (get's more negative), but not by a lot. Approximate sig suggests tot_pop, pop_den, and tot_pop:pop_den are sig. 
+
+fixef(popdem.m2)
+fixef(popdem.m1)
+# this model has larger effect sizes for all terms than m1
+
+ranef(popdem.m2)
+
+# so for this model I have a global intercept, and global slopes for tot_pop, pop_den, and prop_ind, and their interactions.  I also have individual intercepts for each province, and for each commune/province combination, and a random slope for year for each province and each commune.  
+
+# plot the random effects
+plot_model(popdem.m2, type="re")
+
+
+
+
+
+      # model comparison ####
+
+# behaviour of chi squared biased, so best to apply Kenward Roger correction or conduct parametric bootstraps
+# both implemented in package pbkrtest
+# when using pbkrtest package, always ensure the simpler model is listed second, or else the function will fail
+
+kr.dem1<-KRmodcomp(popdem.m2,popdem.m1)
+summary(kr.b)
+# The Kenward-Roger approximation is often more conservative
+
+pb.b<-PBmodcomp(popdem.m2,popdem.m1,nsim=500)
+summary(pb.b)
+# p-vals similar using a parametric bootstrap
+
+extractAIC(popdem.m1)
+
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
