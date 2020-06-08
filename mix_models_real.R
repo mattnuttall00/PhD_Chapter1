@@ -1572,6 +1572,24 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 
 
 #### Mixed models -----------------------------------------------------------
+### Approach ####
+
+# I am going to follow the below approach for each set
+
+# 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
+# 2) assess the model diagnostics
+# 3) assess each variables effect via plotting (main effect plot plus communes with highest intercept)
+# 4) run maximal model with interactions and compare with the first model (Kenwood Rogers correction & parametric              bootstrapping)
+# 5) conduct model simplification and selection until the best model is selected
+# 6) assess model diagnostics
+# 7) Plot effects from selected model:
+  # a) manual predict from observed data and compare to predict()
+  # b) predict main effects, from an "average" commune
+  # c) add on predictions from communes with highest intercepts
+  # d) plot the communes within the two provinces with the highest RE intercept and lowest RE intercept. 
+  # e) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid with the         global effect plus the effect for that commune
+# 8)
+
   ## Random effects structure ####
 
 # according to Zuur et al 2009 and Barr et al 2015a, a good approach for establishing your random effects structure is to include all fixed effects (maximal / above optimal model) and then test different random effects structures (using REML)
@@ -1748,7 +1766,7 @@ abline(a = 0, b = 1, col = "red")
 
 
 
-        # predictions (newdata, tot_pop varying) ####
+      # predictions (newdata, tot_pop varying) ####
 
 # create new dataframe for predict (offset as argument, so not required here)
 tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
@@ -1911,7 +1929,7 @@ ggplot()+
 ### Main take home point here I think is that total population does not predict forest cover very well!
 
 
-        # Predictions (newdata, pop_den varying) ####
+      # Predictions (newdata, pop_den varying) ####
 
 # create new dataframe for predict (offset as argument, so not required here)
 pop_den_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
