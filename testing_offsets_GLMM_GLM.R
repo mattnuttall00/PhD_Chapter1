@@ -33,12 +33,16 @@ m2 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
             offset = log(meanForPix), data=dat1, family="poisson")
 
 # model 3. GLM with offset as mean ForPix over the time period
-m3 <- glm(ForPix ~ tot_pop + pop_den + prop_ind, offset = log(meanForPix), data=dat1, family = "poisson")
+m3 <- glm(ForPix ~ tot_pop + pop_den + prop_ind + year, offset = log(meanForPix), data=dat1, family = "poisson")
+
+# model 4. GLM with offset as areaKM, set as argument
+m4 <- glm(ForPix ~ tot_pop + pop_den + prop_ind + year, offset = log(areaKM), data=dat1, family = "poisson")
 
 
 summary(m1)
 summary(m2)
 summary(m3)
+summary(m4)
 
 
 ### manually predict
@@ -145,7 +149,7 @@ manual_m2_pred <- with(m2.dat, {
 
 ## model 3
 
-m3.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, Provcomm)
+m3.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, year, Provcomm)
 
 # add intercept
 m3.dat$Int <- m3$coefficients["(Intercept)"]
@@ -154,6 +158,7 @@ m3.dat$Int <- m3$coefficients["(Intercept)"]
 m3.dat$b_tot_pop <- m3$coefficients["tot_pop"]
 m3.dat$b_pop_den <- m3$coefficients["pop_den"]
 m3.dat$b_prop_ind <- m3$coefficients["prop_ind"]
+m3.dat$b_year <- m3$coefficients["year"]
 
 # add offset
 m3.dat$offset <- log(dat1$meanForPix)[match(m3.dat$Provcomm, dat1$Provcomm)]
@@ -166,16 +171,51 @@ manual_m3_pred <- with(m3.dat, {
     tot_pop*b_tot_pop +
     pop_den*b_pop_den +
     prop_ind*b_prop_ind +
+    year*b_year+
     offset
 })
 
 
-man_pred_obs <- data.frame(m1=manual_m1_pred,m2=manual_m2_pred,m3=manual_m3_pred)
+
+## model 4
+
+m4.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, year, Provcomm)
+
+# add intercept
+m4.dat$Int <- m4$coefficients["(Intercept)"]
+
+# add the fixed effects of tot_pop, pop_den, prop_ind
+m4.dat$b_tot_pop <- m4$coefficients["tot_pop"]
+m4.dat$b_pop_den <- m4$coefficients["pop_den"]
+m4.dat$b_prop_ind <- m4$coefficients["prop_ind"]
+m4.dat$b_year <- m4$coefficients["year"]
+
+# add offset
+m4.dat$offset <- log(dat1$areaKM)[match(m4.dat$Provcomm, dat1$Provcomm)]
+
+head(m4.dat)
+
+# predict manually
+manual_m4_pred <- with(m4.dat, {
+  Int +
+    tot_pop*b_tot_pop +
+    pop_den*b_pop_den +
+    prop_ind*b_prop_ind +
+    year*b_year+
+    offset
+})
+
+
+man_pred_obs <- data.frame(m1=manual_m1_pred,m2=manual_m2_pred,m3=manual_m3_pred,m4=manual_m4_pred)
 
 # plot all manual predictions against each other
 pairs(man_pred_obs)
 
-
+par(mfrow=c(2,2))
+hist(manual_m1_pred)
+hist(manual_m2_pred)
+hist(manual_m3_pred)
+hist(manual_m4_pred)
 
 ### predicting from the 3 models using new data
 
@@ -199,18 +239,31 @@ m2_pred <- as.vector(predict(m2, newdata=m2_newdat, type="response", re.form=NA)
 m3_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
                         pop_den = mean(dat1$pop_den),
                         prop_ind = mean(dat1$prop_ind),
+                        year = mean(dat1$year),
                         meanForPix = 1) # I'm assuming here we want per unit (pixel) as that is what m1+m2 are doing?
 
 m3_pred <- as.vector(predict(m3, newdata=m3_newdat, type="response"))
 
+
+## m4
+m4_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                        pop_den = mean(dat1$pop_den),
+                        prop_ind = mean(dat1$prop_ind),
+                        year = mean(dat1$year),
+                        areaKM = 1) # I'm assuming here we want per unit (area) as that is what m1+m2 are doing?
+
+m4_pred <- as.vector(predict(m4, newdata=m4_newdat, type="response"))
+
 # bind all predictions
-preds <- data.frame(m1_pred = m1_pred, m2_pred = m2_pred, m3_pred = m3_pred, tot_pop = m1_newdat$tot_pop)
+preds <- data.frame(m1_pred = m1_pred, m2_pred = m2_pred, m3_pred = m3_pred, m4_pred = m4_pred,
+                    tot_pop = m1_newdat$tot_pop)
 
 # plot all together
 ggplot(dat1, aes(x=tot_pop, y=ForPix))+
   geom_line(data=preds, aes(y=m1_pred), colour="red", size=1)+
   geom_line(data=preds, aes(y=m2_pred), colour="blue", size=1)+
-  geom_line(data=preds, aes(y=m3_pred), colour="green", size=1)
+  geom_line(data=preds, aes(y=m3_pred), colour="green", size=1)+
+  geom_line(data=preds, aes(y=m4_pred), colour="orange", size=1)
 
 # so for m1 (red line), these predictions are the predicted count of forest pixels per UNIT AREA for an "average" commune, given mean pop_den and prop_ind, and varying values of tot_pop
 
