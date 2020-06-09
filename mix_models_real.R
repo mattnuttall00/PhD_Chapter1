@@ -2431,11 +2431,70 @@ plot(exp(m_popdem.m4_pred),pred_popdem.m4)
 
 
 #
-      # predict main effects for "average" commune ####
+      # predict main effects ####
+
+## for average commune
+
+# tot_pop with pop_den held at mean
+tot_pop_newdat_noint <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
+                                   pop_den = mean(dat1$pop_den))
+
+# tot_pop with pop_den at min
+tot_pop_newdat_int_min <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), 
+                                                   length.out = 100),
+                                     pop_den = min(dat1$pop_den))
+
+# tot_pop with pop_den at max
+tot_pop_newdat_int_max <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), 
+                                                   length.out = 100),
+                                      pop_den = max(dat1$pop_den))
+
+                                                 
+# pop_den with tot_pop held at mean
+pop_den_newdat_noint <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                                   tot_pop = mean(dat1$tot_pop))
+
+# pop_den with tot_pop at min
+pop_den_newdat_int_min <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), 
+                                                   length.out = 100),
+                                   tot_pop = min(dat1$tot_pop))
+
+# pop_den with tot_pop at max
+pop_den_newdat_int_max <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), 
+                                                   length.out = 100),
+                                     tot_pop = max(dat1$tot_pop))
 
 
+# predict
+tot_pop_pred_noint     <- predict(popdem.m4, newdata=tot_pop_newdat_noint, type="response", re.form=NA)
+tot_pop_pred_int_min   <- predict(popdem.m4, newdata=tot_pop_newdat_int_min, type="response", re.form=NA)
+tot_pop_pred_int_max   <- predict(popdem.m4, newdata=tot_pop_newdat_int_max, type="response", re.form=NA)
 
+pop_den_pred_noint     <- predict(popdem.m4, newdata=pop_den_newdat_noint, type="response", re.form=NA)
+pop_den_pred_int_min   <- predict(popdem.m4, newdata=pop_den_newdat_int_min, type="response", re.form=NA)
+pop_den_pred_int_max   <- predict(popdem.m4, newdata=pop_den_newdat_int_max, type="response", re.form=NA)
 
+# merge
+tot_pop_newdat_noint <- cbind(tot_pop_newdat_noint,tot_pop_pred_noint)
+tot_pop_newdat_int_min   <- cbind(tot_pop_newdat_int_min,tot_pop_pred_int_min)
+tot_pop_newdat_int_max   <- cbind(tot_pop_newdat_int_max,tot_pop_pred_int_max)
+
+pop_den_newdat_noint <- cbind(pop_den_newdat_noint,pop_den_pred_noint)
+pop_den_newdat_int_min   <- cbind(pop_den_newdat_int_min,pop_den_pred_int_min)
+pop_den_newdat_int_max   <- cbind(pop_den_newdat_int_max,pop_den_pred_int_max)
+
+# plot
+ggplot()+
+  geom_line(data=tot_pop_newdat_noint, aes(x=tot_pop, y=tot_pop_pred_noint), colour="red", size=1)+
+  geom_line(data=tot_pop_newdat_int_min, aes(x=tot_pop, y=tot_pop_pred_int_min), colour="green",size=1)+
+  geom_line(data=tot_pop_newdat_int_max, aes(x=tot_pop, y=tot_pop_pred_int_max), colour="blue",size=1)+
+  theme(element_blank())
+  
+ggplot()+
+  geom_line(data=pop_den_newdat_noint, aes(x=pop_den, y=pop_den_pred_noint), colour="red", size=1)+
+  geom_line(data=pop_den_newdat_int_min, aes(x=pop_den, y=pop_den_pred_int_min), colour="green",size=1)+
+  geom_line(data=pop_den_newdat_int_max, aes(x=pop_den, y=pop_den_pred_int_max), colour="blue",size=1)+
+  theme(element_blank())
 
 
 #
