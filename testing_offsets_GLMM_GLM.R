@@ -32,6 +32,11 @@ m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
 m2 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
             offset = log(meanForPix), data=dat1, family="poisson")
 
+# remove various RE terms from the RE (singular warning in above model)
+m2a <- glmer(ForPix ~ tot_pop + pop_den + (year|Province/Provcomm),
+            offset = log(meanForPix), data=dat1, family="poisson")
+
+
 # model 3. GLM with offset as mean ForPix over the time period
 m3 <- glm(ForPix ~ tot_pop + pop_den + prop_ind + year, offset = log(meanForPix), data=dat1, family = "poisson")
 
@@ -41,6 +46,7 @@ m4 <- glm(ForPix ~ tot_pop + pop_den + prop_ind + year, offset = log(areaKM), da
 
 summary(m1)
 summary(m2)
+summary(m2a)
 summary(m3)
 summary(m4)
 
@@ -206,16 +212,23 @@ manual_m4_pred <- with(m4.dat, {
 })
 
 
-man_pred_obs <- data.frame(m1=manual_m1_pred,m2=manual_m2_pred,m3=manual_m3_pred,m4=manual_m4_pred)
+man_pred_obs <- data.frame(m1=exp(manual_m1_pred),m2=exp(manual_m2_pred),m3=exp(manual_m3_pred),
+                           m4=exp(manual_m4_pred))
 
 # plot all manual predictions against each other
 pairs(man_pred_obs)
 
 par(mfrow=c(2,2))
-hist(manual_m1_pred)
-hist(manual_m2_pred)
-hist(manual_m3_pred)
-hist(manual_m4_pred)
+hist(exp(manual_m1_pred))
+hist(exp(manual_m2_pred))
+hist(exp(manual_m3_pred))
+hist(exp(manual_m4_pred))
+
+# plot residuals
+hist(residuals(m1))
+hist(residuals(m2))
+hist(residuals(m3))
+hist(residuals(m4))
 
 ### predicting from the 3 models using new data
 
