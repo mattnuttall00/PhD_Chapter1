@@ -2475,27 +2475,29 @@ pop_den_pred_int_min   <- predict(popdem.m4, newdata=pop_den_newdat_int_min, typ
 pop_den_pred_int_max   <- predict(popdem.m4, newdata=pop_den_newdat_int_max, type="response", re.form=NA)
 
 # merge
-tot_pop_newdat_noint <- cbind(tot_pop_newdat_noint,tot_pop_pred_noint)
-tot_pop_newdat_int_min   <- cbind(tot_pop_newdat_int_min,tot_pop_pred_int_min)
-tot_pop_newdat_int_max   <- cbind(tot_pop_newdat_int_max,tot_pop_pred_int_max)
+tot_pop_newdat_noint$pred    <- tot_pop_pred_noint
+tot_pop_newdat_int_min$pred  <- tot_pop_pred_int_min
+tot_pop_newdat_int_max$pred  <- tot_pop_pred_int_max
+tot_pop_newdat_all <- rbind(tot_pop_newdat_noint,tot_pop_newdat_int_min,tot_pop_newdat_int_max)
+tot_pop_newdat_all$pop_den_value <- rep(c("mean", "min", "max"), each=100)
 
-pop_den_newdat_noint <- cbind(pop_den_newdat_noint,pop_den_pred_noint)
-pop_den_newdat_int_min   <- cbind(pop_den_newdat_int_min,pop_den_pred_int_min)
-pop_den_newdat_int_max   <- cbind(pop_den_newdat_int_max,pop_den_pred_int_max)
+pop_den_newdat_noint$pred    <- pop_den_pred_noint
+pop_den_newdat_int_min$pred  <- pop_den_pred_int_min
+pop_den_newdat_int_max$pred  <- pop_den_pred_int_max
+pop_den_newdat_all <- rbind(pop_den_newdat_noint,pop_den_newdat_int_min,pop_den_newdat_int_max)
+pop_den_newdat_all$tot_pop_value  <- rep(c("mean", "min", "max"), each=100)
 
 # plot
-ggplot()+
-  geom_line(data=tot_pop_newdat_noint, aes(x=tot_pop, y=tot_pop_pred_noint), colour="red", size=1)+
-  geom_line(data=tot_pop_newdat_int_min, aes(x=tot_pop, y=tot_pop_pred_int_min), colour="green",size=1)+
-  geom_line(data=tot_pop_newdat_int_max, aes(x=tot_pop, y=tot_pop_pred_int_max), colour="blue",size=1)+
+p.tot_pop <- ggplot(tot_pop_newdat_all, aes(x=tot_pop, y=pred, group=pop_den_value, colour=pop_den_value))+
+  geom_line(size=1)+
+  theme(element_blank())
+ 
+  
+p.pop_den <- ggplot(pop_den_newdat_all, aes(x=pop_den, y=pred, group=tot_pop_value, colour=tot_pop_value))+
+  geom_line(size=1)+
   theme(element_blank())
   
-ggplot()+
-  geom_line(data=pop_den_newdat_noint, aes(x=pop_den, y=pop_den_pred_noint), colour="red", size=1)+
-  geom_line(data=pop_den_newdat_int_min, aes(x=pop_den, y=pop_den_pred_int_min), colour="green",size=1)+
-  geom_line(data=pop_den_newdat_int_max, aes(x=pop_den, y=pop_den_pred_int_max), colour="blue",size=1)+
-  theme(element_blank())
-
+p.tot_pop + p.pop_den
 
 #
 ### simple test ####
