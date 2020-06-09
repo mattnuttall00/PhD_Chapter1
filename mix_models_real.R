@@ -1580,7 +1580,7 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 # 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
 # 2) assess the model diagnostics
 # 3) assess each variables effect via plotting (main effect plot plus communes with highest intercept)
-# 4) run maximal model with interactions and compare with the first model (Kenwood Rogers correction & parametric              bootstrapping)
+# 4) run maximal model with interactions and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
 # 5) conduct model simplification and selection until the best model is selected
 # 6) assess model diagnostics
 # 7) Plot effects from selected model:
@@ -2221,22 +2221,224 @@ plot_model(popdem.m2, type="re")
 
 
 
-      # model comparison ####
+      # model comparison - popdem.m4 selected ####
 
-# behaviour of chi squared biased, so best to apply Kenward Roger correction or conduct parametric bootstraps
-# both implemented in package pbkrtest
 # when using pbkrtest package, always ensure the simpler model is listed second, or else the function will fail
 
-kr.dem1<-KRmodcomp(popdem.m2,popdem.m1)
-summary(kr.b)
-# The Kenward-Roger approximation is often more conservative
+# Likelihood ratio test
 
-pb.b<-PBmodcomp(popdem.m2,popdem.m1,nsim=500)
-summary(pb.b)
-# p-vals similar using a parametric bootstrap
+# test just the terms in popdem.m2
+drop1(popdem.m2, test="Chisq")
+# the tot_pop:pop_den:prop_ind interaction is not sig
 
-extractAIC(popdem.m1)
+# anova
+anova(popdem.m2, popdem.m1, test="Chisq")
+# simpler model is worse
 
+# remove interaction with prop_ind
+popdem.m3 <- glmer(ForPix ~ tot_pop * pop_den + prop_ind + (year|Province/Provcomm), 
+                   offset = log(areaKM), data = dat1, family = "poisson")
+
+
+# anova
+anova(popdem.m2, popdem.m3, test="Chisq")
+# simpler model is better. The interaction with prop_ind is not doing anything - this is supported by the plots from the prop_ind section above (no effects at all)
+
+# remove prop_ind altogether
+popdem.m4 <- glmer(ForPix ~ tot_pop * pop_den + (year|Province/Provcomm), 
+                   offset = log(areaKM), data = dat1, family = "poisson")
+
+# anova
+anova(popdem.m3, popdem.m4, test="Chisq")
+# model with no prop_ind is better - this was expected and is supported by the plots etc.
+
+# remove interaction between tot_pop and pop_den
+popdem.m5 <- glmer(ForPix ~ tot_pop + pop_den + (year|Province/Provcomm), 
+                   offset = log(areaKM), data = dat1, family = "poisson")
+
+# anova
+anova(popdem.m4, popdem.m5, test="Chisq")
+# The simpler model with no interaction is signficantly worse 
+
+
+# remove tot_pop altogether
+popdem.m6 <- glmer(ForPix ~ pop_den + (year|Province/Provcomm), 
+                   offset = log(areaKM), data = dat1, family = "poisson")
+
+# anova
+anova(popdem.m4, popdem.m6, test="Chisq")
+# the model with tot_pop is better
+
+
+## None of the p values have been questionable (i.e. close to or around 0.05). I would use another test for prop_ind if I had any doubts but I don't, thanks to the plotting of the effects in the above section.  If I need to get final p-values for reporting, I can use parametric bootstrapping, but I won't bother just now.
+
+
+
+
+#
+      # model diagnostics ####
+
+# USing DHARMa package for diagnostics - first calculate residuals using all RE levels
+simulationOutput <- simulateResiduals(fittedModel = popdem.m4, plot = T, 
+                                      re.form = ~(year|Province/Provcomm))
+
+# QQ plot
+plotQQunif(simulationOutput)
+# According to the DHARMa vignette, this QQ plot shows underdispersion - i.e. too many value around 0.5 and not enough residuals at the tail ends of the distribution. Although on the plot the dispersion test is not sig, but the deviation from the distribution is
+
+# Another test for dispersion
+testDispersion(simulationOutput)
+# this looks pretty good to me. Perhaps slightly too many in the middle and not enough at the tails
+
+# residual vs predcted plot
+plotResiduals(simulationOutput)
+# this to me shows fairly major heteroskedasicity - much more residual variance for small values of predicted ForPix.  I was hoping that the removal of prop_ind was going to make this look better!
+hist(simulationOutput)
+
+# plot residuals from individual predictors
+par(mfrow=c(1,2))
+plotResiduals(simulationOutput, dat1$tot_pop)
+# tot_pop residuals look ok
+plotResiduals(simulationOutput, dat1$pop_den)
+# pop_den residuals show high variation close to zero
+
+
+par(mfrow=c(1,1))
+# test temporal and spatial autocorrelation
+testTemporalAutocorrelation(simulationOutput)
+# no major problem with temporal autocorr. NOthing significant, and no clear pattern in the lags with higher values
+testSpatialAutocorrelation(simulationOutput)
+# I haven't provided any x values. It says random values assigned. If these values were assigned in order, then this should partly work because the communes are listed by province and so communes in the same province should have similar "random" values and so should act as a proxy for x values. 
+
+# test for zero inflation
+par(mfrow=c(1,1))
+testZeroInflation(simulationOutput)
+
+# testing residuals per commune
+simulationOutput.com = recalculateResiduals(simulationOutput, dat1$Provcomm)
+# QQ plot
+plotQQunif(simulationOutput.com)
+# still shows underdispersion. Outlier test and deviation test are both significant.
+
+# Another test for dispersion
+testDispersion(simulationOutput.com)
+# not as well spread as the one above
+
+# residual vs predcted plot
+plotResiduals(simulationOutput.com)
+# looks like too many small residuals at lower model predictions. This suggests that the model is better fitted at smaller ForPix predictions. There are a lot more smaller communes which will be definition have less forest
+
+
+# testing residuals per province
+simulationOutput.prov = recalculateResiduals(simulationOutput, dat1$Province)
+# QQ plot
+plotQQunif(simulationOutput.prov)
+# Not as bad as communes
+
+# Another test for dispersion
+testDispersion(simulationOutput.prov)
+# looks pretty good to me. This suggests that the issues with residuals are coming from the communes, not the provinces
+
+# residual vs predicted plot
+plotResiduals(simulationOutput.prov)
+# Not really enough points but I think that looks ok!
+
+
+# get outliers
+outliers(simulationOutput)
+str(simulationOutput)
+
+
+
+
+
+#
+    # predictions - popdem.m4 ####
+      # manual predictions from observed data ####
+
+summary(popdem.m4)
+# RE variances for province and commune, and for year at each level are similar to m1 and m2.  Approximate p values suggest sig effects for tot_pop, pop_den and tot_pop:pop_den.  tot_pop has a positive effect, and pop_den has a negative effect. The interaction suggests that as pop_den increases, the effect of tot_pop gets larger.  
+
+fixef(popdem.m4)
+
+ranef(popdem.m4)
+
+#  quick plots of fixed effects
+plot_model(popdem.m4, type="pred", terms=c("pop_den","tot_pop"))
+# this plot suggests that increasing population density reduces predicted forest cover. When a commune has low total population, forest cover decreases more quickly. As tot_pop increases, the slope for pop_den gets flatter.
+plot_model(popdem.m4, type="pred", terms=c("tot_pop","pop_den"))
+# This plot suggests that at low population densities, tot_pop has no real effect on forest cover.  But as population density increases, tot_pop then has a positive effect on predicted forest cover. I can't think of a reasonable explanation for this at the moment
+
+
+## manually calculate predictions
+
+# first create subset data
+popdem.m4.dat <- select(dat1, ForPix, tot_pop, pop_den, year, Province, Provcomm)
+
+# add global intercept
+popdem.m4.dat$Iglobal <- fixef(popdem.m4)[["(Intercept)"]]
+
+# add RE intercepts for each Province 
+popdem.m4.dat$Iprovince <- ranef(popdem.m4)$Province[,"(Intercept)"][
+  match(popdem.m4.dat$Province, row.names(ranef(popdem.m4)$Province))]
+
+# add Provcomm:Province name column to match the RE output
+popdem.m4.dat$Provcomm_P = paste(popdem.m4.dat$Provcomm,popdem.m4.dat$Province,sep=":")
+
+# add RE intercepts for each commune
+popdem.m4.dat$Icommune <- ranef(popdem.m4)[[1]][, "(Intercept)"][
+  match(popdem.m4.dat$Provcomm_P, row.names(ranef(popdem.m4)[[1]]))]
+
+
+# add RE slope for year for province
+popdem.m4.dat$b_year_prov <- ranef(popdem.m4)$Province[,"year"][
+  match(popdem.m4.dat$Province, row.names(ranef(popdem.m4)$Province))]
+
+# add random slope for year for commune
+popdem.m4.dat$b_year_com <- ranef(popdem.m4)$'Provcomm:Province'[,"year"][
+  match(popdem.m4.dat$Provcomm_P, row.names(ranef(popdem.m4)$'Provcomm:Province'))]
+
+# now add the fixed effects of tot_pop & pop_den
+popdem.m4.dat$b_tot_pop <- fixef(popdem.m4)['tot_pop']
+popdem.m4.dat$b_pop_den <- fixef(popdem.m4)['pop_den']
+
+# add offset
+popdem.m4.dat$offset <- log(dat1$areaKM)[match(popdem.m4.dat$Provcomm, dat1$Provcomm)]
+
+head(popdem.m4.dat)
+
+# y ~ I + (Ip + Ic)|Prov/Comm + tot_pop*b1 * pop_den*b2 + (year*(cP + Cc)|Prov/Comm)
+
+# (global_intercept+(IProvince+Icommune)_given province/commune) + tot_pop*b_totpops * pop_den*b_pop_den + 
+#  year.s*(b_year_province+b_year_commune)_given province_commune).
+
+# predict manually
+m_popdem.m4_pred <- with(popdem.m4.dat, {
+  Iglobal +
+    tot_pop*b_tot_pop *
+    pop_den*b_pop_den +
+    Iprovince +
+    Icommune +
+    year*(b_year_prov+b_year_com)+
+    offset
+})
+
+# compare with predict()
+pred_popdem.m4 <- predict(popdem.m4, type = "response")
+plot(exp(m_popdem.m4_pred),pred_popdem.m4)
+# they match pretty well
+
+
+
+#
+      # predict main effects for "average" commune ####
+
+
+
+
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
