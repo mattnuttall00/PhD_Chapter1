@@ -2175,9 +2175,9 @@ p <- p + geom_line(data=top5_newdat2, aes(prop_ind, y=pred), colour="orange", si
 
     # popdem.m2 (tot_pop, pop_den, prop_ind - interactions) ####
 
-# model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes. All interactions tested
-popdem.m2 <- glmer(ForPix ~ tot_pop * pop_den * prop_ind + (year|Province/Provcomm),
-                   offset = log(areaKM), data=dat1, family="poisson")
+# model with all pop dem vars as fixed effects. Offset (areaKM) as term to account for differences in size of communes. All interactions tested
+popdem.m2 <- glmer(ForPix ~ tot_pop * pop_den * prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
+                   data=dat1, family="poisson")
 
 
 summary(popdem.m2)
@@ -2213,8 +2213,8 @@ anova(popdem.m2, popdem.m1, test="Chisq")
 # simpler model is worse
 
 # remove interaction with prop_ind
-popdem.m3 <- glmer(ForPix ~ tot_pop * pop_den + prop_ind + (year|Province/Provcomm), 
-                   offset = log(areaKM), data = dat1, family = "poisson")
+popdem.m3 <- glmer(ForPix ~ tot_pop * pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
 
 
 # anova
@@ -2222,16 +2222,16 @@ anova(popdem.m2, popdem.m3, test="Chisq")
 # simpler model is better. The interaction with prop_ind is not doing anything - this is supported by the plots from the prop_ind section above (no effects at all)
 
 # remove prop_ind altogether
-popdem.m4 <- glmer(ForPix ~ tot_pop * pop_den + (year|Province/Provcomm), 
-                   offset = log(areaKM), data = dat1, family = "poisson")
+popdem.m4 <- glmer(ForPix ~ tot_pop * pop_den + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
 
 # anova
 anova(popdem.m3, popdem.m4, test="Chisq")
 # model with no prop_ind is better - this was expected and is supported by the plots etc.
 
 # remove interaction between tot_pop and pop_den
-popdem.m5 <- glmer(ForPix ~ tot_pop + pop_den + (year|Province/Provcomm), 
-                   offset = log(areaKM), data = dat1, family = "poisson")
+popdem.m5 <- glmer(ForPix ~ tot_pop + pop_den + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
 
 # anova
 anova(popdem.m4, popdem.m5, test="Chisq")
@@ -2239,15 +2239,15 @@ anova(popdem.m4, popdem.m5, test="Chisq")
 
 
 # remove tot_pop altogether
-popdem.m6 <- glmer(ForPix ~ pop_den + (year|Province/Provcomm), 
-                   offset = log(areaKM), data = dat1, family = "poisson")
+popdem.m6 <- glmer(ForPix ~ pop_den + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
 
 # anova
 anova(popdem.m4, popdem.m6, test="Chisq")
 # the model with tot_pop is better
 
 
-## None of the p values have been questionable (i.e. close to or around 0.05). I would use another test for prop_ind if I had any doubts but I don't, thanks to the plotting of the effects in the above section.  If I need to get final p-values for reporting, I can use parametric bootstrapping, but I won't bother just now.
+## None of the p values have been questionable (i.e. close to or around 0.05). I would use another test for prop_ind if I had any doubts but I don't, thanks to the plotting of the effects in the above section.  If I need to get final p-values for reporting, I can use parametric bootstrapping, but I won't bother just now as it takes ages.
 
 
 
@@ -2350,7 +2350,7 @@ plot_model(popdem.m4, type="pred", terms=c("tot_pop","pop_den"))
 ## manually calculate predictions
 
 # first create subset data
-popdem.m4.dat <- select(dat1, ForPix, tot_pop, pop_den, year, Province, Provcomm)
+popdem.m4.dat <- select(dat1, ForPix, tot_pop, pop_den, areaKM, year, Province, Provcomm)
 
 # add global intercept
 popdem.m4.dat$Iglobal <- fixef(popdem.m4)[["(Intercept)"]]
@@ -2410,36 +2410,42 @@ plot(exp(m_popdem.m4_pred),pred_popdem.m4)
 #
       # predict main effects ####
 
-## for average commune
+## for average commune. In this case, the offset needs to be set to the mean i.e. an "verage sized" commune
 
 # tot_pop with pop_den held at mean
 tot_pop_newdat_noint <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
-                                   pop_den = mean(dat1$pop_den))
+                                   pop_den = mean(dat1$pop_den),
+                                   areaKM = mean(dat1$areaKM))
 
 # tot_pop with pop_den at min
 tot_pop_newdat_int_min <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), 
                                                    length.out = 100),
-                                     pop_den = min(dat1$pop_den))
+                                     pop_den = min(dat1$pop_den),
+                                     areaKM = mean(dat1$areaKM))
 
 # tot_pop with pop_den at max
 tot_pop_newdat_int_max <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), 
                                                    length.out = 100),
-                                      pop_den = max(dat1$pop_den))
+                                     pop_den = max(dat1$pop_den),
+                                     areaKM = mean(dat1$areaKM))
 
                                                  
 # pop_den with tot_pop held at mean
 pop_den_newdat_noint <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
-                                   tot_pop = mean(dat1$tot_pop))
+                                   tot_pop = mean(dat1$tot_pop),
+                                   areaKM = mean(dat1$areaKM))
 
 # pop_den with tot_pop at min
 pop_den_newdat_int_min <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), 
                                                    length.out = 100),
-                                   tot_pop = min(dat1$tot_pop))
+                                     tot_pop = min(dat1$tot_pop),
+                                     areaKM = mean(dat1$areaKM))
 
 # pop_den with tot_pop at max
 pop_den_newdat_int_max <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), 
                                                    length.out = 100),
-                                     tot_pop = max(dat1$tot_pop))
+                                     tot_pop = max(dat1$tot_pop),
+                                     areaKM = mean(dat1$areaKM))
 
 
 # predict
@@ -2476,6 +2482,10 @@ p.pop_den <- ggplot(pop_den_newdat_all, aes(x=pop_den, y=pred, group=tot_pop_val
   
 p.tot_pop + p.pop_den
 
+
+### total population still has a postive effect on forest cover. One explanation for this is that the communes withe more forest tend to be the more remote commmunes in the large, rural provinces.  So although population density may be low, absolute total population is still large (i.e. they have more villages).  Communes with high pop_den values tend to have less forest to start with, but as population increases, so does predicted forest cover. Commmunes with the lowest population density have the most forest (this makes sense), and the smallest effect (flattest slope) as population increases.
+### population density has a negative effect on forest cover.  Communes with the lowest population density have the most forest, which makes sense. Communes with lower total populations are affected more by increasing population density (i.e. steeper slopes). This could reflect the more remote communes (which have more forest), being more impacted by increases in population density.  Communes with a higher absolute population, are affected less by increasing population density.
+### I am still not sure whether tot_pop is a sensible variable to have in, and whether it is actually telling me anything. Jeroen is concerned about collinearity between the two, which I understand, but I don't think they are always directly linked. Population density can change without the total population changing, depending on the size of the commune. But Kez pointed out that tot_pop is not that meaningful because communes are "arbitrary" delineations, and tot_pop reflects those arbitrary deliniations. And so surely pop_den is the more relevant measure of the impact of population?  
 #
 ### simple test ####
 
