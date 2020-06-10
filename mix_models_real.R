@@ -2487,6 +2487,68 @@ p.tot_pop + p.pop_den
 ### population density has a negative effect on forest cover.  Communes with the lowest population density have the most forest, which makes sense. Communes with lower total populations are affected more by increasing population density (i.e. steeper slopes). This could reflect the more remote communes (which have more forest), being more impacted by increases in population density.  Communes with a higher absolute population, are affected less by increasing population density.
 ### I am still not sure whether tot_pop is a sensible variable to have in, and whether it is actually telling me anything. Jeroen is concerned about collinearity between the two, which I understand, but I don't think they are always directly linked. Population density can change without the total population changing, depending on the size of the commune. But Kez pointed out that tot_pop is not that meaningful because communes are "arbitrary" delineations, and tot_pop reflects those arbitrary deliniations. And so surely pop_den is the more relevant measure of the impact of population?  
 #
+      # predict for ets of communes ####
+
+# here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
+
+# save the popdem.m4 commune-level random effects
+m4.re.com <- ranef(popdem.m4)[[1]]
+plot_model(popdem.m4, type="re")
+
+# re-order
+m4.re.com <- m4.re.com[order(m4.re.com[ ,"(Intercept)"], decreasing = FALSE),]
+
+# the 4 communes closest to 0 are:
+# Kampot_Chres:Kampot, 
+# Koh Kong_Tuol Kokir Leu:Koh Kong, 
+# Kampong Cham_Cheyyou:Kampong Cham, 
+# Kracheh_Ta Mau:Kracheh
+
+# the 4 communes furthest above 0 are:
+# Phnom Penh_Chak Angrae Kraom:Phnom Penh
+# Kampong Cham_Pongro:Kampong Cham
+# Kampong Chhnang_Chieb:Kampong Chhnang
+# Kampot_Preaek Tnaot:Kampot
+
+# the 4 communes furthest below 0 are:
+# Kampong Thom_Chaeung Daeung:Kampong Thom
+# Kracheh_Han Chey:Kracheh
+# Siem Reap_Nokor Pheas:Siem Reap
+# Pursat_Boeng Bat Kandaol:Pursat
+
+# which communes
+coms <- c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou","Kracheh_Ta Mau",
+          "Phnom Penh_Chak Angrae Kraom","Kampong Cham_Pongro","Kampong Chhnang_Chieb","Kampot_Preaek Tnaot",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas","Pursat_Boeng Bat Kandaol")
+provs <- c("Kampot","Koh Kong", "Kampong Cham","Kracheh","Phnom Penh","Kampong Cham","Kampong Chhnang","Kampot",
+           "Kampong Thom","Kracheh","Siem Reap","Pursat")
+
+# create new prediction grid for varying pop_den
+m4_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
+                            Province = rep(provs, each=100),
+                            pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                            tot_pop = mean(dat1$tot_pop),
+                            year = mean(dat1$year),
+                            areaKM = dat1$areaKM[match(m4_newdat_com$Provcomm, dat1$Provcomm)])
+m4_newdat_com$Provcomm <- as.factor(m4_newdat_com$Provcomm)
+
+# attach commune-specific predictions
+m4_newdat_com$pred.com <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_com, 
+                                        re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions (i.e. ignoring RE's)
+m4_newdat_com$pred.glo <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_com, re.form=NA))
+
+
+# plot
+ggplot(m4_newdat_com, aes(x=pop_den))+
+  geom_line(aes(x=pop_den, y=pred.glo))+
+  geom_line(aes(x=pop_den, y=pred.com), linetype="dashed")+
+  facet_wrap(m4_newdat_com$Provcomm, nrow=3)
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
