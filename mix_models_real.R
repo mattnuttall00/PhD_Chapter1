@@ -1611,8 +1611,8 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
 
 
 # model with all pop dem vars a fixed effects. Offset as areaKM to account for differences in size of communes
-popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + (year|Province/Provcomm),
-                   offset = log(areaKM), data=dat1, family="poisson")
+popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
+                   data=dat1, family="poisson")
 
 
 summary(popdem.m1)
@@ -1708,7 +1708,7 @@ plotResiduals(simulationOutput.prov)
 ## manually calculate predictions
 
 # first create subset data
-popdem.m1.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, year, Province, Provcomm)
+popdem.m1.dat <- select(dat1, ForPix, tot_pop, pop_den, prop_ind, areaKM, year, Province, Provcomm)
 
 # add global intercept
 popdem.m1.dat$Iglobal <- fixef(popdem.m1)[["(Intercept)"]]
@@ -1738,7 +1738,7 @@ popdem.m1.dat$b_tot_pop <- fixef(popdem.m1)['tot_pop']
 popdem.m1.dat$b_pop_den <- fixef(popdem.m1)['pop_den']
 popdem.m1.dat$b_prop_ind <- fixef(popdem.m1)['prop_ind']
 
-# add offset
+# add offset. When offset is a term in the model you have to be careful when predicting. You need to be explicit about what values the offset is taking.  In this case though,I am predicting from the observed data, and so the offset is the actual areaKM for each commune from the data.
 popdem.m1.dat$offset <- log(dat1$areaKM)[match(popdem.m1.dat$Provcomm, dat1$Provcomm)]
 
 head(popdem.m1.dat)
@@ -1769,24 +1769,25 @@ abline(a = 0, b = 1, col = "red")
 
       # predictions (newdata, tot_pop varying) ####
 
-# create new dataframe for predict (offset as argument, so not required here)
+# create new dataframe for predict (offset as term, so required here). I am predicting for an average commune and so the offset will be set to an "average sized" commune
 tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
                              pop_den = mean(dat1$pop_den),
-                             prop_ind = mean(dat1$prop_ind))
+                             prop_ind = mean(dat1$prop_ind),
+                             areaKM = mean(dat1$areaKM))
 
 
 
 # predict for "average" commune
 pred_tot_pop_av.m1 <- as.vector(predict(popdem.m1, newdata = tot_pop_newdat, type="response", re.form = NA))
 
-tot_pop_newdat <- cbind(tot_pop_newdat,pred_tot_pop_av.m1)
+tot_pop_newdat$pred <- pred_tot_pop_av.m1
 
 # plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
-ggplot()+
-  geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  ylim(0,30)+
-  ylab("Forest pixes per KM2")+
-  xlab("Total population (scaled)")
+ggplot(tot_pop_newdat, aes(x=tot_pop))+
+    geom_line(aes(y=pred), colour="red", size=1)+
+    ylim(0,170)+
+    ylab("Forest pixels")+
+    xlab("Total population (scaled)")
   
 
 
@@ -1800,24 +1801,26 @@ head(commune_re, 5)
 # Save the names of these
 top5 <- row.names(head(commune_re, 5))
 
+# make sure to set the areaKM to the correct value for the selected commune
 top5_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
                           pop_den = mean(dat1$pop_den),
                           prop_ind = mean(dat1$prop_ind),
                           year = mean(dat1$year),
                           Province = "Kampong Chhnang",
-                          Provcomm = "Kampong Chhnang_Chieb")
+                          Provcomm = "Kampong Chhnang_Chieb",
+                          areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampong Chhnang_Chieb"]))
 
 pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                         newdata = top5_newdat))
 
-top5_newdat <- cbind(top5_newdat, pred_topcom1)
+top5_newdat$pred <- pred_topcom1
 
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  ylim(0,30)+
-  ylab("Forest pixes per KM2")+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred), colour="blue", size=1)+
+  ylim(0,2300)+
+  ylab("Forest pixels")+
   xlab("Total population (scaled)")
 
 # next
@@ -1826,20 +1829,21 @@ top5_newdat1 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot
                           prop_ind = mean(dat1$prop_ind),
                           year = mean(dat1$year),
                           Province = "Kampot",
-                          Provcomm = "Kampot_Preaek Tnaot")
+                          Provcomm = "Kampot_Preaek Tnaot",
+                          areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampot_Preaek Tnaot"]))
 
 pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat1))
 
-top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+top5_newdat1$pred <- pred_topcom2
 
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
-  ylim(0,30)+
-  ylab("Forest pixes per KM2")+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred), colour="green", size=1)+
+  ylim(0,2300)+
+  ylab("Forest pixels")+
   xlab("Total population (scaled)")
 
 
@@ -1849,21 +1853,22 @@ top5_newdat2 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Battambang",
-                           Provcomm = "Battambang_Chhnal Moan")
+                           Provcomm = "Battambang_Chhnal Moan",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Battambang_Chhnal Moan"]))
 
 pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat2))
 
-top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+top5_newdat2$pred <- pred_topcom3
 
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
-  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
-  ylim(0,30)+
-  ylab("Forest pixes per KM2")+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred), colour="orange", size=1)+
+  ylim(0,3000)+
+  ylab("Forest pixels")+
   xlab("Total population (scaled)")
 
 
@@ -1879,22 +1884,23 @@ top5_newdat3 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kouk Chak")
+                           Provcomm = "Siem Reap_Kouk Chak",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Siem Reap_Kouk Chak"]))
 
 pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat3))
 
-top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
+top5_newdat3$pred <- pred_topcom4
 
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
-  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
-  geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
-  ylim(0,30)+
-  ylab("Forest pixes per KM2")+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred), colour="orange", size=1)+
+  geom_line(data=top5_newdat3, aes(tot_pop, y=pred), colour="purple", size=1)+
+  ylim(0,3000)+
+  ylab("Forest pixels")+
   xlab("Total population (scaled)")
 
 
@@ -1907,48 +1913,51 @@ top5_newdat4 <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kampong Khleang")
+                           Provcomm = "Siem Reap_Kampong Khleang",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Siem Reap_Kampong Khleang"]))
 
 pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat4))
 
-top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
+top5_newdat4$pred <- pred_topcom5
 
 # plot
 ggplot()+
   geom_line(data=tot_pop_newdat, aes(x=tot_pop, y=pred_tot_pop_av.m1), colour="red", size=1)+
-  geom_line(data=top5_newdat, aes(tot_pop, y=pred_topcom1), colour="blue", size=1)+
-  geom_line(data=top5_newdat1, aes(tot_pop, y=pred_topcom2), colour="green", size=1)+
-  geom_line(data=top5_newdat2, aes(tot_pop, y=pred_topcom3), colour="orange", size=1)+
-  geom_line(data=top5_newdat3, aes(tot_pop, y=pred_topcom4), colour="purple", size=1)+
-  geom_line(data=top5_newdat4, aes(tot_pop, y=pred_topcom5), colour="yellow", size=1)+
-  ylim(0,10)+
-  ylab("Forest pixes per KM2")+
+  geom_line(data=top5_newdat, aes(tot_pop, y=pred), colour="blue", size=1)+
+  geom_line(data=top5_newdat1, aes(tot_pop, y=pred), colour="green", size=1)+
+  geom_line(data=top5_newdat2, aes(tot_pop, y=pred), colour="orange", size=1)+
+  geom_line(data=top5_newdat3, aes(tot_pop, y=pred), colour="purple", size=1)+
+  geom_line(data=top5_newdat4, aes(tot_pop, y=pred), colour="yellow", size=1)+
+  ylim(0,3000)+
+  ylab("Forest pixels")+
   xlab("Total population (scaled)")
 
 
 ### Main take home point here I think is that total population does not predict forest cover very well!
+### However, we can see that the effect of tot_pop is greater (steeper positive slope) in communes with more forest. This could be reflecting the fact that communes with more forest tend to be larger communes, which will tend to have larger absolute total populations. 
 
 
       # Predictions (newdata, pop_den varying) ####
 
-# create new dataframe for predict (offset as argument, so not required here)
+# create new dataframe for predict (offset as term, so need to specify). Here we are predicting for an "average" commune and so the area should be set the mean
 pop_den_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
                              tot_pop = mean(dat1$tot_pop),
-                             prop_ind = mean(dat1$prop_ind))
+                             prop_ind = mean(dat1$prop_ind),
+                             areaKM = mean(dat1$areaKM))
 
 
 
 # predict for "average" commune
 pred_pop_den_av.m1 <- as.vector(predict(popdem.m1, newdata = pop_den_newdat, type="response", re.form = NA))
 
-pop_den_newdat <- cbind(pop_den_newdat,pred_pop_den_av.m1)
+pop_den_newdat$pred <- pred_pop_den_av.m1
 
-# plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
+# plot
 p <- ggplot()+
-     geom_line(data=pop_den_newdat, aes(x=pop_den, y=pred_pop_den_av.m1), colour="red", size=1)+
-     ylim(0,10)+
-     ylab("Forest pixes per KM2")+
+     geom_line(data=pop_den_newdat, aes(x=pop_den, y=pred), colour="red", size=1)+
+     ylim(0,3200)+
+     ylab("Forest pixels")+
      xlab("Population density (scaled)")
 
 
@@ -1968,15 +1977,16 @@ top5_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_
                           prop_ind = mean(dat1$prop_ind),
                           year = mean(dat1$year),
                           Province = "Kampong Chhnang",
-                          Provcomm = "Kampong Chhnang_Chieb")
+                          Provcomm = "Kampong Chhnang_Chieb",
+                          areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampong Chhnang_Chieb"]))
 
 pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat))
 
-top5_newdat <- cbind(top5_newdat, pred_topcom1)
+top5_newdat$pred <- pred_topcom1
 
 # plot
-p <- p + geom_line(data=top5_newdat, aes(pop_den, y=pred_topcom1), colour="blue", size=1)
+p <- p + geom_line(data=top5_newdat, aes(pop_den, y=pred), colour="blue", size=1)
 
 # next
 top5_newdat1 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
@@ -1984,17 +1994,18 @@ top5_newdat1 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Kampot",
-                           Provcomm = "Kampot_Preaek Tnaot")
+                           Provcomm = "Kampot_Preaek Tnaot",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampot_Preaek Tnaot"]))
 
 
 
 pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat1))
 
-top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+top5_newdat1$pred <- pred_topcom2
 
 # plot
-p <- p + geom_line(data=top5_newdat1, aes(pop_den, y=pred_topcom2), colour="green", size=1)
+p <- p + geom_line(data=top5_newdat1, aes(pop_den, y=pred), colour="green", size=1)
 
 
 # next
@@ -2003,17 +2014,18 @@ top5_newdat2 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Battambang",
-                           Provcomm = "Battambang_Chhnal Moan")
+                           Provcomm = "Battambang_Chhnal Moan",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Battambang_Chhnal Moan"]))
 
 
 
 pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat2))
 
-top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+top5_newdat2$pred <- pred_topcom3
 
 # plot
-p <- p + geom_line(data=top5_newdat2, aes(pop_den, y=pred_topcom3), colour="orange", size=1)
+p <- p + geom_line(data=top5_newdat2, aes(pop_den, y=pred), colour="orange", size=1)
 
 
 
@@ -2028,17 +2040,18 @@ top5_newdat3 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kouk Chak")
+                           Provcomm = "Siem Reap_Kouk Chak",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Siem Reap_Kouk Chak"]))
 
 
 
 pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat3))
 
-top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
+top5_newdat3$pred <- pred_topcom4
 
 # plot
-p <- p + geom_line(data=top5_newdat3, aes(pop_den, y=pred_topcom4), colour="purple", size=1)
+p <- p + geom_line(data=top5_newdat3, aes(pop_den, y=pred), colour="purple", size=1)
 
 
 # order REs by year, but in reverse (largest negative slope is steeper than largest positive)
@@ -2050,36 +2063,41 @@ top5_newdat4 <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop
                            prop_ind = mean(dat1$prop_ind),
                            year = mean(dat1$year),
                            Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kampong Khleang")
+                           Provcomm = "Siem Reap_Kampong Khleang",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Siem Reap_Kampong Khleang"]))
 
 pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat4))
 
-top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
+top5_newdat4$pred <- pred_topcom5
 
 # plot
-p <- p + geom_line(data=top5_newdat4, aes(pop_den, y=pred_topcom5), colour="yellow", size=1)
+p <- p + geom_line(data=top5_newdat4, aes(pop_den, y=pred), colour="yellow", size=1)
+
+
+### Main message here is that population density does appear to have some rpedictive power for forest cover.  Also, in communes with more forest, this effect is much larger.  I think this is potentially an important finding.
 
 
 #
       # Predictions (newdata, prop_ind varying) ####
 
-# create new dataframe for predict (offset as argument, so not required here)
+# create new dataframe for predict (offset as term so required here). Predicting for "average" commune and so mean area will be used
 prop_ind_newdat <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
                              tot_pop = mean(dat1$tot_pop),
-                             pop_den = mean(dat1$prop_ind))
+                             pop_den = mean(dat1$prop_ind),
+                             areaKM = mean(dat1$areaKM))
 
 
 
 # predict for "average" commune
 pred_prop_ind_av.m1 <- as.vector(predict(popdem.m1, newdata = prop_ind_newdat, type="response", re.form = NA))
 
-prop_ind_newdat <- cbind(prop_ind_newdat,pred_prop_ind_av.m1)
+prop_ind_newdat$pred <- pred_prop_ind_av.m1
 
 # plot. I am not adding the original points because the model is predicting forest pixels per unit area (KM)
 p <- ggplot()+
-  geom_line(data=prop_ind_newdat, aes(x=prop_ind, y=pred_prop_ind_av.m1), colour="red", size=1)+
-  ylim(0,10)+
+  geom_line(data=prop_ind_newdat, aes(x=prop_ind, y=pred), colour="red", size=1)+
+  ylim(0,3000)+
   ylab("Forest pixes per KM2")+
   xlab("Proportion indigenous (scaled)")
 
@@ -2100,15 +2118,16 @@ top5_newdat <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$pr
                           pop_den = mean(dat1$pop_den),
                           year = mean(dat1$year),
                           Province = "Kampong Chhnang",
-                          Provcomm = "Kampong Chhnang_Chieb")
+                          Provcomm = "Kampong Chhnang_Chieb",
+                          areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampong Chhnang_Chieb"]))
 
 pred_topcom1 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat))
 
-top5_newdat <- cbind(top5_newdat, pred_topcom1)
+top5_newdat$pred <- pred_topcom1
 
 # plot
-p <- p + geom_line(data=top5_newdat, aes(prop_ind, y=pred_topcom1), colour="blue", size=1)
+p <- p + geom_line(data=top5_newdat, aes(prop_ind, y=pred), colour="blue", size=1)
 
 # next
 top5_newdat1 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
@@ -2116,17 +2135,18 @@ top5_newdat1 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$p
                            pop_den = mean(dat1$pop_den),
                            year = mean(dat1$year),
                            Province = "Kampot",
-                           Provcomm = "Kampot_Preaek Tnaot")
+                           Provcomm = "Kampot_Preaek Tnaot",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Kampot_Preaek Tnaot"]))
 
 
 
 pred_topcom2 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat1))
 
-top5_newdat1 <- cbind(top5_newdat1, pred_topcom2)
+top5_newdat1$pred <- pred_topcom2
 
 # plot
-p <- p + geom_line(data=top5_newdat1, aes(prop_ind, y=pred_topcom2), colour="green", size=1)
+p <- p + geom_line(data=top5_newdat1, aes(prop_ind, y=pred), colour="green", size=1)
 
 
 # next
@@ -2135,65 +2155,22 @@ top5_newdat2 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$p
                            pop_den = mean(dat1$pop_den),
                            year = mean(dat1$year),
                            Province = "Battambang",
-                           Provcomm = "Battambang_Chhnal Moan")
+                           Provcomm = "Battambang_Chhnal Moan",
+                           areaKM = unique(dat1$areaKM[dat1$Provcomm=="Battambang_Chhnal Moan"]))
 
 
 
 pred_topcom3 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
                                   newdata = top5_newdat2))
 
-top5_newdat2 <- cbind(top5_newdat2, pred_topcom3)
+top5_newdat2$pred <- pred_topcom3
 
 # plot
-p <- p + geom_line(data=top5_newdat2, aes(prop_ind, y=pred_topcom3), colour="orange", size=1)
+p <- p + geom_line(data=top5_newdat2, aes(prop_ind, y=pred), colour="orange", size=1)
 
 
+# I'm not bothering with plotting the others as I have above for the other variables. There is clearly sweet fuck all going on here. Those slopes couln't be flatter :(
 
-## add lines for communes with largest effect of year (ie. steepest slope)
-
-# order REs by year
-commune_re <- commune_re[order(commune_re[,"year"], decreasing = TRUE),]
-head(commune_re,5)
-
-top5_newdat3 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
-                           tot_pop = mean(dat1$tot_pop),
-                           pop_den = mean(dat1$pop_den),
-                           year = mean(dat1$year),
-                           Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kouk Chak")
-
-
-
-pred_topcom4 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
-                                  newdata = top5_newdat3))
-
-top5_newdat3 <- cbind(top5_newdat3, pred_topcom4)
-
-# plot
-p <- p + geom_line(data=top5_newdat3, aes(prop_ind, y=pred_topcom4), colour="purple", size=1)
-
-
-# order REs by year, but in reverse (largest negative slope is steeper than largest positive)
-commune_re <- commune_re[order(commune_re[,"year"], decreasing = FALSE),]
-head(commune_re,5)
-
-top5_newdat4 <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
-                           tot_pop = mean(dat1$tot_pop),
-                           pop_den = mean(dat1$pop_den),
-                           year = mean(dat1$year),
-                           Province = "Siem Reap",
-                           Provcomm = "Siem Reap_Kampong Khleang")
-
-pred_topcom5 <- as.vector(predict(popdem.m1, type="response", re.form = ~(year|Province/Provcomm), 
-                                  newdata = top5_newdat4))
-
-top5_newdat4 <- cbind(top5_newdat4, pred_topcom5)
-
-# plot
-p <- p + geom_line(data=top5_newdat4, aes(prop_ind, y=pred_topcom5), colour="yellow", size=1)
-
-
-### Those slopes couln't be flatter :(
 
 
     # popdem.m2 (tot_pop, pop_den, prop_ind - interactions) ####
