@@ -1591,7 +1591,7 @@ dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_")
   # e) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid with the         global effect plus the effect for that commune
 # 8) run simple binomial glm (as per Jeroen's suggestion) to check that the results are vaguely plausible 
 
-  ## Random effects structure ####
+  ### Random effects structure ####
 
 # according to Zuur et al 2009 and Barr et al 2015a, a good approach for establishing your random effects structure is to include all fixed effects (maximal / above optimal model) and then test different random effects structures (using REML)
 
@@ -2496,7 +2496,7 @@ m4.re.com <- ranef(popdem.m4)[[1]]
 plot_model(popdem.m4, type="re")
 
 # re-order
-m4.re.com <- m4.re.com[order(m4.re.com[ ,"(Intercept)"], decreasing = FALSE),]
+m4.re.com <- m4.re.com[order(m4.re.com[ ,"(Intercept)"], decreasing = TRUE),]
 
 # the 4 communes closest to 0 are:
 # Kampot_Chres:Kampot, 
@@ -2520,6 +2520,8 @@ m4.re.com <- m4.re.com[order(m4.re.com[ ,"(Intercept)"], decreasing = FALSE),]
 coms <- c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou","Kracheh_Ta Mau",
           "Phnom Penh_Chak Angrae Kraom","Kampong Cham_Pongro","Kampong Chhnang_Chieb","Kampot_Preaek Tnaot",
           "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas","Pursat_Boeng Bat Kandaol")
+
+# which provinces
 provs <- c("Kampot","Koh Kong", "Kampong Cham","Kracheh","Phnom Penh","Kampong Cham","Kampong Chhnang","Kampot",
            "Kampong Thom","Kracheh","Siem Reap","Pursat")
 
@@ -2529,8 +2531,11 @@ m4_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
                             pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
                             tot_pop = mean(dat1$tot_pop),
                             year = mean(dat1$year))
-                            
+
+# add commune-specific areaKM offset                         
 m4_newdat_com$areaKM <-  dat1$areaKM[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
 m4_newdat_com$Provcomm <- factor(m4_newdat_com$Provcomm, 
                                  levels = c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou",
                                             "Kracheh_Ta Mau","Phnom Penh_Chak Angrae Kraom",
@@ -2561,7 +2566,7 @@ m4_newdat_com$pop_den_real <- dat1$pop_den[match(m4_newdat_com$Provcomm, dat1$Pr
 m4_newdat_com$ForPix <- dat1$ForPix[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
 
 # pull out real data points for the above communes
-pop_den_dat <- data.frame(Provcomm = dat1$Provcomm[dat1$Provcomm %in% coms] ,
+pop_den_dat <- data.frame(Provcomm = as.factor(dat1$Provcomm[dat1$Provcomm %in% coms]) ,
                          pop_den = dat1$pop_den[dat1$Provcomm %in% coms],
                          ForPix = dat1$ForPix[dat1$Provcomm %in% coms])
 
@@ -2569,13 +2574,171 @@ pop_den_dat <- data.frame(Provcomm = dat1$Provcomm[dat1$Provcomm %in% coms] ,
 ggplot()+
   geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.glo))+
   geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.com), linetype="dashed")+
-  geom_point(data=pop_den_dat, aes(x=pop_den, y=ForPix))+
   facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
   ylim(0,1000)+
   ylab("Predicted forest pixels")+
-  xlab("Population density (scaled")+
+  xlab("Population density (scaled)")+
   theme(element_blank())
 
+# plot
+ggplot(m4_newdat_com, aes(x=pop_den))+
+  geom_line(aes(y=pred.glo))+
+  geom_line(aes(y=pred.com), linetype="dashed")+
+  facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
+  ylim(0,1000)+
+  ylab("Predicted forest pixels")+
+  xlab("Population density (scaled)")+
+  theme(element_blank())
+
+
+#
+  ## Education ####
+
+# just one var - M6_24_sch
+
+    # edu.m1 ####
+
+# only one variable here
+edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
+
+summary(edu.m1)
+# Province and commune variance similar to popdem models. Year variance relatively very small both for province and commune (although same order of magnitude as each other, unlike popdem models).  predictor has very small positive effect, with approximate p value >0.9. 
+
+# quick plot
+plot_model(edu.m1, type="pred", terms="M6_24_sch")
+# flat as a pancake
+
+    # diagnostics ####
+
+# check fixed var 
+drop1(edu.m1, test="Chisq")
+
+# Not much point in going any further - there is no relationship
+
+#
+  ## Employment ####
+    # emp.m1 (propPrimsec, propSecSec) ####
+
+# I am not going to test an interaction because these two variables are likely to be related, i.e. when there are fewer people in the primary sector there are likely to be more people in the secondary sector, and vice versa
+emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(emp.m1)
+# province and commune variance similar to other model sets.  year variance for commune is order of magnitude larger than for province, but both very small. propPrimSec has positive effect, propSecSec has negative, but both very small and approximate p values > 0.5
+
+# quick plot
+plot_model(emp.m1, type="pred")
+
+    # model selection ####
+
+# see if we remove propSecSec
+emp.m2 <- glmer(ForPix ~ propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
+
+summary(emp.m2)
+
+anova(emp.m1, emp.m2, test="Chisq")
+# simpler model is better
+
+plot_model(emp.m2, type="pred")
+
+# still a useless model though. No relationship
+
+#
+  ## Economic security ####
+
+# Les_1_R_Land & pig_fam
+
+    # econ.m1 ####
+
+# model with both variables. I don't have any a priori hypothesis about an interaction, and so I will not test one
+econ.m1 <- glmer(ForPix ~ Les1_R_Land + pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m1)
+
+# quick plot
+plot_model(econ.m1, type="pred")
+
+    # model selection ####
+
+# try models with only single vars
+econ.m2 <- glmer(ForPix ~ Les1_R_Land + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m2)
+
+anova(econ.m1, econ.m2, test="Chisq")
+# m2 is better than m1
+
+
+econ.m3 <- glmer(ForPix ~ pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m3)
+
+anova(econ.m1, econ.m3, test="Chisq")
+# m3 is better than m1
+
+anova(econ.m1, econ.m2, econ.m3, test="Chisq")
+# m3 is the best model
+
+# quick plot
+plot_model(econ.m3, type="pred")
+
+## no relationship with either variable
+
+#
+  ## Access to services ####
+
+# dist_sch, garbage, KM_Comm
+
+    # acc.m1 ####
+
+# I have no a priori hypotheses regarding interactions, and so I won't test them
+acc.m1 <- glmer(ForPix ~ dist_sch + garbage + KM_Comm + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(acc.m1)
+
+# quick plot
+plot_model(acc.m1, type="pred")
+
+    # model selection ####
+
+acc.m2 <- glmer(ForPix ~ dist_sch + garbage + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+acc.m3 <- glmer(ForPix ~ dist_sch + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+acc.m4 <- glmer(ForPix ~ garbage + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+acc.m5 <- glmer(ForPix ~ KM_Comm + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(acc.m2)
+summary(acc.m3)
+summary(acc.m4)
+
+
+anova(acc.m1,acc.m2,acc.m3,acc.m4,acc.m5, test="Chisq")
+# acc.m4 is the best apparently
+
+plot_model(acc.m4, type="pred")
+
+#
+  ## Social justice ####
+
+# crim_case, land_confl
+
+    # jus.m1 ####
+
+# no a priori reason to think there is an interaction and so I won't test
+jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province/Provcomm),
+                          family="poisson", data=dat1)
+
+summary(jus.m1)
 
 #
 ### simple test ####
