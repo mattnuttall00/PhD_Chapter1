@@ -2487,7 +2487,7 @@ p.tot_pop + p.pop_den
 ### population density has a negative effect on forest cover.  Communes with the lowest population density have the most forest, which makes sense. Communes with lower total populations are affected more by increasing population density (i.e. steeper slopes). This could reflect the more remote communes (which have more forest), being more impacted by increases in population density.  Communes with a higher absolute population, are affected less by increasing population density.
 ### I am still not sure whether tot_pop is a sensible variable to have in, and whether it is actually telling me anything. Jeroen is concerned about collinearity between the two, which I understand, but I don't think they are always directly linked. Population density can change without the total population changing, depending on the size of the commune. But Kez pointed out that tot_pop is not that meaningful because communes are "arbitrary" delineations, and tot_pop reflects those arbitrary deliniations. And so surely pop_den is the more relevant measure of the impact of population?  
 #
-      # predict for ets of communes ####
+      # predict for sets of communes ####
 
 # here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
 
@@ -2523,29 +2523,58 @@ coms <- c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou","Krach
 provs <- c("Kampot","Koh Kong", "Kampong Cham","Kracheh","Phnom Penh","Kampong Cham","Kampong Chhnang","Kampot",
            "Kampong Thom","Kracheh","Siem Reap","Pursat")
 
-# create new prediction grid for varying pop_den
+# create new prediction grid for specific communes with varying pop_den
 m4_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
                             Province = rep(provs, each=100),
                             pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
                             tot_pop = mean(dat1$tot_pop),
-                            year = mean(dat1$year),
-                            areaKM = dat1$areaKM[match(m4_newdat_com$Provcomm, dat1$Provcomm)])
-m4_newdat_com$Provcomm <- as.factor(m4_newdat_com$Provcomm)
+                            year = mean(dat1$year))
+                            
+m4_newdat_com$areaKM <-  dat1$areaKM[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+m4_newdat_com$Provcomm <- factor(m4_newdat_com$Provcomm, 
+                                 levels = c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou",
+                                            "Kracheh_Ta Mau","Phnom Penh_Chak Angrae Kraom",
+                                            "Kampong Cham_Pongro","Kampong Chhnang_Chieb","Kampot_Preaek Tnaot",
+                                            "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas",
+                                            "Pursat_Boeng Bat Kandaol"))
+
 
 # attach commune-specific predictions
 m4_newdat_com$pred.com <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_com, 
                                         re.form=~(year|Province/Provcomm)))
 
 
-# attach global predictions (i.e. ignoring RE's)
-m4_newdat_com$pred.glo <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_com, re.form=NA))
+# create new prediction grid for global effects with varying pop_den
+m4_newdat_glo <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                            tot_pop = mean(dat1$tot_pop),
+                            areaKM = mean(dat1$areaKM))
 
+
+# global predictions (i.e. ignoring RE's)
+pred.glo <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_glo, re.form=NA))
+
+# attach global predictions
+m4_newdat_com$pred.glo <- rep(pred.glo, times=12)
+
+# attach real data points
+m4_newdat_com$pop_den_real <- dat1$pop_den[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+m4_newdat_com$ForPix <- dat1$ForPix[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+
+# pull out real data points for the above communes
+pop_den_dat <- data.frame(Provcomm = dat1$Provcomm[dat1$Provcomm %in% coms] ,
+                         pop_den = dat1$pop_den[dat1$Provcomm %in% coms],
+                         ForPix = dat1$ForPix[dat1$Provcomm %in% coms])
 
 # plot
-ggplot(m4_newdat_com, aes(x=pop_den))+
-  geom_line(aes(x=pop_den, y=pred.glo))+
-  geom_line(aes(x=pop_den, y=pred.com), linetype="dashed")+
-  facet_wrap(m4_newdat_com$Provcomm, nrow=3)
+ggplot()+
+  geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.glo))+
+  geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.com), linetype="dashed")+
+  geom_point(data=pop_den_dat, aes(x=pop_den, y=ForPix))+
+  facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
+  ylim(0,1000)+
+  ylab("Predicted forest pixels")+
+  xlab("Population density (scaled")+
+  theme(element_blank())
 
 
 #
