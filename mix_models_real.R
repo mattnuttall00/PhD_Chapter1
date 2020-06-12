@@ -2256,7 +2256,7 @@ anova(popdem.m4, popdem.m6, test="Chisq")
 
 
 #
-      # model diagnostics ####
+      # model diagnostics popdem.m4 ####
         # DHARMa ####
 
 # USing DHARMa package for diagnostics - first calculate residuals using all RE levels
@@ -2449,31 +2449,35 @@ ggplot(res.comp, aes(x=year.orig, y=pop_den, group=Commune, colour=residuals))+
 
 
 ### I forgot to look at 'year':
-plot(dat1$year, dat1$m4res, ylab = "residuals", xlab = "pop density")
+plot(m4.diag.dat$year, m4.diag.dat$m4res, ylab = "residuals", xlab = "year")
 ### This looks a lot better (at least heterogeneity wise) than the others.
+
+
+
 
 ### This looks at a bunch of other potential models with a few extra fixed effects:
 par(mfrow=c(3,2))
 popdem.m5 <- glmer(ForPix ~ tot_pop * pop_den + dist_border + offset(log(areaKM)) + (year|Province/Provcomm), 
                    data = dat1, family = "poisson")
-dat1$m5pred = predict(popdem.m5, type = "response")
-plot(dat1$ForPix, dat1$m5pred)
-dat1$m5res = resid(popdem.m5)
-plot(dat1$m5pred , dat1$m5res, col = dat1$Provcomm_colours)
+m4.diag.dat$m5pred = predict(popdem.m5, type = "response")
+plot(m4.diag.dat$ForPix, m4.diag.dat$m5pred)
+m4.diag.dat$m5res = resid(popdem.m5)
+plot(m4.diag.dat$m5pred , m4.diag.dat$m5res, col = m4.diag.dat$Provcomm_colours)
 
 popdem.m6 <- glmer(ForPix ~ tot_pop * pop_den + dist_provCap + offset(log(areaKM)) + (year|Province/Provcomm), 
                    data = dat1, family = "poisson")
-dat1$m6pred = predict(popdem.m6, type = "response")
-plot(dat1$ForPix, dat1$m6pred)
-dat1$m6res = resid(popdem.m6)
-plot(dat1$m6pred, dat1$m6res, col = dat1$Provcomm_colours)
+m4.diag.dat$m6pred = predict(popdem.m6, type = "response")
+plot(m4.diag.dat$ForPix, m4.diag.dat$m6pred)
+m4.diag.dat$m6res = resid(popdem.m6)
+plot(m4.diag.dat$m6pred, m4.diag.dat$m6res, col = m4.diag.dat$Provcomm_colours)
 
 popdem.m7 <- glmer(ForPix ~ tot_pop * pop_den + propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), 
                    data = dat1, family = "poisson")
-dat1$m7pred = predict(popdem.m7, type = "response")
-plot(dat1$ForPix, dat1$m7pred)
-dat1$m7res = resid(popdem.m7)
-plot(dat1$m7pred, dat1$m7res, col = dat1$Provcomm_colours)
+m4.diag.dat$m7pred = predict(popdem.m7, type = "response")
+plot(m4.diag.dat$ForPix, m4.diag.dat$m7pred)
+m4.diag.dat$m7res = resid(popdem.m7)
+plot(m4.diag.dat$m7pred, m4.diag.dat$m7res, col = m4.diag.dat$Provcomm_colours)
+
 
 ### What happens if we take out all fixed effects and just rely on the RE structure for overall fit? We can use this as
 ### "null" model - if the "null" is "best" it means you basically have nil variance left for any fixed effects, after
@@ -2584,7 +2588,7 @@ plot(exp(m_popdem.m4_pred),pred_popdem.m4)
 #
       # predict main effects ####
 
-## for average commune. In this case, the offset needs to be set to the mean i.e. an "verage sized" commune
+## for average commune. In this case, the offset needs to be set to the mean i.e. an "average sized" commune
 
 # tot_pop with pop_den held at mean
 tot_pop_newdat_noint <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
@@ -2827,6 +2831,77 @@ for(i in 1:length(provcomm_lvls)) {
   ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
   points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
+
+#
+    # popdem.m6 (pop_den only) ####
+      # manual diagnostics ####
+
+# copy data
+m6.diag.dat <- dat1
+m6.diag.dat$Provcomm <- as.factor(m4.diag.dat$Provcomm)
+
+### Make "fitted" predictions, i.e. fully conditional:
+m6.diag.dat$m6pred <- predict(popdem.m6, type = "response")
+
+### Plot predicted against observed:
+plot(m6.diag.dat$ForPix, m6.diag.dat$m6pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
+### Nice!
+
+### Extract model residuals:
+m6.diag.dat$m6res <- resid(popdem.m6)
+
+### Plot residuals against fitted values:
+plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
+### still quite a bit of heterogeneity here - especially at low predicted values.
+### So al low predicted values, "error" is greater.
+### Given the structure in the data, this is almost inevitable given the extent of variation across communes.
+
+# plot pred against res for m4 vs m6
+par(mfrow=c(2,1))
+plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res)
+# not much difference at all
+
+
+### This is an attempt at repeating the plot but colouring by commune:
+colfunc = colorRampPalette(c("red","royalblue"))
+m6.diag.dat$Provcomm_colours = m6.diag.dat$Provcomm
+levels(m6.diag.dat$Provcomm_colours) = heat.colors((nlevels(m6.diag.dat$Provcomm)))
+
+# predicted values vs residuals, coloured by commune
+plot(m6.diag.dat$m6pred, m6.diag.dat$m6res, col = m6.diag.dat$Provcomm_colours)
+
+### Not quite as highly correlated with commune at the lower end of the range:
+plot(m6.diag.dat$m6pred, m6.diag.dat$m6res, col = m6.diag.dat$Provcomm_colours, xlim = c(0,2000))
+
+# above zoomed in plot of m6 and m4
+plot(m6.diag.dat$m6pred, m6.diag.dat$m6res, col = m6.diag.dat$Provcomm_colours, xlim = c(0,2000))
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res, col = m4.diag.dat$Provcomm_colours, xlim = c(0,2000))
+
+### Essentially what this suggests, is that the current model seems to be less good at accurately predicting patterns of forest cover in the lower range... perhaps this is due to missing predictors?
+plot(m6.diag.dat$ForPix, m6.diag.dat$m6res, col = m6.diag.dat$Provcomm_colours)
+
+### Bit more exploration of residuals, but now over the explanatory variable:
+par(mfrow=c(2,2))
+plot(m6.diag.dat$pop_den, m6.diag.dat$m6res, ylab = "residuals", xlab = "pop density")
+boxplot(m6res ~ factor(Province), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
+boxplot(m6res ~ factor(Provcomm), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Commune")
+### similar to m4
+
+# check m4 vs m6 for the provinces causing issues
+par(mfrow=c(2,1))
+boxplot(m6res ~ factor(Province), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
+boxplot(m4res ~ factor(Province), data = m4.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
+# They're the same provinces causing the issues in both models
+
+## dig a litte deeper into the provinces
+provs <- c("Battambang","Kampong Chhnang","Kampong Thom","Kracheh","Pursat","Ratanak Kiri","Siem Reap",
+              "Stung Treng")
+## if you look at the map (in GIS), the provinces with the smallest residuals are the smaller provinces in the south surrounding PP. These are provinces that generally have very little forest. But they are not the only provinces with no forest cover, so I am not sure that is the (only) reason. I think I need to look at the communes within the provinces
+
+
+# extract all original data from those provinces
+
 
 #
   ## Education ####
