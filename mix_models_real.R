@@ -2254,6 +2254,7 @@ anova(popdem.m4, popdem.m6, test="Chisq")
 
 #
       # model diagnostics ####
+        # DHARMa ####
 
 # USing DHARMa package for diagnostics - first calculate residuals using all RE levels
 simulationOutput <- simulateResiduals(fittedModel = popdem.m4, plot = T, 
@@ -2326,6 +2327,99 @@ outliers(simulationOutput)
 str(simulationOutput)
 
 
+        # Manual diagnostics ####
+
+
+### Make "fitted" predictions, i.e. fully conditional:
+dat1$m4pred = predict(popdem.m4, type = "response")
+
+### Plot predicted against observed:
+plot(dat1$ForPix, dat1$m4pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
+### Nice!
+
+### Extract model residuals:
+dat1$m4res = resid(popdem.m4)
+
+### Plot residuals against fitted values:
+plot(dat1$m4pred, dat1$m4res)
+### Less nice - quite a bit of heterogeneity here - especially at low predicted values.
+### So al low predicted values, "error" is greater.
+### Given the structure in your data, this is almost inevitable given the extent of variation across communes.
+### This is an attempt at repeating the plot but colouring by commune:
+colfunc = colorRampPalette(c("red","royalblue"))
+dat1$Provcomm_colours = dat1$Provcomm
+levels(dat1$Provcomm_colours) = heat.colors((nlevels(dat1$Provcomm)))
+plot(dat1$m4pred, dat1$m4res, col = dat1$Provcomm_colours)
+
+### Not quite as highly correlated with commune at the lower end of the range:
+plot(dat1$m4pred, dat1$m4res, col = dat1$Provcomm_colours, xlim = c(0,2000))
+
+### Essentially what this suggests, is that the current model seems to be less good at accurately predicting patterns of
+### forest cover in the lower range... perhaps this is due to missing predictors?
+plot(dat1$ForPix, dat1$m4res, col = dat1$Provcomm_colours)
+
+### Bit more exploration of residuals, but now over each explanatory variable:
+par(mfrow=c(2,2))
+plot(dat1$tot_pop, dat1$m4res, ylab = "residuals", xlab = "total pop size")
+plot(dat1$pop_den, dat1$m4res, ylab = "residuals", xlab = "pop density")
+boxplot(m4res ~ factor(Province), data = dat1, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
+boxplot(m4res ~ factor(Provcomm), data = dat1, outline = T, xlab = "Province", ylab = "Residuals w/i Commune")
+### Again, a lot of this heteregeneity looks like its driven by a relatively small number of Provinces/Communes. It may
+### be worthwhile to do some more data exploration - find which ones there are and see if you can see any obvious
+### commonalities for those.
+
+### I forgot to look at 'year':
+plot(dat1$year, dat1$m4res, ylab = "residuals", xlab = "pop density")
+### This looks a lot better (at least heterogeneity wise) than the others.
+
+### This looks at a bunch of other potential models with a few extra fixed effects:
+par(mfrow=c(3,2))
+popdem.m5 <- glmer(ForPix ~ tot_pop * pop_den + dist_border + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
+dat1$m5pred = predict(popdem.m5, type = "response")
+plot(dat1$ForPix, dat1$m5pred)
+dat1$m5res = resid(popdem.m5)
+plot(dat1$m5pred , dat1$m5res, col = dat1$Provcomm_colours)
+
+popdem.m6 <- glmer(ForPix ~ tot_pop * pop_den + dist_provCap + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
+dat1$m6pred = predict(popdem.m6, type = "response")
+plot(dat1$ForPix, dat1$m6pred)
+dat1$m6res = resid(popdem.m6)
+plot(dat1$m6pred, dat1$m6res, col = dat1$Provcomm_colours)
+
+popdem.m7 <- glmer(ForPix ~ tot_pop * pop_den + propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
+dat1$m7pred = predict(popdem.m7, type = "response")
+plot(dat1$ForPix, dat1$m7pred)
+dat1$m7res = resid(popdem.m7)
+plot(dat1$m7pred, dat1$m7res, col = dat1$Provcomm_colours)
+
+### What happens if we take out all fixed effects and just rely on the RE structure for overall fit? We can use this as
+### "null" model - if the "null" is "best" it means you basically have nil variance left for any fixed effects, after
+### fitting RE's.
+popdem.m0 <- glmer(ForPix ~ 1 + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
+
+### Compare the above models:
+### I'm just using MuMin here for convenience, because it has an AICc function:
+library(MuMIn)
+aicc = AICc(popdem.m0, popdem.m4,popdem.m5,popdem.m6,popdem.m7)
+bic =  BIC(popdem.m0, popdem.m4,popdem.m5,popdem.m6,popdem.m7)
+
+aicc = aicc[order(aicc[,"AICc"]),]
+aicc$diff = aicc[,"AICc"] - aicc[1,"AICc"]
+aicc
+
+bic = bic[order(bic[,"BIC"]),]
+bic$diff = bic[,"BIC"] - bic[1,"BIC"]
+bic
+
+### So from the above it looks like that whatever the comparison metric, the models WITH fixed effects give much better
+### fits compared to the intercept only - which is good!
+
+### This also suggests that the apparent issue with heterogeneity of variance as referred to above (larger residuals at
+### lower forest cover values) isn't solely a function of lack of variance following fitting of RE's.
 
 
 
@@ -2525,12 +2619,29 @@ coms <- c("Kampot_Chres","Koh Kong_Tuol Kokir Leu","Kampong Cham_Cheyyou","Krach
 provs <- c("Kampot","Koh Kong", "Kampong Cham","Kracheh","Phnom Penh","Kampong Cham","Kampong Chhnang","Kampot",
            "Kampong Thom","Kracheh","Siem Reap","Pursat")
 
+
+### I am making commune-specific predictions, so probably should customise both the mean total population size,
+### as well as the range of population densities you are predicting for, on the basis of each commune.
+
+### Easiest to define the range of pop_den to predict for, first. Min/max per commune:
+pop_den_min <- tapply(dat1$pop_den, dat1$Provcomm, min)
+pop_den_max <- tapply(dat1$pop_den, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+pop_den_min <- min(pop_den_min[names(pop_den_min) %in% coms])
+pop_den_max <- max(pop_den_max[names(pop_den_max) %in% coms])
+### Note these are quite different to the overall min/max:
+min(dat1$pop_den)
+max(dat1$pop_den)
+
 # create new prediction grid for specific communes with varying pop_den
 m4_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
                             Province = rep(provs, each=100),
-                            pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
-                            tot_pop = mean(dat1$tot_pop),
+                            pop_den = seq(from=pop_den_min, to=pop_den_max, length.out = 100),
                             year = mean(dat1$year))
+
+### Add commune-specific mean pop size:
+provcomm_mean_totpop <- as.data.frame(tapply(dat1$tot_pop, dat1$Provcomm, mean))
+m4_newdat_com$tot_pop <- provcomm_mean_totpop[,1][match(m4_newdat_com$Provcomm, row.names(provcomm_mean_totpop))]
 
 # add commune-specific areaKM offset                         
 m4_newdat_com$areaKM <-  dat1$areaKM[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
@@ -2550,46 +2661,92 @@ m4_newdat_com$pred.com <- as.vector(predict(popdem.m4, type="response", newdata=
 
 
 # create new prediction grid for global effects with varying pop_den
-m4_newdat_glo <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
-                            tot_pop = mean(dat1$tot_pop),
-                            areaKM = mean(dat1$areaKM))
+#m4_newdat_glo <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                            #tot_pop = mean(dat1$tot_pop),
+                            #areaKM = mean(dat1$areaKM))
 
 
 # global predictions (i.e. ignoring RE's)
-pred.glo <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_glo, re.form=NA))
+#pred.glo <- as.vector(predict(popdem.m4, type="response", newdata=m4_newdat_glo, re.form=NA))
 
 # attach global predictions
-m4_newdat_com$pred.glo <- rep(pred.glo, times=12)
+#m4_newdat_com$pred.glo <- rep(pred.glo, times=12)
 
 # attach real data points
-m4_newdat_com$pop_den_real <- dat1$pop_den[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
-m4_newdat_com$ForPix <- dat1$ForPix[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+#m4_newdat_com$pop_den_real <- dat1$pop_den[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
+#m4_newdat_com$ForPix <- dat1$ForPix[match(m4_newdat_com$Provcomm, dat1$Provcomm)]
 
 # pull out real data points for the above communes
-pop_den_dat <- data.frame(Provcomm = as.factor(dat1$Provcomm[dat1$Provcomm %in% coms]) ,
-                         pop_den = dat1$pop_den[dat1$Provcomm %in% coms],
-                         ForPix = dat1$ForPix[dat1$Provcomm %in% coms])
+#pop_den_dat <- data.frame(Provcomm = as.factor(dat1$Provcomm[dat1$Provcomm %in% coms]) ,
+                         #pop_den = dat1$pop_den[dat1$Provcomm %in% coms],
+                         #ForPix = dat1$ForPix[dat1$Provcomm %in% coms])
 
 # plot
-ggplot()+
-  geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.glo))+
-  geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.com), linetype="dashed")+
-  facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
-  ylim(0,1000)+
-  ylab("Predicted forest pixels")+
-  xlab("Population density (scaled)")+
-  theme(element_blank())
+#ggplot()+
+ # geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.glo))+
+  #geom_line(data=m4_newdat_com, aes(x=pop_den, y=pred.com), linetype="dashed")+
+  #facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
+  #ylim(0,1000)+
+  #ylab("Predicted forest pixels")+
+  #xlab("Population density (scaled)")+
+  #theme(element_blank())
 
 # plot
-ggplot(m4_newdat_com, aes(x=pop_den))+
-  geom_line(aes(y=pred.glo))+
-  geom_line(aes(y=pred.com), linetype="dashed")+
-  facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
-  ylim(0,1000)+
-  ylab("Predicted forest pixels")+
-  xlab("Population density (scaled)")+
-  theme(element_blank())
+#ggplot(m4_newdat_com, aes(x=pop_den))+
+  #geom_line(aes(y=pred.glo))+
+  #geom_line(aes(y=pred.com), linetype="dashed")+
+  #facet_wrap(m4_newdat_com$Provcomm, nrow=3)+
+  #ylim(0,1000)+
+  #ylab("Predicted forest pixels")+
+  #xlab("Population density (scaled)")+
+  #theme(element_blank())
 
+
+### The following plot "overlays" the observed ForPix count against observed population densities for the communes.
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(m4_newdat_com$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### population density range across all communes, so we need to do this overall:
+ylo <- min(m4_newdat_com$pred.com)*0.9
+yhi <- max(m4_newdat_com$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(m4_newdat_com$Provcomm),"pop_den"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(m4_newdat_com$Provcomm),"pop_den"])
+### Iterate through the communes (levels in m4_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- m4_newdat_com[m4_newdat_com$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+ # if(i == 1) {
+    # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+    plot(preddat_i$pop_den,preddat_i$pred.com, 
+         type = "l", 
+         col = com_colours[i], 
+         ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+         xlab = "Population density (scaled & standardised",
+         ylab = "Predicted forest cover (forest pixel count)")
+ # } else {
+    lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
 
 #
   ## Education ####
