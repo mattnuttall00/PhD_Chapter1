@@ -2378,12 +2378,12 @@ boxplot(m4res ~ factor(Provcomm), data = m4.diag.dat, outline = T, xlab = "Provi
 ### commonalities for those.
 
 # extract the provinces and communes with extreme residuals
-high.res <- m4.diag.dat %>% filter(m4res > 3 | m4res < -3) %>% 
+high.res <- m4.diag.dat %>% filter(m4res > 2 | m4res < -2) %>% 
             select(Province, Commune, Provcomm, ForPix, year.orig, pop_den, tot_pop, m4res) %>% 
             arrange(Provcomm)
 
 # extract the communes with residuals closest to 0 (for comparison)
-low.res <- m4.diag.dat %>% filter(m4res > -0.0001 & m4res < 0.0001) %>% 
+low.res <- m4.diag.dat %>% filter(m4res > -0.001 & m4res < 0.001) %>% 
            select(Province, Commune, Provcomm, ForPix, year.orig, pop_den, tot_pop, m4res) %>% 
            arrange(Provcomm)
 
@@ -2400,29 +2400,52 @@ dat %>% filter(Province=="Koh Kong" & Commune=="Ta Tey Leu") %>% select(year,For
 dat %>% filter(Province=="Mondul Kiri" & Commune=="Srae Sangkom") %>% select(year,ForPix,pop_den,tot_pop)
 
 # extract original data from dat1 for the communes with extreme/low residuals (so I get ALL years from each commune)
-high.res.orig <- dat1[dat1$Provcomm %in% high.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune")]
+high.res.orig <- dat1[dat1$Provcomm %in% high.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune","pop_den")]
 high.res.orig$residuals <- "high"
-low.res.orig <- dat1[dat1$Provcomm %in% low.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune")]
+low.res.orig <- dat1[dat1$Provcomm %in% low.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune","pop_den")]
 low.res.orig$residuals <- "low"
 
 res.comp <- rbind(high.res.orig,low.res.orig)
 
+### plots of changes in ForPix
+
 # plot high residual communes
 ggplot(high.res.orig, aes(x=year.orig, y=ForPix, group=Commune, colour=Commune))+
   geom_line()+
-  ylim(0,2100)+
-  facet_wrap(high.res.orig$Commune, nrow=4)
+  facet_wrap(high.res.orig$Commune, scales = "free")
 
 # plot low residual communes
 ggplot(low.res.orig, aes(x=year.orig, y=ForPix, group=Commune, colour=Commune))+
   geom_line()+
-  ylim(0,20150)+
-  facet_wrap(low.res.orig$Commune, nrow=4)
+  facet_wrap(low.res.orig$Commune, scales = "free")
 
 # plot together
 ggplot(res.comp, aes(x=year.orig, y=ForPix, group=Commune, colour=residuals))+
   geom_line(size=0.7)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylim(0,1000)
+
+### So it looks like the error is potentially coming from two sources: 1) the model is not predicting well for communes with generally low forest cover (fewer pixels), but 2) also the communes that are not predicted well tend to be communes that lose a decent % of their forest cover, often in one time step.  
+
+### Plots of changes in pop_den
+
+# plot high residual communes
+ggplot(high.res.orig, aes(x=year.orig, y=pop_den, group=Commune, colour=Commune))+
+  geom_line()+
+  facet_wrap(high.res.orig$Commune, scales = "free")
+
+# plot low residual communes
+ggplot(low.res.orig, aes(x=year.orig, y=pop_den, group=Commune, colour=Commune))+
+  geom_line()+
+  facet_wrap(low.res.orig$Commune, scales = "free")
+
+# plot together
+ggplot(res.comp, aes(x=year.orig, y=pop_den, group=Commune, colour=residuals))+
+  geom_line(size=0.7)+
+  theme(element_blank())+
+  ylim(-1,0)
+
+### less of an obvious pattern here - there is similar variation in pop_den between years in the communes with high and low residuals.  One potential pattern is that the communes with low residuals tend to either have very high or very low values for pop_den, whereas the communes with high residuals sit in the middle.  Not really sure that means much though
 
 
 ### I forgot to look at 'year':
