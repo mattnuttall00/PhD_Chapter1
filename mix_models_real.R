@@ -1571,6 +1571,9 @@ dat1 <- dat %>%
 # merge Province and Commune into a new unique variable (to remove issue of communes with the same name)
 dat1 <- dat1 %>% mutate(Provcomm = paste(dat1$Province, dat1$Commune, sep = "_"))
 
+# add original year (i.e. not scaled)
+dat1$year.orig <- dat$year
+
 
 #### Mixed models -----------------------------------------------------------
 ### Approach ####
@@ -2329,44 +2332,98 @@ str(simulationOutput)
 
         # Manual diagnostics ####
 
+# copy data
+m4.diag.dat <- dat1
+m4.diag.dat$Provcomm <- as.factor(m4.diag.dat$Provcomm)
 
 ### Make "fitted" predictions, i.e. fully conditional:
-dat1$m4pred = predict(popdem.m4, type = "response")
+m4.diag.dat$m4pred <- predict(popdem.m4, type = "response")
 
 ### Plot predicted against observed:
-plot(dat1$ForPix, dat1$m4pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
+plot(m4.diag.dat$ForPix, m4.diag.dat$m4pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
 ### Nice!
 
 ### Extract model residuals:
-dat1$m4res = resid(popdem.m4)
+m4.diag.dat$m4res <- resid(popdem.m4)
 
 ### Plot residuals against fitted values:
-plot(dat1$m4pred, dat1$m4res)
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res)
 ### Less nice - quite a bit of heterogeneity here - especially at low predicted values.
 ### So al low predicted values, "error" is greater.
-### Given the structure in your data, this is almost inevitable given the extent of variation across communes.
+### Given the structure in the data, this is almost inevitable given the extent of variation across communes.
+
+
 ### This is an attempt at repeating the plot but colouring by commune:
 colfunc = colorRampPalette(c("red","royalblue"))
-dat1$Provcomm_colours = dat1$Provcomm
-levels(dat1$Provcomm_colours) = heat.colors((nlevels(dat1$Provcomm)))
-plot(dat1$m4pred, dat1$m4res, col = dat1$Provcomm_colours)
+m4.diag.dat$Provcomm_colours = m4.diag.dat$Provcomm
+levels(m4.diag.dat$Provcomm_colours) = heat.colors((nlevels(m4.diag.dat$Provcomm)))
+
+# predicted values vs residuals, coloured by commune
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res, col = m4.diag.dat$Provcomm_colours)
 
 ### Not quite as highly correlated with commune at the lower end of the range:
-plot(dat1$m4pred, dat1$m4res, col = dat1$Provcomm_colours, xlim = c(0,2000))
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res, col = m4.diag.dat$Provcomm_colours, xlim = c(0,2000))
 
-### Essentially what this suggests, is that the current model seems to be less good at accurately predicting patterns of
-### forest cover in the lower range... perhaps this is due to missing predictors?
-plot(dat1$ForPix, dat1$m4res, col = dat1$Provcomm_colours)
+### Essentially what this suggests, is that the current model seems to be less good at accurately predicting patterns of forest cover in the lower range... perhaps this is due to missing predictors?
+plot(m4.diag.dat$ForPix, m4.diag.dat$m4res, col = m4.diag.dat$Provcomm_colours)
 
 ### Bit more exploration of residuals, but now over each explanatory variable:
 par(mfrow=c(2,2))
-plot(dat1$tot_pop, dat1$m4res, ylab = "residuals", xlab = "total pop size")
-plot(dat1$pop_den, dat1$m4res, ylab = "residuals", xlab = "pop density")
-boxplot(m4res ~ factor(Province), data = dat1, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
-boxplot(m4res ~ factor(Provcomm), data = dat1, outline = T, xlab = "Province", ylab = "Residuals w/i Commune")
+plot(m4.diag.dat$tot_pop, m4.diag.dat$m4res, ylab = "residuals", xlab = "total pop size")
+plot(m4.diag.dat$pop_den, m4.diag.dat$m4res, ylab = "residuals", xlab = "pop density")
+boxplot(m4res ~ factor(Province), data = m4.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
+boxplot(m4res ~ factor(Provcomm), data = m4.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Commune")
 ### Again, a lot of this heteregeneity looks like its driven by a relatively small number of Provinces/Communes. It may
-### be worthwhile to do some more data exploration - find which ones there are and see if you can see any obvious
+### be worthwhile to do some more data exploration - find which ones there are and see if I can see any obvious
 ### commonalities for those.
+
+# extract the provinces and communes with extreme residuals
+high.res <- m4.diag.dat %>% filter(m4res > 3 | m4res < -3) %>% 
+            select(Province, Commune, Provcomm, ForPix, year.orig, pop_den, tot_pop, m4res) %>% 
+            arrange(Provcomm)
+
+# extract the communes with residuals closest to 0 (for comparison)
+low.res <- m4.diag.dat %>% filter(m4res > -0.0001 & m4res < 0.0001) %>% 
+           select(Province, Commune, Provcomm, ForPix, year.orig, pop_den, tot_pop, m4res) %>% 
+           arrange(Provcomm)
+
+# only a few communes that have very extreme residual values. take a closer look
+dat %>% filter(Province=="Siem Reap" & Commune=="Chi Kraeng") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Siem Reap" & Commune=="Kampong Khleang") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Kampong Thom" & Commune=="Popok") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Kracheh" & Commune=="Preaek Prasab") %>% select(year,ForPix,pop_den,tot_pop)
+
+# closer look at communes with low residuals
+dat %>% filter(Province=="Kampong Speu" & Commune=="Ta Sal") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Koh Kong" & Commune=="Phnhi Meas") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Koh Kong" & Commune=="Ta Tey Leu") %>% select(year,ForPix,pop_den,tot_pop)
+dat %>% filter(Province=="Mondul Kiri" & Commune=="Srae Sangkom") %>% select(year,ForPix,pop_den,tot_pop)
+
+# extract original data from dat1 for the communes with extreme/low residuals (so I get ALL years from each commune)
+high.res.orig <- dat1[dat1$Provcomm %in% high.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune")]
+high.res.orig$residuals <- "high"
+low.res.orig <- dat1[dat1$Provcomm %in% low.res$Provcomm, c("year.orig", "ForPix", "Province", "Commune")]
+low.res.orig$residuals <- "low"
+
+res.comp <- rbind(high.res.orig,low.res.orig)
+
+# plot high residual communes
+ggplot(high.res.orig, aes(x=year.orig, y=ForPix, group=Commune, colour=Commune))+
+  geom_line()+
+  ylim(0,2100)+
+  facet_wrap(high.res.orig$Commune, nrow=4)
+
+# plot low residual communes
+ggplot(low.res.orig, aes(x=year.orig, y=ForPix, group=Commune, colour=Commune))+
+  geom_line()+
+  ylim(0,20150)+
+  facet_wrap(low.res.orig$Commune, nrow=4)
+
+# plot together
+ggplot(res.comp, aes(x=year.orig, y=ForPix, group=Commune, colour=residuals))+
+  geom_line(size=0.7)+
+  theme(element_blank())
+
 
 ### I forgot to look at 'year':
 plot(dat1$year, dat1$m4res, ylab = "residuals", xlab = "pop density")
