@@ -2245,6 +2245,8 @@ anova(popdem.m4, popdem.m5, test="Chisq")
 popdem.m6 <- glmer(ForPix ~ pop_den + offset(log(areaKM)) + (year|Province/Provcomm), 
                    data = dat1, family = "poisson")
 
+plot_model(popdem.m6, type = "pred")
+
 # anova
 anova(popdem.m4, popdem.m6, test="Chisq")
 # the model with tot_pop is better
@@ -3337,7 +3339,52 @@ jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Pr
 
 summary(jus.m1)
 
+# quick plot
+plot_model(jus.m1, type="pred")
+
+    # jus.m2 ####
+
+# remove land_confl
+jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provcomm),
+                          family="poisson", data=dat1)
+
+summary(jus.m2)
+
+
+  ## migration ####
+    # mig.m1 ####
+
+# Here I think there is a possible cause to test interactions. Migration in an out of a commune, and what this means for socioeconomics and forest cover is potentially quite complex. 
+mig.m1 <- glmer(ForPix ~ Pax_migt_in*Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m1)
+
+plot_model(mig.m1, type="int")
+plot_model(mig.m1, type="pred")
+
+    # mig.m2 ####
+
+# remove migt_in
+mig.m2 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m2)
+
+plot_model(mig.m2, type="pred")
+
 #
+  ## Environmental vars ####
+    # env.m1 ####
+
+# there is plausible reasons why the effect of elevation might vary depending on habitat type, therefore an interacion will be tested
+env.m1 <- glmer(ForPix ~ mean_elev*habitat + offset(log(areaKM)) + (year|Province/Provcomm),
+                family = "poisson", data=dat1)
+
+summary(env.m1)
+
+plot_model(env.m1, type="pred")
+
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
