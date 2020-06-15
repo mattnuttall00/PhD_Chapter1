@@ -2201,7 +2201,7 @@ plot_model(popdem.m2, type="re")
 
 
 
-      # model comparison - popdem.m4 selected ####
+      # model comparison - popdem.m4 selected for further investigations ####
 
 # when using pbkrtest package, always ensure the simpler model is listed second, or else the function will fail
 
@@ -3106,6 +3106,86 @@ for(i in 1:length(provcomm_lvls)) {
   points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
+
+### so the plots support the diagnostics in the section above - the global model does not predict well for communes with high forest cover - because the global model always predicts low forest cover, even for communes with low population density.  Essentially there are too many communes with low forest cover, and so the global model is dragged down, meaning that the communes with high forest cover get poor predictions. This does suggest though that the global model predicts well at high population density values, as these communes tend to have low forest cover.  
+
+
+### now let's do the same as above but for a random selection of communes
+
+# randomly sample communes
+rand.com <- sample(dat1$Provcomm, 12, replace = FALSE)
+rand.prov <- unlist(strsplit(rand.com, "_"))
+rand.prov <- rand.prov[c(1,3,5,7,9,11,13,15,17,19,21,23)]
+
+# define the range of pop_den to predict for, first. Min/max per commune:
+pop_den_min <- tapply(dat1$pop_den, dat1$Provcomm, min)
+pop_den_max <- tapply(dat1$pop_den, dat1$Provcomm, max)
+# Min/max within your selection of communes:
+pop_den_min <- min(pop_den_min[names(pop_den_min) %in% rand.com])
+pop_den_max <- max(pop_den_max[names(pop_den_max) %in% rand.com])
+# min not really different but max very different
+min(dat1$pop_den)
+max(dat1$pop_den)
+
+# create new prediction grid for specific communes with varying pop_den
+m6_newdat_com_ran <- data.frame(Provcomm = rep(rand.com, each=100),
+                            Province = rep(rand.prov, each=100),
+                            pop_den = seq(from=pop_den_min, to=pop_den_max, length.out = 100),
+                            year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+m6_newdat_com_ran$areaKM <-  dat1$areaKM[match(m6_newdat_com_ran$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+m6_newdat_com_ran$pred.com <- as.vector(predict(popdem.m6, type="response", newdata=m6_newdat_com_ran, 
+                                        re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+m6_newdat_com_ran$pred.glo <- rep(m6.newdat$pred, times=12)
+
+# set levels
+m6_newdat_com_ran$Provcomm <- as.factor(m6_newdat_com_ran$Provcomm)
+provcomm_lvls <- levels(m6_newdat_com_ran$Provcomm) 
+par(mfrow = c(3,4))
+
+# set scales
+ylo <- min(m6_newdat_com_ran$pred.com)*0.9
+yhi <- max(m6_newdat_com_ran$pred.com)*1.1
+xlo <- pop_den_min
+xhi <- pop_den_max
+
+# Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- m6_newdat_com_ran[m6_newdat_com_ran$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+ # if(i == 1) {
+    # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+    plot(preddat_i$pop_den,preddat_i$pred.com, 
+         type = "l", 
+         col = com_colours[i], 
+         ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+         xlab = "Population density (scaled & standardised",
+         ylab = "Predicted forest cover (forest pixel count)")
+ # } else {
+    lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
+    lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+
+### after running the above random plotting a few times, the trend seems to hold - i.e. the global model predics well for communes with low forest cover and/or high population density, but does not perform well for communes with high forest cover
+
+### I am not convinced that having both pop_den and tot_pop in the model is sensible (especially as an interaction). I have gone back and forth because I do think they tell us different things about a commune, and between communes they are not necessarily collinear. However within communes over time they are - i.e. in a given commune, over time, in order for pop_den to increase tot_pop must increase. Therefore as Jeroen said, it is a bit dangerous to have both in the same model as an interaction.  I also have a LOT of potential predictors, and so I need to be selective in which ones I take forward, and pop_den is the more important of the two.
+
+### pop_den taken forward
 
 
 #
