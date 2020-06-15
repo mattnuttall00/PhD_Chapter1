@@ -3008,6 +3008,106 @@ head(m6.re.com)
 # Kampong Thom_Tang Krasang:Kampong Thom
 
 
+# which communes
+coms <- c("Pursat_Ansa Chambak","Kampong Cham_Kraek", "Ratanak Kiri_Pak Nhai","Kampong Speu_Tang Samraong",
+          "Kampong Chhnang_Chieb","Kampot_Preaek Tnaot","Battambang_Chhnal Moan","Phnom Penh_Chak Angrae Kraom",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas","Kampong Thom_Tang Krasang")
+
+# which provinces
+provs <- c("Pursat","Kampong Cham","Ratanak Kiri","Kampong Speu",
+           "Kampong Chhnang","Kampot","Battambang","Phnom Penh",
+           "Kampong Thom","Kracheh","Siem Reap","Kampong Thom")
+
+
+### I am making commune-specific predictions, so should customise the range of population densities I am predicting for, on the basis of each commune.
+
+### Easiest to define the range of pop_den to predict for, first. Min/max per commune:
+pop_den_min <- tapply(dat1$pop_den, dat1$Provcomm, min)
+pop_den_max <- tapply(dat1$pop_den, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+pop_den_min <- min(pop_den_min[names(pop_den_min) %in% coms])
+pop_den_max <- max(pop_den_max[names(pop_den_max) %in% coms])
+### Not really any different from the overall min and max
+min(dat1$pop_den)
+max(dat1$pop_den)
+
+# create new prediction grid for specific communes with varying pop_den
+m6_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
+                            Province = rep(provs, each=100),
+                            pop_den = seq(from=pop_den_min, to=pop_den_max, length.out = 100),
+                            year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+m6_newdat_com$areaKM <-  dat1$areaKM[match(m6_newdat_com$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+m6_newdat_com$Provcomm <- factor(m6_newdat_com$Provcomm, 
+                                 levels = c("Pursat_Ansa Chambak","Kampong Cham_Kraek", "Ratanak Kiri_Pak Nhai",
+                                            "Kampong Speu_Tang Samraong","Kampong Chhnang_Chieb","Kampot_Preaek Tnaot",
+                                            "Battambang_Chhnal Moan","Phnom Penh_Chak Angrae Kraom",
+                                            "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas",
+                                            "Kampong Thom_Tang Krasang"))
+
+
+# attach commune-specific predictions
+m6_newdat_com$pred.com <- as.vector(predict(popdem.m6, type="response", newdata=m6_newdat_com, 
+                                        re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+m6_newdat_com$pred.glo <- rep(m6.newdat$pred, times=12)
+
+
+### The following plot can either "overlay" the observed ForPix count against observed population densities for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(m6_newdat_com$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### population density range across all communes, so we need to do this overall:
+ylo <- min(m6_newdat_com$pred.com)*0.9
+yhi <- max(m6_newdat_com$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(m6_newdat_com$Provcomm),"pop_den"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(m6_newdat_com$Provcomm),"pop_den"])
+### Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- m6_newdat_com[m6_newdat_com$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+ # if(i == 1) {
+    # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+    plot(preddat_i$pop_den,preddat_i$pred.com, 
+         type = "l", 
+         col = com_colours[i], 
+         ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+         xlab = "Population density (scaled & standardised",
+         ylab = "Predicted forest cover (forest pixel count)")
+ # } else {
+    lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
+    lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+
+
 #
   ## Education ####
 
