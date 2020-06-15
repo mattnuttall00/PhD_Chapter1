@@ -1583,7 +1583,7 @@ dat1$year.orig <- dat$year
 # 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
 # 2) assess the model diagnostics
 # 3) assess each variables effect via plotting (main effect plot plus communes with highest intercept)
-# 4) run maximal model with interactions and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
+# 4) run maximal model with interactions (if I think that interactions are plausible and if I have an a priori hypothesis about the interactions) and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
 # 5) conduct model simplification and selection until the best model is selected
 # 6) assess model diagnostics
 # 7) Plot effects from selected model:
@@ -2838,14 +2838,14 @@ for(i in 1:length(provcomm_lvls)) {
 
 # copy data
 m6.diag.dat <- dat1
-m6.diag.dat$Provcomm <- as.factor(m4.diag.dat$Provcomm)
+m6.diag.dat$Provcomm <- as.factor(m6.diag.dat$Provcomm)
 
 ### Make "fitted" predictions, i.e. fully conditional:
 m6.diag.dat$m6pred <- predict(popdem.m6, type = "response")
 
 ### Plot predicted against observed:
 plot(m6.diag.dat$ForPix, m6.diag.dat$m6pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
-### Nice!
+### good
 
 ### Extract model residuals:
 m6.diag.dat$m6res <- resid(popdem.m6)
@@ -2856,7 +2856,7 @@ plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
 ### So al low predicted values, "error" is greater.
 ### Given the structure in the data, this is almost inevitable given the extent of variation across communes.
 
-# plot pred against res for m4 vs m6
+# plot predictions against residuals for m4 vs m6
 par(mfrow=c(2,1))
 plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
 plot(m4.diag.dat$m4pred, m4.diag.dat$m4res)
@@ -2894,13 +2894,118 @@ boxplot(m6res ~ factor(Province), data = m6.diag.dat, outline = T, xlab = "Provi
 boxplot(m4res ~ factor(Province), data = m4.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
 # They're the same provinces causing the issues in both models
 
-## dig a litte deeper into the provinces
+## dig a little deeper into the provinces
 provs <- c("Battambang","Kampong Chhnang","Kampong Thom","Kracheh","Pursat","Ratanak Kiri","Siem Reap",
               "Stung Treng")
 ## if you look at the map (in GIS), the provinces with the smallest residuals are the smaller provinces in the south surrounding PP. These are provinces that generally have very little forest. But they are not the only provinces with no forest cover, so I am not sure that is the (only) reason. I think I need to look at the communes within the provinces
 
 
 # extract all original data from those provinces
+prov.dat <- dat %>% filter(Province %in% provs) %>% select(Province,Commune,year,ForPix,pop_den,tot_pop)
+
+# create subset of all data NOT including the above
+prov.excl <- dat %>% filter(!Province %in% provs)
+
+# compare ForPix between the above selection and the data overall, and the rest of the data (excluding selection)
+par(mfrow=c(2,2))
+hist(prov.dat$ForPix, main="prov subset")
+hist(dat$ForPix, main="All data")
+hist(prov.excl$ForPix, main="exclude provs")
+
+# compare scatter plot of ForPix across communes, split by the provinces
+ggplot()+
+  geom_point(data=prov.dat, aes(x=Commune, y=ForPix),colour="red")+
+  geom_point(data=prov.excl, aes(x=Commune, y=ForPix), colour="green")+
+  ylim(0,250)
+# I would say that the provinces that are causing the issues tend to have higher ForPix than the others. It also look potentially like the provinces causing issues are almost always losing forest cover over time (lots of vertical lines of dots)
+
+# scatter plot of ForPix against pop_den, split by provinces
+ggplot()+
+  geom_point(data=prov.dat, aes(x=pop_den, y=ForPix),colour="red")+
+  geom_point(data=prov.excl, aes(x=pop_den, y=ForPix),colour="green")+
+  ylim(0,10000)+
+  xlim(0,1000)
+# This plot makes it also looks like the problem provinces tend to have communes with higher ForPix. There is a chunk of red with no green where pop_den has increased to about 100 but ForPix has not decreased (whereas all the green dots are lower, i.e. in the other provinces/communes at that population density forest cover is lower). 
+
+# boxplot of ForPix and province, coloured by the two groups of provinces 
+ggplot()+
+  geom_boxplot(data=prov.dat, aes(x=Province, y=ForPix,colour="Problem provinces"))+
+  geom_boxplot(data=prov.excl, aes(x=Province, y=ForPix, colour="Other provinces"))+
+  ylim(0,10000)
+# this plot suggests that the problem provinces don't necessarily have more forest cover, but they do tend to have more outliers that are very high forest cover.  
+
+# boxplot of pop_den and province, coloured by the two groups of provinces
+ggplot()+
+  geom_boxplot(data=prov.dat, aes(x=Province, y=pop_den,colour="Problem provinces"))+
+  geom_boxplot(data=prov.excl, aes(x=Province, y=pop_den, colour="Other provinces"))
+# This plot suggests that overall, the problem provinces tend to have lower median pop_den value compared to the other provinces, but they again tend to have more outliers
+
+# boxplot of Commune and pop_den, coloured by the two groups of provinces
+ggplot()+
+  geom_boxplot(data=prov.dat, aes(x=Commune, y=pop_den,colour="Problem provinces"))+
+  geom_boxplot(data=prov.excl, aes(x=Commune, y=pop_den, colour="Other provinces"))+
+  ylim(0,1000)
+# again this looks like there are more communes with higher pop_den values in the non-problematic provinces
+
+
+# boxplot of Commune and ForPix, coloured by the two groups of provinces
+ggplot()+
+  geom_boxplot(data=prov.dat, aes(x=Commune, y=ForPix,colour="Problem provinces"))+
+  geom_boxplot(data=prov.excl, aes(x=Commune, y=ForPix, colour="Other provinces"))+
+  ylim(0,10000)
+# this plot is quite hard to see much, as there's too much info.  However, I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
+
+
+### If you look at the plot of the main effect in the section below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.
+
+#
+      # predict main effects ####
+
+### predict main effects for an average commune
+
+# create new data
+m6.newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                        areaKM = mean(dat1$areaKM))
+
+# add predictions
+m6.newdat$pred <- as.vector(predict(popdem.m6, type="response", newdata=m6.newdat, re.form=NA))
+
+# plot
+ggplot(m6.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  ylim(0,5000)
+
+
+#
+      # predict for sets of communes ####
+
+# here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
+
+# save the popdem.m4 commune-level random effects
+m6.re.com <- ranef(popdem.m6)[[1]]
+plot_model(popdem.m6, type="re")
+
+# re-order
+m6.re.com <- m6.re.com[order(m6.re.com[ ,"(Intercept)"], decreasing = FALSE),]
+head(m6.re.com)
+
+# the 4 communes closest to 0 are:
+# Pursat_Ansa Chambak:Pursat, 
+# Kampong Cham_Kraek:Kampong Cham, 
+# Ratanak Kiri_Pak Nhai:Ratanak Kiri, 
+# Kampong Speu_Tang Samraong:Kampong Speu
+
+# the 4 communes furthest above 0 are:
+# Kampong Chhnang_Chieb:Kampong Chhnang
+# Kampot_Preaek Tnaot:Kampot
+# Battambang_Chhnal Moan:Battambang
+# Phnom Penh_Chak Angrae Kraom:Phnom Pen
+
+# the 4 communes furthest below 0 are:
+# Kampong Thom_Chaeung Daeung:Kampong Thom
+# Kracheh_Han Chey:Kracheh
+# Siem Reap_Nokor Pheas:Siem Reap
+# Kampong Thom_Tang Krasang:Kampong Thom
 
 
 #
