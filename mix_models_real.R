@@ -20,6 +20,7 @@ library(lattice)
 library(reshape2)
 library(pbkrtest)
 library(MuMIn)
+library(RColorBrewer)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -3378,6 +3379,9 @@ plot_model(mig.m2, type="pred")
   ## Environmental vars ####
     # env.m1 ####
 
+### UPDATE - I have decided not to use habitat.  This is because the habitat layer was used to create the response (ForPix), and so the two are intrinsically linked, and makes interpretation challenging. Skip to env.m2 sections 
+
+
 # CP - cropland
 # MC - Mosaic crop
 # MN - Mosaic natural
@@ -3404,7 +3408,7 @@ ranef(env.m1)
 
 fixef(env.m1)
 
-    # Diagnostics manual ####
+    # Diagnostics m1 - IGNORE ####
 
 # copy data
 env.m1.diag <- dat1
@@ -3491,6 +3495,145 @@ ggplot(all.provs, aes(x=mean_elev, y=ForPix, colour=type))+
 par(mfrow=c(1,1))
 qqnorm(resid(env.m1))
 qqline(resid(env.m1))
+
+    # model selection ####
+
+env.m2 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
+                family = "poisson", data=dat1)
+
+anova(env.m1, env.m2, test="Chisq")
+# The simplified model is not better
+
+env.m3 <- glmer(ForPix ~ habitat + offset(log(areaKM)) + (year|Province/Provcomm),
+                family = "poisson", data=dat1)
+
+anova(env.m1, env.m3, test="Chisq")
+# the simplified model is not better
+
+### UPDATE - I am not using habitat anymore (see text in env.m1 section above)
+
+#
+    # predictions - env.m1 - IGNORE ####
+
+### predict for an average commune (i.e. ignoring REs) 
+
+# create new data
+m1_newdat <- expand.grid(mean_elev = seq(from=min(dat1$mean_elev), to=max(dat1$mean_elev), length.out = 100),
+                         habitat = levels(dat1$habitat),
+                         areaKM = mean(dat1$areaKM))
+# remove "nd"
+m1_newdat <- m1_newdat[m1_newdat$habitat != "nd",]
+
+
+# predict
+m1_newdat$pred <- as.vector(predict(env.m1, type="response", newdata=m1_newdat, re.form=NA))
+
+# colours
+my_pal <- colorRampPalette(brewer.pal(10,"Set3"))
+my_pal <- colorRampPalette(colorRamp(10,"primary.colors"))
+
+# plot
+ggplot(m1_newdat, aes(x=mean_elev, y=pred, group=habitat, colour=habitat))+
+  geom_line(size=1)+
+  scale_colour_manual(values = my_pal(nlevels(m1_newdat$habitat)))+
+  theme(element_blank())
+
+ggplot(m1_newdat, aes(x=mean_elev, y=pred, group=habitat, colour=habitat))+
+  geom_line(size=1)+
+  scale_colour_brewer(palette = "Paired")+
+  theme(element_blank())
+# Ok so predicted forest cover increases as mean elevation increases. The effect is differnet for the different habitats. The highest predicted forest cover is in Mosaic (tree, shrub, herbaceous), Forest (broadleaved, evergree), and water.  The lowest predicted forest cover is in mosaic (natural), shrubland. Interestingly predicted forest cover is higher in cropland than in mosaic (natural) and shrubland. This is possible because the habitat is allocated based on >50% of the commune, which means that there can still be a decent proportion of the communes that is forested, despite the habitat being classified as, say, cropland. 
+
+#
+    # Diagnostics m2 ####
+
+# copy data
+env.m2.diag <- dat1
+env.m2.diag$Provcomm <- as.factor(env.m2.diag$Provcomm)
+
+# attach residuals
+env.m2.diag$m2res <- resid(env.m2)
+
+# attach conditional predictions
+env.m2.diag$m2pred <- as.vector(predict(env.m2, type="response"))
+
+# plot predicted vs observed
+plot(env.m2.diag$m2pred, env.m2.diag$ForPix)
+# good
+
+# residuals vs fitted
+plot(env.m2.diag$m2pred, env.m2.diag$m2res)
+# heteroskedasicity - particularly bad a low predicted forest cover. Similar to the popdem models.
+
+
+# repeating the plot but colouring by commune:
+colfunc = colorRampPalette(c("red","royalblue"))
+env.m2.diag$Provcomm_colours = env.m2.diag$Provcomm
+levels(env.m2.diag$Provcomm_colours) = heat.colors((nlevels(env.m2.diag$Provcomm)))
+
+# predicted values vs residuals, coloured by commune
+plot(env.m2.diag$m2pred, env.m2.diag$m2res, col = env.m2.diag$Provcomm_colours)
+
+# zoom in on the x axis
+plot(env.m2.diag$m2pred, env.m2.diag$m2res, col = env.m2.diag$Provcomm_colours, xlim = c(0,2000))
+
+# ForPix vs residuals, coloured
+plot(env.m2.diag$ForPix, env.m2.diag$m2res, col = env.m2.diag$Provcomm_colours)
+
+## Bit more exploration of residuals, but now over the explanatory variable:
+par(mfrow=c(2,2))
+plot(env.m2.diag$mean_elev, env.m2.diag$m2res, ylab = "residuals", xlab = "mean elevation")
+boxplot(m2res ~ factor(Province), data = env.m2.diag, outline = T, xlab = "Province", 
+        ylab = "Residuals w/i Province")
+boxplot(m2res ~ factor(Provcomm), data = env.m2.diag, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+# There seems to be a slightly odd pattern in the first plot - it looks like there are certain elevation values that produce large residuals
+
+# zoom in
+plot(env.m2.diag$mean_elev, env.m2.diag$m2res, xlim = c(-1,2),ylab = "residuals", xlab = "mean elevation")
+# looks like elevation values of approx -0.6, -0.4, -0.1, 0.2, 0.8, 
+
+# What are the provinces with the largest residuals?
+levels(env.m2.diag$Province)
+
+provs <- c("Battambang","Kampong Cham","Kampong Chhnang","Kampong Thom","Koh Kong","Kracheh","Mondul Kiri"
+               ,"Otdar Meanchey","Preah Sihanouk","Pursat","Ratanak Kiri","Siem Reap","Stung Treng")
+prob.provs <- dat %>% filter(Province %in% provs)
+prob.provs$type <- "problem"
+other.provs <- dat %>% filter(!Province %in% provs)
+other.provs$type <- "other"
+all.provs <- rbind(prob.provs,other.provs)
+
+# get provincial means
+prov.elev.mean <- all.provs %>% group_by(Province) %>% summarise(mean = mean(mean_elev))
+prov.elev.mean$type <- ifelse(prov.elev.mean$Province %in% provs, "problem", "other")
+
+# plot mean elevation by province
+ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
+  geom_point(size=4)+
+  theme(element_blank())
+# not a stiking trend, but the 4 provinces with the lowest mean elevation are all not problematic ones. 
+
+arrange(prov.elev.mean, mean)
+# lowest means are Svay Rieng, Kandal, PP, Prey Veng, which are numbers 8, 23, 15, 18 (to compare with plot).So those provinces have very small residuals.
+
+# now do the same but using dat1 (scaled vars) so I can try and see where that odd pattern is coming from in the plot above
+prob.provs <- dat1 %>% filter(Province %in% provs)
+prob.provs$type <- "problem"
+other.provs <- dat1 %>% filter(!Province %in% provs)
+other.provs$type <- "other"
+all.provs <- rbind(prob.provs,other.provs)
+
+# get provincial means
+prov.elev.mean <- all.provs %>% group_by(Province) %>% summarise(mean = mean(mean_elev))
+prov.elev.mean$type <- ifelse(prov.elev.mean$Province %in% provs, "problem", "other")
+
+# plot mean elevation by province
+ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
+  geom_point(size=4)+
+  theme(element_blank())
+
+# need to pull out the communes from dat1 that have elev values that match the weird pattern and see if they all fall within the problem provinces, or see if there is any other pattern
 
 
 #
