@@ -3632,9 +3632,68 @@ prov.elev.mean$type <- ifelse(prov.elev.mean$Province %in% provs, "problem", "ot
 ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
   geom_point(size=4)+
   theme(element_blank())
+# this is the wrong plot to investigate that pattern - I need to look at communes
 
-# need to pull out the communes from dat1 that have elev values that match the weird pattern and see if they all fall within the problem provinces, or see if there is any other pattern
+# pull out the communes from env.m2.diag that have residual values that match the weird pattern and see if there is any other pattern that might explain the residual pattern
+# elevation values of approx -0.6, -0.4, -0.1, 0.2, 0.8
 
+# zoom further
+plot(env.m2.diag$mean_elev, env.m2.diag$m2res, xaxp = c(-0.6, 1, 8), xlim = c(-0.6,1), ylim = c(-5,5),
+     ylab = "residuals", xlab = "mean elevation")
+
+prob.coms <- env.m2.diag %>% filter(m2res > 0.5 | m2res < -0.5)
+hist(prob.coms$m2res)
+
+plot(prob.coms$mean_elev, prob.coms$m2res)
+# ok so these are now the communes with the weird shape
+
+unique(prob.coms$Province)
+# Battambang, Kampong Cham, Kampong Chhnang, Kampong Thom, Kampot, Kandal, Koh Kong, Kracheh, Mondul Kiri, Pursat, Ratanak Kiri, Siem Reap, Stung Treng, Otdar Meanchey, Preah Sihanouk, Preah Vihear. 
+provs
+
+# plot the elevation
+plot(prob.coms$Commune, prob.coms$mean_elev)
+# hard to see much here
+
+# pull out these communes from dat so I can see the elevation on original scale
+coms <- prob.coms$Commune
+prob.coms.orig <- dat[dat$Commune %in% coms,]
+other.coms.orig <- dat %>% filter(!Commune %in% coms)
+
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=mean_elev, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=mean_elev, colour="problem"))+
+  theme(element_blank())
+# no obvious pattern here.
+
+# the other fixed effect is the offset - areaKM.  Perhaps this is the source of the issue
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=areaKM, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=areaKM, colour="problem"))+
+  theme(element_blank())
+
+# look at ForPix between the two sets
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=ForPix, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=ForPix, colour="problem"))+
+  theme(element_blank())
+# ok so there is an obvious difference here.  There problem communes clearly mostly lose forest over time (vertical lines of dots), whereas the others generally do not (single points). This is the same issue as highlighted in the popdem model.
+
+# just for shits and giggles, lets see if this pattern exists if I put year in as a fixed effect
+env.m4 <- glmer(ForPix ~ mean_elev + year + offset(log(areaKM)) + (year|Province/Commune),
+                family="poisson", data=dat1)
+
+summary(env.m4)
+
+m4.diag.dat <- dat1
+m4.diag.dat$m4res <- resid(env.m4)
+m4.diag.dat$m4pred <- as.vector(predict(env.m4, type="response"))
+
+plot(m4.diag.dat$m4pred, m4.diag.dat$m4res)
+# pretty similar to m2
+
+plot(m4.diag.dat$mean_elev, m4.diag.dat$m4res)
+# pattern is still there
 
 #
 ### simple test ####
