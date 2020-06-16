@@ -19,6 +19,7 @@ library(patchwork)
 library(lattice)
 library(reshape2)
 library(pbkrtest)
+library(MuMIn)
 
 # load data
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -3377,14 +3378,122 @@ plot_model(mig.m2, type="pred")
   ## Environmental vars ####
     # env.m1 ####
 
-# there is plausible reasons why the effect of elevation might vary depending on habitat type, therefore an interacion will be tested
-env.m1 <- glmer(ForPix ~ mean_elev*habitat + offset(log(areaKM)) + (year|Province/Provcomm),
+# CP - cropland
+# MC - Mosaic crop
+# MN - Mosaic natural
+# FBE - Forest broadleaved, evergreen
+# FBD - Forest broadleaved, deciduous
+# MTSH - Mosaic, tree, shrub, herbaceous cover 
+# SL - Shrubland
+# GL - Grassland
+# NF - Natural cover, flooded
+# W - Water
+# nd - No data
+
+
+# there is plausible reasons why the effect of elevation might vary depending on habitat type, therefore an interacion was tested, but there were model issues (rank deficiency and non-convergence). Therefore the interaction was removed and the model ran with no warning
+env.m1 <- glmer(ForPix ~ mean_elev+habitat + offset(log(areaKM)) + (year|Province/Provcomm),
                 family = "poisson", data=dat1)
 
 summary(env.m1)
 
+# quick plot
 plot_model(env.m1, type="pred")
 
+ranef(env.m1)
+
+fixef(env.m1)
+
+    # Diagnostics manual ####
+
+# copy data
+env.m1.diag <- dat1
+env.m1.diag$Provcomm <- as.factor(env.m1.diag$Provcomm)
+
+# attach residuals
+env.m1.diag$m1res <- resid(env.m1)
+
+# attach conditional predictions
+env.m1.diag$m1pred <- as.vector(predict(env.m1, type="response"))
+
+# plot predicted vs observed
+plot(env.m1.diag$m1pred, env.m1.diag$ForPix)
+# good
+
+# residuals vs fitted
+plot(env.m1.diag$m1pred, env.m1.diag$m1res)
+# heteroskedasicity - particularly bad a low predicted forest cover. Similar to the popdem models.
+
+
+# repeating the plot but colouring by commune:
+colfunc = colorRampPalette(c("red","royalblue"))
+env.m1.diag$Provcomm_colours = env.m1.diag$Provcomm
+levels(env.m1.diag$Provcomm_colours) = heat.colors((nlevels(env.m1.diag$Provcomm)))
+
+# predicted values vs residuals, coloured by commune
+plot(env.m1.diag$m1pred, env.m1.diag$m1res, col = env.m1.diag$Provcomm_colours)
+
+# zoom in on the x axis
+plot(env.m1.diag$m1pred, env.m1.diag$m1res, col = env.m1.diag$Provcomm_colours, xlim = c(0,2000))
+
+# ForPix vs residuals, coloured
+plot(env.m1.diag$ForPix, env.m1.diag$m1res, col = env.m1.diag$Provcomm_colours)
+
+## Bit more exploration of residuals, but now over the explanatory variable:
+par(mfrow=c(2,2))
+plot(env.m1.diag$mean_elev, env.m1.diag$m1res, ylab = "residuals", xlab = "mean elevation")
+boxplot(m1res ~ factor(habitat), data = env.m1.diag, outline = T, xlab("habitat"), 
+        ylab = "residuals w/i habitat")
+boxplot(m1res ~ factor(Province), data = env.m1.diag, outline = T, xlab = "Province", 
+        ylab = "Residuals w/i Province")
+boxplot(m1res ~ factor(Provcomm), data = env.m1.diag, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+# CP, FBE, and NF are particularly bad, but FBD, MC, MTSH, and W aren't great either. It doesn't appear to be a problem with number of observations in each category - for example CP has nearly half of all the obs, and it is one of the worst.  Whereas SL is one of the best, and it only has 17 obs.  
+
+# check if the provinces that have the communes with the largest residuals are the same as from the popdem model
+levels(env.m1.diag$Province)
+# Battambang, Kampong Chhnang, Kampong Thom, Kracheh, Otdar Meanchey, Pursat, Siem Reap, Stung Treng.
+
+# Yes - basically the same provinces causing the issues
+
+# compare ForPix between the problem provinces and the rest
+provs <- c("Battambang","Kampong Chhnang","Kampong Thom","Kracheh","Otdar Meanchey","Pursat","Siem Reap",
+           "Stung Treng")
+prob.provs <- dat[dat$Province %in% provs,]
+prob.provs$type <- "problem"
+other.provs <- dat %>% filter(!Province %in% provs) 
+other.provs$type <- "other"
+all.provs <- rbind(prob.provs,other.provs)
+
+
+ggplot()+
+  geom_boxplot(data=prob.provs, aes(x=Province, y=ForPix, colour="problem provinces"))+
+  geom_boxplot(data=other.provs, aes(x=Province, y=ForPix, colour="other provinces"))
+# I dunno, not much to see really.  Perhaps the problem provinces tend to have more outliers, but not really any obvious pattern
+
+# plot habitat between the provinces
+ggplot(all.provs, aes(x=habitat, y=Province, fill=type))+
+  geom_boxplot()
+# I think some of the issues are coming from the fact that not all the provinces have communes with all of the habitat types
+
+# plots comparing elevation
+ggplot()+
+  geom_boxplot(data=prob.provs, aes(x=Province, y=mean_elev, colour="problem provinces"))+
+  geom_boxplot(data=other.provs, aes(x=Province, y=mean_elev, colour="other provinces"))
+# looks like the provinces causing issues tend to have lower mean elevations across their communes
+
+# compare mean_elev and ForPix between the groups of provinces
+ggplot(all.provs, aes(x=mean_elev, y=ForPix, colour=type))+
+  geom_point()
+# looks like the problem province tend to have higher ForPix (same as the popdem models) but lower elevation
+
+# QQ plot
+par(mfrow=c(1,1))
+qqnorm(resid(env.m1))
+qqline(resid(env.m1))
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
