@@ -3545,7 +3545,7 @@ ggplot(m1_newdat, aes(x=mean_elev, y=pred, group=habitat, colour=habitat))+
 # Ok so predicted forest cover increases as mean elevation increases. The effect is differnet for the different habitats. The highest predicted forest cover is in Mosaic (tree, shrub, herbaceous), Forest (broadleaved, evergree), and water.  The lowest predicted forest cover is in mosaic (natural), shrubland. Interestingly predicted forest cover is higher in cropland than in mosaic (natural) and shrubland. This is possible because the habitat is allocated based on >50% of the commune, which means that there can still be a decent proportion of the communes that is forested, despite the habitat being classified as, say, cropland. 
 
 #
-    # Diagnostics m2 ####
+    # diagnostics m2 ####
 
 # copy data
 env.m2.diag <- dat1
@@ -3694,6 +3694,239 @@ plot(m4.diag.dat$m4pred, m4.diag.dat$m4res)
 
 plot(m4.diag.dat$mean_elev, m4.diag.dat$m4res)
 # pattern is still there
+
+#
+    # predict main effects m2 ####
+
+### predict from env.m2 for an average commune
+
+# create new data
+env_m2_newdata <- data.frame(mean_elev = seq(from=min(dat1$mean_elev), to=max(dat1$mean_elev),
+                                             length.out = 100),
+                             areaKM = mean(dat1$areaKM))
+# predict
+env_m2_newdata$pred <- as.vector(predict(env.m2, type="response", newdata=env_m2_newdata, re.form=NA))
+
+# plot
+ggplot(env_m2_newdata, aes(x=mean_elev, y=pred))+
+  geom_line()+
+  theme(element_blank())+
+  ylim(0,20000)+
+  xlab("Mean elevation (scaled)")+
+  ylab("Predicted forest cover (pixels)")
+
+    # predict for sets of communes ####
+
+# here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
+
+# save the env.m2 commune-level random effects
+env.m2.com <- ranef(env.m2)[[1]]
+plot_model(env.m2, type="re")
+
+# re-order
+env.m2.com <- env.m2.com[order(env.m2.com[ ,"(Intercept)"], decreasing = FALSE),]
+head(env.m2.com)
+
+# the 4 communes closest to 0 are:
+# Koh Kong_Bak Khlang:Koh Kong, 
+# Kracheh_Bos Leav:Kracheh, 
+# Preah Vihear_Kuleaen Tboung:Preah Vihear, 
+# Ratanak Kiri_Saom Thum:Ratanak Kiri
+
+# the 4 communes furthest above 0 are:
+# Kampong Cham_Tuol Snuol:Kampong Cham
+# Banteay Meanchey_Paoy Char:Banteay Meanchey
+# Kampong Cham_Khpob Ta Nguon:Kampong Cham
+# Kampong Chhnang_Dar:Kampong Chhnang
+
+# the 4 communes furthest below 0 are:
+# Kampong Thom_Chaeung Daeung:Kampong Thom
+# Kracheh_Han Chey:Kracheh 
+# Kampong Thom_Tang Krasang:Kampong Thom 
+# Siem Reap_Nokor Pheas:Siem Reap
+
+
+# which communes
+coms <- c("Koh Kong_Bak Khlang","Kracheh_Bos Leav","Preah Vihear_Kuleaen Tboung","Ratanak Kiri_Saom Thum",
+          "Kampong Cham_Tuol Snuol","Banteay Meanchey_Paoy Char","Kampong Cham_Khpob Ta Nguon","Kampong Chhnang_Dar",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Kampong Thom_Tang Krasang","Siem Reap_Nokor Pheas")
+
+# which provinces
+provs <- c("Koh Kong","Kracheh","Preah Vihear","Ratanak Kiri",
+           "Kampong Cham","Banteay Meanchey","Kampong Cham","Kampong Chhnang",
+           "Kampong Thom","Kracheh","Kampong Thom","Siem Reap")
+
+
+### I am making commune-specific predictions, so should customise the range of elevations I am predicting for, on the basis of each commune.
+
+### Easiest to define the range of mean_elev to predict for, first. Min/max per commune:
+mean_elev_min <- tapply(dat1$mean_elev, dat1$Provcomm, min)
+mean_elev_max <- tapply(dat1$mean_elev, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+mean_elev_min <- min(mean_elev_min[names(mean_elev_min) %in% coms])
+mean_elev_max <- max(mean_elev_max[names(mean_elev_max) %in% coms])
+### Not really any different for the min, but the max is different
+min(dat1$mean_elev)
+max(dat1$mean_elev)
+
+# create new prediction grid for specific communes with varying mean_elev
+env_m2_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
+                            Province = as.factor(rep(provs, each=100)),
+                            mean_elev = seq(from=mean_elev_min, to=mean_elev_max, length.out = 100),
+                            year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+env_m2_newdat_com$areaKM <-  dat1$areaKM[match(env_m2_newdat_com$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+env_m2_newdat_com$Provcomm <- factor(env_m2_newdat_com$Provcomm, 
+                                 levels = c("Koh Kong_Bak Khlang",
+                                            "Kracheh_Bos Leav",
+                                            "Preah Vihear_Kuleaen Tboung",
+                                            "Ratanak Kiri_Saom Thum",
+                                            "Kampong Cham_Tuol Snuol",
+                                            "Banteay Meanchey_Paoy Char",
+                                            "Kampong Cham_Khpob Ta Nguon",
+                                            "Kampong Chhnang_Dar",
+                                            "Kampong Thom_Chaeung Daeung",
+                                            "Kracheh_Han Chey",
+                                            "Kampong Thom_Tang Krasang",
+                                            "Siem Reap_Nokor Pheas"))
+
+
+# attach commune-specific predictions
+env_m2_newdat_com$pred.com <- as.vector(predict(env.m2, type="response", newdata=env_m2_newdat_com, 
+                                            re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+env_m2_newdat_com$pred.glo <- rep(env_m2_newdata$pred, times=12)
+
+
+### The following plot can either "overlay" the observed ForPix count against observed population densities for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(env_m2_newdat_com$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### population density range across all communes, so we need to do this overall:
+ylo <- min(env_m2_newdat_com$pred.com)*0.9
+yhi <- max(env_m2_newdat_com$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
+### Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- env_m2_newdat_com[env_m2_newdat_com$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  # if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$mean_elev,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Mean elevation (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  # } else {
+  lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$mean_elev,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+
+
+### now let's do the same as above but for a random selection of communes
+
+# randomly sample communes
+rand.com <- sample(dat1$Provcomm, 12, replace = FALSE)
+rand.prov <- unlist(strsplit(rand.com, "_"))
+rand.prov <- rand.prov[c(1,3,5,7,9,11,13,15,17,19,21,23)]
+
+# define the range of pop_den to predict for, first. Min/max per commune:
+mean_elev_min <- tapply(dat1$mean_elev, dat1$Provcomm, min)
+mean_elev_max <- tapply(dat1$mean_elev, dat1$Provcomm, max)
+# Min/max within your selection of communes:
+mean_elev_min <- min(mean_elev_min[names(mean_elev_min) %in% rand.com])
+mean_elev_max <- max(mean_elev_max[names(mean_elev_max) %in% rand.com])
+# min not really different but max very different
+min(dat1$mean_elev)
+max(dat1$mean_elev)
+
+# create new prediction grid for specific communes with varying pop_den
+env.m2_newdat_com_ran <- data.frame(Provcomm = rep(rand.com, each=100),
+                                Province = rep(rand.prov, each=100),
+                                mean_elev = seq(from=mean_elev_min, to=mean_elev_max, length.out = 100),
+                                year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+env.m2_newdat_com_ran$areaKM <-  dat1$areaKM[match(env.m2_newdat_com_ran$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+env.m2_newdat_com_ran$pred.com <- as.vector(predict(env.m2, type="response", newdata=env.m2_newdat_com_ran, 
+                                                re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+env.m2_newdat_com_ran$pred.glo <- rep(env_m2_newdata$pred, times=12)
+
+# set levels
+env.m2_newdat_com_ran$Provcomm <- as.factor(env.m2_newdat_com_ran$Provcomm)
+provcomm_lvls <- levels(env.m2_newdat_com_ran$Provcomm) 
+par(mfrow = c(3,4))
+
+# set scales
+ylo <- min(env.m2_newdat_com_ran$pred.com)*0.9
+yhi <- max(env.m2_newdat_com_ran$pred.com)*1.1
+xlo <- mean_elev_min
+xhi <- mean_elev_max
+
+# Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- env.m2_newdat_com_ran[env.m2_newdat_com_ran$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  # if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$mean_elev,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Mean elevation (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  # } else {
+  lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$mean_elev,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+### after running the above random sampling code a few times, it looks as though the global model is good at predicting at low forest cover and low elevation (as with the popdem model), as this is where most of the communes sit on the spectrum.  It performs ok for communes with higher elevation provided they don't have too much forest!  As soon as the commune has lots of forest or very high elevation, the global model performs badly.  
+
 
 #
 ### simple test ####
