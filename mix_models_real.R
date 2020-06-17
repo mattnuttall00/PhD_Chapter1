@@ -3929,6 +3929,69 @@ for(i in 1:length(provcomm_lvls)) {
 
 
 #
+  ## Human additional variables ####
+    # hum.m1 ####
+
+# there are 5 variables in this set - distance to border (dist_border), distance to the provincial captial (dist_provCap), presence of economic land concession (elc), presence of any protected area (PA), and the protecte area category (PA_cat, includes "none")
+
+# attempt saturated model
+hum.m1 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+PA_cat+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m1)
+# interestingly, PA doesn't appear to look important.  This surprises me as you would assume that PAs would be placed in areas with high forest cover. elc doesn't appear to be important, which is also surprising because I could imagine two scenarios 1) it would have a postive relationship ebcause elcs were often placed in forested areas, and 2) a negative relationship because the elc's would have cleared a lot of forest in the areas they were placed.  However, during this time period, perhaps not much forest clearing had happened yet. dist_border and dst_provCap appear to be important, with both having apositive effect. dist_provCap I can understand - communes further away from urban centres are likely to be more forested. Not sure yet about dist_border. I think all vars require further investigation 
+
+# quick plots
+plot_model(hum.m1, type="pred", terms="dist_border")
+plot_model(hum.m1, type="pred", terms="dist_provCap")
+plot_model(hum.m1, type="pred", terms="elc")
+plot_model(hum.m1, type="pred", terms="PA")
+plot_model(hum.m1, type="pred", terms="PA_cat") # surprised RMS level is not sig given the coefficient
+
+
+#
+    # model selection ####
+
+# remove PA_cat
+hum.m2 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m2)
+
+# remove elc but keep PA_cat in
+hum.m3 <- glmer(ForPix ~ dist_border+dist_provCap+PA_cat+PA+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m3)
+# PA_cat is causing the rank deficient matrix warning
+
+# remove elc and PA_cat
+hum.m4 <- glmer(ForPix ~ dist_border+dist_provCap+PA+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m4)
+
+# remove PA
+hum.m5 <- glmer(ForPix ~ dist_border+dist_provCap+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m5)
+
+# remove dist_border
+hum.m6 <- glmer(ForPix ~ dist_provCap+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m6)
+
+
+# compare with LRT
+anova(hum.m1,hum.m2,hum.m3,hum.m4,hum.m5,hum.m6)
+
+# compare with AIC
+
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
