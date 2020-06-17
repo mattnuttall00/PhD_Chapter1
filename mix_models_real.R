@@ -3985,10 +3985,69 @@ summary(hum.m6)
 
 
 # compare with LRT
-anova(hum.m1,hum.m2,hum.m3,hum.m4,hum.m5,hum.m6)
+anova(hum.m1,hum.m2)
+# More complex model is not better
+
+anova(hum.m2,hum.m3)
+# complex model not better
+
+anova(hum.m3, hum.m4)
+# complex model not better
+
+anova(hum.m4, hum.m5)
+# complex model not better
+
+anova(hum.m5,hum.m6)
+# complex model is better - i.e worth keeping dist_border in
+      
 
 # compare with AIC
+aic.comp <- data.frame(model = c("m1","m2","m3","m4","m5","m6"),
+                       AICc = c(AICc(hum.m1),AICc(hum.m2),AICc(hum.m3),AICc(hum.m4),
+                                AICc(hum.m5),AICc(hum.m6)))
+aic.comp$dAICc <- aic.comp$AICc - min(aic.comp$AICc)
+aic.comp <- arrange(aic.comp, dAICc)
+# based on AICc hum.m2, hum.m4, and hum.m5 all have some support (dAICc < 3). Therefore there is cause to investigate dist_border, dist_provCap, elc, and PA. I will progress with hum.m2 
 
+    # diagnostics hum.m2 ####
+
+# copy data for diagnostics
+hum.diag.dat <- dat1
+
+# residuals
+hum.diag.dat$m2res <- resid(hum.m2)
+
+# conditional predictions
+hum.diag.dat$m2.pred <- as.vector(predict(hum.m2, type="response", re.form=NA))
+
+# predicted vs observed
+plot(hum.diag.dat$m2.pred, hum.diag.dat$ForPix)
+# not great - much worse than the previous model sets. It appears the model is underpredicting by quite a long way
+
+# residuals vs predicted
+plot(hum.diag.dat$m2.pred, hum.diag.dat$m2res)
+# this doesn't look great. Some outlier large predictions which have small residuals, but a lot of heterogeneity at smaller predicted values. There's an odd line of residuals jsut below 2000 (x axis) which suggests there's one predicted value that is appearing quite a few times?
+
+
+# further look at residuals by predictor
+par(mfrow=c(3,2))
+plot(hum.diag.dat$dist_border, hum.diag.dat$m2res, ylab = "residuals", xlab = "distance to border")
+plot(hum.diag.dat$dist_provCap, hum.diag.dat$m2res, ylab = "residuals", xlab = "distance to Prov Cap")
+plot(hum.diag.dat$PA, hum.diag.dat$m2res, ylab = "residuals", xlab = "PA presence")
+plot(hum.diag.dat$elc, hum.diag.dat$m2res, ylab = "residuals", xlab = "Land concession presence")
+boxplot(m2res ~ factor(Province), data = hum.diag.dat, outline = T, xlab = "Province", 
+        ylab = "Residuals w/i Province")
+boxplot(m2res ~ factor(Provcomm), data = hum.diag.dat, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+# Based on the first two plots, it looks like there's only a relatively small number of communes that have really large residuals (and there seems to be patterns in these)
+
+# zoom in on the y axis for the first two plots to get a better look at the majority of residuals
+par(mfrow=c(2,1))
+plot(hum.diag.dat$dist_border, hum.diag.dat$m2res, ylim=c(-3,3),
+     ylab = "residuals", xlab = "distance to border")
+plot(hum.diag.dat$dist_provCap, hum.diag.dat$m2res, ylim=c(-3,3),
+     ylab = "residuals", xlab = "distance to Prov Cap")
+# when you zoom in they look better!  The slightly odd patterns are smaller residuals between 0 and 1 dist_border, and between probably 0 and 0.2 for dist_provCap.  For the dist_border, 
 
 
 #
