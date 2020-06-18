@@ -4047,8 +4047,76 @@ plot(hum.diag.dat$dist_border, hum.diag.dat$m2res, ylim=c(-3,3),
      ylab = "residuals", xlab = "distance to border")
 plot(hum.diag.dat$dist_provCap, hum.diag.dat$m2res, ylim=c(-3,3),
      ylab = "residuals", xlab = "distance to Prov Cap")
-# when you zoom in they look better!  The slightly odd patterns are smaller residuals between 0 and 1 dist_border, and between probably 0 and 0.2 for dist_provCap.  For the dist_border, 
+# when you zoom in they look better!  The slightly odd patterns are smaller residuals between 0 and 1 dist_border, and between probably 0 and 0.3 for dist_provCap. 
 
+
+## lets have a look at which provinces have the larger residuals and see if they match with the problem provinces from the previous model sets
+levels(hum.diag.dat$Province)
+# Battambang, Kampong Cham, Kampong Chhnanhg, Kampong Thom, Koh Kong, Kracheh, Mondul Kiri, Otdar Meanchey, Pursat, Ratanak Kiri, Siem Reap, Stung Treng. 
+# These are the same provinces that are causing issues in the other model sets.
+
+
+# I think it is because they are where forest is being lost over time. Lets try and check this using diffPix
+diffPix <- dat1 %>% group_by(Provcomm) %>% summarise(sum = sum(diffPix))
+provs <- unlist(strsplit(diffPix$Provcomm, "_"))
+provs1 <- provs[seq(1, length(provs), 2)]
+diffPix$Province <- provs1
+
+unique(diffPix$Province[diffPix$sum > 0])
+# the provinces where sone forest is lost are Kampong Cham, Kampong Speu, Kampot, Koh Kong, Kracheh, Mondul Kiri, Otdar Meanchey, Preah Sihanouk, Preah Vihear, Ratanak Kiri, Stung Treng.
+# So this may go some way towards explaining the issues. However, there are still Provinces that lose no forest but are still causing issues, such as Kampong Chhnang and Kampong Thom. 
+
+
+## lets try and look at the individual communes that have very large residuals.
+par(mfrow=c(1,1))
+boxplot(m2res ~ factor(Provcomm), data = hum.diag.dat, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+
+# extract communes
+prob.coms <- hum.diag.dat[hum.diag.dat$m2res > 1 | hum.diag.dat$m2res < -1,]
+prob.coms$type <- "problem"
+other.coms <- hum.diag.dat %>% filter(!Provcomm %in% prob.coms$Provcomm)
+other.coms$type <- "other"
+all.coms <- rbind(prob.coms, other.coms)
+
+
+plot(prob.coms$m2.pred, prob.coms$m2res)
+
+unique(prob.coms$Province)
+
+# plot ForPix between the two sets
+ggplot(all.coms, aes(x=Provcomm, y=ForPix, colour=type))+
+  geom_point()
+# this doen't show an obvious pattern to me - and in fact here the loss of forest over time doesn't look unique to the problem communes, as it did in the previous sets
+
+# plot area between the sets
+ggplot(all.coms, aes(x=Provcomm, y=areaKM, colour=type))+
+  geom_point()
+# no obvious pattern here
+
+# plot dist_border between sets
+ggplot(all.coms, aes(x=Provcomm, y=dist_border, colour=type))+
+  geom_point()+
+  theme(element_blank())
+# no obvious pattern
+
+# plot dist_provCap between sets
+ggplot(all.coms, aes(x=Provcomm, y=dist_provCap, colour=type))+
+  geom_point()+
+  theme(element_blank())
+# no obvious pattern
+
+# compare count of communes with PA presence 
+nrow(prob.coms[prob.coms$PA=="1",])
+nrow(other.coms[other.coms$PA=="1",])
+
+# compare count of communes with ELC presence 
+nrow(prob.coms[prob.coms$elc=="1",])
+nrow(other.coms[other.coms$elc=="1",])
+
+### SO am not sure exactly what the other reasons are for the large residuals in those communes. It may become clearer when I look at the predictions between the global model and the commune-specific models
+
+### There didn't appear to be any obvious issues with the residual spread for PA / ELC presence
 
 #
 ### simple test ####
