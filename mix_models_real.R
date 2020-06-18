@@ -4197,7 +4197,7 @@ hum.m2.com <- ranef(hum.m2)[[1]]
 plot_model(hum.m2, type="re")
 
 # re-order
-hum.m2.com <- hum.m2.com[order(hum.m2.com[ ,"(Intercept)"], decreasing = FALSE),]
+hum.m2.com <- hum.m2.com[order(hum.m2.com[ ,"(Intercept)"], decreasing = TRUE),]
 head(hum.m2.com,4)
 
 # the 4 communes closest to 0 are:
@@ -4335,6 +4335,7 @@ for(i in 1:length(provcomm_lvls)) {
   points(dat_i$dist_border, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
+# can't face figuring out how to plot all the different lines on each plot (technically 8 lines, for each combination of the categorical variables for both the commune-specific and global models), so I am donig it in ggplot (sorry Jeroen!)
 ggplot(hum_m2_newdat_bord, aes(x=dist_border))+
   
   geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==1,], 
@@ -4349,10 +4350,124 @@ ggplot(hum_m2_newdat_bord, aes(x=dist_border))+
   geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==0,], 
             aes(y=pred.com), colour = "blue", linetype="dashed")+
   
-  geom_line(aes(y=pred.glo), colour = "black")+
-  facet_wrap(~Provcomm)
- 
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==1,],
+            aes(y=pred.glo), colour = "black", linetype="solid")+
   
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==0,],
+            aes(y=pred.glo), colour = "black", linetype="dashed")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==1,],
+            aes(y=pred.glo), colour = "black", linetype="dotted")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==0,],
+            aes(y=pred.glo), colour = "black", linetype="dotdash")+
+  
+  facet_wrap(~Provcomm)+
+  theme(element_blank())
+  
+ 
+### Do the above again for the 4 communes with the largest intercept 
+
+# the 4 communes furthest above 0 are:
+# Kampot_Preaek Tnaot:Kampot
+# Kampot_Kaoh Touch:Kampot
+# Kampong Chhnang_Chieb:Kampong Chhnang
+# Kampong Cham_Pongro:Kampong Cham
+
+
+# which communes
+coms <- c("Kampot_Preaek Tnaot","Kampot_Kaoh Touch","Kampong Chhnang_Chieb","Kampong Cham_Pongro")
+
+# which provinces
+provs <- c("Kampot","Kampot","Kampong Chhnang","Kampong Cham")
+
+
+### I am making commune-specific predictions, so should customise the range of dist_border and dist_provCom I am predicting for, on the basis of each commune.
+
+###  define the range of dist_border to predict for. Min/max per commune:
+dist_border_min <- tapply(dat1$dist_border, dat1$Provcomm, min)
+dist_border_max <- tapply(dat1$dist_border, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+dist_border_min <- min(dist_border_min[names(dist_border_min) %in% coms])
+dist_border_max <- max(dist_border_max[names(dist_border_max) %in% coms])
+
+min(dat1$dist_border)
+max(dat1$dist_border)
+
+
+###  define the range of dist_provCap to predict for. Min/max per commune:
+dist_provCap_min <- tapply(dat1$dist_provCap, dat1$Provcomm, min)
+dist_provCap_max <- tapply(dat1$dist_provCap, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+dist_provCap_min <- min(dist_provCap_min[names(dist_provCap_min) %in% coms])
+dist_provCap_max <- max(dist_provCap_max[names(dist_provCap_max) %in% coms])
+
+min(dat1$dist_provCap)
+max(dat1$dist_provCap)
+
+
+# create new prediction grid for specific communes with varying dist_border
+hum_m2_newdat_bord <- expand.grid(Provcomm = coms,
+                                  dist_border = seq(dist_border_min, dist_border_max, length.out = 100),
+                                  dist_provCap = mean(dat1$dist_provCap),
+                                  year = mean(dat1$year),
+                                  PA = levels(dat1$PA),
+                                  elc = levels(dat1$elc))
+
+# add province
+hum_m2_newdat_bord$Provcomm <- as.character(hum_m2_newdat_bord$Provcomm)
+provs <- unlist(strsplit(hum_m2_newdat_bord$Provcomm, "_"))
+provs1 <- provs[seq(1, length(provs), 2)]
+hum_m2_newdat_bord$Province <- provs1
+hum_m2_newdat_bord$Provcomm <- as.factor(hum_m2_newdat_bord$Provcomm)
+
+
+# add commune-specific areaKM offset                         
+hum_m2_newdat_bord$areaKM <-  dat1$areaKM[match(hum_m2_newdat_bord$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+hum_m2_newdat_bord$pred.com <- as.vector(predict(hum.m2, type="response", newdata=hum_m2_newdat_bord, 
+                                                 re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions. need to alter areaKM below so that the global model has only the mean areakM rather than the commune-specific one. This is fine as pred.com is already done
+hum_m2_newdat_bord <- hum_m2_newdat_bord %>% rename(areaKM_com = areaKM)
+hum_m2_newdat_bord$areaKM <- mean(dat1$areaKM)
+hum_m2_newdat_bord$pred.glo <- as.vector(predict(hum.m2,type="response",newdata=hum_m2_newdat_bord,re.form=NA))
+
+# plot
+ggplot(hum_m2_newdat_bord, aes(x=dist_border))+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==1,], 
+            aes(y=pred.com), colour = "red")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==0,], 
+            aes(y=pred.com), colour = "red", linetype="dashed")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==1,], 
+            aes(y=pred.com), colour = "blue")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==0,], 
+            aes(y=pred.com), colour = "blue", linetype="dashed")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==1,],
+            aes(y=pred.glo), colour = "black", linetype="solid")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==0,],
+            aes(y=pred.glo), colour = "black", linetype="dashed")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==1,],
+            aes(y=pred.glo), colour = "black", linetype="dotted")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==0,],
+            aes(y=pred.glo), colour = "black", linetype="dotdash")+
+  
+  facet_wrap(~Provcomm)+
+  theme(element_blank())
+
+
+### elc is clearly doing nothing (well, PA isn't exactly doing a lot, but more than elc).  If you look back at the AIC table, m5 and m4 were almost the same, and m2 - which had elc - had a dAICc > 2.  I wanted to see if it did anything, but clearly not. Therefore I need to move forward with diagnostics and predicting for m4 (dist_border, dist_provCap, PA)
 
 #
 ### simple test ####
