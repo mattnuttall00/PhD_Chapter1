@@ -4220,14 +4220,10 @@ head(hum.m2.com,4)
 
 
 # which communes
-coms <- c("Kracheh_Preaek Saman","Preah Vihear_Kuleaen Tboung","Preah Vihear_Chrach","Kampong Cham_Kampoan",
-          "Kampot_Preaek Tnaot","Kampot_Kaoh Touch","Kampong Chhnang_Chieb","Kampong Cham_Pongro",
-          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Preah Vihear_Reaksmei","Siem Reap_Nokor Pheas")
+coms <- c("Kracheh_Preaek Saman","Preah Vihear_Kuleaen Tboung","Preah Vihear_Chrach","Kampong Cham_Kampoan")
 
 # which provinces
-provs <- c("Kracheh","Preah Vihear","Preah Vihear","Kampong Cham",
-           "Kampot","Kampot","Kampong Chhnang","Kampong Cham",
-           "Kampong Thom","Kracheh","Preah Vihear","Siem Reap")
+provs <- c("Kracheh","Preah Vihear","Preah Vihear","Kampong Cham")
 
 
 ### I am making commune-specific predictions, so should customise the range of dist_border and dist_provCom I am predicting for, on the basis of each commune.
@@ -4242,42 +4238,53 @@ dist_border_max <- max(dist_border_max[names(dist_border_max) %in% coms])
 min(dat1$dist_border)
 max(dat1$dist_border)
 
-# do above for dist_provCap
+
+###  define the range of dist_provCap to predict for. Min/max per commune:
+dist_provCap_min <- tapply(dat1$dist_provCap, dat1$Provcomm, min)
+dist_provCap_max <- tapply(dat1$dist_provCap, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+dist_provCap_min <- min(dist_provCap_min[names(dist_provCap_min) %in% coms])
+dist_provCap_max <- max(dist_provCap_max[names(dist_provCap_max) %in% coms])
+
+min(dat1$dist_provCap)
+max(dat1$dist_provCap)
 
 
-# create new prediction grid for specific communes with varying mean_elev
-env_m2_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
-                                Province = as.factor(rep(provs, each=100)),
-                                mean_elev = seq(from=mean_elev_min, to=mean_elev_max, length.out = 100),
-                                year = mean(dat1$year))
+# create new prediction grid for specific communes with varying dist_border
+hum_m2_newdat_bord <- expand.grid(Provcomm = coms,
+                                dist_border = seq(dist_border_min, dist_border_max, length.out = 100),
+                                dist_provCap = mean(dat1$dist_provCap),
+                                year = mean(dat1$year),
+                                PA = levels(dat1$PA),
+                                elc = levels(dat1$elc))
+
+# add province
+hum_m2_newdat_bord$Provcomm <- as.character(hum_m2_newdat_bord$Provcomm)
+provs <- unlist(strsplit(hum_m2_newdat_bord$Provcomm, "_"))
+provs1 <- provs[seq(1, length(provs), 2)]
+hum_m2_newdat_bord$Province <- provs1
+hum_m2_newdat_bord$Provcomm <- as.factor(hum_m2_newdat_bord$Provcomm)
 
 
 # add commune-specific areaKM offset                         
-env_m2_newdat_com$areaKM <-  dat1$areaKM[match(env_m2_newdat_com$Provcomm, dat1$Provcomm)]
+hum_m2_newdat_bord$areaKM <-  dat1$areaKM[match(hum_m2_newdat_bord$Provcomm, dat1$Provcomm)]
 
 # re-order levels so they plot in the correct sets
-env_m2_newdat_com$Provcomm <- factor(env_m2_newdat_com$Provcomm, 
-                                     levels = c("Koh Kong_Bak Khlang",
-                                                "Kracheh_Bos Leav",
-                                                "Preah Vihear_Kuleaen Tboung",
-                                                "Ratanak Kiri_Saom Thum",
-                                                "Kampong Cham_Tuol Snuol",
-                                                "Banteay Meanchey_Paoy Char",
-                                                "Kampong Cham_Khpob Ta Nguon",
-                                                "Kampong Chhnang_Dar",
-                                                "Kampong Thom_Chaeung Daeung",
-                                                "Kracheh_Han Chey",
-                                                "Kampong Thom_Tang Krasang",
-                                                "Siem Reap_Nokor Pheas"))
+hum_m2_newdat_bord$Provcomm <- factor(hum_m2_newdat_bord$Provcomm, 
+                                     levels = c("Kracheh_Preaek Saman","Preah Vihear_Kuleaen Tboung",
+                                                "Preah Vihear_Chrach","Kampong Cham_Kampoan"))
 
 
 # attach commune-specific predictions
-env_m2_newdat_com$pred.com <- as.vector(predict(env.m2, type="response", newdata=env_m2_newdat_com, 
+hum_m2_newdat_bord$pred.com <- as.vector(predict(hum.m2, type="response", newdata=hum_m2_newdat_bord, 
                                                 re.form=~(year|Province/Provcomm)))
 
 
-# attach global predictions
-env_m2_newdat_com$pred.glo <- rep(env_m2_newdata$pred, times=12)
+# attach global predictions. need to alter areaKM below so that the global model has only the mean areakM rather than the commune-specific one. This is fine as pred.com is already done
+hum_m2_newdat_bord <- hum_m2_newdat_bord %>% rename(areaKM_com = areaKM)
+hum_m2_newdat_bord$areaKM <- mean(dat1$areaKM)
+hum_m2_newdat_bord$pred.glo <- as.vector(predict(hum.m2,type="response",newdata=hum_m2_newdat_bord,re.form=NA))
+
 
 
 ### The following plot can either "overlay" the observed ForPix count against observed population densities for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
@@ -4296,39 +4303,56 @@ com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
 if(!exists("com_colours")) {
   com_colours <- rep("black", 12)
 }
-provcomm_lvls <- levels(env_m2_newdat_com$Provcomm) 
-par(mfrow = c(3,4))
+provcomm_lvls <- levels(hum_m2_newdat_bord$Provcomm) 
+par(mfrow = c(4,4))
 ### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
 ### population density range across all communes, so we need to do this overall:
-ylo <- min(env_m2_newdat_com$pred.com)*0.9
-yhi <- max(env_m2_newdat_com$pred.com)*1.1
-xlo <- min(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
-xhi <-  max(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
-### Iterate through the communes (levels in m6_newdat_com$Provcomm):
+ylo <- min(hum_m2_newdat_bord$pred.com)*0.9
+yhi <- max(hum_m2_newdat_bord$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(hum_m2_newdat_bord$Provcomm),"dist_border"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(hum_m2_newdat_bord$Provcomm),"dist_border"])
+### Iterate through the communes (levels in hum_m2_newdat_bord$Provcomm):
 for(i in 1:length(provcomm_lvls)) {
   ### Pick commune i data from the predictions:
-  preddat_i <- env_m2_newdat_com[env_m2_newdat_com$Provcomm==provcomm_lvls[i],]
+  preddat_i <- hum_m2_newdat_bord[hum_m2_newdat_bord$Provcomm==provcomm_lvls[i],]
   ### Pick commune i data from observed data:
   dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
   ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
-  # if(i == 1) {
+   #if(i == 1) {
   # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
-  plot(preddat_i$mean_elev,preddat_i$pred.com, 
+  plot(preddat_i$dist_border,preddat_i$pred.com, 
        type = "l", 
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
-       xlab = "Mean elevation (scaled & standardised",
+       xlab = "Distance to intl border (scaled & standardised)",
        ylab = "Predicted forest cover (forest pixel count)",
        main = unique(preddat_i$Provcomm))
-  # } else {
-  lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
-  lines(preddat_i$mean_elev,preddat_i$pred.glo, lty=2)
+   #} else {
+  lines(preddat_i$dist_border,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$dist_border,preddat_i$pred.glo, lty=2)
   #}
   ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
-  points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+  points(dat_i$dist_border, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
-
+ggplot(hum_m2_newdat_bord, aes(x=dist_border))+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==1,], 
+            aes(y=pred.com), colour = "red")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==1 & hum_m2_newdat_bord$elc==0,], 
+            aes(y=pred.com), colour = "red", linetype="dashed")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==1,], 
+            aes(y=pred.com), colour = "blue")+
+  
+  geom_line(data=hum_m2_newdat_bord[hum_m2_newdat_bord$PA==0 & hum_m2_newdat_bord$elc==0,], 
+            aes(y=pred.com), colour = "blue", linetype="dashed")+
+  
+  geom_line(aes(y=pred.glo), colour = "black")+
+  facet_wrap(~Provcomm)
+ 
+  
 
 #
 ### simple test ####
