@@ -4119,6 +4119,78 @@ nrow(other.coms[other.coms$elc=="1",])
 ### There didn't appear to be any obvious issues with the residual spread for PA / ELC presence
 
 #
+    # predict main effects hum.m2 ####
+
+### dist_border
+
+# create new data
+dist_border_newdat <- expand.grid(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), 
+                                                    length.out = 100),
+                                  dist_provCap = mean(dat1$dist_provCap),
+                                  PA = levels(dat1$PA),
+                                  elc = levels(dat1$elc),
+                                  areaKM = mean(dat1$areaKM))
+
+# predict
+dist_border_newdat$pred <- as.vector(predict(hum.m2, type="response", newdata=dist_border_newdat, re.form=NA))
+
+# plot
+ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
+  geom_line(size=1)+
+  facet_grid(PA ~ elc, labeller = label_both)+
+  theme(element_blank())+
+  xlab("Distance to international border (scaled and centered)")+
+  ylab("Predicted forest cover (pixels)")
+# PA and ELC appear to make no differnce to the effect of dist_border.  As distance to border increases, so does predicrted forest cover
+
+
+### dist_provCap
+
+# create new data
+dist_provCap_newdat <- expand.grid(dist_provCap = seq(min(dat1$dist_provCap), max(dat1$dist_provCap), 
+                                                    length.out = 100),
+                                  dist_border = mean(dat1$dist_border),
+                                  PA = levels(dat1$PA),
+                                  elc = levels(dat1$elc),
+                                  areaKM = mean(dat1$areaKM))
+
+# predict
+dist_provCap_newdat$pred <- as.vector(predict(hum.m2, type="response", newdata=dist_provCap_newdat, re.form=NA))
+
+# plot
+ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
+  geom_line(size=1)+
+  facet_grid(PA ~ elc, labeller = label_both)+
+  theme(element_blank())+
+  xlab("Distance to provincial capital (scaled and centered)")+
+  ylab("Predicted forest cover (pixels)")
+# very similar slope - as distance to provCap increases, so does predicted forest cover. There does appear to be slight differences in the shapes.  Hard to see, but I think in communes where the is a PA and NO ELC, predicted forest cover increases more sharply than in communes with PAs AND an ELC.  I think this is also the case in communes where there is no PA - if there is an ELC, predicted forest cover increases less steeply. This is godd because it makes sense!
+
+
+### PA + ELC
+
+# create new data
+PA_elc_newdat <- expand.grid(PA = levels(dat1$PA),
+                             elc = levels(dat1$elc),
+                             dist_border = mean(dat1$dist_border),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             areaKM = mean(dat1$areaKM))
+
+# predict
+PA_elc_newdat$pred <- as.vector(predict(hum.m2, type="response", newdata=PA_elc_newdat, re.form=NA))
+
+
+# plot PA / elc
+ggplot(PA_elc_newdat, aes(x=PA,y=pred))+
+  geom_point(size=2)+
+  facet_grid(PA ~ elc, labeller = label_both)+
+  theme(element_blank())
+# So here we see that if a commune has a PA, it is predicted to have more forest, but only by a really tiny amount (~4 pixels...).  The presence of an ELC appears to make no difference
+
+
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
