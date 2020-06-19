@@ -1615,7 +1615,7 @@ dat1$year.orig <- dat$year
     # popdem.m1 (tot_pop, pop_den, prop_ind - no interactions) ####
 
 
-# model with all pop dem vars a fixed effects. Offset as areaKM to account for differences in size of communes
+# model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes
 popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
                    data=dat1, family="poisson")
 
@@ -2203,7 +2203,7 @@ plot_model(popdem.m2, type="re")
 
 
 
-      # model comparison - popdem.m4 selected for further investigations ####
+      # model comparison  ####
 
 # when using pbkrtest package, always ensure the simpler model is listed second, or else the function will fail
 
@@ -2905,10 +2905,12 @@ provs <- c("Battambang","Kampong Chhnang","Kampong Thom","Kracheh","Pursat","Rat
 
 
 # extract all original data from those provinces
-prov.dat <- dat %>% filter(Province %in% provs) %>% select(Province,Commune,year,ForPix,pop_den,tot_pop)
-
+prov.dat <- dat %>% filter(Province %in% provs) 
+prov.dat$type <- "problem"
 # create subset of all data NOT including the above
 prov.excl <- dat %>% filter(!Province %in% provs)
+prov.excl$type <- "other"
+prov.all <- rbind(prov.dat,prov.excl)
 
 # compare ForPix between the above selection and the data overall, and the rest of the data (excluding selection)
 par(mfrow=c(2,2))
@@ -2917,38 +2919,40 @@ hist(dat$ForPix, main="All data")
 hist(prov.excl$ForPix, main="exclude provs")
 
 # compare scatter plot of ForPix across communes, split by the provinces
-ggplot()+
-  geom_point(data=prov.dat, aes(x=Commune, y=ForPix),colour="red")+
-  geom_point(data=prov.excl, aes(x=Commune, y=ForPix), colour="green")+
-  ylim(0,250)
+ggplot(prov.all, aes(Commune,y=ForPix, colour=type))+
+  geom_point()+
+  theme(element_blank())
 # I would say that the provinces that are causing the issues tend to have higher ForPix than the others. It also look potentially like the provinces causing issues are almost always losing forest cover over time (lots of vertical lines of dots)
 
 # scatter plot of ForPix against pop_den, split by provinces
-ggplot()+
-  geom_point(data=prov.dat, aes(x=pop_den, y=ForPix),colour="red")+
-  geom_point(data=prov.excl, aes(x=pop_den, y=ForPix),colour="green")+
+ggplot(prov.all, aes(x=pop_den, y=ForPix, colour=type))+
+  geom_point()+
   ylim(0,10000)+
-  xlim(0,1000)
+  xlim(0,1000)+
+    theme(element_blank())
 # This plot makes it also looks like the problem provinces tend to have communes with higher ForPix. There is a chunk of red with no green where pop_den has increased to about 100 but ForPix has not decreased (whereas all the green dots are lower, i.e. in the other provinces/communes at that population density forest cover is lower). 
 
 # boxplot of ForPix and province, coloured by the two groups of provinces 
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Province, y=ForPix,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Province, y=ForPix, colour="Other provinces"))+
-  ylim(0,10000)
+  ylim(0,10000)+
+  theme(element_blank())
 # this plot suggests that the problem provinces don't necessarily have more forest cover, but they do tend to have more outliers that are very high forest cover.  
 
 # boxplot of pop_den and province, coloured by the two groups of provinces
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Province, y=pop_den,colour="Problem provinces"))+
-  geom_boxplot(data=prov.excl, aes(x=Province, y=pop_den, colour="Other provinces"))
+  geom_boxplot(data=prov.excl, aes(x=Province, y=pop_den, colour="Other provinces"))+
+  theme(element_blank())
 # This plot suggests that overall, the problem provinces tend to have lower median pop_den value compared to the other provinces, but they again tend to have more outliers
 
 # boxplot of Commune and pop_den, coloured by the two groups of provinces
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Commune, y=pop_den,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Commune, y=pop_den, colour="Other provinces"))+
-  ylim(0,1000)
+  ylim(0,1000)+
+  theme(element_blank())
 # again this looks like there are more communes with higher pop_den values in the non-problematic provinces
 
 
@@ -2956,7 +2960,8 @@ ggplot()+
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Commune, y=ForPix,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Commune, y=ForPix, colour="Other provinces"))+
-  ylim(0,10000)
+  ylim(0,10000)+
+  theme(element_blank())
 # this plot is quite hard to see much, as there's too much info.  However, I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
 
 
