@@ -2979,10 +2979,18 @@ m6.newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_de
 # add predictions
 m6.newdat$pred <- as.vector(predict(popdem.m6, type="response", newdata=m6.newdat, re.form=NA))
 
-# plot
-ggplot(m6.newdat, aes(x=pop_den, y=pred))+
+# plot with free y axis
+popdem.m6.p1 <- ggplot(m6.newdat, aes(x=pop_den, y=pred))+
   geom_line()+
-  ylim(0,5000)
+  theme(element_blank())
+
+# plot
+popdem.m6.p2 <- ggplot(m6.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  ylim(0,10000)+
+  theme(element_blank())
+
+popdem.m6.p1 + popdem.m6.p2
 
 
 #
@@ -3158,7 +3166,7 @@ m6_newdat_com_ran$pred.glo <- rep(m6.newdat$pred, times=12)
 # set levels
 m6_newdat_com_ran$Provcomm <- as.factor(m6_newdat_com_ran$Provcomm)
 provcomm_lvls <- levels(m6_newdat_com_ran$Provcomm) 
-par(mfrow = c(3,4))
+par(mfrow = c(1,1))
 
 # set scales
 ylo <- min(m6_newdat_com_ran$pred.com)*0.9
@@ -3173,7 +3181,7 @@ for(i in 1:length(provcomm_lvls)) {
   ### Pick commune i data from observed data:
   dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
   ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
- # if(i == 1) {
+ if(i == 1) {
     # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
     plot(preddat_i$pop_den,preddat_i$pred.com, 
          type = "l", 
@@ -3181,14 +3189,36 @@ for(i in 1:length(provcomm_lvls)) {
          ylim = c(ylo,yhi), xlim = c(xlo,xhi),
          xlab = "Population density (scaled & standardised",
          ylab = "Predicted forest cover (forest pixel count)")
- # } else {
+ } else {
     lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
     lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
-  #}
+  }
   ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
   points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
+## check whether communes with more forest are more likely to lose forest
+hist(dat1$ForPix)
+summary(dat1$ForPix) # 3rd quantile is > 982
+
+# separate dat1 into the quarter with the most forest and then the rest
+com.for <- dat1[dat1$ForPix>982,]
+com.for1 <- dat1[!(dat1$Provcomm %in% com.for$Provcomm),]
+
+# summarise forest loss
+com.for <- com.for %>% group_by(Provcomm) %>% 
+              summarise(diffPix_sum = sum(diffPix))
+com.for$type <- "high forest"
+com.for1 <- com.for1 %>% group_by(Provcomm) %>% 
+              summarise(diffPix_sum = sum(diffPix))
+com.for1$type <- "low forest"
+com.for.all <- rbind(com.for,com.for1)
+
+ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
+  geom_boxplot()+
+  xlab("Commune")+
+  ylab("Forest pixels lost over study period")+
+  theme(element_blank())
 
 ### after running the above random plotting a few times, the trend seems to hold - i.e. the global model predics well for communes with low forest cover and/or high population density, but does not perform well for communes with high forest cover
 
