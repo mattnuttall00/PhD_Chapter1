@@ -465,3 +465,102 @@ ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
   theme(element_blank())
 
 #' The above plot splits the communes by forest cover - communes in the top 3rd quarter of most forested are in the "high forest" category, and the rest are in the "low forest" category. I have then summed the difference in pixels within each commune across the study period (i.e. if a commune loses 10 pixels each year it would have a y-axis value of 50). We can see that the communes with more forest, are more likely to lose forest. 
+#' 
+#' 
+#' ## Education
+#' 
+#' There is only one variable in this set - the number of males aged 6-24 in school. There were more raw variables, but they were all highly correlated and so this one was taken forward as I think it is the most relevant to forest cover. This is because young men are the most likely to be engaging in agriculture, forest clearance, logging etc.
+#' 
+#+ edu.m1, include=TRUE
+edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
+
+summary(edu.m1)
+
+#' The model output suggests there is nothing going on here.  I can use 'plot_model' from the sjPlot package to quickly plot a prediction. It basically does exactly what I would do - create newdata with the variable of interest varying from the min to the max, and holding all others at their mean.
+#' 
+#+ edu.m1 plot_model, echo=FALSE, results=TRUE
+plot_model(edu.m1, type="pred", terms="M6_24_sch")
+
+#' Flat as a pancake. 
+#' 
+#' Below are some commune-specific predictions from another random selection of communes
+#'  
+#+ edu.m1 commune predictions, echo=FALSE,results=T
+
+par(mfrow = c(3,3))
+set.seed(123)
+runs <- c(1:9)
+
+for(i in 1:length(runs)){
+# randomly sample communes
+rand.com <- sample(dat1$Provcomm, 9, replace = FALSE)
+rand.prov <- unlist(strsplit(rand.com, "_"))
+rand.prov <- rand.prov[c(1,3,5,7,9,11,13,15,17)]
+
+# define the range of pop_den to predict for, first. Min/max per commune:
+M6_24_sch_min <- tapply(dat1$M6_24_sch, dat1$Provcomm, min)
+M6_24_sch_max <- tapply(dat1$M6_24_sch, dat1$Provcomm, max)
+# Min/max within your selection of communes:
+M6_24_sch_min <- min(M6_24_sch_min[names(M6_24_sch_min) %in% rand.com])
+M6_24_sch_max <- max(M6_24_sch_max[names(M6_24_sch_max) %in% rand.com])
+
+
+# create new prediction grid for specific communes with varying pop_den
+edu.m1_newdat_com_ran <- data.frame(Provcomm = rep(rand.com, each=100),
+                                    Province = rep(rand.prov, each=100),
+                                    M6_24_sch = seq(from=M6_24_sch_min, to=M6_24_sch_max, length.out = 100),
+                                    year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+edu.m1_newdat_com_ran$areaKM <-  dat1$areaKM[match(edu.m1_newdat_com_ran$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+edu.m1_newdat_com_ran$pred.com <- as.vector(predict(edu.m1, type="response", 
+                                                    newdata=edu.m1_newdat_com_ran, 
+                                                    re.form=~(year|Province/Provcomm)))
+
+# global predictions
+edu.m1_glo_pred <- data.frame(M6_24_sch = rep(min(dat1$M6_24_sch),max(dat1$M6_24_sch), length.out=100),
+                              areaKM = mean(dat1$areaKM))
+edu.m1_glo_pred$pred <- as.vector(predict(edu.m1, type="response", newdata=edu.m1_glo_pred,re.form=NA))
+
+# attach global predictions
+edu.m1_newdat_com_ran$pred.glo <- rep(edu.m1_glo_pred$pred, times=9)
+
+# set levels
+edu.m1_newdat_com_ran$Provcomm <- as.factor(edu.m1_newdat_com_ran$Provcomm)
+provcomm_lvls <- levels(edu.m1_newdat_com_ran$Provcomm) 
+
+# set scales
+ylo <- min(edu.m1_newdat_com_ran$pred.com)*0.9
+yhi <- max(edu.m1_newdat_com_ran$pred.com)*1.1
+xlo <- M6_24_sch_min
+xhi <- M6_24_sch_max
+
+# Iterate through the communes 
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- edu.m1_newdat_com_ran[edu.m1_newdat_com_ran$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$M6_24_sch,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Proportion of males aged 6-24 in school (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)")
+  } else {
+  lines(preddat_i$M6_24_sch,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$M6_24_sch,preddat_i$pred.glo, lty=2)
+  }
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$M6_24_sch, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+}
+
+#' I think it is fair to say that there is no relationship between forest cover and males in school.
