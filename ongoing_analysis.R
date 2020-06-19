@@ -225,4 +225,142 @@ ggplot()+
 
 #' Again, difficult to see a huge amount however I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
 #' 
-#' If you look at the plot of the main effect in the section below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.
+#' If you look at the plot of the main effect in the section below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.  I do not think there is much I can do about this?  Would including year as a fixed effect perhaps help account for the variation within communes across years?
+#' 
+#' ### Predict main (global) effects
+#' 
+#+ popdem.m6 predict & plot main effects, echo=FALSE, results=TRUE
+# create new data
+m6.newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
+                        areaKM = mean(dat1$areaKM))
+
+# add predictions
+m6.newdat$pred <- as.vector(predict(popdem.m6, type="response", newdata=m6.newdat, re.form=NA))
+
+# plot with free y axis
+popdem.m6.p1 <- ggplot(m6.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  theme(element_blank())+
+  xlab("Population density (scaled and centered)")+
+  ylab("Predicted forest pixels")
+
+# plot with large y axis
+popdem.m6.p2 <-ggplot(m6.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  ylim(0,5000)+
+  theme(element_blank())+
+  xlab("Population density (scaled and centered)")+
+  ylab("Predicted forest pixels")
+
+popdem.m6.p1 + popdem.m6.p2
+
+#' We can see in the plots above that the effect is there (left plot), but it is small when you look at it with a more realistic y-axis, i.e. with forest pixel values more like those that are actually seen (right plot)
+#' 
+#' ### Predict for specific communes
+#' 
+#' Here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes.  I will also do this for a random sample of communes.
+#' 
+#+ popdem.m6 commune predictions, include=FALSE
+# save the popdem.m4 commune-level random effects
+m6.re.com <- ranef(popdem.m6)[[1]]
+
+# re-order
+m6.re.com <- m6.re.com[order(m6.re.com[ ,"(Intercept)"], decreasing = FALSE),]
+
+# which communes
+coms <- c("Pursat_Ansa Chambak","Kampong Cham_Kraek", "Ratanak Kiri_Pak Nhai","Kampong Speu_Tang Samraong",
+          "Kampong Chhnang_Chieb","Kampot_Preaek Tnaot","Battambang_Chhnal Moan","Phnom Penh_Chak Angrae Kraom",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas","Kampong Thom_Tang Krasang")
+
+# which provinces
+provs <- c("Pursat","Kampong Cham","Ratanak Kiri","Kampong Speu",
+           "Kampong Chhnang","Kampot","Battambang","Phnom Penh",
+           "Kampong Thom","Kracheh","Siem Reap","Kampong Thom")
+
+
+### I am making commune-specific predictions, so should customise the range of population densities I am predicting for, on the basis of each commune.
+
+### Easiest to define the range of pop_den to predict for, first. Min/max per commune:
+pop_den_min <- tapply(dat1$pop_den, dat1$Provcomm, min)
+pop_den_max <- tapply(dat1$pop_den, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+pop_den_min <- min(pop_den_min[names(pop_den_min) %in% coms])
+pop_den_max <- max(pop_den_max[names(pop_den_max) %in% coms])
+### Not really any different from the overall min and max
+
+# create new prediction grid for specific communes with varying pop_den
+m6_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
+                            Province = rep(provs, each=100),
+                            pop_den = seq(from=pop_den_min, to=pop_den_max, length.out = 100),
+                            year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+m6_newdat_com$areaKM <-  dat1$areaKM[match(m6_newdat_com$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+m6_newdat_com$Provcomm <- factor(m6_newdat_com$Provcomm, 
+                                 levels = c("Pursat_Ansa Chambak","Kampong Cham_Kraek", "Ratanak Kiri_Pak Nhai",
+                                            "Kampong Speu_Tang Samraong","Kampong Chhnang_Chieb","Kampot_Preaek Tnaot",
+                                            "Battambang_Chhnal Moan","Phnom Penh_Chak Angrae Kraom",
+                                            "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Siem Reap_Nokor Pheas",
+                                            "Kampong Thom_Tang Krasang"))
+
+
+# attach commune-specific predictions
+m6_newdat_com$pred.com <- as.vector(predict(popdem.m6, type="response", newdata=m6_newdat_com, 
+                                            re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+m6_newdat_com$pred.glo <- rep(m6.newdat$pred, times=12)
+
+
+### The following plot can either "overlay" the observed ForPix count against observed population densities for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(m6_newdat_com$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### population density range across all communes, so we need to do this overall:
+ylo <- min(m6_newdat_com$pred.com)*0.9
+yhi <- max(m6_newdat_com$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(m6_newdat_com$Provcomm),"pop_den"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(m6_newdat_com$Provcomm),"pop_den"])
+### Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- m6_newdat_com[m6_newdat_com$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  # if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$pop_den,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Population density (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)")
+  # } else {
+  lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+#' In the above plots, the top row are communes with intercepts closest to the mean, the middle row are communes with intercepts furthest above the mean, and the bottom row are communes with intercepts furthest below the mean.  The coloured solid lines are the commune-specific predictions, i.e. those made using all RE's specific to that commune. The dashed black line is the global model (i.e. for an "average" commune). The poins are the actual pop_den ~ ForPix values for that commune. The plots support the diagnostics in the section above - the global model does not predict well for communes with high forest cover - because the global model always predicts low forest cover, even for communes with low population density.  Essentially there are too many communes with low forest cover, and so the global model is dragged down, meaning that the communes with high forest cover get poor predictions. This does suggest though that the global model predicts well at high population density values, as these communes tend to have low forest cover.
