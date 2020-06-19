@@ -4664,6 +4664,243 @@ ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
 # as distance to provincial capital increases, so does predicted forest cover. This appears to be a stronger effect than dist_border.
 
 
+    # predict for commune sets ####
+
+
+# here I want to plot grids of different communes with the overall predicted effects, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes. Because of the presence of 2 categorical predictors, I will need 4 plots per commune
+
+# save the hum.m2 commune-level random effects
+hum.m5.com <- ranef(hum.m5)[[1]]
+
+# re-order
+hum.m5.com <- hum.m5.com[order(hum.m5.com[ ,"(Intercept)"], decreasing = TRUE),]
+head(hum.m5.com,4)
+
+# the 4 communes closest to 0 are:
+# Stung Treng_Kbal Romeas:Stung Treng
+# Preah Vihear_Chhaeb Pir:Preah Vihear
+# Kampong Cham_Kampoan:Kampong Cham 
+# Preah Vihear_Kuleaen Tboung:Preah Vihear
+
+# the 4 communes furthest above 0 are:
+# Kampot_Preaek Tnaot:Kampot
+# Kampot_Kaoh Touch:Kampot
+# Kampong Chhnang_Chieb:Kampong Chhnang
+# Kampong Cham_Pongro:Kampong Cham
+
+# the 4 communes furthest below 0 are:
+# Kampong Thom_Chaeung Daeung:Kampong Thom
+# Kracheh_Han Chey:Kracheh
+# Preah Vihear_Reaksmei:Preah Vihear
+# Siem Reap_Nokor Pheas:Siem Reap
+
+
+# which communes
+coms <- c("Stung Treng_Kbal Romeas","Preah Vihear_Chhaeb Pir","Kampong Cham_Kampoan","Preah Vihear_Kuleaen Tboung",
+          "Kampot_Preaek Tnaot","Kampot_Kaoh Touch","Kampong Chhnang_Chieb","Kampong Cham_Pongro",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Preah Vihear_Reaksmei","Siem Reap_Nokor Pheas")
+
+# which provinces
+provs <- c("Stung Treng","Preah Vihear","Kampong Cham","Preah Vihear",
+           "Kampot","Kampot","Kampong Chhnang","Kampong Cham",
+           "Kampong Thom","Kracheh","Preah Vihear","Siem Reap")
+
+
+### I am making commune-specific predictions, so should customise the range of dist_border and dist_provCom I am predicting for, on the basis of each commune.
+
+###  define the range of dist_border to predict for. Min/max per commune:
+dist_border_min <- tapply(dat1$dist_border, dat1$Provcomm, min)
+dist_border_max <- tapply(dat1$dist_border, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+dist_border_min <- min(dist_border_min[names(dist_border_min) %in% coms])
+dist_border_max <- max(dist_border_max[names(dist_border_max) %in% coms])
+
+min(dat1$dist_border)
+max(dat1$dist_border)
+
+
+# create new prediction grid for specific communes with varying dist_border
+hum_m5_newdat_bord <- data.frame(Provcomm = rep(coms, each=100),
+                                 Province = rep(provs, each=100),
+                                  dist_border = seq(dist_border_min, dist_border_max, length.out = 100),
+                                  dist_provCap = dat1$dist_provCap[match(hum_m5_newdat_bord$Provcomm, dat1$Provcomm)],
+                                  year = mean(dat1$year))
+
+
+
+# add commune-specific areaKM offset                         
+hum_m5_newdat_bord$areaKM <-  dat1$areaKM[match(hum_m5_newdat_bord$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+hum_m5_newdat_bord$Provcomm <- factor(hum_m5_newdat_bord$Provcomm, 
+                                      levels = c("Stung Treng_Kbal Romeas","Preah Vihear_Chhaeb Pir",
+                                                 "Kampong Cham_Kampoan","Preah Vihear_Kuleaen Tboung",
+                                                 "Kampot_Preaek Tnaot","Kampot_Kaoh Touch","Kampong Chhnang_Chieb",
+                                                 "Kampong Cham_Pongro","Kampong Thom_Chaeung Daeung",
+                                                 "Kracheh_Han Chey","Preah Vihear_Reaksmei","Siem Reap_Nokor Pheas"))
+
+
+# attach commune-specific predictions
+hum_m5_newdat_bord$pred.com <- as.vector(predict(hum.m5, type="response", newdata=hum_m5_newdat_bord, 
+                                                 re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions. need to alter areaKM below so that the global model has only the mean areakM rather than the commune-specific one. This is fine as pred.com is already done
+hum_m5_newdat_bord <- hum_m5_newdat_bord %>% rename(areaKM_com = areaKM)
+hum_m5_newdat_bord$areaKM <- mean(dat1$areaKM)
+hum_m5_newdat_bord$pred.glo <- as.vector(predict(hum.m5,type="response",newdata=hum_m5_newdat_bord,re.form=NA))
+
+
+
+### The following plot can either "overlay" the observed ForPix count against observed dist_borders for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(hum_m5_newdat_bord$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### dist_border range across all communes, so we need to do this overall:
+ylo <- min(hum_m5_newdat_bord$pred.com)*0.9
+yhi <- max(hum_m5_newdat_bord$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(hum_m5_newdat_bord$Provcomm),"dist_border"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(hum_m5_newdat_bord$Provcomm),"dist_border"])
+### Iterate through the communes (levels in hum_m5_newdat_bord$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- hum_m5_newdat_bord[hum_m5_newdat_bord$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  #if(i == 1) {
+  # Plot predicted ForPix as function of dist_border; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$dist_border,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Distance to intl border (scaled & standardised)",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  #} else {
+  lines(preddat_i$dist_border,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$dist_border,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$dist_border, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+### These plots suggest the global model fits poorly for communes with higher forest cover, but fits better for communes with low forest cover 
+
+
+
+### predict for dist_provCap
+
+
+###  define the range of dist_provCap to predict for. Min/max per commune:
+dist_provCap_min <- tapply(dat1$dist_provCap, dat1$Provcomm, min)
+dist_provCap_max <- tapply(dat1$dist_provCap, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+dist_provCap_min <- min(dist_provCap_min[names(dist_provCap_min) %in% coms])
+dist_provCap_max <- max(dist_provCap_max[names(dist_provCap_max) %in% coms])
+
+min(dat1$dist_provCap)
+max(dat1$dist_provCap)
+
+# create new prediction grid for specific communes with varying dist_border
+hum_m5_newdat_provCap <- data.frame(Provcomm = rep(coms, each=100),
+                                 Province = rep(provs, each=100),
+                                 dist_provCap = seq(dist_provCap_min, dist_provCap_max, length.out = 100),
+                                 dist_border = dat1$dist_border[match(hum_m5_newdat_bord$Provcomm, dat1$Provcomm)],
+                                 year = mean(dat1$year))
+
+
+
+# add commune-specific areaKM offset                         
+hum_m5_newdat_provCap$areaKM <-  dat1$areaKM[match(hum_m5_newdat_provCap$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+hum_m5_newdat_provCap$Provcomm <- factor(hum_m5_newdat_provCap$Provcomm, 
+                                      levels = c("Stung Treng_Kbal Romeas","Preah Vihear_Chhaeb Pir",
+                                                 "Kampong Cham_Kampoan","Preah Vihear_Kuleaen Tboung",
+                                                 "Kampot_Preaek Tnaot","Kampot_Kaoh Touch","Kampong Chhnang_Chieb",
+                                                 "Kampong Cham_Pongro","Kampong Thom_Chaeung Daeung",
+                                                 "Kracheh_Han Chey","Preah Vihear_Reaksmei","Siem Reap_Nokor Pheas"))
+
+
+# attach commune-specific predictions
+hum_m5_newdat_provCap$pred.com <- as.vector(predict(hum.m5, type="response", newdata=hum_m5_newdat_provCap, 
+                                                 re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions. need to alter areaKM below so that the global model has only the mean areakM rather than the commune-specific one. This is fine as pred.com is already done
+hum_m5_newdat_provCap <- hum_m5_newdat_provCap %>% rename(areaKM_com = areaKM)
+hum_m5_newdat_provCap$areaKM <- mean(dat1$areaKM)
+hum_m5_newdat_provCap$pred.glo <- as.vector(predict(hum.m5,type="response",newdata=hum_m5_newdat_provCap,re.form=NA))
+
+
+
+### The following plot can either "overlay" the observed ForPix count against observed dist_provCap for the communes, or I can split by commune. comment out the if(i==1) statement and set par() if you want a grid
+
+### Pick some colours using RColorBrewer using a completely overelaborate piece of crap code... Anyway this is just to
+#try to help see the differences between communes more clearly in the observed points in particular (you can comment the
+#following lines out if you want)
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(hum_m5_newdat_provCap$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### dist_provCap range across all communes, so we need to do this overall:
+ylo <- min(hum_m5_newdat_provCap$pred.com)*0.9
+yhi <- max(hum_m5_newdat_provCap$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(hum_m5_newdat_provCap$Provcomm),"dist_border"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(hum_m5_newdat_provCap$Provcomm),"dist_border"])
+### Iterate through the communes (levels in hum_m5_newdat_bord$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- hum_m5_newdat_provCap[hum_m5_newdat_provCap$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  #if(i == 1) {
+  # Plot predicted ForPix as function of dist_border; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$dist_provCap,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Distance to provincial capital (scaled & standardised)",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  #} else {
+  lines(preddat_i$dist_provCap,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$dist_provCap,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$dist_provCap, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+### similar conclusions to the dist_border model
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
