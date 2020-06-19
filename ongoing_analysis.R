@@ -364,3 +364,104 @@ for(i in 1:length(provcomm_lvls)) {
 }
 
 #' In the above plots, the top row are communes with intercepts closest to the mean, the middle row are communes with intercepts furthest above the mean, and the bottom row are communes with intercepts furthest below the mean.  The coloured solid lines are the commune-specific predictions, i.e. those made using all RE's specific to that commune. The dashed black line is the global model (i.e. for an "average" commune). The poins are the actual pop_den ~ ForPix values for that commune. The plots support the diagnostics in the section above - the global model does not predict well for communes with high forest cover - because the global model always predicts low forest cover, even for communes with low population density.  Essentially there are too many communes with low forest cover, and so the global model is dragged down, meaning that the communes with high forest cover get poor predictions. This does suggest though that the global model predicts well at high population density values, as these communes tend to have low forest cover.
+#' 
+#' Now I will do the same but for 9 random selections of 9 communes.
+#' 
+#+ popdem.m6 commune predictions from random selection, echo=FALSE,results=TRUE
+# randomly sample communes
+par(mfrow = c(3,3))
+set.seed(123)
+runs <- c(1:9)
+
+for(i in 1:length(runs)){
+  
+rand.com <- sample(dat1$Provcomm,9, replace = FALSE)
+rand.prov <- unlist(strsplit(rand.com, "_"))
+rand.prov <- rand.prov[c(1,3,5,7,9,11,13,15,17)]
+
+# define the range of pop_den to predict for, first. Min/max per commune:
+pop_den_min <- tapply(dat1$pop_den, dat1$Provcomm, min)
+pop_den_max <- tapply(dat1$pop_den, dat1$Provcomm, max)
+# Min/max within your selection of communes:
+pop_den_min <- min(pop_den_min[names(pop_den_min) %in% rand.com])
+pop_den_max <- max(pop_den_max[names(pop_den_max) %in% rand.com])
+
+# create new prediction grid for specific communes with varying pop_den
+m6_newdat_com_ran <- data.frame(Provcomm = rep(rand.com, each=100),
+                                Province = rep(rand.prov, each=100),
+                                pop_den = seq(from=pop_den_min, to=pop_den_max, length.out = 100),
+                                year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+m6_newdat_com_ran$areaKM <-  dat1$areaKM[match(m6_newdat_com_ran$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+m6_newdat_com_ran$pred.com <- as.vector(predict(popdem.m6, type="response", newdata=m6_newdat_com_ran, 
+                                                re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+m6_newdat_com_ran$pred.glo <- rep(m6.newdat$pred, times=9)
+
+# set levels
+m6_newdat_com_ran$Provcomm <- as.factor(m6_newdat_com_ran$Provcomm)
+provcomm_lvls <- levels(m6_newdat_com_ran$Provcomm) 
+
+
+# set scales
+ylo <- min(m6_newdat_com_ran$pred.com)*0.9
+yhi <- max(m6_newdat_com_ran$pred.com)*1.1
+xlo <- pop_den_min
+xhi <- pop_den_max
+
+# Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- m6_newdat_com_ran[m6_newdat_com_ran$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$pop_den,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Population density (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)")
+  } else {
+  lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
+  }
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+}
+#'
+#' The above plots I think support the assessment that the global model predicts poorly for most communes, but I would expect this as there is so much variation between communes, it would be impossible to get a single model that predicted well. The above plots suggest that the commune-specific models predict better for communes where population density changes over time, but they predict poorly for communes when forest pixels change over time (i.e. forest is lost). Communes with more forest are, in general, more likely to lose forest (see plot below), which I think exacerbates the problem of the global model predicting poorly for communes with high forest cover i.e. it's a double whammy of poor predictions due to high forest cover, and poor predictions due to forest loss.
+#' 
+#+ plot forest loss comparison between high and low forested communes, echo=FALSE,results=TRUE
+## check whether communes with more forest are more likely to lose forest
+
+# separate dat1 into the quarter with the most forest and then the rest
+com.for <- dat1[dat1$ForPix>982,] # 982 is the 3rd quantile
+com.for1 <- dat1[!(dat1$Provcomm %in% com.for$Provcomm),]
+
+# summarise forest loss
+com.for <- com.for %>% group_by(Provcomm) %>% 
+  summarise(diffPix_sum = sum(diffPix))
+com.for$type <- "high forest"
+com.for1 <- com.for1 %>% group_by(Provcomm) %>% 
+  summarise(diffPix_sum = sum(diffPix))
+com.for1$type <- "low forest"
+com.for.all <- rbind(com.for,com.for1)
+
+ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
+  geom_boxplot()+
+  xlab("Commune")+
+  ylab("Forest pixels lost over study period")+
+  theme(element_blank())
+
+#' The above plot splits the communes by forest cover - communes in the top 3rd quarter of most forested are in the "high forest" category, and the rest are in the "low forest" category. I have then summed the difference in pixels within each commune across the study period (i.e. if a commune loses 10 pixels each year it would have a y-axis value of 50). We can see that the communes with more forest, are more likely to lose forest. 
