@@ -3475,7 +3475,11 @@ jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provco
 
 summary(jus.m2)
 
+anova(jus.m1,jus.m2, test="Chisq")
+# simpler model is better
 
+
+#
   ## migration ####
     # mig.m1 ####
 
@@ -3495,6 +3499,9 @@ mig.m2 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Pro
                 family="poisson", data=dat1)
 
 summary(mig.m2)
+
+anova(mig.m1,mig.m2,test="Chisq")
+# simpler model is better
 
 plot_model(mig.m2, type="pred")
 
