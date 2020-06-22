@@ -564,3 +564,88 @@ for(i in 1:length(provcomm_lvls)) {
 }
 
 #' I think it is fair to say that there is no relationship between forest cover and males in school.
+#' 
+#' ## Employment
+#' 
+#' There are two variables in this set - the proportion of the population engaged in the Primary Sector and the proportion engaged in the Secondary Sector. The primary sector includes sectors of the economy that extracts or harvests products from the earth such as raw materials and basic foods, and includes farming, fishing, mining etc. The secondary sector includes the production of finished goods from raw materials, and includes manufacturing, processing, and construction.  
+#' 
+#' I have no *a priori* hypothesis about an interaction between these two variables, and so I have not tested one.  It is also plausible that although these two are no correlated (-0.2), they may well be related as they are both proportions drawn from the same population, therefore including an interaction might be misleading.
+#' 
+#' The model:
+#' 
+#+ emp.m1, include=TRUE
+
+emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(emp.m1)
+
+#' Province and commune variance similar to other model sets.  Year variance for commune is order of magnitude larger than for province, but both very small. propPrimSec has positive effect, propSecSec has negative, but both very small and approximate p values > 0.5.  The model produces an warning about large eigenvalues.  The variables are already scaled so I guess this just suggests a poor model fit. 
+#' 
+#' Quick plot of the effects
+#' 
+#+ plot_model emp.m1, echo=FALSE, results=TRUE 
+plot_model(emp.m1, type="re")
+
+plot_model(emp.m1, type="pred", terms=c("propPrimSec"))
+
+plot_model(emp.m1, type="pred", terms=c("propSecSec"))
+
+#' These two variables do not appear to be important.  I will try and remove propSecSec
+#' 
+#+ emp.m2, include=TRUE
+emp.m2 <- glmer(ForPix ~ propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
+
+summary(emp.m2)
+
+#' Compare the two models:
+#' 
+#+ anova emp.m1 and emp.m2, include=TRUE
+
+anova(emp.m1, emp.m2, test="Chisq")
+
+#' The simpler model is better, but is still pretty uninteresting
+#' 
+#' ## Economic Security
+#' 
+#' In this set there are two variables - the proportion of families who have less than 1 hectare of agricultural land, and the proportion of families who keep pigs.  Both of these things are fairly good proxies for a family's economic security, especially the farming land variable.
+#' 
+#+ econ.m1, include=TRUE
+
+econ.m1 <- glmer(ForPix ~ Les1_R_Land + pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m1)
+
+
+#' Very small effects with large approximate p values. Random effects similar to previous models.  Les1_R_Land has a tiny negative effect, pig_fam has a small positive effect.
+#'
+#' Quick plot of the main effects:
+#' 
+#+ plot_model econ.m1, echo=FALSE, results=TRUE
+
+plot_model(econ.m1, type="pred", terms="Les1_R_Land")
+plot_model(econ.m1, type="pred", terms="pig_fam")
+
+#' Again, these variables do not look like they can provide much. I did run model selection, and the simpler models (i.e. with just one of the vars) were better than model 1 with both variables, but the effects were similarly tiny.
+#' 
+#' ## Access to Services
+#' 
+#' This model set has three variables - median distance to the nearest school, median distance to the Commune office, and the proportion of families with access to waste collection. 
+#' 
+#+ acc.m1, include=TRUE
+acc.m1 <- glmer(ForPix ~ dist_sch + garbage + KM_Comm + offset(log(areaKM)) + 
+                  (year|Province/Provcomm),family="poisson", data=dat1)
+
+summary(acc.m1)
+
+#' Also produces warning about large eigenvalues. All three variables have tiny effects with large approximate p values. 
+#' 
+#' Quick plots of the main effects
+#' 
+#+ plot_model acc.m1, echo=FALSE, results=TRUE
+plot_model(acc.m1, type="pred", terms="dist_sch")
+plot_model(acc.m1, type="pred", terms="garbage")
+plot_model(acc.m1, type="pred", terms="KM_Comm")
+
+#' These variables do not appear to be useful. I completed model selection using a combination of LRT's and AICc comparison, and all of the models with only an individual predictor were better than any model with more than one predictor. The top three models were therefore models with each of the single predictors, and there was virtually no difference between them (dAICc < 0.1). But they were equally as useless as the acc.m1 i.e. tiny effects, large approximate p values, flat main effect.
