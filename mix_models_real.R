@@ -3432,10 +3432,24 @@ summary(acc.m3)
 summary(acc.m4)
 
 
-anova(acc.m1,acc.m2,acc.m3,acc.m4,acc.m5, test="Chisq")
-# acc.m4 is the best apparently
+anova(acc.m1,acc.m2,test="Chisq")
+# simpler model is better
 
-plot_model(acc.m4, type="pred")
+anova(acc.m2,acc.m3,test="Chisq")
+# simpler model is better
+      
+anova(acc.m2,acc.m4,test="Chisq")
+# simpler model is better
+
+anova(acc.m1,acc.m5,test="Chisq")
+# simpler model is better
+
+# compare m3-m5 using AICc
+acc.AIC <- data.frame(AICc = c(AICc(acc.m3),AICc(acc.m4),AICc(acc.m5)))
+acc.AIC$dAICc <- acc.AIC$AICc - min(acc.AIC$AICc)
+acc.AIC <- arrange(acc.AIC,dAICc)
+
+# acc.m3 - acc.m5 are all similar in terms of AICc
 
 #
   ## Social justice ####
