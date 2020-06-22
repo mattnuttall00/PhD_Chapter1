@@ -363,7 +363,7 @@ for(i in 1:length(provcomm_lvls)) {
   points(dat_i$pop_den, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
-#' In the above plots, the top row are communes with intercepts closest to the mean, the middle row are communes with intercepts furthest above the mean, and the bottom row are communes with intercepts furthest below the mean.  The coloured solid lines are the commune-specific predictions, i.e. those made using all RE's specific to that commune. The dashed black line is the global model (i.e. for an "average" commune). The poins are the actual pop_den ~ ForPix values for that commune. The plots support the diagnostics in the section above - the global model does not predict well for communes with high forest cover - because the global model always predicts low forest cover, even for communes with low population density.  Essentially there are too many communes with low forest cover, and so the global model is dragged down, meaning that the communes with high forest cover get poor predictions. This does suggest though that the global model predicts well at high population density values, as these communes tend to have low forest cover.
+#' In the above plots, the top row are communes with intercepts closest to the mean, the middle row are communes with intercepts furthest above the mean, and the bottom row are communes with intercepts furthest below the mean.  The coloured solid lines are the commune-specific predictions, i.e. those made using all RE's specific to that commune. The dashed black line is the global model (i.e. for an "average" commune). The points are the actual pop_den ~ ForPix values for that commune. The plots support the diagnostics in the section above - the global model does not predict well for communes with high forest cover - because the global model always predicts low forest cover, even for communes with low population density.  Essentially there are too many communes with low forest cover, and so the global model is dragged down, meaning that the communes with high forest cover get poor predictions. This does suggest though that the global model predicts well at high population density values, as these communes tend to have low forest cover.
 #' 
 #' Now I will do the same but for 9 random selections of 9 communes.
 #' 
@@ -703,3 +703,361 @@ anova(mig.m1,mig.m2,test="Chisq")
 plot_model(mig.m2, type="pred")
 
 #' ## Environmental variables
+#' 
+#' This set initially had two predictor variables - mean elevation and habiat. These variables were intially supposed to be "control" variables, i.e. ensuring that other, non-socioeconomic predictors that would be likely to affect forest cover, were taken into account.   I did run some models, diagnostics, and predictions using both variables, but I have decided to drop habitat altogether. This is because the layer I was using for the habitat was the same layer that produced the response - i.e. to get the "forest pixel" layer used in the response, I simply aggregated all of the forest habitat types.  Therefore I don't think it is appropriate to use the same layer as a predictor!  That leaves me with mean elevation.
+#' 
+#+ env.m2 elevation only, include=TRUE
+env.m2 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
+                family = "poisson", data=dat1)
+
+summary(env.m2)
+
+#' The RE variances have decreased slightly compared to previous model sets, suggesting that the elevation predictor is explaning more of the total variance.  Elevation appears to have a positive effect on forest pixels and appears significant (very small approximate p value).
+#' 
+#' ### Diagnostics
+#' 
+#+ env.m2 diagnostics 1, include=FALSE
+# copy data
+env.m2.diag <- dat1
+env.m2.diag$Provcomm <- as.factor(env.m2.diag$Provcomm)
+
+# attach residuals
+env.m2.diag$m2res <- resid(env.m2)
+
+# attach conditional predictions
+env.m2.diag$m2pred <- as.vector(predict(env.m2, type="response"))
+
+#+ env.m2 predicted vs observed plot, echo=FALSE, results=TRUE
+plot(env.m2.diag$m2pred, env.m2.diag$ForPix)
+
+#' This is the predicted versus observed plot, which looks good.
+
+#+ env.m2 residuals vs fitted plot, echo=FALSE, results=TRUE
+plot(env.m2.diag$m2pred, env.m2.diag$m2res)
+
+
+#' Again heteroskedasicity is an issues here - particularly bad a low predicted forest cover. Similar to the popdem models.
+#' 
+#' Bit more exploration of residuals, but now over the explanatory variable:
+
+#+ env.m2 residual plots, echo=FALSE, results=TRUE
+par(mfrow=c(2,2))
+plot(env.m2.diag$mean_elev, env.m2.diag$m2res, ylab = "residuals", xlab = "mean elevation")
+boxplot(m2res ~ factor(Province), data = env.m2.diag, outline = T, xlab = "Province", 
+        ylab = "Residuals w/i Province")
+boxplot(m2res ~ factor(Provcomm), data = env.m2.diag, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+
+#' There seems to be a slightly odd pattern in the first plot - it looks like there are certain elevation values that produce large residuals. Zoom in:
+
+#+ env.m2 elevation vs residuals, echo=FALSE, results=TRUE
+plot(env.m2.diag$mean_elev, env.m2.diag$m2res, xlim = c(-1,2),ylab = "residuals", xlab = "mean elevation")
+
+#' Looks like elevation values of approx -0.6, -0.4, -0.1, 0.2, 0.8.
+#' 
+#' I will take a closer look at the Provinces that have the communes that appear to produce the largest residuals.
+#' 
+#+ env.m2 provinces with largest residuals, echo=FALSE, results=TRUE 
+
+provs <- c("Battambang","Kampong Cham","Kampong Chhnang","Kampong Thom","Koh Kong","Kracheh",
+           "Mondul Kiri","Otdar Meanchey","Preah Sihanouk","Pursat","Ratanak Kiri","Siem Reap",
+           "Stung Treng")
+prob.provs <- dat %>% filter(Province %in% provs)
+prob.provs$type <- "problem"
+other.provs <- dat %>% filter(!Province %in% provs)
+other.provs$type <- "other"
+all.provs <- rbind(prob.provs,other.provs)
+
+# get provincial means
+prov.elev.mean <- all.provs %>% group_by(Province) %>% summarise(mean = mean(mean_elev))
+prov.elev.mean$type <- ifelse(prov.elev.mean$Province %in% provs, "problem", "other")
+
+# plot mean elevation by province
+ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
+  geom_point(size=4)+
+  theme(element_blank())
+
+#' The above plot shows the mean elevation (on the original scale) for each Province, with the "problem" provinces (i.e. the ones with the largest residuals) coloured blue. There is not a stiking trend, but the 4 provinces with the lowest mean elevation are all *not* problematic ones. 
+#' 
+#' Now I will pull out the individual communes that have residual values that match the weird pattern and see if there is any other pattern that might explain it.
+
+#+ env.m2 prob.com, echo=FALSE, results=TRUE
+par(mfrow=c(1,1))
+prob.coms <- env.m2.diag %>% filter(m2res > 0.5 | m2res < -0.5)
+
+plot(prob.coms$mean_elev, prob.coms$m2res)
+
+#' These are now the communes with the weird shape. Let's have a look that these communes and their mean elevaiton (on the original scale), compared with all other communes:
+#' 
+#+ env.m2 prob.coms, echo=FALSE, results=TRUE 
+coms <- prob.coms$Commune
+prob.coms.orig <- dat[dat$Commune %in% coms,]
+other.coms.orig <- dat %>% filter(!Commune %in% coms)
+
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=mean_elev, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=mean_elev, colour="problem"))+
+  theme(element_blank())
+
+#' I can't see an obvious pattern here. The other fixed effect is the offset - areaKM.  Perhaps this is the source of the issue:
+#' 
+#+ env.m2 prob.com - areaKM plot, include=TRUE 
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=areaKM, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=areaKM, colour="problem"))+
+  theme(element_blank())
+
+#' No obvious pattern. Let's look at the response (ForPix):
+#' 
+#+ env.m2 prob.com ForPix plot, include=TRUE
+ggplot()+
+  geom_point(data=other.coms.orig, aes(x=Commune, y=ForPix, colour="other"))+
+  geom_point(data=prob.coms.orig, aes(x=Commune, y=ForPix, colour="problem"))+
+  theme(element_blank())
+
+#' Ok so there is an obvious difference here.  The problem communes clearly mostly lose forest over time (vertical lines of dots), whereas the others generally do not (single points). This is the same issue as highlighted in the popdem model. So the global model does not fit well when communes lose forest over time.
+#' 
+#' ### Predict main effects 
+#' 
+#+ env.m2 predict main effects, echo=FALSE, results=TRUE
+env_m2_newdata <- data.frame(mean_elev = seq(from=min(dat1$mean_elev), to=max(dat1$mean_elev),
+                                             length.out = 100),
+                             areaKM = mean(dat1$areaKM))
+# predict
+env_m2_newdata$pred <- as.vector(predict(env.m2, type="response", newdata=env_m2_newdata, 
+                                         re.form=NA))
+
+# plot with free y axis
+env.m2.main.plot <- ggplot(env_m2_newdata, aes(x=mean_elev, y=pred))+
+                    geom_line()+
+                    theme(element_blank())+
+                    xlab("Mean elevation (scaled)")+
+                    ylab("Predicted forest cover (pixels)")
+
+# plot
+env.m2.main.plot2 <- ggplot(env_m2_newdata, aes(x=mean_elev, y=pred))+
+                      geom_line()+
+                      theme(element_blank())+
+                      ylim(0,20000)+
+                      xlab("Mean elevation (scaled)")+
+                      ylab("Predicted forest cover (pixels)")
+
+env.m2.main.plot + env.m2.main.plot2
+
+#' The above two plots show the predicted effects of mean elevation for an "average" commune (i.e. not commune-specific RE's), with a free y-axis (left) and with a realistic y axis (right).  We can see that mean elevation has a positive effect on forest cover. I was expecing this relationship. Most of the highly forested areas in Cambodia are in the provinces with higher elevation.
+#' 
+#' ### Predict for specific commmunes
+#' 
+#' I will start by predicting for the 4 communes with intercepts closest to 0, the 4 communes with intercepts furthest above 0, and the communes with intercepts furthest below 0.
+#' 
+#+ env.m2 commune predictions, echo=FALSE, results=TRUE
+
+env.m2.com <- ranef(env.m2)[[1]]
+
+# re-order
+env.m2.com <- env.m2.com[order(env.m2.com[ ,"(Intercept)"], decreasing = FALSE),]
+
+# which communes
+coms <- c("Koh Kong_Bak Khlang","Kracheh_Bos Leav","Preah Vihear_Kuleaen Tboung","Ratanak Kiri_Saom Thum",
+          "Kampong Cham_Tuol Snuol","Banteay Meanchey_Paoy Char","Kampong Cham_Khpob Ta Nguon","Kampong Chhnang_Dar",
+          "Kampong Thom_Chaeung Daeung","Kracheh_Han Chey","Kampong Thom_Tang Krasang","Siem Reap_Nokor Pheas")
+
+# which provinces
+provs <- c("Koh Kong","Kracheh","Preah Vihear","Ratanak Kiri",
+           "Kampong Cham","Banteay Meanchey","Kampong Cham","Kampong Chhnang",
+           "Kampong Thom","Kracheh","Kampong Thom","Siem Reap")
+
+
+# customise the range of elevations I am predicting for, on the basis of each commune.
+
+### Easiest to define the range of mean_elev to predict for, first. Min/max per commune:
+mean_elev_min <- tapply(dat1$mean_elev, dat1$Provcomm, min)
+mean_elev_max <- tapply(dat1$mean_elev, dat1$Provcomm, max)
+### Min/max within your selection of communes:
+mean_elev_min <- min(mean_elev_min[names(mean_elev_min) %in% coms])
+mean_elev_max <- max(mean_elev_max[names(mean_elev_max) %in% coms])
+
+# create new prediction grid for specific communes with varying mean_elev
+env_m2_newdat_com <- data.frame(Provcomm = rep(coms, each=100),
+                            Province = as.factor(rep(provs, each=100)),
+                            mean_elev = seq(from=mean_elev_min, to=mean_elev_max, length.out = 100),
+                            year = mean(dat1$year))
+
+# add commune-specific areaKM offset                         
+env_m2_newdat_com$areaKM <-  dat1$areaKM[match(env_m2_newdat_com$Provcomm, dat1$Provcomm)]
+
+# re-order levels so they plot in the correct sets
+env_m2_newdat_com$Provcomm <- factor(env_m2_newdat_com$Provcomm, 
+                                 levels = c("Koh Kong_Bak Khlang",
+                                            "Kracheh_Bos Leav",
+                                            "Preah Vihear_Kuleaen Tboung",
+                                            "Ratanak Kiri_Saom Thum",
+                                            "Kampong Cham_Tuol Snuol",
+                                            "Banteay Meanchey_Paoy Char",
+                                            "Kampong Cham_Khpob Ta Nguon",
+                                            "Kampong Chhnang_Dar",
+                                            "Kampong Thom_Chaeung Daeung",
+                                            "Kracheh_Han Chey",
+                                            "Kampong Thom_Tang Krasang",
+                                            "Siem Reap_Nokor Pheas"))
+
+
+# attach commune-specific predictions
+env_m2_newdat_com$pred.com <- as.vector(predict(env.m2, type="response", newdata=env_m2_newdat_com, 
+                                            re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+env_m2_newdat_com$pred.glo <- rep(env_m2_newdata$pred, times=12)
+
+# colours
+require(RColorBrewer)
+com_colours <- brewer.pal(11, "RdYlBu")
+com_colours <- c(head(com_colours,4),tail(com_colours,4))
+com_colours_greys <- tail(brewer.pal(9, "Greys"),4)
+com_colours <- c(com_colours, com_colours_greys)
+com_colours <- com_colours[sample(1:length(com_colours),12,replace=F)]
+
+### This is just to check if you have commented tbe above out: :)
+if(!exists("com_colours")) {
+  com_colours <- rep("black", 12)
+}
+provcomm_lvls <- levels(env_m2_newdat_com$Provcomm) 
+par(mfrow = c(3,4))
+### Note the scales are important here - we need to set a scale that encompasses all the communes and the full
+### population density range across all communes, so we need to do this overall:
+ylo <- min(env_m2_newdat_com$pred.com)*0.9
+yhi <- max(env_m2_newdat_com$pred.com)*1.1
+xlo <- min(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
+xhi <-  max(dat1[dat1$Provcomm %in% levels(env_m2_newdat_com$Provcomm),"mean_elev"])
+### Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- env_m2_newdat_com[env_m2_newdat_com$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  # if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$mean_elev,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Mean elevation (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  # } else {
+  lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$mean_elev,preddat_i$pred.glo, lty=2)
+  #}
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+
+#' In the above plots, the top row are the communes with intercepts clsoest to 0, middle row are those with intercepts furthest above 0, and bootm row are those with intercepts furthest below 0. The dashed black line is the global model, and the coloured solid lines are the commune-specific predictions. The dots are the actual ForPix ~ mean elevation points for that commune. 
+#' We can see that as for the population demographics model, the global model predicts poorly for communes with high forest cover, regardless of mean elevation. If a commune has low forest cover, then the global model predicts well for increasing values of elevation, until elevation reaches a scaled value of ~1, after which the model predicts poorly (becasue a commune can't increase in elevation).  
+#' 
+#' Let's do the same predictions but for a random set of communes: 
+#' 
+#+ env.m2 commune predictions - random, echo=FALSE, results=TRUE
+
+par(mfrow = c(3,3))
+set.seed(123)
+runs <- c(1:9)
+
+for(i in 1:length(runs)){
+# randomly sample communes
+rand.com <- sample(dat1$Provcomm, 9, replace = FALSE)
+rand.prov <- unlist(strsplit(rand.com, "_"))
+rand.prov <- rand.prov[c(1,3,5,7,9,11,13,15,17)]
+
+# define the range of pop_den to predict for, first. Min/max per commune:
+mean_elev_min <- tapply(dat1$mean_elev, dat1$Provcomm, min)
+mean_elev_max <- tapply(dat1$mean_elev, dat1$Provcomm, max)
+# Min/max within your selection of communes:
+mean_elev_min <- min(mean_elev_min[names(mean_elev_min) %in% rand.com])
+mean_elev_max <- max(mean_elev_max[names(mean_elev_max) %in% rand.com])
+# min not really different but max very different
+
+# create new prediction grid for specific communes with varying pop_den
+env.m2_newdat_com_ran <- data.frame(Provcomm = rep(rand.com, each=100),
+                                Province = rep(rand.prov, each=100),
+                                mean_elev = seq(from=mean_elev_min, to=mean_elev_max, length.out = 100),
+                                year = mean(dat1$year))
+
+
+# add commune-specific areaKM offset                         
+env.m2_newdat_com_ran$areaKM <-  dat1$areaKM[match(env.m2_newdat_com_ran$Provcomm, dat1$Provcomm)]
+
+
+# attach commune-specific predictions
+env.m2_newdat_com_ran$pred.com <- as.vector(predict(env.m2, type="response", 
+                                    newdata=env.m2_newdat_com_ran, 
+                                    re.form=~(year|Province/Provcomm)))
+
+
+# attach global predictions
+env.m2_newdat_com_ran$pred.glo <- rep(env_m2_newdata$pred, times=9)
+
+# set levels
+env.m2_newdat_com_ran$Provcomm <- as.factor(env.m2_newdat_com_ran$Provcomm)
+provcomm_lvls <- levels(env.m2_newdat_com_ran$Provcomm) 
+
+# set scales
+ylo <- min(env.m2_newdat_com_ran$pred.com)*0.9
+yhi <- max(env.m2_newdat_com_ran$pred.com)*1.1
+xlo <- mean_elev_min
+xhi <- mean_elev_max
+
+# Iterate through the communes (levels in m6_newdat_com$Provcomm):
+for(i in 1:length(provcomm_lvls)) {
+  ### Pick commune i data from the predictions:
+  preddat_i <- env.m2_newdat_com_ran[env.m2_newdat_com_ran$Provcomm==provcomm_lvls[i],]
+  ### Pick commune i data from observed data:
+  dat_i <- dat1[dat1$Provcomm==provcomm_lvls[i],]
+  ## If this is the first plot, use plot(), otherwise lines() to add to an existing plot:
+  if(i == 1) {
+  # Plot predicted ForPix as function of pop_den; as "line" type. Note this is where you set axis limits.
+  plot(preddat_i$mean_elev,preddat_i$pred.com, 
+       type = "l", 
+       col = com_colours[i], 
+       ylim = c(ylo,yhi), xlim = c(xlo,xhi),
+       xlab = "Mean elevation (scaled & standardised",
+       ylab = "Predicted forest cover (forest pixel count)",
+       main = unique(preddat_i$Provcomm))
+  } else {
+  lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
+  lines(preddat_i$mean_elev,preddat_i$pred.glo, lty=2)
+  }
+  ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
+  points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
+}
+}
+
+#' Each plot contains a random sample of 9 communes. Again the black dashed line is the global model. Note the varying y-axes. After running the above random sampling code a few times, it looks as though the global model is good at predicting at low forest cover and low elevation (as with the population density model), as this is where most of the communes sit on the spectrum.  It performs ok for communes with higher elevation provided they don't have too much forest!  As soon as the commune has lots of forest or very high elevation, the global model performs badly.  It looks as though the commune-specific models predict quite well, provided the communes does not lose forest (as with the population density model).
+#' 
+#' ## Additional human predictor variables
+#' 
+#' As with the environmental predictor above, these variables were supposed to be "control" variables. The variables included in this set are distance to border (from the centre of the commune), distance to the Provincial Capital (from the centre of the commune), presence of economic land concessions ("elc", binary), presence of a PA (any kind of PA, binary), PA category (7 levels, including "none").
+#' 
+#+ hum.m1, include=TRUE
+hum.m1 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+PA_cat+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m1)
+
+#' Model produces a rank deficiency warning. Interestingly, PA doesn't appear to look important.  This surprises me as you would assume that PAs would be placed in areas with high forest cover. elc doesn't appear to be important, which is also surprising because I could imagine two scenarios 1) it would have a postive relationship because elc's were often placed in forested areas, and 2) a negative relationship because the elc's would have cleared a lot of forest in the areas they were placed.  However, during this time period, perhaps not much forest clearing had happened yet. dist_border and dst_provCap appear to be important, with both having a positive effect. dist_provCap I can understand - communes further away from urban centres are likely to be more forested. Not sure yet about dist_border. I think all vars require further investigation. 
+#' 
+#'  I will do some quick plots below:
+#'  
+#+ hum.m1 plot_models, echo=FALSE, results=TRUE
+# quick plots
+hum.p1 <- plot_model(hum.m1, type="pred", terms="dist_border")
+hum.p2 <- plot_model(hum.m1, type="pred", terms="dist_provCap")
+hum.p3 <- plot_model(hum.m1, type="pred", terms="elc")
+hum.p4 <- plot_model(hum.m1, type="pred", terms="PA")
+hum.p5 <- plot_model(hum.m1, type="pred", terms="PA_cat") # surprised RMS level is not sig given the coefficient
+
+hum.p1+hum.p2+hum.p3+hum.p4+hum.p5 
+
+#' From the quick plots above, it looks like both dist_border and dist_provCap do have a relationship with forest cover.  elc does not look promising (note the y axis - differnece is tiny), and neither really does PA.  Not much difference in predicted forest cover for the different PA categories, apart from the RMS level.   
