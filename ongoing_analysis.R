@@ -1068,6 +1068,10 @@ hum.p1+hum.p2+hum.p3+hum.p4+hum.p5
 #' 
 #+ hum.m5 pred and res and plot observerd vs predicted, echo=FALSE, results=TRUE
 # copy data for diagnostics
+
+hum.m5 <- glmer(ForPix ~ dist_border+dist_provCap+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
 hum.diag.dat <- dat1
 
 # residuals
