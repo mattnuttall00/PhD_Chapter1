@@ -1048,7 +1048,7 @@ summary(hum.m1)
 
 #' Model produces a rank deficiency warning. Interestingly, PA doesn't appear to look important.  This surprises me as you would assume that PAs would be placed in areas with high forest cover. elc doesn't appear to be important, which is also surprising because I could imagine two scenarios 1) it would have a postive relationship because elc's were often placed in forested areas, and 2) a negative relationship because the elc's would have cleared a lot of forest in the areas they were placed.  However, during this time period, perhaps not much forest clearing had happened yet. dist_border and dst_provCap appear to be important, with both having a positive effect. dist_provCap I can understand - communes further away from urban centres are likely to be more forested. Not sure yet about dist_border. I think all vars require further investigation. 
 #' 
-#'  I will do some quick plots below:
+#' I will do some quick plots below:
 #'  
 #+ hum.m1 plot_models, echo=FALSE, results=TRUE
 # quick plots
@@ -1061,3 +1061,151 @@ hum.p5 <- plot_model(hum.m1, type="pred", terms="PA_cat") # surprised RMS level 
 hum.p1+hum.p2+hum.p3+hum.p4+hum.p5 
 
 #' From the quick plots above, it looks like both dist_border and dist_provCap do have a relationship with forest cover.  elc does not look promising (note the y axis - differnece is tiny), and neither really does PA.  Not much difference in predicted forest cover for the different PA categories, apart from the RMS level.   
+#' 
+#' I conducted LRT's and AICc comparisons, and moved forward with predictions and plotting for models with dist_border, dist_provCap, PA and elc.  But it became clear that PA and elc did very little, and so I have settled on a model with just dist_border and dist_provCap. 
+#' 
+#' ### Diagnostics
+#' 
+#+ hum.m5 pred and res and plot observerd vs predicted, echo=FALSE, results=TRUE
+# copy data for diagnostics
+hum.diag.dat <- dat1
+
+# residuals
+hum.diag.dat$m5res <- resid(hum.m5)
+
+# conditional predictions
+hum.diag.dat$m5.pred <- as.vector(predict(hum.m5, type="response", re.form=NA))
+
+plot(hum.diag.dat$m5.pred, hum.diag.dat$ForPix)
+
+#' The above plot is the observed values versus the predicted values (from a fully conditional model).  This plot is not great - worse than the previous model sets, and it looks like the model is under-predicting by quite a long way.  
+#' 
+#+ hum.m5 plot residuals versus predicted, echo=FALSE, results=TRUE
+plot(hum.diag.dat$m5.pred, hum.diag.dat$m5res)
+
+#' This doesn't look great. Some outlier large predictions which have small residuals, but a lot of heterogeneity at smaller predicted values. There's an odd line of residuals just below 2000 (x axis) which suggests there's one predicted value that is appearing quite a few times?  Below I look more closely at the residuals.
+#' 
+#+ hum.m5 residual plots, echo=FALSE, results=TRUE
+par(mfrow=c(2,2))
+plot(hum.diag.dat$dist_border, hum.diag.dat$m5res, ylab = "residuals", xlab = "distance to border")
+plot(hum.diag.dat$dist_provCap, hum.diag.dat$m5res, ylab = "residuals", xlab = "distance to Prov Cap")
+boxplot(m5res ~ factor(Province), data = hum.diag.dat, outline = T, xlab = "Province", 
+        ylab = "Residuals w/i Province")
+boxplot(m5res ~ factor(Provcomm), data = hum.diag.dat, outline = T, xlab = "Commune", 
+        ylab = "Residuals w/i Commune")
+
+#' Based on the first two plots, it looks like there's only a relatively small number of communes that have really large residuals (and there seems to be patterns in these).  
+#' 
+#' Zoom in:
+#' 
+#+ hum.m5 residual plots zoom, echo=FALSE, results=TRUE
+par(mfrow=c(2,1))
+plot(hum.diag.dat$dist_border, hum.diag.dat$m5res, ylim=c(-3,3),
+     ylab = "residuals", xlab = "distance to border")
+plot(hum.diag.dat$dist_provCap, hum.diag.dat$m5res, ylim=c(-3,3),
+     ylab = "residuals", xlab = "distance to Prov Cap")
+
+#' The slightly odd patterns are smaller residuals between 0 and 1 dist_border, and between probably 0 and 0.3 for dist_provCap.
+#'  
+#' I had a look at which provinces have the larger residuals to see if they match with the problem provinces from the previous model sets.  They are Battambang, Kampong Cham, Kampong Chhnanhg, Kampong Thom, Koh Kong, Kracheh, Mondul Kiri, Otdar Meanchey, Pursat, Ratanak Kiri, Siem Reap, Stung Treng. These are the same provinces that are causing issues in the other model sets.
+#' 
+#' As I have mentioned before, I think these problem communes are the ones that are losing forest over time.  I used the raw data to assess which Provinces contain communes that lose some forest over the study period.
+#' 
+#+ hum.m5 Provinces that lose forest, echo=FALSE, results=TRUE
+diffPix <- dat1 %>% group_by(Provcomm) %>% summarise(sum = sum(diffPix))
+provs <- unlist(strsplit(diffPix$Provcomm, "_"))
+provs1 <- provs[seq(1, length(provs), 2)]
+diffPix$Province <- provs1
+
+unique(diffPix$Province[diffPix$sum > 0])
+
+#' So this may go some way towards explaining the issues. However, there are still Provinces that lose no forest but are still causing issues, such as Kampong Chhnang and Kampong Thom. I looked more closely at some of the individual communes that had very large residuals.
+#' 
+#+ hum.m5 communes larege residusals, echo=FALSE, results=TRUE
+prob.coms <- hum.diag.dat[hum.diag.dat$m5res > 1 | hum.diag.dat$m5res < -1,]
+prob.coms$type <- "problem"
+other.coms <- hum.diag.dat %>% filter(!Provcomm %in% prob.coms$Provcomm)
+other.coms$type <- "other"
+all.coms <- rbind(prob.coms, other.coms)
+
+
+plot(prob.coms$m5.pred, prob.coms$m5res)
+
+#' The residuals above are the largest ones. Below, I have split all of the communes into the ones that produced the residuals above, and the rest:
+#' 
+#+ hum.m5 prob coms vs ForPix, echo=F, results=T
+hum.plot1 <- ggplot(all.coms, aes(x=Provcomm, y=ForPix, colour=type))+
+              geom_point()+
+              theme(element_blank())+
+              labs(x="Commune", y="Forest pixels")
+
+hum.plot2 <- ggplot(all.coms, aes(x=Provcomm, y=areaKM, colour=type))+
+              geom_point()+
+              theme(element_blank())+
+              labs(x="Commune", y="Commune area (KM)")
+
+hum.plot3 <- ggplot(all.coms, aes(x=Provcomm, y=dist_border, colour=type))+
+              geom_point()+
+              theme(element_blank())+
+              labs(x="Commune", y="Distance to border")
+
+hum.plot4 <- ggplot(all.coms, aes(x=Provcomm, y=dist_provCap, colour=type))+
+              geom_point()+
+              theme(element_blank())+
+              labs(x="Commune", y="Distance to Provincial Captital")
+
+hum.plot1+hum.plot2+hum.plot3+hum.plot4
+
+#' The top left plot is forest pixels per commune, the top right plot is the area (KM) of the communes, the bottom left plot is distance to border, and the bottom right is distance to provincial capital. None of these show an obvious pattern to me - and in fact in the top left plot (forest pixels) the loss of forest over time doesn't look unique to the problem communes, as it did in the previous sets.  The only pattern I can see in these plots is that the problem communes are spatially relatively close and clumped (they are grouped by Province in the dataframe and so if they are plotted near one another on the x axis they are probably in the same Province). But the issues are certainly not unique to a single province, or to a set of communes all with similar characteristics (that I can think of anyway!).  So am not sure exactly what the other reasons are for the large residuals in those communes.
+#' 
+#' ### Predict main effects
+#' 
+#' Below are the predictions for dist_border and dist_provCap from the 'global' model.
+#' 
+#+ hum.m5 main effects predictions, echo=F, results=T
+
+# create new data for dist_border
+dist_border_newdat <- expand.grid(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), 
+                                                    length.out = 100),
+                                  dist_provCap = mean(dat1$dist_provCap),
+                                  areaKM = mean(dat1$areaKM))
+
+# predict
+dist_border_newdat$pred <- as.vector(predict(hum.m5, type="response", newdata=dist_border_newdat, re.form=NA))
+
+# create new data for dist_provCap
+dist_provCap_newdat <- expand.grid(dist_provCap = seq(min(dat1$dist_provCap), max(dat1$dist_provCap), 
+                                                      length.out = 100),
+                                   dist_border = mean(dat1$dist_border),
+                                   areaKM = mean(dat1$areaKM))
+
+# predict
+dist_provCap_newdat$pred <- as.vector(predict(hum.m5, type="response", newdata=dist_provCap_newdat, 
+                                              re.form=NA))
+
+
+
+# plot
+hum.p6 <-  ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
+  geom_line(size=1)+
+  theme(element_blank())+
+  ylim(0,2000)+
+  xlab("Distance to international border (scaled and centered)")+
+  ylab("Predicted forest cover (pixels)")+
+  ggtitle("Distance to border")
+
+hum.p7 <-ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
+  geom_line(size=1)+
+  theme(element_blank())+
+  ylim(0,2000)+
+  xlab("Distance to provincial capital (scaled and centered)")+
+  ylab("Predicted forest cover (pixels)")+
+  ggtitle("Distance to provincial captial")
+
+hum.p6 + hum.p7
+
+#' We can see that both predictors have a positive effect on forest cover, and that distance to provincial capital is the stronger effect. The relationship with dist_provCap makes sense - the more rural/remote a communes is, the more likely it is to be forested. Communes that are in or around large urban centres, are unlikely to be heavily forested. The dist_border relationship is more difficult to explain easily. Based on my knowledge of the country I was expecting the opposite - lots of the large PAs are near international borders, whereas much of the central part of the country is farmland. I will need to investigate this further.
+#' 
+#' ### Predict for specific communes
+#' 
+#' 
