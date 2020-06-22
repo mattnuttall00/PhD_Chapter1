@@ -476,7 +476,7 @@ edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province/Provco
 
 summary(edu.m1)
 
-#' The model output suggests there is nothing going on here.  I can use 'plot_model' from the sjPlot package to quickly plot a prediction. It basically does exactly what I would do - create newdata with the variable of interest varying from the min to the max, and holding all others at their mean.
+#' The model output suggests there is nothing going on here.  I can use 'plot_model' from the sjPlot package to quickly plot a prediction. It basically does exactly what I would do - create newdata with the variable of interest varying from the min to the max, and holding all others at their mean. You can specify whether you want it to plot conditional on the fixed effects only (i.e. "average" comune / global model), or on the random effects. The below is conditionl on fixed effects only.
 #' 
 #+ edu.m1 plot_model, echo=FALSE, results=TRUE
 plot_model(edu.m1, type="pred", terms="M6_24_sch")
@@ -649,3 +649,57 @@ plot_model(acc.m1, type="pred", terms="garbage")
 plot_model(acc.m1, type="pred", terms="KM_Comm")
 
 #' These variables do not appear to be useful. I completed model selection using a combination of LRT's and AICc comparison, and all of the models with only an individual predictor were better than any model with more than one predictor. The top three models were therefore models with each of the single predictors, and there was virtually no difference between them (dAICc < 0.1). But they were equally as useless as the acc.m1 i.e. tiny effects, large approximate p values, flat main effect.
+#' 
+#' ## Social Justice
+#' 
+#' This set includes two predictor variables - the raw number of land conflict cases, and the per capita number of criminal cases. I had no *a priori* hypothesis about an interaction between these two variables, and so I did not test one.
+#' 
+#+ just.m1, include=TRUE
+jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province/Provcomm),
+                          family="poisson", data=dat1)
+
+summary(jus.m1)
+
+#' Very small effects with large approximate p values. Similar RE variances to previous model sets. 
+#' 
+#' Quick plots of main effects:
+#' 
+#+ plot_model jus.m1, echo=FALSE, results=TRUE
+
+plot_model(jus.m1, type="pred", terms="crim_case")
+plot_model(jus.m1, type="pred", terms="land_confl")
+
+#' I removed land_confl for jus.m2, and LRT suggested the simpler model was better, but the resulting odel still had tiny effect for srim_case, with large approximate p value. The plot was just as flat as jus.m1.
+#' 
+#' ## Migration
+#' 
+#' There are two predictors in this set - raw number of in-migrants and out-migrants. For these variables, I thought there was cause to test an interaction, as the relationship between migration in and out of a commune is potentially complex, and intertwined with various aspects of the local economy and natural resource use.
+#' 
+#+ mig.m1, include=TRUE
+mig.m1 <- glmer(ForPix ~ Pax_migt_in*Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m1)
+
+#' Very small effects and large approximate p values. No change in the RE variances
+#' 
+#' Quick plots of the marginal effects of interaction terms:
+#' 
+#+ plot_model mig.m1, echo=FALSE, results=TRUE
+plot_model(mig.m1, type="pred", terms=c("Pax_migt_in","Pax_migt_out[-0.47,0,16.7]"))
+plot_model(mig.m1, type="pred", terms=c("Pax_migt_out","Pax_migt_in[-0.53,0,11.1]"))
+
+#' There appears to be a small interaction. When out-migration from a commune is large, then the effect of in-migration is positive, whereas there is no effect when out-migration is low or at its mean. Similarly, when in-migration to a commune is large, then there is a small positive effect of out-migration. There is no effect of out-migration when in-migration is low or at its mean.  Nevertheless, neither term, nor the interaction are particularly convincing. Model selection using LRT suggested that a model with just Pax_migt_out was significantly better than the model with both terms. And the resulting model has as equally unimpressive effect.
+#' 
+#+ mig.m2, include=TRUE
+mig.m2 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m2)
+
+anova(mig.m1,mig.m2,test="Chisq")
+# simpler model is better
+
+plot_model(mig.m2, type="pred")
+
+#' ## Environmental variables
