@@ -1,7 +1,7 @@
 #' ---
 #' title: Mixed models - socioeconomic predictors of forest cover
 #' author: Matt Nuttall
-#' date: 17/06/20
+#' date: 23/06/20
 #' output:
 #'    html_document:
 #'      toc: true
@@ -142,11 +142,11 @@ plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
 #' 
 #' Exploration of the residuals over the predictors, and between provinces and communes
 #' 
-#+ popdem.m6 residual plots, echo=FALSE,results=TRUE
+#+ popdem.m6 residual plots, echo=FALSE,results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,2))
 plot(m6.diag.dat$pop_den, m6.diag.dat$m6res, ylab = "residuals", xlab = "pop density")
 boxplot(m6res ~ factor(Province), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
-boxplot(m6res ~ factor(Provcomm), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Commune")
+boxplot(m6res ~ factor(Provcomm), data = m6.diag.dat, outline = T, xlab = "Commune", ylab = "Residuals w/i Commune")
 
 #' A lot of the heterogeneity is driven by relatively few communes/provinces. I investigated further. If you look at the map (in GIS), the provinces with the smallest residuals are the smaller provinces in the south surrounding the capital Phnom Penh. These are provinces that generally have very little forest. But they are not the only provinces with no forest cover, so I am not sure that is the (only) reason. I think I need to look at the communes within the provinces
 #' 
@@ -167,61 +167,68 @@ prov.all <- rbind(prov.dat,prov.excl)
 #+ popdem.m6 plot problem communes ForPix, echo=FALSE, results=TRUE, warnings=FALSE
 ggplot(prov.all, aes(Commune,y=ForPix, colour=type))+
   geom_point()+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Forest pixels")
 
 #' I would say that the provinces that are causing the issues tend to have higher ForPix than the others. It also look potentially like the provinces causing issues are almost always losing forest cover over time (lots of vertical lines of dots)
 #' 
 #' Plot of population density (the predictor) against forest pixels, split by the problem communes again. I have zoomed in on both axes so we can see what is gong on
 #' 
-#+ popdem.m6 plot problem communes ForPix ~ pop_den, echo=FALSE, results=TRUE, warnings=FALSE
+#+ popdem.m6 plot problem communes ForPix ~ pop_den, echo=FALSE, results=TRUE, warning=FALSE
 ggplot(prov.all, aes(x=pop_den, y=ForPix, colour=type))+
   geom_point()+
   ylim(0,10000)+
   xlim(0,1000)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Forest pixels")+
+  xlab("population density")
 
 #' This plot makes it also look like the problem provinces tend to have communes with higher ForPix. There is a chunk of blue with no pink where pop_den has increased to about 100 but ForPix has not decreased (whereas almost all the pink dots are lower, i.e. in the other provinces/communes at that population density forest cover is lower). 
 #' 
 #' The plot below shows the forest pixles by province (rather than commune), split by the problem provinces. 
 #' 
-#+ popdem.m6 plot problem provinces and ForPix, echo=FALSE, results=TRUE, warnings=FALSE
+#+ popdem.m6 plot problem provinces and ForPix, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Province, y=ForPix,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Province, y=ForPix, colour="Other provinces"))+
   ylim(0,10000)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Forest pixels")
 
 #' This plot suggests that the problem provinces don't necessarily have more (mean) forest cover, but they do tend to have more outliers (individual communes) that are very high forest cover. 
 #' 
 #' The plot below shows the population density by province, split by the problme provinces.
 #' 
-#+ popdem.m6 plot problem provinces and pop_den, echo=FALSE, results=TRUE, warnings=FALSE
+#+ popdem.m6 plot problem provinces and pop_den, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Province, y=pop_den,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Province, y=pop_den, colour="Other provinces"))+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Population density")
 
 #' This plot suggests that overall, the problem provinces tend to have lower median pop_den value compared to the other provinces, but they again tend to have more outliers.  This is what I would expect - the communes with lower population denstiy will also likely be the communes with higher forest cover (as we saw in the above plots).
 #' 
 #' The plot below shows the same as above but by communes, rather than province
 #' 
-#+ popdem.m6 plot problem communes and pop_den, echo=FALSE, results=TRUE, warnings=FALSE
+#+ popdem.m6 plot problem communes and pop_den, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Commune, y=pop_den,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Commune, y=pop_den, colour="Other provinces"))+
   ylim(0,1000)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Population density")
 
 #' Although slightly difficult to interpret, again this looks like there are more communes with higher pop_den values in the non-problematic provinces. And in the problem communes with higher population density values, they also tend to have much more variation in population density (i.e. the pop_den changes a lot over time)
 #' 
 #' The plot below shows the problem communes and their forest pixels
 #' 
-#+ popdem.m6 plot problem communes and ForPix, echo=FALSE, results=TRUE, warnings=FALSE
+#+ popdem.m6 plot problem communes and ForPix, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
   geom_boxplot(data=prov.dat, aes(x=Commune, y=ForPix,colour="Problem provinces"))+
   geom_boxplot(data=prov.excl, aes(x=Commune, y=ForPix, colour="Other provinces"))+
   ylim(0,10000)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Forest pixels")
 
 #' Again, difficult to see a huge amount however I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
 #' 
@@ -260,7 +267,7 @@ popdem.m6.p1 + popdem.m6.p2
 #' 
 #' Here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes.  I will also do this for a random sample of communes.
 #' 
-#+ popdem.m6 commune predictions, include=FALSE
+#+ popdem.m6 commune predictions, echo=FALSE, results=T,fig.width=10, fig.height=10, dpi=100
 # save the popdem.m4 commune-level random effects
 m6.re.com <- ranef(popdem.m6)[[1]]
 
@@ -354,7 +361,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Population density (scaled & standardised",
-       ylab = "Predicted forest cover (forest pixel count)")
+       ylab = "Predicted forest cover pixels")
   # } else {
   lines(preddat_i$pop_den,preddat_i$pred.com, col = com_colours[i])
   lines(preddat_i$pop_den,preddat_i$pred.glo, lty=2)
@@ -367,7 +374,7 @@ for(i in 1:length(provcomm_lvls)) {
 #' 
 #' Now I will do the same but for 9 random selections of 9 communes.
 #' 
-#+ popdem.m6 commune predictions from random selection, echo=FALSE,results=TRUE
+#+ popdem.m6 commune predictions from random selection, echo=FALSE,results=TRUE, fig.width=10, fig.height=10, dpi=100
 # randomly sample communes
 par(mfrow = c(3,3))
 set.seed(123)
@@ -485,7 +492,7 @@ plot_model(edu.m1, type="pred", terms="M6_24_sch")
 #' 
 #' Below are some commune-specific predictions from another random selection of communes
 #'  
-#+ edu.m1 commune predictions, echo=FALSE,results=T
+#+ edu.m1 commune predictions, echo=FALSE,results=T, fig.width=10, fig.height=10, dpi=100
 
 par(mfrow = c(3,3))
 set.seed(123)
@@ -553,7 +560,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Proportion of males aged 6-24 in school (scaled & standardised",
-       ylab = "Predicted forest cover (forest pixel count)")
+       ylab = "Predicted forest pixels")
   } else {
   lines(preddat_i$M6_24_sch,preddat_i$pred.com, col = com_colours[i])
   lines(preddat_i$M6_24_sch,preddat_i$pred.glo, lty=2)
@@ -700,7 +707,7 @@ summary(mig.m2)
 anova(mig.m1,mig.m2,test="Chisq")
 # simpler model is better
 
-plot_model(mig.m2, type="pred")
+plot_model(mig.m2, type="pred", terms="Pax_migt_out")
 
 #' ## Environmental variables
 #' 
@@ -740,7 +747,7 @@ plot(env.m2.diag$m2pred, env.m2.diag$m2res)
 #' 
 #' Bit more exploration of residuals, but now over the explanatory variable:
 
-#+ env.m2 residual plots, echo=FALSE, results=TRUE
+#+ env.m2 residual plots, echo=FALSE, results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,2))
 plot(env.m2.diag$mean_elev, env.m2.diag$m2res, ylab = "residuals", xlab = "mean elevation")
 boxplot(m2res ~ factor(Province), data = env.m2.diag, outline = T, xlab = "Province", 
@@ -775,7 +782,8 @@ prov.elev.mean$type <- ifelse(prov.elev.mean$Province %in% provs, "problem", "ot
 # plot mean elevation by province
 ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
   geom_point(size=4)+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Mean elevation")
 
 #' The above plot shows the mean elevation (on the original scale) for each Province, with the "problem" provinces (i.e. the ones with the largest residuals) coloured blue. There is not a stiking trend, but the 4 provinces with the lowest mean elevation are all *not* problematic ones. 
 #' 
@@ -797,23 +805,26 @@ other.coms.orig <- dat %>% filter(!Commune %in% coms)
 ggplot()+
   geom_point(data=other.coms.orig, aes(x=Commune, y=mean_elev, colour="other"))+
   geom_point(data=prob.coms.orig, aes(x=Commune, y=mean_elev, colour="problem"))+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Mean elevation")
 
 #' I can't see an obvious pattern here. The other fixed effect is the offset - areaKM.  Perhaps this is the source of the issue:
 #' 
-#+ env.m2 prob.com - areaKM plot, include=TRUE 
+#+ env.m2 prob.com - areaKM plot, echo=F, results=T
 ggplot()+
   geom_point(data=other.coms.orig, aes(x=Commune, y=areaKM, colour="other"))+
   geom_point(data=prob.coms.orig, aes(x=Commune, y=areaKM, colour="problem"))+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Area (KM)")
 
 #' No obvious pattern. Let's look at the response (ForPix):
 #' 
-#+ env.m2 prob.com ForPix plot, include=TRUE
+#+ env.m2 prob.com ForPix plot, echo=F, results=T
 ggplot()+
   geom_point(data=other.coms.orig, aes(x=Commune, y=ForPix, colour="other"))+
   geom_point(data=prob.coms.orig, aes(x=Commune, y=ForPix, colour="problem"))+
-  theme(element_blank())
+  theme(element_blank())+
+  ylab("Forest pixels")
 
 #' Ok so there is an obvious difference here.  The problem communes clearly mostly lose forest over time (vertical lines of dots), whereas the others generally do not (single points). This is the same issue as highlighted in the popdem model. So the global model does not fit well when communes lose forest over time.
 #' 
@@ -850,7 +861,7 @@ env.m2.main.plot + env.m2.main.plot2
 #' 
 #' I will start by predicting for the 4 communes with intercepts closest to 0, the 4 communes with intercepts furthest above 0, and the communes with intercepts furthest below 0.
 #' 
-#+ env.m2 commune predictions, echo=FALSE, results=TRUE
+#+ env.m2 commune predictions, echo=FALSE, results=TRUE, fig.width=8, fig.height=8, dpi=100
 
 env.m2.com <- ranef(env.m2)[[1]]
 
@@ -944,7 +955,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Mean elevation (scaled & standardised",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   # } else {
   lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
@@ -959,7 +970,7 @@ for(i in 1:length(provcomm_lvls)) {
 #' 
 #' Let's do the same predictions but for a random set of communes: 
 #' 
-#+ env.m2 commune predictions - random, echo=FALSE, results=TRUE
+#+ env.m2 commune predictions - random, echo=FALSE, results=TRUE,fig.width=8, fig.height=8, dpi=100
 
 par(mfrow = c(3,3))
 set.seed(123)
@@ -1023,7 +1034,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Mean elevation (scaled & standardised",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   } else {
   lines(preddat_i$mean_elev,preddat_i$pred.com, col = com_colours[i])
@@ -1050,7 +1061,7 @@ summary(hum.m1)
 #' 
 #' I will do some quick plots below:
 #'  
-#+ hum.m1 plot_models, echo=FALSE, results=TRUE
+#+ hum.m1 plot_models, echo=FALSE, results=TRUE, warning=F, fig.width=8, fig.height=8, dpi=100
 # quick plots
 hum.p1 <- plot_model(hum.m1, type="pred", terms="dist_border")
 hum.p2 <- plot_model(hum.m1, type="pred", terms="dist_provCap")
@@ -1089,7 +1100,7 @@ plot(hum.diag.dat$m5.pred, hum.diag.dat$m5res)
 
 #' This doesn't look great. Some outlier large predictions which have small residuals, but a lot of heterogeneity at smaller predicted values. There's an odd line of residuals just below 2000 (x axis) which suggests there's one predicted value that is appearing quite a few times?  Below I look more closely at the residuals.
 #' 
-#+ hum.m5 residual plots, echo=FALSE, results=TRUE
+#+ hum.m5 residual plots, echo=FALSE, results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,2))
 plot(hum.diag.dat$dist_border, hum.diag.dat$m5res, ylab = "residuals", xlab = "distance to border")
 plot(hum.diag.dat$dist_provCap, hum.diag.dat$m5res, ylab = "residuals", xlab = "distance to Prov Cap")
@@ -1102,7 +1113,7 @@ boxplot(m5res ~ factor(Provcomm), data = hum.diag.dat, outline = T, xlab = "Comm
 #' 
 #' Zoom in:
 #' 
-#+ hum.m5 residual plots zoom, echo=FALSE, results=TRUE
+#+ hum.m5 residual plots zoom, echo=FALSE, results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,1))
 plot(hum.diag.dat$dist_border, hum.diag.dat$m5res, ylim=c(-3,3),
      ylab = "residuals", xlab = "distance to border")
@@ -1137,7 +1148,7 @@ plot(prob.coms$m5.pred, prob.coms$m5res)
 
 #' The residuals above are the largest ones. Below, I have split all of the communes into the ones that produced the residuals above, and the rest:
 #' 
-#+ hum.m5 prob coms vs ForPix, echo=F, results=T
+#+ hum.m5 prob coms vs ForPix, echo=F, results=T, fig.width=10, fig.height=10, dpi=100
 hum.plot1 <- ggplot(all.coms, aes(x=Provcomm, y=ForPix, colour=type))+
               geom_point()+
               theme(element_blank())+
@@ -1214,9 +1225,9 @@ hum.p6 + hum.p7
 #' 
 #' Below I have run predictions for 12 communes - the four with intercepts closest to 0, four with intercepts furthest above 0, and the four with intercepts furthest below 0.
 #' 
-#' First for dis_border
+#' First for dist_border
 #' 
-#+ hum.m5 commune predictions dist_border, echo=F, results=T
+#+ hum.m5 commune predictions dist_border, echo=F, results=T,  fig.width=8, fig.height=8, dpi=100
 
 hum.m5.com <- ranef(hum.m5)[[1]]
 
@@ -1306,7 +1317,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Distance to intl border (scaled & standardised)",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   #} else {
   lines(preddat_i$dist_border,preddat_i$pred.com, col = com_colours[i])
@@ -1320,7 +1331,7 @@ for(i in 1:length(provcomm_lvls)) {
 #' 
 #' Now I will do the same plots but for a random subset of communes.
 #' 
-#+ hum.m5 random commune predictions dist_border, echo=F, results=T
+#+ hum.m5 random commune predictions dist_border, echo=F, results=T, fig.width=8, fig.height=8, dpi=100
 
 par(mfrow = c(3,3))
 set.seed(123)
@@ -1400,23 +1411,23 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Distance to intl border (scaled & standardised)",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   } else {
   lines(preddat_i$dist_border,preddat_i$pred.com, col = com_colours[i])
   lines(preddat_i$dist_border,preddat_i$pred.glo, lty=2)
-  #}
+  }
   ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
   points(dat_i$dist_border, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 }
-}
+
 
 #' The above plots I think show that again, the commune-specific models are fitting well, provided forest cover doesn't change.  
 #' 
 #' Below I will do the same predictions and plotting, but for varying dist_provCap.  First, I will plot the 12 communes above, below, and around the mean intercept.
 #' 
-#+ hum.m5 commune predictions dist_provCap, echo=F, results=T
+#+ hum.m5 commune predictions dist_provCap, echo=F, results=T,  fig.width=8, fig.height=8, dpi=100
 
 ###  define the range of dist_provCap to predict for. Min/max per commune:
 dist_provCap_min <- tapply(dat1$dist_provCap, dat1$Provcomm, min)
@@ -1496,7 +1507,7 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Distance to provincial capital (scaled & standardised)",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   #} else {
   lines(preddat_i$dist_provCap,preddat_i$pred.com, col = com_colours[i])
@@ -1508,7 +1519,7 @@ for(i in 1:length(provcomm_lvls)) {
 
 #' The above plots paint a similar picture to the dist_border plots.  Below I will predict and plot for a random subset of communes.
 #' 
-#+ hum.m5 random commune predictions dist_provCap, echo=F, results=T
+#+ hum.m5 random commune predictions dist_provCap, echo=F, results=T,  fig.width=8, fig.height=8, dpi=100
 
 par(mfrow = c(3,3))
 set.seed(123)
@@ -1589,15 +1600,15 @@ for(i in 1:length(provcomm_lvls)) {
        col = com_colours[i], 
        ylim = c(ylo,yhi), xlim = c(xlo,xhi),
        xlab = "Distance to Provincial capital (scaled & standardised)",
-       ylab = "Predicted forest cover (forest pixel count)",
+       ylab = "Predicted forest pixels",
        main = unique(preddat_i$Provcomm))
   } else {
   lines(preddat_i$dist_provCap,preddat_i$pred.com, col = com_colours[i])
   lines(preddat_i$dist_provCap,preddat_i$pred.glo, lty=2)
-  #}
+  }
   ## Add points for "observed" ForPix for commune i across all observed pop_den across communes.
   points(dat_i$dist_provCap, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 }
-}
+
 
