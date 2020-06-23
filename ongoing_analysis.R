@@ -42,44 +42,46 @@ dat1$year.orig <- dat$year
 
 #' This document is a summary of the ongoing analysis into predictors of forest cover/loss at the commune level across Cambodia.
 #' 
-#' Currently the response variable is raw count of forest pixels, and there are 9 predictor variable sets with varying number of predictors in each set. All predictor variables have been scaled and centered prior to analysis. A GLMM framework has been used, with a Poisson distribution and the following random effects structure:
+#' Currently the response variable is raw count of forest pixels, and there are 9 predictor variable sets with varying numbers of predictors in each set. All predictor variables have been scaled and centered prior to analysis. A GLMM framework has been used, with a Poisson distribution and the following random effects structure:
 #' 
-#' (year|Province/Commune)
+#' **(year|Province/Commune)**
 #' 
-#' The logged area of each commune has been used as an offset term in each model.
+#' The logged area (KM) of each commune has been used as an offset term in each model.
 #' 
-#' The variable sets are as follow:
+#' The variable sets are as follows:
 #' 
-#' * POPULATION DEMOGRAPHICS - population density, total population, proportion indigenous
+#' * POPULATION DEMOGRAPHICS - population density, total population, proportion of commune that are indigenous
 #' * EDUCATION -  proportion of males aged 6-24 in school
 #' * EMPLOYMENT - proportion of people employed in the Primary sector, proportion of people emplyed in the Secondary sector
 #' * ECONOMIC SECURITY - proportion of population with less than 1ha of farming land, proportion of families with pigs
-#' * ACCESS TO SERVICES - median distance to nearest school, median distance to the Commune Office, proportion of families with access to waste collection services
+#' * ACCESS TO SERVICES - median distance to nearest school (of all the villages within the commune), median distance to the Commune Office (of all the villages within the commune), proportion of families with access to waste collection services
 #' * SOCIAL JUSTICE - total number of land conflict cases, number of criminal cases per capita
 #' * MIGRATION - total number of in-migrants, total number of out-migrants
 #' * ENVIRONMENTAL (CONTROL) - mean elevation, habitat
 #' * HUMAN (CONTROL) - distance to international border, distance to Provincial Capital, PA presence, PA category, economic land concession presence
 #' 
-#' ## Brief summary
+#' ## summary of results 
 #' 
-#' Unfortunately, none of the socioeconomic predictors appear to have any predictive power!  The only exception is population density.  The "control" variables however, do have some predictive power. Below I will show the results of the initial models for each set.
+#' Unfortunately, none of the socioeconomic predictors appear to have any predictive power!  The only exception is population density.  The "control" variables (Environmental, Human, see above) however, do have some predictive power. Below I will show the results of the initial models for each set.
 #' 
-#' My general conclusion thus far however is that with this response, I don't think I am asking the question I want to. I think the models below are telling us which variables can predict forest cover (i.e. where is the forest? Which communes have lots of forest and which ones have little forest?).  I don't think the below models can really tell me anything about forest LOSS, or which variables are able to predict forest cover loss/change.  I feel like I need to go further and look at forest cover change as a response (e.g. rate of change / difference in forest pixels).  That's not to say that what I have done so far is not useful - I think in combination with further analysis we can build up a wider picture of forest cover and forest cover dynamics.  For example, the overall analysis and our results could be made up of the following:
+#' My general conclusion thus far however is that with this response, I still don't think I am asking the question I want to. I think the models below are telling us which variables can predict forest cover (i.e. where is the forest? Which communes have lots of forest and which ones have little forest?).  I don't think the below models can really tell me anything about forest ***loss***, or which variables are able to predict forest cover loss/change.  I feel like I need to go further and look at forest cover change as a response (e.g. rate of change / difference in forest pixels).  That's not to say that what I have done so far is not useful - I think in combination with further analysis we can build up a wider picture of forest cover and forest cover dynamics.  For example, the overall analysis and our results could be made up of the following:
 #' 
 #' * Which variables predict where forest cover is greatest / lowest across the country? (this is what I have done. Although at the moment the question is really "...where forest cover is greatest/lowest given there is SOME forest. This is because I removed all communes with 0 forest cover right at the start, as at that stage I was planning on useing rate of change as a response and so communes with no forest were false 0's)
 #' * Which variables predict where forest is likely to be lost? (Presumably I could use binomial logistic model here: forest lost/not lost)
 #' * Then subset the communes to only those that have lost some forest, and then model rate of change / magnitude of change. (Initially this is what I was going to do, either manually i.e. two steps, or via a hurdle model)
 #' 
 #' I keep having to remind myself of what the purpose of this analysis is.  The purpose is to use the resulting model(s) to predict where in the country forest is likely to be lost under various potential scenarios. I want to be able to highlight communes where forest cover is likely to be lost if, say, population density in rural areas goes up, or if the number of land conflicts in communes with land concessions spike.  The aim WAS then to use these predictions to assess the robustness of the national wildlife corridor network to future changes.  But in theory I could do a number of things, e.g. identifiy which PAs are most vulnerable to certain future scenarios etc. 
-#' The main point being though, is that I don't think I can use the below models to do that.  
+#' The main point being though, is that I don't think I can use the below models to do that.    
 #' 
-#' Unless I am mis-understanding the usefulness of the models below.  The only way I can think to use these models to do what I want, is using the below approach:
+#' Unless I am mis-understanding the usefulness of the models below.  Please feel free to correct me if you think I am interpreting this incorrectly.  The only way I can think to use these models to do what I want, is using the below approach:
 #' 
 #' * Ignore the "global" model (i.e. the model with RE's set to means)
 #' * Pull out the individual communes of interest, e.g. the ones within the wildlife corridor, or the ones in/around the PAs
-#' * run the commune-specific models (i.e. with RE's specific to that commune) with varying ranges of the predictors, e.g. increasing population density.  Do you think this does what I want?
+#' * run the commune-specific models (i.e. with RE's specific to that commune) with varying ranges of the predictors, e.g. increasing population density.  
 #' 
-#' The obvious problem with the above approach is that I don't really have any socioeconomic predictors (apart from population density) to play with as they're all a bit shit!  The other predictor variables that have some predictive power are mostly unchangeable i.e. elevation, distance to Provincial capital etc.
+#' That approach above though, doesn't feel right to me. This is because at the moment, if I adjusted model parameters to simulate a particular commune increasing, say, its population density, I don't feel like the result would reflect forest cover dynamics in that commune. I feel like it would be more llike saying - "if this commune happened to have a higher population density, it would probably have this amount of forest", which I think is subtley but importantly different from saying - "if population density increased in this communes, this commune would likely lose xx amount of forest". 
+#' 
+#' The other obvious problem with the above approach is that I don't really have any socioeconomic predictors (apart from population density) to play with as they're all a bit shit!  The other predictor variables that have some predictive power are mostly unchangeable i.e. elevation, distance to Provincial capital etc.
 #' 
 #' So I am currently unsure how best to proceed, and I would very much appreciate some guidance!  Below I will summarise the models, the diagnostics, and the predictions.
 #' 
@@ -87,7 +89,7 @@ dat1$year.orig <- dat$year
 #' 
 #' ## Population demographics   
 #' 
-#' Full population demographics model:
+#' Full population demographics model below. `tot_pop` = total population, `pop_den` = population density, `prop_ind` = proporition indigneous.
 
 #+ popdem.m1
 popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -95,9 +97,9 @@ popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) +
 
 summary(popdem.m1)
 
-#' Variance for Province and commune are similar. Variance for year at both levels is small, but an order of magnitude smaller for the Province level. Approximate p values are sig for pop_den only. tot_pop is positive effect, pop_den and prop_ind are negative. no real correlation between fixed effects.Note: I did run the model without offset and the variance for Province and Provcomm:Province were double what they are now that offset is included.
+#' Variance for Province and commune are similar. Variance for year at both levels is small, but an order of magnitude smaller for the Province level. Approximate p values are significant for pop_den only. tot_pop is positive effect, pop_den and prop_ind are negative. No real correlation between fixed effects.Note: I did run the model without offset and the variance for Province and Provcomm:Province were double what they are now that offset is included.
 #'
-#' Plot the random effects. First plot is Commune, second plot is Province
+#' Plot the random effects. First plot is Commune and year, second plot is Province and year
 
 #+ popdem.m1 RE plots, echo=FALSE, results=TRUE
 plot_model(popdem.m1, type="re")
@@ -131,16 +133,16 @@ m6.diag.dat$m6res <- resid(popdem.m6)
 #+ popdem.m6 fitted vs observed plot, echo=FALSE, results=TRUE
 plot(m6.diag.dat$ForPix, m6.diag.dat$m6pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
 
-#' Looks good
+#' This plot looks good.
 #' 
-#' Plot residuals vs fitted values
+#' Below is a plot of residuals vs fitted values
 #' 
 #+ popdem.m6 plot fitted vs residuals, echo=FALSE,results=TRUE
 plot(m6.diag.dat$m6pred, m6.diag.dat$m6res)
 
-#' Quite bad heterogeneity here. Jeroen suggested this could be due to missing predictors, however this was also the case for previous models that had the other 2 predictors. At low predicted values, error is greater. As Jeroren said - given the structure in the data, this is almost inevitable given the extent of variation across communes. AS we will see, this is an issues with all of the models.
+#' Quite bad heterogeneity here. Jeroen suggested this could be due to missing predictors, however this was also the case for previous models that had the other 2 predictors. At low predicted values, error is greater. As Jeroren said - given the structure in the data, this is almost inevitable given the extent of variation across communes. As we will see, this is an issues with all of the models.
 #' 
-#' Exploration of the residuals over the predictors, and between provinces and communes
+#' Exploration of the residuals over the predictors, and between provinces and communes:
 #' 
 #+ popdem.m6 residual plots, echo=FALSE,results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,2))
@@ -148,7 +150,7 @@ plot(m6.diag.dat$pop_den, m6.diag.dat$m6res, ylab = "residuals", xlab = "pop den
 boxplot(m6res ~ factor(Province), data = m6.diag.dat, outline = T, xlab = "Province", ylab = "Residuals w/i Province")
 boxplot(m6res ~ factor(Provcomm), data = m6.diag.dat, outline = T, xlab = "Commune", ylab = "Residuals w/i Commune")
 
-#' A lot of the heterogeneity is driven by relatively few communes/provinces. I investigated further. If you look at the map (in GIS), the provinces with the smallest residuals are the smaller provinces in the south surrounding the capital Phnom Penh. These are provinces that generally have very little forest. But they are not the only provinces with no forest cover, so I am not sure that is the (only) reason. I think I need to look at the communes within the provinces
+#' A lot of the heterogeneity is driven by relatively few communes/provinces. I investigated further. If you look at the map (in GIS), the provinces with the smallest residuals are the smaller provinces in the south surrounding the capital Phnom Penh. These are provinces that generally have very little forest. But they are not the only provinces with no forest cover, so I am not sure that is the (only) reason. I think I need to look at the communes within the provinces.
 #' 
 #+ popdem.m6 extract problem residuals, include=FALSE
 provs <- c("Battambang","Kampong Chhnang","Kampong Thom","Kracheh","Pursat","Ratanak Kiri","Siem Reap",
@@ -162,7 +164,7 @@ prov.excl <- dat %>% filter(!Province %in% provs)
 prov.excl$type <- "other"
 prov.all <- rbind(prov.dat,prov.excl)
 
-#' Here I plot foresr pixels for each commune, separated by the communes with high residuals in the model ("problem"), and the rest ("other")
+#' Here I plot forest pixels for each commune, separated by the communes with high residuals in the model ("problem"), and the rest ("other"):
 #' 
 #+ popdem.m6 plot problem communes ForPix, echo=FALSE, results=TRUE, warnings=FALSE
 ggplot(prov.all, aes(Commune,y=ForPix, colour=type))+
@@ -170,9 +172,9 @@ ggplot(prov.all, aes(Commune,y=ForPix, colour=type))+
   theme(element_blank())+
   ylab("Forest pixels")
 
-#' I would say that the provinces that are causing the issues tend to have higher ForPix than the others. It also look potentially like the provinces causing issues are almost always losing forest cover over time (lots of vertical lines of dots)
+#' I would say that the provinces that are causing the issues tend to have higher ForPix than the others. It also look potentially like the provinces causing issues are almost always losing forest cover over time (lots of vertical lines of dots).
 #' 
-#' Plot of population density (the predictor) against forest pixels, split by the problem communes again. I have zoomed in on both axes so we can see what is gong on
+#' Plot of population density (the predictor) against forest pixels, split by the problem communes again. I have zoomed in on both axes so we can see what is going on a bit better:
 #' 
 #+ popdem.m6 plot problem communes ForPix ~ pop_den, echo=FALSE, results=TRUE, warning=FALSE
 ggplot(prov.all, aes(x=pop_den, y=ForPix, colour=type))+
@@ -183,9 +185,9 @@ ggplot(prov.all, aes(x=pop_den, y=ForPix, colour=type))+
   ylab("Forest pixels")+
   xlab("population density")
 
-#' This plot makes it also look like the problem provinces tend to have communes with higher ForPix. There is a chunk of blue with no pink where pop_den has increased to about 100 but ForPix has not decreased (whereas almost all the pink dots are lower, i.e. in the other provinces/communes at that population density forest cover is lower). 
+#' This plot makes it also look like the problem provinces tend to have communes with higher ForPix (although this is clearly not true for all communes). There is a chunk of blue with no pink where pop_den has increased to about 100 but ForPix has not decreased (whereas almost all the pink dots are lower, i.e. in the other provinces/communes at that population density forest cover is lower). 
 #' 
-#' The plot below shows the forest pixles by province (rather than commune), split by the problem provinces. 
+#' The plot below shows the forest pixels by province (rather than commune), split by the problem provinces. 
 #' 
 #+ popdem.m6 plot problem provinces and ForPix, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
@@ -197,7 +199,7 @@ ggplot()+
 
 #' This plot suggests that the problem provinces don't necessarily have more (mean) forest cover, but they do tend to have more outliers (individual communes) that are very high forest cover. 
 #' 
-#' The plot below shows the population density by province, split by the problme provinces.
+#' The plot below shows the population density by province, split by the problem provinces.
 #' 
 #+ popdem.m6 plot problem provinces and pop_den, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
@@ -206,7 +208,7 @@ ggplot()+
   theme(element_blank())+
   ylab("Population density")
 
-#' This plot suggests that overall, the problem provinces tend to have lower median pop_den value compared to the other provinces, but they again tend to have more outliers.  This is what I would expect - the communes with lower population denstiy will also likely be the communes with higher forest cover (as we saw in the above plots).
+#' This plot suggests that overall, the problem provinces tend to have lower median pop_den value compared to the other provinces, but they again tend to have more outliers.  This is what I would expect - the communes with lower population density will also likely be the communes with higher forest cover (as we saw in the above plots).
 #' 
 #' The plot below shows the same as above but by communes, rather than province
 #' 
@@ -220,7 +222,7 @@ ggplot()+
 
 #' Although slightly difficult to interpret, again this looks like there are more communes with higher pop_den values in the non-problematic provinces. And in the problem communes with higher population density values, they also tend to have much more variation in population density (i.e. the pop_den changes a lot over time)
 #' 
-#' The plot below shows the problem communes and their forest pixels
+#' The plot below shows the problem communes and their forest pixels:
 #' 
 #+ popdem.m6 plot problem communes and ForPix, echo=FALSE, results=TRUE, warning=FALSE
 ggplot()+
@@ -230,9 +232,9 @@ ggplot()+
   theme(element_blank())+
   ylab("Forest pixels")
 
-#' Again, difficult to see a huge amount however I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
+#' Again, difficult to see a huge amount, however I would say that it looks like the problem provinces in general have more variation in ForPix, both within communes and between communes. 
 #' 
-#' If you look at the plot of the main effect in the section below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.  I do not think there is much I can do about this?  Would including year as a fixed effect perhaps help account for the variation within communes across years?
+#' If you look at the plot of the main effect below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.  I do not think there is much I can do about this?  Would including year as a fixed effect perhaps help account for the variation within communes across years?
 #' 
 #' ### Predict main (global) effects
 #' 
@@ -265,7 +267,7 @@ popdem.m6.p1 + popdem.m6.p2
 #' 
 #' ### Predict for specific communes
 #' 
-#' Here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes.  I will also do this for a random sample of communes.
+#' Here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercepts at the extremes.  I will also do this for a random sample of communes.
 #' 
 #+ popdem.m6 commune predictions, echo=FALSE, results=T,fig.width=10, fig.height=10, dpi=100
 # save the popdem.m4 commune-level random effects
@@ -576,7 +578,7 @@ for(i in 1:length(provcomm_lvls)) {
 #' 
 #' There are two variables in this set - the proportion of the population engaged in the Primary Sector and the proportion engaged in the Secondary Sector. The primary sector includes sectors of the economy that extracts or harvests products from the earth such as raw materials and basic foods, and includes farming, fishing, mining etc. The secondary sector includes the production of finished goods from raw materials, and includes manufacturing, processing, and construction.  
 #' 
-#' I have no *a priori* hypothesis about an interaction between these two variables, and so I have not tested one.  It is also plausible that although these two are no correlated (-0.2), they may well be related as they are both proportions drawn from the same population, therefore including an interaction might be misleading.
+#' I have no *a priori* hypothesis about an interaction between these two variables, and so I have not tested one.  It is also plausible that although these two are not correlated (-0.2), they may well be related as they are both proportions drawn from the same population, therefore including an interaction might be misleading.
 #' 
 #' The model:
 #' 
@@ -587,7 +589,7 @@ emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|
 
 summary(emp.m1)
 
-#' Province and commune variance similar to other model sets.  Year variance for commune is order of magnitude larger than for province, but both very small. propPrimSec has positive effect, propSecSec has negative, but both very small and approximate p values > 0.5.  The model produces an warning about large eigenvalues.  The variables are already scaled so I guess this just suggests a poor model fit. 
+#' Province and commune variance similar to other model sets.  Year variance for commune is an order of magnitude larger than for province, but both very small. propPrimSec has positive effect, propSecSec has negative, but both very small and approximate p values > 0.5.  The model produces a warning about large eigenvalues.  The variables are already scaled so I guess this just suggests a poor model fit. 
 #' 
 #' Quick plot of the effects
 #' 
@@ -676,7 +678,7 @@ summary(jus.m1)
 plot_model(jus.m1, type="pred", terms="crim_case")
 plot_model(jus.m1, type="pred", terms="land_confl")
 
-#' I removed land_confl for jus.m2, and LRT suggested the simpler model was better, but the resulting odel still had tiny effect for srim_case, with large approximate p value. The plot was just as flat as jus.m1.
+#' I removed land_confl for jus.m2, and LRT suggested the simpler model was better, but the resulting model still had tiny effect for crim_case, with large approximate p value. The plot was just as flat as jus.m1.
 #' 
 #' ## Migration
 #' 
@@ -711,7 +713,7 @@ plot_model(mig.m2, type="pred", terms="Pax_migt_out")
 
 #' ## Environmental variables
 #' 
-#' This set initially had two predictor variables - mean elevation and habiat. These variables were intially supposed to be "control" variables, i.e. ensuring that other, non-socioeconomic predictors that would be likely to affect forest cover, were taken into account.   I did run some models, diagnostics, and predictions using both variables, but I have decided to drop habitat altogether. This is because the layer I was using for the habitat was the same layer that produced the response - i.e. to get the "forest pixel" layer used in the response, I simply aggregated all of the forest habitat types.  Therefore I don't think it is appropriate to use the same layer as a predictor!  That leaves me with mean elevation.
+#' This set initially had two predictor variables - mean elevation and habitat. These variables were intially supposed to be "control" variables, i.e. ensuring that other, non-socioeconomic predictors that would be likely to affect forest cover, were taken into account.   I did run some models, diagnostics, and predictions using both variables, but I have decided to drop habitat altogether. This is because the layer I was using for the habitat was the same layer that produced the response - i.e. to get the "forest pixel" layer used in the response, I simply aggregated all of the forest habitat types.  Therefore I don't think it is appropriate to use the same layer as a predictor!  That leaves me with mean elevation.
 #' 
 #+ env.m2 elevation only, include=TRUE
 env.m2 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -737,13 +739,13 @@ env.m2.diag$m2pred <- as.vector(predict(env.m2, type="response"))
 #+ env.m2 predicted vs observed plot, echo=FALSE, results=TRUE
 plot(env.m2.diag$m2pred, env.m2.diag$ForPix)
 
-#' This is the predicted versus observed plot, which looks good.
+#' The above plot is the predicted versus observed values, which looks good.
 
 #+ env.m2 residuals vs fitted plot, echo=FALSE, results=TRUE
 plot(env.m2.diag$m2pred, env.m2.diag$m2res)
 
 
-#' Again heteroskedasicity is an issues here - particularly bad a low predicted forest cover. Similar to the popdem models.
+#' The above plot is the predicted values versus model residuals. Again heteroskedasicity is an issues here - particularly bad a low predicted forest cover. Similar to the popdem models.
 #' 
 #' Bit more exploration of residuals, but now over the explanatory variable:
 
@@ -785,7 +787,7 @@ ggplot(prov.elev.mean, aes(x=Province, y=mean, colour=type))+
   theme(element_blank())+
   ylab("Mean elevation")
 
-#' The above plot shows the mean elevation (on the original scale) for each Province, with the "problem" provinces (i.e. the ones with the largest residuals) coloured blue. There is not a stiking trend, but the 4 provinces with the lowest mean elevation are all *not* problematic ones. 
+#' The above plot shows the mean elevation (on the original scale) for each Province, with the "problem" provinces (i.e. the ones with the largest residuals) coloured blue. There is not a striking trend, but the 4 provinces with the lowest mean elevation are all *not* problematic ones. 
 #' 
 #' Now I will pull out the individual communes that have residual values that match the weird pattern and see if there is any other pattern that might explain it.
 
@@ -795,7 +797,7 @@ prob.coms <- env.m2.diag %>% filter(m2res > 0.5 | m2res < -0.5)
 
 plot(prob.coms$mean_elev, prob.coms$m2res)
 
-#' These are now the communes with the weird shape. Let's have a look that these communes and their mean elevaiton (on the original scale), compared with all other communes:
+#' The above plot are the "problem" residuals. These are now the communes with the weird shape. Let's have a look that these communes and their mean elevation (on the original scale), compared with all other communes:
 #' 
 #+ env.m2 prob.coms, echo=FALSE, results=TRUE 
 coms <- prob.coms$Commune
@@ -826,7 +828,7 @@ ggplot()+
   theme(element_blank())+
   ylab("Forest pixels")
 
-#' Ok so there is an obvious difference here.  The problem communes clearly mostly lose forest over time (vertical lines of dots), whereas the others generally do not (single points). This is the same issue as highlighted in the popdem model. So the global model does not fit well when communes lose forest over time.
+#' Ok so there is an obvious difference here.  The problem communes clearly mostly lose forest over time (vertical lines of dots), whereas the others generally do not (single points). This is the same issue as highlighted in the population demographics model. So the global model does not fit well when communes lose forest over time.
 #' 
 #' ### Predict main effects 
 #' 
@@ -855,7 +857,7 @@ env.m2.main.plot2 <- ggplot(env_m2_newdata, aes(x=mean_elev, y=pred))+
 
 env.m2.main.plot + env.m2.main.plot2
 
-#' The above two plots show the predicted effects of mean elevation for an "average" commune (i.e. not commune-specific RE's), with a free y-axis (left) and with a realistic y axis (right).  We can see that mean elevation has a positive effect on forest cover. I was expecing this relationship. Most of the highly forested areas in Cambodia are in the provinces with higher elevation.
+#' The above two plots show the predicted effects of mean elevation for an "average" commune (i.e. not commune-specific RE's), with a free y-axis (left) and with a realistic y axis (right).  We can see that mean elevation has a positive effect on forest cover. I was expecting this relationship. Most of the highly forested areas in Cambodia are in the provinces with higher elevation.
 #' 
 #' ### Predict for specific commmunes
 #' 
@@ -965,7 +967,7 @@ for(i in 1:length(provcomm_lvls)) {
   points(dat_i$mean_elev, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
-#' In the above plots, the top row are the communes with intercepts clsoest to 0, middle row are those with intercepts furthest above 0, and bootm row are those with intercepts furthest below 0. The dashed black line is the global model, and the coloured solid lines are the commune-specific predictions. The dots are the actual ForPix ~ mean elevation points for that commune. 
+#' In the above plots, the top row are the communes with intercepts clsoest to 0, middle row are those with intercepts furthest above 0, and bottom row are those with intercepts furthest below 0. The dashed black line is the global model, and the coloured solid lines are the commune-specific predictions. The dots are the actual ForPix ~ mean elevation points for that commune. 
 #' We can see that as for the population demographics model, the global model predicts poorly for communes with high forest cover, regardless of mean elevation. If a commune has low forest cover, then the global model predicts well for increasing values of elevation, until elevation reaches a scaled value of ~1, after which the model predicts poorly (becasue a commune can't increase in elevation).  
 #' 
 #' Let's do the same predictions but for a random set of communes: 
@@ -1071,7 +1073,7 @@ hum.p5 <- plot_model(hum.m1, type="pred", terms="PA_cat") # surprised RMS level 
 
 hum.p1+hum.p2+hum.p3+hum.p4+hum.p5 
 
-#' From the quick plots above, it looks like both dist_border and dist_provCap do have a relationship with forest cover.  elc does not look promising (note the y axis - differnece is tiny), and neither really does PA.  Not much difference in predicted forest cover for the different PA categories, apart from the RMS level.   
+#' From the quick plots above, it looks like both dist_border and dist_provCap do have a relationship with forest cover.  elc does not look promising (note the y axis - difference is tiny), and neither really does PA.  Not much difference in predicted forest cover for the different PA categories, apart from the RMS (RAMSAR) level.   
 #' 
 #' I conducted LRT's and AICc comparisons, and moved forward with predictions and plotting for models with dist_border, dist_provCap, PA and elc.  But it became clear that PA and elc did very little, and so I have settled on a model with just dist_border and dist_provCap. 
 #' 
@@ -1098,7 +1100,7 @@ plot(hum.diag.dat$m5.pred, hum.diag.dat$ForPix)
 #+ hum.m5 plot residuals versus predicted, echo=FALSE, results=TRUE
 plot(hum.diag.dat$m5.pred, hum.diag.dat$m5res)
 
-#' This doesn't look great. Some outlier large predictions which have small residuals, but a lot of heterogeneity at smaller predicted values. There's an odd line of residuals just below 2000 (x axis) which suggests there's one predicted value that is appearing quite a few times?  Below I look more closely at the residuals.
+#' The above plot is the predicted values versus the model residuals. This doesn't look great. Some outlier large predictions which have small residuals, but a lot of heterogeneity at smaller predicted values. There's an odd line of residuals just below 2000 (x axis) which suggests there's one predicted value that is appearing quite a few times?  Below I look more closely at the residuals.
 #' 
 #+ hum.m5 residual plots, echo=FALSE, results=TRUE, fig.width=10, fig.height=10, dpi=100
 par(mfrow=c(2,2))
@@ -1215,7 +1217,7 @@ hum.p7 <-ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
   ylim(0,2000)+
   xlab("Distance to provincial capital (scaled and centered)")+
   ylab("Predicted forest cover (pixels)")+
-  ggtitle("Distance to provincial captial")
+  ggtitle("Distance to provincial capital")
 
 hum.p6 + hum.p7
 
@@ -1327,7 +1329,7 @@ for(i in 1:length(provcomm_lvls)) {
   points(dat_i$dist_border, dat_i$ForPix, pch = 21, bg = com_colours[i], col = com_colours[i])
 }
 
-#' These plots suggest the global model fits poorly for communes with higher forest cover, but fits better for communes with low forest cover, regardless of dist_border, which is much the same as previous models. The global model is better at predicting for communes with intercpets around the global mean, or below it. 
+#' These plots suggest the global model fits poorly for communes with higher forest cover, but fits better for communes with low forest cover, regardless of dist_border, which is much the same as previous models. The global model is better at predicting for communes with intercepts around the global mean, or below it. 
 #' 
 #' Now I will do the same plots but for a random subset of communes.
 #' 
