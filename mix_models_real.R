@@ -5171,6 +5171,34 @@ r.squaredGLMM(multi.mod.3)
 plot_model(multi.mod.3, type="pred")
 plot_model(multi.mod.3, type="int")
 
+
+# test models with interactions between pop_den and the human control vars
+multi.mod.4 <- glmer(ForPix ~ pop_den*propPrimSec + pop_den*PA + offset(log(areaKM)) +
+                              (year|Province/Provcomm), 
+                     glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)),
+                     data = dat1, family = "poisson")
+summary(multi.mod.4)
+plot_model(multi.mod.4, type="int")
+# Turns out there is a fairly decent looking interaction between pop_den and PA presence. And it makes sense!  As pop_den increases, if there is a PA in the commune then forest cover decreases at a slower rate, compared to a commune with no PA. 
+
+
+# test model with PA_cat
+multi.mod.5 <- glmer(ForPix ~ pop_den*propPrimSec + pop_den*PA_cat + offset(log(areaKM)) +
+                              (year|Province/Provcomm), 
+                     glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)),
+                     data = dat1, family = "poisson")
+summary(multi.mod.5)
+plot_model(multi.mod.5, type="int")
+# I think there are too many levels and not enough data here.
+
+
+    # Plotting multiple variable model ####
+
+# The best, and I guess final model is
+
+
+
+
 #
 ### simple test ####
 
