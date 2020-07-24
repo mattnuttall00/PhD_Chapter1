@@ -5120,8 +5120,58 @@ plot_model(popdem.mig.m1, type = "int")
 # a couple of the models above showed some interesting interactions - pop_den*propPrimSec and pop_den*land_confl
 
 # try a model with both
+multi.mod.1 <- glmer(ForPix ~ pop_den*propPrimSec + pop_den*land_confl + offset(log(areaKM)) +
+                              (year|Province/Provcomm), 
+                     data = dat1, family = "poisson")
+summary(multi.mod.1)
 
 
+# variance component analysis
+print(VarCorr(multi.mod.1),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(1.49,0.004,1.63,0.0007))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+
+# marginal and conditional r2
+r.squaredGLMM(multi.mod.1)
+# marginal r2 (fixed effects) is extremely low 0.008, and the conditional (fixed + random) is 0.99.  This basically means that the random effects are explaing essentially all the variance.
+
+
+# remove land_confl and see if the model is improved
+multi.mod.2 <- glmer(ForPix ~ pop_den*propPrimSec + offset(log(areaKM)) +
+                              (year|Province/Provcomm), 
+                     data = dat1, family = "poisson")
+summary(multi.mod.2)
+
+# compare models
+anova(multi.mod.1,multi.mod.2)
+# the simpler model is better
+
+
+# what if we added some of the control variables to the model with pop_den*propPrimSec
+# mean_elev, dist_border, dist_provCap
+multi.mod.3 <- glmer(ForPix ~ pop_den*propPrimSec + dist_border + dist_provCap + offset(log(areaKM)) +
+                              (year|Province/Provcomm), 
+                     data = dat1, family = "poisson")
+summary(multi.mod.3)
+# all terms appear to have some support which is good - I was worried the control vars would destroy any effect of pop_den and propPrimSec. 
+
+# variance component analysis
+print(VarCorr(multi.mod.3),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(1.36,0.004,1.58,0.0007))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+# variance has gone down a bit for the random effects
+
+# marginal and conditional r2
+r.squaredGLMM(multi.mod.3)
+# marginal r2 has increased by an order of magnitude compared to multi.mod.1
+
+# quick plots
+plot_model(multi.mod.3, type="pred")
+plot_model(multi.mod.3, type="int")
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
