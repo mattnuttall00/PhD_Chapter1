@@ -368,6 +368,8 @@ pix10.agg <- PixAggFun(pix10, 2010)
 pix11.agg <- PixAggFun(pix11, 2011)
 pix12.agg <- PixAggFun(pix12, 2012)
 
+# Initial analyses removed all communes with 0 forest cover. This was because the response variable was going to be CHANGE in forest cover, and therefore communes with zero forest were unable to lose any, and thus were false zeros.  The code below removes these. Skip down to the merging code a few lines down if you do not want to remove false zeros. I am doing this becuase the response I am now using is raw forest pixels, and so communes with zero forest cover are real zeros.
+
 # before merging together, I need to remove false zeros, starting with 2007
 pix07.agg <- pix07.agg %>% filter(ForPix >0)
 
