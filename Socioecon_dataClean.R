@@ -168,6 +168,9 @@ CCI@data@values
 
   ## Commune shapefile ####
 
+# read in as a sf object
+com.shp <- st_read('Spatial_data/boundary_khum.shp')
+
 # Commune shapefile
 com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
 
@@ -196,6 +199,8 @@ forest.shp <- subset(com.shp, CODEKHUM %in% comCode)
 str(forest.shp@data)
 plot(forest.shp)
 
+com.shp <- subset(com.shp, CODEKHUM %in% comCode)
+plot(com.shp)
 
   ## Calculate forested pixels in each commune (not working) ####
 
@@ -663,10 +668,21 @@ length(dat_merge$PA[is.na(dat_merge$PA)])
 #### Clean, format, and error check data -----------------------------------------------
   ## Load working version of data ####
 
+# save working version of the data with ALL communes (i.e. communes with zero forest NOT removed)
+write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
 
 
-# load working version of the data
+# load working version of the data 
+
+# if using the data where communes with 0 forest have been removed
 dat_merge <- read.csv("Data/commune/dat_merge.csv", header=T)
+
+# if using data where no communes have been removed
+dat_merge <- read.csv("Data/commune/dat_merge_allComs.csv", header=T)
+
+# get rid of annoying diagostic warnings
+dat_merge <- as.data.frame(dat_merge)
+
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
 
@@ -691,6 +707,7 @@ dat_merge$year <- as.factor(dat_merge$year)
 # 11) Environmental additional (mean_elev, habitat) #2
 # 12) Human additional (dist_border, dist_provCap, elc, PA, PA_cat) #5
 
+# habitat removed here because I am not using it in my models now (see mix_models_real script)
 dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
                                   ForPix, diffPix,
                           tot_pop, family, male_18_60, fem_18_60, pop_over61, tot_ind, prop_ind, pop_den,
@@ -701,7 +718,7 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
                                   land_confl, crim_case,
                                   inf_mort, U5_mort,
                                   Pax_migt_in, Pax_migt_out,
-                                  mean_elev, habitat,
+                                  mean_elev,
                                   dist_border, dist_provCap, elc, PA, PA_cat)
 
   ## Error checking ####
@@ -716,7 +733,7 @@ dat_merge <- dat_merge %>% select(year,Province, Commune, commGIS, areaKM,
 # Forest cover data
 # Correcting duplicate communes in forest_dat
 # Matching socioeconoimc and forest data sets
-# Removing false zeros
+# Removing false zeros (There are instructions in this section if you are not removing false zeros)
 # Additional variables (and sub chunks)
 
 # load dat_merge
@@ -727,7 +744,15 @@ dat_merge <- dat_merge[ ,-1]
     # area ####
 hist(dat_merge$areaKM)
 dat_merge %>% filter(areaKM >2000)
-# some very large communes - I have checked - they are in Mondulkiri are are correct
+# some very large communes 
+
+large.area <- dat_merge %>% filter(areaKM >2000) %>% select(commGIS)
+area.shp <- subset(com.shp, CODEKHUM %in% large.area)
+
+ggplot(com.shp)+
+  geom_sf()
+
+
 
     # ForPix ####
 
@@ -736,7 +761,7 @@ length(dat_merge$ForPix[is.na(dat_merge$ForPix)])
 hist(dat_merge$ForPix)
 dat_merge %>% filter(ForPix < 10) %>% select(year, Province, Commune, ForPix)
 dat_merge %>% filter(ForPix == 0) %>% select(year, Province, Commune, ForPix)
-# Lots of communes with small number of forest pixels.
+# Lots of communes with very few or zero forest pixels.
 
 
     # diffPix ####
