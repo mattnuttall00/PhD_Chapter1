@@ -2249,6 +2249,17 @@ popdem.m6 <- glmer(ForPix ~ pop_den + offset(log(areaKM)) + (year|Province/Provc
 
 plot_model(popdem.m6, type = "pred")
 
+# variance component analysis
+print(VarCorr(popdem.m6),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(1.51329170,0.00459509,1.67420722,0.00067864))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+
+# marginal and conditional r2
+r.squaredGLMM(popdem.m6)
+# marginal r2 (fixed effects) is extremely low 0.007, and the conditional (fixed + random) is 0.99.  This basically means that the random effects are explaing essentially all the variance.
+
+
 # anova
 anova(popdem.m4, popdem.m6, test="Chisq")
 # the model with tot_pop is better
@@ -5031,6 +5042,86 @@ for(i in 1:length(provcomm_lvls)) {
 ### similar conclusions to the dist_border model
 
 #
+## Models with multiple sets ####
+
+# Above I have only modelled variables within a single set together. There is argument however that variables from different sets may inflence each other. Therefore I think it is worth exploring models that have pre-selected (i.e. selected because of a priori hypotheses) variables from different sets together.
+
+# Population density is the only variable with some power, and so this will form the basis of the models.
+
+# hypotheses:
+
+# pop_den * education. As pop_den increases, if there are more people yet fewer males in school, then there could be more young men in agriculture/forest clearance.
+
+# pop_den * employment. As pop_den increases, if there is a higher proportion of people in the primary sector then there are more people exerting pressure on natural resources in the same area. 
+
+# pop_den * Les_1_R_land. If there are more people in the same area, and there are fewer people with llitte or no rice land, then that might suggest that agricultural land is expanding.
+
+# pop_den * land_confl.  As population density increases, if land conflict also increases, there may be more land grabbing
+
+# pop_den * pax_migt_in.  Population density may well be influenced by in-migration. If a commune's population is made up of more and more migrants, there may be more land grabbing, and traditional land management may be less influential i.e. if khmer people migrate into indigenous areas.
+
+  # pop_den * education ####
+
+popdem.edu.m1 <- glmer(ForPix ~ pop_den *  M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), 
+                   data = dat1, family = "poisson")
+
+summary(popdem.edu.m1)
+
+plot_model(popdem.edu.m1, type = "int")
+# There doesn't appear to be an interaction. M6_24_sch does nothing
+
+  # pop_den * employment ####
+
+popdem.emp.m1 <- glmer(ForPix ~ pop_den *  propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), 
+                       data = dat1, family = "poisson")
+
+summary(popdem.emp.m1)
+# propPrimSec is nearly sig, and the interaction term is.
+
+plot_model(popdem.emp.m1, type = "int")
+# the interaction is what I would have expected. When the population density increases, if the proportion of people engaged in the primary sector is low, forest cover decreases slower. If the proportion of people engaged in the primary sector is high, forest cover decreases quicker.
+
+  # pop_den * economic security ####
+
+popdem.ecsec.m1 <- glmer(ForPix ~ pop_den * Les1_R_Land + offset(log(areaKM)) + (year|Province/Provcomm), 
+                       data = dat1, family = "poisson")
+
+summary(popdem.ecsec.m1)
+# No signifcant interaction and Les1_R_Land is not important
+
+plot_model(popdem.ecsec.m1, type = "int")
+
+  # pop_den * land conflict ####
+
+popdem.lconf.m1 <- glmer(ForPix ~ pop_den * land_confl + offset(log(areaKM)) + (year|Province/Provcomm), 
+                         data = dat1, family = "poisson", 
+                         glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(popdem.lconf.m1)
+# although the land_confl term and the interaction term don't have signifncant approximate p values, the plot of the interaction suggests that something is going on. When population desnity increases but land conflicts are low, forest cover decreases less quickly. But when population density increases and land conflict are high, forest cover decreases more quickly.
+
+plot_model(popdem.lconf.m1, type = "int")
+
+  # pop_den * migration ####
+
+popdem.mig.m1 <- glmer(ForPix ~ pop_den * Pax_migt_in + offset(log(areaKM)) + (year|Province/Provcomm), 
+                         data = dat1, family = "poisson", 
+                         glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(popdem.mig.m1)
+# migration term and interaction term don't appear sig
+
+plot_model(popdem.mig.m1, type = "int")
+# some evidence of an interaction in the plot but not hugely convincing.
+
+
+  # Multiple vars ####
+
+# a couple of the models above showed some interesting interactions - pop_den*propPrimSec and pop_den*land_confl
+
+# try a model with both
+
+
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
