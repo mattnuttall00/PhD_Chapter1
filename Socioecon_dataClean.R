@@ -168,14 +168,10 @@ CCI@data@values
 
   ## Commune shapefile ####
 
+## as SF object
+
 # read in as a sf object
 com.shp <- st_read('Spatial_data/boundary_khum.shp')
-
-# Commune shapefile
-com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
-
-# set CRS to UTM zone 48, Indian 1960
-proj4string(com.shp) <- CRS("+init=epsg:3148")
 
 # explore shapefile
 plot(com.shp, bg="transparent", add=T)
@@ -184,23 +180,28 @@ nrow(com.shp)
 summary(com.shp)
 head(com.shp@data)
 
+# plot using ggplot
+ggplot(com.shp)+
+  geom_sf()
+
+# set CRS to UTM zone 48, Indian 1960
+proj4string(com.shp) <- CRS("+init=epsg:3148")
+
 # are there any polygons with area=0
 length(com.shp$AREA[com.shp$AREA==0])
 length(com.shp$AREA[com.shp$AREA<5000])
 
-# try to subset shapefile for only forested communes
-str(com.shp@data)
-
-# pull out commGIS
-comCode <- dat_merge$commGIS
+# pull out unique commGIS from data (because they are repeated for each year)
+comCode <- unique(dat_merge$commGIS)
 
 # subset
-forest.shp <- subset(com.shp, CODEKHUM %in% comCode)
-str(forest.shp@data)
-plot(forest.shp)
-
 com.shp <- subset(com.shp, CODEKHUM %in% comCode)
+str(com.shp)
 plot(com.shp)
+
+
+## load using GDAL
+com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
 
   ## Calculate forested pixels in each commune (not working) ####
 
@@ -749,8 +750,11 @@ dat_merge %>% filter(areaKM >2000)
 large.area <- dat_merge %>% filter(areaKM >2000) %>% select(commGIS)
 area.shp <- subset(com.shp, CODEKHUM %in% large.area)
 
+# Add areaKM to shapefile attribute table
+com.shp$areaKM <- com.shp$AREA / 1000000
+
 ggplot(com.shp)+
-  geom_sf()
+  geom_sf(aes(fill=areaKM > 2000))
 
 
 
