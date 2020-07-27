@@ -787,14 +787,12 @@ hist(dat_merge$areaKM)
 dat_merge %>% filter(areaKM >2000)
 # some very large communes 
 
-large.area <- dat_merge %>% filter(areaKM >2000) %>% select(commGIS)
-area.shp <- subset(com.shp, CODEKHUM %in% large.area)
 
-# Add areaKM to shapefile attribute table
+# Add areaKM to primary shapefile attribute table
 com.shp$areaKM <- com.shp$AREA / 1000000
 
 ggplot(com.shp)+
-  geom_sf(aes(fill=AREA > 2000))
+  geom_sf(aes(fill=areaKM > 1000))
 
 
 
@@ -806,6 +804,41 @@ hist(dat_merge$ForPix)
 dat_merge %>% filter(ForPix < 10) %>% select(year, Province, Commune, ForPix)
 dat_merge %>% filter(ForPix == 0) %>% select(year, Province, Commune, ForPix)
 # Lots of communes with very few or zero forest pixels.
+
+# subset dat_merge to get ForPix and commGIS for each year
+ForPix07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,ForPix)
+ForPix08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,ForPix)
+ForPix09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,ForPix)
+ForPix10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,ForPix)
+ForPix11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,ForPix)
+ForPix12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,ForPix)
+
+# add onto the annual shapefiles
+com.shp.07 <- left_join(com.shp.07, ForPix07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, ForPix08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, ForPix09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, ForPix10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, ForPix11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, ForPix12, by="commGIS")
+
+
+# plot all
+forpix_plot07 <- ggplot(com.shp.07)+
+                  geom_sf(aes(fill=ForPix == 0))
+forpix_plot08 <- ggplot(com.shp.08)+
+                  geom_sf(aes(fill=ForPix == 0))
+forpix_plot09 <- ggplot(com.shp.09)+
+                  geom_sf(aes(fill=ForPix == 0))
+forpix_plot10 <- ggplot(com.shp.10)+
+                  geom_sf(aes(fill=ForPix == 0))
+forpix_plot11 <- ggplot(com.shp.11)+
+                  geom_sf(aes(fill=ForPix == 0))
+forpix_plot12 <- ggplot(com.shp.12)+
+                  geom_sf(aes(fill=ForPix == 0))
+
+(forpix_plot07 | forpix_plot08)/
+(forpix_plot09 | forpix_plot10)/
+(forpix_plot11 | forpix_plot12)
 
 
     # diffPix ####
@@ -847,14 +880,21 @@ summary(dat_merge$areaKM)
 summary(dat_merge$tot_pop)
 
 # where are the communes with the largest populations
-dat_merge %>% filter(tot_pop > 20000) %>% select(year, commGIS, Province, Commune, tot_pop)
-# Ii can believe these. Kampong Cham, Kandal are both around Phnom Penh, Battambang is the third largest city, Siem Reap is the secon largest, and Otdar Meanchey is on the Thai border
+dat_merge %>% filter(tot_pop > 30000) %>% select(year, commGIS, Province, Commune, tot_pop)
+# I can believe these. Kampong Cham, Kandal are both around Phnom Penh, Battambang is the third largest city, Siem Reap is the secon largest, and Otdar Meanchey is on the Thai border
+
+dat_merge %>% filter(tot_pop > 50000) %>% select(year, commGIS, Province, Commune, tot_pop)
+# largest populations are in Phnom Penh which makes sense
 
 # check histo per year
 ggplot(dat_merge, aes(dat_merge$tot_pop))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 # slight dip in 2011 and 2012
+
+
+
+### below is the original cleaning code for only forested communes. Go further down for the cleaning code for the new analysis which includes all communes
 
 # plot all populations
 ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
@@ -924,7 +964,125 @@ dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop,
 
 
 
+### Cleaning for data with ALL communes
 
+# Plot populations by province
+ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Province), nrow = 2, ncol=12)+
+  theme(legend.position="none")
+# most obvious weird ones (with zigzagging trends) are Battambang, Banteay Meanchey, Kandal, Phnom Penh, Pursat, Takeo
+
+## Battambang
+
+ggplot(dat_merge[dat_merge$Province=="Battambang",], 
+        aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+    geom_line()
+# the problem commune is the only commune with tot_pop above 30,000
+
+dat_merge %>% filter(Province=="Battambang" & tot_pop > 30000) %>% select(year,Commune,tot_pop)
+# Boeng Pring
+
+dat_merge %>% filter(Province=="Battambang" & Commune=="Boeng Pring") %>% select(year,tot_pop)
+# the two outliers are identical values, and the other years appear to be increasing steadily as you would expect. I will change the two outliers to the mean between the two sandwiching years.
+
+# are there any other rows in dat_merge with that tot_pop value?
+dat_merge %>% filter(tot_pop == 33525)
+# no so can replace just using the tot_pop value
+
+# find new values
+(9278+9502)/2
+# 2008 value is 9390
+
+(9502+9725)/2
+# 2010 value is 9614
+
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, 
+                                                    which(tot_pop==33525 & year=="2008"),
+                                                    9390))
+dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop, 
+                                                    which(tot_pop==33525 & year=="2010"),
+                                                    9614))
+dat_merge %>% filter(Province=="Battambang", Commune=="Boeng Pring") %>% select(tot_pop)
+
+## Banteay Meanchey
+
+ggplot(dat_merge[dat_merge$Province=="Banteay Meanchey",], 
+       aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+  geom_line()
+# problem commune is alo the only one above 30000
+
+dat_merge %>% filter(Province=="Banteay Meanchey" & tot_pop > 30000) %>% select(year,Commune,tot_pop)
+# Ruessei Kraok
+
+dat_merge %>% filter(Commune=="Ruessei Kraok") %>% select(year,Commune,tot_pop)
+# hard to say what's going on, but the first two years are high and show steady decrease, and the last two years are lower, and still show steady decrease. This suggests to me that the pop is decreasing steadily over the course of the study period. 
+
+# linear interpolation to find values for 2009 and 2010
+x <- c(1,4)
+y <- c(31711,23865)
+
+approx(x=x, y=y, xout = c(2,3))
+
+# change values
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Ruessei Kraok"] <- 29096
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Ruessei Kraok"] <- 26480
+
+# there is another commune with a zig zag shape
+dat_merge %>% filter(Province=="Banteay Meanchey" & tot_pop > 20000) %>% select(Commune,year,tot_pop)
+dat_merge %>% filter(Commune=="Banteay Neang") %>% select(year,Commune,tot_pop)
+# Banteay Neang
+
+# interpolation for 2008,2009,2010
+x <- c(1,5)
+y <- c(20145,20047)
+approx(x=x,y=y,xout=c(2,3,4))
+
+# change values
+dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Banteay Neang"] <- 20121
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Banteay Neang"] <- 20096
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Banteay Neang"] <- 20072
+
+
+## Kandal
+ggplot(dat_merge[dat_merge$Province=="Kandal",], 
+       aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+  geom_line(show.legend = FALSE)
+# after closer inspection I think this is fine. There are a few commune that zig zag a bit, but not major, and it will be very difficult to identify them 
+
+
+## Phnom Penh
+ggplot(dat_merge[dat_merge$Province=="Phnom Penh",], 
+       aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+  geom_line(show.legend = FALSE)
+# I'm looking at the line that increases but zig zags beyond 40000
+
+dat_merge %>% filter(Province=="Phnom Penh" & tot_pop > 40000) %>% select(year,Commune,tot_pop)
+dat_merge %>% filter(Commune=="Tuol Sangkae") %>% select(Province,year,tot_pop)
+# The values for 2008 and 2010 are identical which is suspicious. I want an interpolated line between 2008 and 2011
+
+x <- c(1,4)
+y <- c(40247,53298)
+approx(x=x,y=y,xout=c(2,3))
+
+# replace values
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Tuol Sangkae"] <- 44597
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Tuol Sangkae"] <- 48948
+
+# There are other zigzag lines but nothing too bad, and difficult to identify
+
+# from the plot you can see how many communes disapear in 2010. Must have been some big adminstrative reshuffle
+
+
+## Pursat
+ggplot(dat_merge[dat_merge$Province=="Pursat",], 
+       aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+  geom_line(show.legend = FALSE)
+# yikes.
+
+identify(x,y,plot = TRUE)
+
+#
     # family ####
 
 hist(dat_merge$family)
