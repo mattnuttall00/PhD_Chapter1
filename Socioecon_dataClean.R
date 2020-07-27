@@ -200,6 +200,46 @@ str(com.shp)
 plot(com.shp)
 
 
+
+# test plotting based on data from dat_merge
+comInd <- dat_merge$commGIS[dat_merge$prop_ind > 0.8]
+comInd <- unique(comInd)
+
+# plots only the selected communes
+ggplot(com.shp[com.shp$CODEKHUM %in% comInd,])+
+  geom_sf()
+
+# this doesn't work
+ggplot(com.shp)+
+  geom_sf(aes(fill = CODEKHUM[CODEKHUM %in% comInd]))
+
+# add prop_ind data to the shapefile to facilitate plotting
+prop_ind07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,prop_ind)
+prop_ind08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,prop_ind)
+prop_ind09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,prop_ind)
+prop_ind10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,prop_ind)
+prop_ind11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,prop_ind)
+prop_ind12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,prop_ind)
+
+## subset shapefile for each year (because each year of dat_merge has different number of rows to the shapefile)
+
+# extract annual commGIS values
+dat07 <- dat_merge$commGIS[dat_merge$year=="2007"]
+dat08 <- dat_merge$commGIS[dat_merge$year=="2008"]
+dat09 <- dat_merge$commGIS[dat_merge$year=="2009"]
+dat10 <- dat_merge$commGIS[dat_merge$year=="2010"]
+dat11 <- dat_merge$commGIS[dat_merge$year=="2011"]
+dat12 <- dat_merge$commGIS[dat_merge$year=="2012"]
+
+# subset shapefile
+com.shp.07 <- subset(com.shp, CODEKHUM %in% dat07)
+com.shp.08 <- subset(com.shp, CODEKHUM %in% dat08)
+com.shp.09 <- subset(com.shp, CODEKHUM %in% dat09)
+com.shp.10 <- subset(com.shp, CODEKHUM %in% dat10)
+com.shp.11 <- subset(com.shp, CODEKHUM %in% dat11)
+com.shp.12 <- subset(com.shp, CODEKHUM %in% dat12)
+
+
 ## load using GDAL
 com.shp <- readOGR(dsn = 'Spatial_data/boundary_khum.shp')
 
@@ -754,7 +794,7 @@ area.shp <- subset(com.shp, CODEKHUM %in% large.area)
 com.shp$areaKM <- com.shp$AREA / 1000000
 
 ggplot(com.shp)+
-  geom_sf(aes(fill=areaKM > 2000))
+  geom_sf(aes(fill=AREA > 2000))
 
 
 
@@ -957,6 +997,46 @@ ggplot(dat_merge, aes(dat_merge$pop_over61))+
   facet_grid(cols = vars(year))
 
     # tot_ind & prop_ind (RUN) ####
+
+### adding prop_ind to the annual shapefiles for plotting
+com.shp.07 <- com.shp.07 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.07 <- left_join(com.shp.07,prop_ind07, by="commGIS")
+
+com.shp.08 <- com.shp.08 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.08 <- left_join(com.shp.08,prop_ind08, by="commGIS")
+
+com.shp.09 <- com.shp.09 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.09 <- left_join(com.shp.09,prop_ind09, by="commGIS")
+
+com.shp.10 <- com.shp.10 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.10 <- left_join(com.shp.10,prop_ind10, by="commGIS")
+
+com.shp.11 <- com.shp.11 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.11 <- left_join(com.shp.11,prop_ind11, by="commGIS")
+
+com.shp.12 <- com.shp.12 %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp.12 <- left_join(com.shp.12,prop_ind12, by="commGIS")
+
+# plot prop_ind > 0.8 for all years
+prop_ind_plot_07 <- ggplot(com.shp.07)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+prop_ind_plot_08 <- ggplot(com.shp.08)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+prop_ind_plot_09 <- ggplot(com.shp.09)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+prop_ind_plot_10 <- ggplot(com.shp.10)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+prop_ind_plot_11 <- ggplot(com.shp.11)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+prop_ind_plot_12 <- ggplot(com.shp.12)+
+  geom_sf(aes(fill = prop_ind > 0.8))
+
+(prop_ind_plot_07 | prop_ind_plot_08) / 
+  (prop_ind_plot_09 | prop_ind_plot_10) /
+  (prop_ind_plot_11 | prop_ind_plot_12)
+
+
+## data checking
 
 hist(dat_merge$tot_ind)
 dat_merge %>% filter(tot_ind>tot_pop) %>% select(year,Province,Commune,tot_pop,tot_ind)
