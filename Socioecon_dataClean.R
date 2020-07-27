@@ -1168,9 +1168,41 @@ approx(x=x,y=y,xout=c(2,3))
 dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Tuol Sangkae"] <- 44597
 dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Tuol Sangkae"] <- 48948
 
-# There are other zigzag lines but nothing too bad, and difficult to identify
+# There are two others - the two that have populations over 60K
+dat_merge %>% filter(Province=="Phnom Penh" & tot_pop > 60000) %>% select(Commune,year,tot_pop)
+# Chaom Chau, Stueng Mean Chey
+
+
+# Chaom Chau
+dat_merge %>% filter(Commune=="Chaom Chau") %>% select(Commune,year,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(65714,74432)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# replace values
+dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Chaom Chau"] <- 67458
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Chaom Chau"] <- 69201
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Chaom Chau"] <- 70945
+dat_merge$tot_pop[dat_merge$year=="2011" & dat_merge$Commune=="Chaom Chau"] <- 72688
+
+# Stueng Mean Chey
+dat_merge %>% filter(Commune=="Stueng Mean Chey") %>% select(Commune,year,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,4)
+y <- c(59891,64459)
+approx(x=x,y=y,xout=c(2,3))
+
+# replace values
+dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Stueng Mean Chey"] <- 61414
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Stueng Mean Chey"] <- 62936
 
 # from the plot you can see how many communes disapear in 2010. Must have been some big adminstrative reshuffle
+
 
 
 
@@ -1377,6 +1409,75 @@ dat_merge$tot_pop[
   dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2010"] <- 10701
 dat_merge$tot_pop[
   dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2011"] <- 10127
+
+
+
+
+### Kampong Cham
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Kampong Cham"]))
+# too many, need to split into 3
+
+KC <- dat_merge[dat_merge$Province=="Kampong Cham",]
+KC <- arrange(KC,Commune)
+nrow(KC)
+KC[290:300,]
+KC[590:600,]
+KC1 <- KC[1:298,]
+KC2 <- KC[299:594,]
+KC3 <- KC[595:896,]
+
+# plot first lot
+ggplot(KC1,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Chong Cheach, Kaong Kang
+
+
+# Chong Cheach
+dat_merge %>% filter(Commune=="Chong Cheach") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(15442,22960)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[dat_merge$Commune=="Chong Cheach" & dat_merge$year=="2008"] <- 16946
+dat_merge$tot_pop[dat_merge$Commune=="Chong Cheach" & dat_merge$year=="2009"] <- 18449
+dat_merge$tot_pop[dat_merge$Commune=="Chong Cheach" & dat_merge$year=="2010"] <- 19953
+dat_merge$tot_pop[dat_merge$Commune=="Chong Cheach" & dat_merge$year=="2011"] <- 21456
+
+
+# Kaong Kang
+dat_merge %>% filter(Commune=="Kaong Kang") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(15500,16498)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[dat_merge$Commune=="Kaong Kang" & dat_merge$year=="2008"] <- 15700
+dat_merge$tot_pop[dat_merge$Commune=="Kaong Kang" & dat_merge$year=="2009"] <- 15899
+dat_merge$tot_pop[dat_merge$Commune=="Kaong Kang" & dat_merge$year=="2010"] <- 16099
+dat_merge$tot_pop[dat_merge$Commune=="Kaong Kang" & dat_merge$year=="2011"] <- 16298
+
+
+# plot second lot
+ggplot(KC2,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Kraek, Memot
+
+# save current version of dat_merge (to avoide having to re-run all of the above)
+write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
+
+
+
+
 
 
 
