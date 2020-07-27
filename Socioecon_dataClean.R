@@ -971,7 +971,9 @@ ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
   geom_line()+
   facet_wrap(vars(Province), nrow = 2, ncol=12)+
   theme(legend.position="none")
-# most obvious weird ones (with zigzagging trends) are Battambang, Banteay Meanchey, Kandal, Phnom Penh, Pursat, Takeo
+# most obvious weird ones (with zigzagging trends) are Battambang, Banteay Meanchey, Kandal, Phnom Penh, Pursat, Takeo, Kampong Cham, Kampot, Koh Kong, Otdar Meanchey, Preah Sihanouk, Pursat, Siem Reap, 
+
+
 
 ## Battambang
 
@@ -1004,6 +1006,46 @@ dat_merge <- dat_merge %>% mutate(tot_pop = replace(tot_pop,
                                                     which(tot_pop==33525 & year=="2010"),
                                                     9614))
 dat_merge %>% filter(Province=="Battambang", Commune=="Boeng Pring") %>% select(tot_pop)
+
+# plot all communes in facets
+ggplot(dat_merge[dat_merge$Province=="Battambang",], 
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Svay Pao, and maybe Chamkar Samraong
+
+dat_merge %>% filter(Commune=="Svay Pao") %>% select(Commune,year,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(19536,21033)
+approx(x=x, y=y, xout = c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Svay Pao"] <- 19835
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Svay Pao"] <- 20135
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Svay Pao"] <- 20434
+dat_merge$tot_pop[dat_merge$year=="2011" & dat_merge$Commune=="Svay Pao"] <- 20734
+
+
+## Chamkar Samraong
+dat_merge %>% filter(Commune=="Chamkar Samraong") %>% select(Commune,year,tot_pop)
+# repated values
+
+# interpolate
+x <- c(1,6)
+y <- c(16245,17799)
+approx(x=x, y=y, xout = c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Chamkar Samraong"] <- 16556
+dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Chamkar Samraong"] <- 16867
+dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Chamkar Samraong"] <- 17177
+dat_merge$tot_pop[dat_merge$year=="2011" & dat_merge$Commune=="Chamkar Samraong"] <- 17488
+
+
+
 
 ## Banteay Meanchey
 
@@ -1043,12 +1085,63 @@ dat_merge$tot_pop[dat_merge$year=="2008" & dat_merge$Commune=="Banteay Neang"] <
 dat_merge$tot_pop[dat_merge$year=="2009" & dat_merge$Commune=="Banteay Neang"] <- 20096
 dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Banteay Neang"] <- 20072
 
+# plot all communes with facets
+ggplot(dat_merge[dat_merge$Province=="Banteay Meanchey",], 
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
 
-## Kandal
-ggplot(dat_merge[dat_merge$Province=="Kandal",], 
-       aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
-  geom_line(show.legend = FALSE)
-# after closer inspection I think this is fine. There are a few commune that zig zag a bit, but not major, and it will be very difficult to identify them 
+
+
+
+## Kandal 
+
+# need to split into two groups as there are too many to plot together
+# first pull out all Kandal data
+kandal <- dat_merge[dat_merge$Province=="Kandal",]
+length(unique(kandal$Commune))
+kandal <- kandal %>% arrange(Commune)
+kandal[350:360,]
+kandal1 <- kandal[1:354,]
+kandal2 <- kandal[355:760,]
+
+ggplot(kandal1, aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Kokir Thum
+
+ggplot(kandal2, aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# nothing major
+
+# Kokir Thum
+ggplot(kandal1[kandal1$Commune=="Kokir Thum",], aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
+  geom_line()+
+  ylim(0,15000)
+# proper zig zag that suggest data issues rather than an actual change
+
+dat_merge %>% filter(Commune=="Kokir Thum" & Province=="Kandal") %>% select(year,Commune,Province,tot_pop)
+# need to be careful there are two communes in different provinces with this name
+
+# interpolate
+x <- c(1,6)
+y <- c(12882,12834)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Kandal" & dat_merge$Commune=="Kokir Thum" & dat_merge$year=="2008"] <- 12872
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kandal" & dat_merge$Commune=="Kokir Thum" & dat_merge$year=="2009"] <- 12863
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kandal" & dat_merge$Commune=="Kokir Thum" & dat_merge$year=="2008"] <- 12853
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kandal" & dat_merge$Commune=="Kokir Thum" & dat_merge$year=="2008"] <- 12844
+
 
 
 ## Phnom Penh
@@ -1056,6 +1149,12 @@ ggplot(dat_merge[dat_merge$Province=="Phnom Penh",],
        aes(x=year,y=tot_pop, group=Commune,colour=Commune))+
   geom_line(show.legend = FALSE)
 # I'm looking at the line that increases but zig zags beyond 40000
+
+# plot all communes as facets
+ggplot(dat_merge[dat_merge$Province=="Phnom Penh",], aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+
 
 dat_merge %>% filter(Province=="Phnom Penh" & tot_pop > 40000) %>% select(year,Commune,tot_pop)
 dat_merge %>% filter(Commune=="Tuol Sangkae") %>% select(Province,year,tot_pop)
@@ -1072,6 +1171,7 @@ dat_merge$tot_pop[dat_merge$year=="2010" & dat_merge$Commune=="Tuol Sangkae"] <-
 # There are other zigzag lines but nothing too bad, and difficult to identify
 
 # from the plot you can see how many communes disapear in 2010. Must have been some big adminstrative reshuffle
+
 
 
 ## Pursat
@@ -1148,6 +1248,136 @@ dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2008"] <- 
 dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2009"] <- 19624
 dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2010"] <- 18671
 dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2011"] <- 17717
+
+
+
+### Takeo
+
+ggplot(dat_merge[dat_merge$Province=="Takeo",],aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# struggling to see as there are too many
+
+# split
+takeo <- dat_merge[dat_merge$Province=="Takeo",]
+length(unique(takeo$Commune))
+nrow(takeo)
+takeo <- arrange(takeo, Commune)
+takeo[270:280,]
+takeo1 <- takeo[1:278,]
+takeo2 <- takeo[279:554,]
+
+# first half
+ggplot(takeo1,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# maybe krang leav?
+
+ggplot(takeo1[takeo1$Commune=="Krang Leav",],aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  ylim(0,15000)
+
+dat_merge %>% filter(Commune=="Krang Leav" & Province=="Takeo") %>% select(year,Province,Commune,tot_pop)
+# couple of repeated numbers so defo some errors
+
+# interpolate
+x <- c(1,6)
+y <- c(14699,13134)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Krang Leav" & dat_merge$year=="2008"] <- 14386
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Krang Leav" & dat_merge$year=="2009"] <- 14073
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Krang Leav" & dat_merge$year=="2010"] <- 13760
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Krang Leav" & dat_merge$year=="2011"] <- 13447
+
+
+# second half
+ggplot(takeo2,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Popel, Preah Bat Choan Chum, Thlok, Trapeang Krasang, 
+
+# Popel
+dat_merge %>% filter(Province=="Takeo" & Commune=="Popel") %>% select(year,Province,Commune,tot_pop)
+
+# interpolate
+x <- c(1,6)
+y <- c(8440,9243)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Popel" & dat_merge$year=="2008"] <- 8601
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Popel" & dat_merge$year=="2009"] <- 8762
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Popel" & dat_merge$year=="2010"] <- 8922
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Popel" & dat_merge$year=="2011"] <- 9082
+
+
+# Preah Bat Choan Chum
+dat_merge %>% filter(Province=="Takeo" & Commune=="Preah Bat Choan Chum") %>% select(Commune,year,tot_pop)
+
+# interpolate
+x <- c(1,6)
+y <- c(19991,21128)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Preah Bat Choan Chum" & dat_merge$year=="2008"] <- 20218
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Preah Bat Choan Chum" & dat_merge$year=="2009"] <- 20446
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Preah Bat Choan Chum" & dat_merge$year=="2010"] <- 20673
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Preah Bat Choan Chum" & dat_merge$year=="2011"] <- 20901
+
+# Thlok
+dat_merge %>% filter(Province=="Takeo" & Commune=="Thlok") %>% select(year,Province,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(11322,12717)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Thlok" & dat_merge$year=="2008"] <- 11601
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Thlok" & dat_merge$year=="2009"] <- 11880
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Thlok" & dat_merge$year=="2010"] <- 12159
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Thlok" & dat_merge$year=="2011"] <- 12438
+
+
+# Trapeang Krasang
+dat_merge %>% filter(Province=="Takeo" & Commune=="Trapeang Krasang") %>% select(year,Province,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(12422,9553)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# change values
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2008"] <- 11848
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2009"] <- 11274
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2010"] <- 10701
+dat_merge$tot_pop[
+  dat_merge$Province=="Takeo" & dat_merge$Commune=="Trapeang Krasang" & dat_merge$year=="2011"] <- 10127
+
 
 
 #
