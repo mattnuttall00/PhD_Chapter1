@@ -1080,7 +1080,75 @@ ggplot(dat_merge[dat_merge$Province=="Pursat",],
   geom_line(show.legend = FALSE)
 # yikes.
 
-identify(x,y,plot = TRUE)
+# find the dodgy ones
+ggplot(dat_merge[dat_merge$Province=="Pursat",], 
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))
+# Banteay Dei, Kaoh Chum, Phteah Prey, 
+
+
+## Banteay Dei
+ggplot(dat_merge[dat_merge$Commune=="Banteay Dei",],
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line()+
+  ylim(0,10000)
+
+dat_merge %>% filter(Commune=="Banteay Dei") %>% select(year,Commune,tot_pop)
+# There are more data points with ~5000 as the tot_pop value, so I will assume that is the more likely
+
+# interploation
+x <- c(1,6)
+y <- c(5271,5730)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# replace values
+dat_merge$tot_pop[dat_merge$Commune=="Banteay Dei" & dat_merge$year=="2008"] <- 5363
+dat_merge$tot_pop[dat_merge$Commune=="Banteay Dei" & dat_merge$year=="2009"] <- 5455
+dat_merge$tot_pop[dat_merge$Commune=="Banteay Dei" & dat_merge$year=="2010"] <- 5546
+dat_merge$tot_pop[dat_merge$Commune=="Banteay Dei" & dat_merge$year=="2011"] <- 5638
+
+## Kaoh Chum
+ggplot(dat_merge[dat_merge$Commune=="Kaoh Chum",],
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line()+
+  ylim(0,10000)
+
+dat_merge %>% filter(Commune=="Kaoh Chum") %>% select(year,Commune,tot_pop)
+# There are more years with higher values (between 7K and 8K), and the final year goes up again to >8000. Therefore I will asssume the lower numbers are incorrect.
+
+# interpolation
+x <- c(1,6)
+y <- c(7088,8262)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+# replace values
+dat_merge$tot_pop[dat_merge$Commune=="Kaoh Chum" & dat_merge$year=="2008"] <- 7323
+dat_merge$tot_pop[dat_merge$Commune=="Kaoh Chum" & dat_merge$year=="2009"] <- 7558
+dat_merge$tot_pop[dat_merge$Commune=="Kaoh Chum" & dat_merge$year=="2010"] <- 7792
+dat_merge$tot_pop[dat_merge$Commune=="Kaoh Chum" & dat_merge$year=="2011"] <- 8027
+
+
+## Phteah Prey
+ggplot(dat_merge[dat_merge$Commune=="Phteah Prey",],
+       aes(x=year,y=tot_pop, group=Commune, colour=Commune))+
+  geom_line()+
+  ylim(0,30000)
+
+dat_merge %>% filter(Commune=="Phteah Prey") %>% select(year,Commune,tot_pop)
+# not as clear cut. Neverthelss, the trend appears to be down, and so I will go with that
+
+# interpolation
+x <- c(1,6)
+y <- c(21532,16763)
+approx(x=x,y=y,xout = c(2,3,4,5))
+
+# replace values
+dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2008"] <- 20578
+dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2009"] <- 19624
+dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2010"] <- 18671
+dat_merge$tot_pop[dat_merge$Commune=="Phteah Prey" & dat_merge$year=="2011"] <- 17717
+
 
 #
     # family ####
