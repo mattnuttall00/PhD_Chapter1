@@ -1969,6 +1969,74 @@ dat_merge$tot_pop[
 
 
 #
+        # Preah Sihanouk ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Preah Sihanouk"]))
+
+ggplot(dat_merge[dat_merge$Province=="Preah Sihanouk",],
+       aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Ream, Sangkat lek Bei, Sangkat lek Muoy
+
+
+# Ream
+dat_merge %>% filter(Commune=="Ream") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(8592,10075)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Ream" & dat_merge$year=="2008"] <- 8889
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Ream" & dat_merge$year=="2009"] <- 9185
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Ream" & dat_merge$year=="2010"] <- 9482
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Ream" & dat_merge$year=="2011"] <- 9778
+
+
+# Sangkat lek Bei
+dat_merge %>% filter(Commune=="Sangkat lek Bei") %>% select(year,Commune,tot_pop)
+# repeated measures. Only 3 points, and the fisrt and last are the same value. Not sure the best way of dealing with it, but based on previous communes, I would guess that the 2010 repeated value is the mistake, adn that the pop is increasing based on the 2009 value. Therefore, I will take the 2009 value to be the 2010 value, and interpolate for 2009.
+
+# interpolate
+x <- c(1,3)
+y <- c(15005,20324)
+approx(x=x,y=y,xout=2)
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Sangkat lek Bei" & 
+    dat_merge$year=="2009"] <- 17665
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Sangkat lek Bei" & 
+    dat_merge$year=="2010"] <- 20324
+
+
+# Sangkat lek Muoy
+dat_merge %>% filter(Commune=="Sangkat lek Muoy") %>% select(year,Commune,tot_pop)
+# as above, repeated measure but 2010 likely to be the mistake. I will do the same approach as above
+
+x <- c(1,3)
+y <- c(14102,15479)
+approx(x=x,y=y,xout=2)
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Sangkat lek Muoy" & 
+    dat_merge$year=="2009"] <- 14791
+dat_merge$tot_pop[
+  dat_merge$Province=="Preah Sihanouk" & dat_merge$Commune=="Sangkat lek Muoy" & 
+    dat_merge$year=="2010"] <- 15479
+
+
+
+
+
+
+#
     # family ####
 
 hist(dat_merge$family)
