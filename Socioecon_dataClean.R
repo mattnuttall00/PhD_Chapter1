@@ -2525,10 +2525,10 @@ dat_merge %>% filter(family < 100) %>% select(commGIS,Province, Commune,family,t
 plot(dat_merge$family, dat_merge$tot_pop)
 # yes
 
-id <- identify(dat_merge$family, dat_merge$tot_pop) # outlier points are 590,763,1325,2063,3663
+id <- identify(dat_merge$family, dat_merge$tot_pop) # outlier points are 879,890,7528,8124
 
-dat_merge[c(590,763,1325,2063,3663), c(1:4,8:9)]
-# interesting.  these outliers are Siem Reap (x3), Battambang and Kampong Cham. Siem Reap and Battambang are large cities with industry and tourism. My guess is that lots of people are temporary economic in-migrants who don't necessarily have/take family with them. Their families likely stay out in the provinces.
+dat_merge[c(879,890,7528,8124), c(2:4,9:10)]
+# interesting - 3 out of the 4 are phnom penh. My guess here is that there are more in-migrants who leave their families in the provinces. So they contribute to the tot_pop but not the family.
 
 # check histo per year
 ggplot(dat_merge, aes(dat_merge$family))+
