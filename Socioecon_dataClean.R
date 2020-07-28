@@ -2037,6 +2037,172 @@ dat_merge$tot_pop[
 
 
 #
+        # Pursat ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Pursat"]))
+
+ggplot(dat_merge[dat_merge$Province=="Pursat",],
+       aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Boeng Khnar, Chheu Tom, Kbal Trach, Pramaoy, Roleab, Samraong, Ta Lou, Tnaot Chum, 
+
+
+# Boeng Khnar
+dat_merge %>% filter(Commune=="Boeng Khnar") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(12914,13433)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Boeng Khnar" & dat_merge$year=="2008"] <- 13018
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Boeng Khnar" & dat_merge$year=="2009"] <- 13122
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Boeng Khnar" & dat_merge$year=="2010"] <- 13225
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Boeng Khnar" & dat_merge$year=="2011"] <- 13329
+
+
+# Chheu Tom
+dat_merge %>% filter(Commune=="Chheu Tom") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(13085,14989)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Chheu Tom" & dat_merge$year=="2008"] <- 13466
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Chheu Tom" & dat_merge$year=="2009"] <- 13847
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Chheu Tom" & dat_merge$year=="2010"] <- 14227
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Chheu Tom" & dat_merge$year=="2011"] <- 14608
+
+
+# Kbal Trach
+dat_merge %>% filter(Commune=="Kbal Trach") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(8391,11132)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Kbal Trach" & dat_merge$year=="2008"] <- 8939
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Kbal Trach" & dat_merge$year=="2009"] <- 9487
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Kbal Trach" & dat_merge$year=="2010"] <- 10036
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Kbal Trach" & dat_merge$year=="2011"] <- 10584
+
+
+# Pramaoy
+dat_merge %>% filter(Commune=="Pramaoy") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(3896,5761)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Pramaoy" & dat_merge$year=="2008"] <- 4269
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Pramaoy" & dat_merge$year=="2009"] <- 4642
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Pramaoy" & dat_merge$year=="2010"] <- 5015
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Pramaoy" & dat_merge$year=="2011"] <- 5388
+
+
+# Roleab
+dat_merge %>% filter(Commune=="Roleab") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(11621,15710)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Roleab" & dat_merge$year=="2008"] <- 12439
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Roleab" & dat_merge$year=="2009"] <- 13527
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Roleab" & dat_merge$year=="2010"] <- 14074
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Roleab" & dat_merge$year=="2011"] <- 14892
+
+
+# Samraong
+dat_merge %>% filter(Province=="Pursat" & Commune=="Samraong") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(13382,14347)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Samraong" & dat_merge$year=="2008"] <- 13575
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Samraong" & dat_merge$year=="2009"] <- 13768
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Samraong" & dat_merge$year=="2010"] <- 13961
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Samraong" & dat_merge$year=="2011"] <- 14154
+
+
+# Ta Lou
+dat_merge %>% filter(Province=="Pursat" & Commune=="Ta Lou") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(17198,24740)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Ta Lou" & dat_merge$year=="2008"] <- 18706
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Ta Lou" & dat_merge$year=="2009"] <- 20215
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Ta Lou" & dat_merge$year=="2010"] <- 21723
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Ta Lou" & dat_merge$year=="2011"] <- 23232
+
+
+# Tnaot Chum
+dat_merge %>% filter(Province=="Pursat" & Commune=="Tnaot Chum") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(11398,14712)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Tnaot Chum" & dat_merge$year=="2008"] <- 12061
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Tnaot Chum" & dat_merge$year=="2009"] <- 12724
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Tnaot Chum" & dat_merge$year=="2010"] <- 13386
+dat_merge$tot_pop[
+  dat_merge$Province=="Pursat" & dat_merge$Commune=="Tnaot Chum" & dat_merge$year=="2011"] <- 14049
+
+
+
+
+#
     # family ####
 
 hist(dat_merge$family)
