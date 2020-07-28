@@ -1815,6 +1815,160 @@ dat_merge$tot_pop[
 
 
 #
+        # Otdar Meanchey ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Otdar Meanchey"]))
+
+ggplot(dat_merge[dat_merge$Province=="Otdar Meanchey",],
+       aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Anlong Veaeng, Bansay Reak, Beng, Chong Kal, Koun Kriel, Ou Svay, Samraong
+
+
+# Anlong Veaeng
+dat_merge %>% filter(Commune=="Anlong Veaeng") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(9297,13528)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Anlong Veaeng" & 
+    dat_merge$year=="2008"] <- 10143
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Anlong Veaeng" & 
+    dat_merge$year=="2009"] <- 10989
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Anlong Veaeng" & 
+    dat_merge$year=="2010"] <- 11836
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Anlong Veaeng" & 
+    dat_merge$year=="2011"] <- 12682
+
+
+# Bansay Reak
+dat_merge %>% filter(Commune=="Bansay Reak") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(5773,8045)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Bansay Reak" & 
+    dat_merge$year=="2008"] <- 6227
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Bansay Reak" & 
+    dat_merge$year=="2009"] <- 6682
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Bansay Reak" & 
+    dat_merge$year=="2010"] <- 7136
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Bansay Reak" & 
+    dat_merge$year=="2011"] <- 7591
+
+
+# Beng
+dat_merge %>% filter(Commune=="Beng") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(11987,12925)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Beng" & dat_merge$year=="2008"] <- 12175
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Beng" & dat_merge$year=="2009"] <- 12362
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Beng" & dat_merge$year=="2010"] <- 12550
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Beng" & dat_merge$year=="2011"] <- 12373
+
+
+# Chong Kal
+dat_merge %>% filter(Commune=="Chong Kal") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7629,8147)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Chong Kal" & dat_merge$year=="2008"] <- 7733
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Chong Kal" & dat_merge$year=="2009"] <- 7836
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Chong Kal" & dat_merge$year=="2010"] <- 7940
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Chong Kal" & dat_merge$year=="2011"] <- 8043
+
+
+# Koun Kriel
+dat_merge %>% filter(Commune=="Koun Kriel") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(17795,19766)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Koun Kriel" & dat_merge$year=="2008"] <- 18189
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Koun Kriel" & dat_merge$year=="2009"] <- 18583
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Koun Kriel" & dat_merge$year=="2010"] <- 18978
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Koun Kriel" & dat_merge$year=="2011"] <- 19372
+
+
+# Ou Svay
+dat_merge %>% filter(Province=="Otdar Meanchey" & Commune=="Ou Svay") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(4864,7525)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Ou Svay" & dat_merge$year=="2008"] <- 5396
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Ou Svay" & dat_merge$year=="2009"] <- 5928
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Ou Svay" & dat_merge$year=="2010"] <- 6461
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Ou Svay" & dat_merge$year=="2011"] <- 6993
+
+
+# Samraong
+dat_merge %>% filter(Province=="Otdar Meanchey" & Commune=="Samraong") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(15238,17345)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Samraong" & dat_merge$year=="2008"] <- 15659
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Samraong" & dat_merge$year=="2009"] <- 16081
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Samraong" & dat_merge$year=="2010"] <- 16502
+dat_merge$tot_pop[
+  dat_merge$Province=="Otdar Meanchey" & dat_merge$Commune=="Samraong" & dat_merge$year=="2011"] <- 16924
+
+
+
+#
     # family ####
 
 hist(dat_merge$family)
