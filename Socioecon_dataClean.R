@@ -24,6 +24,7 @@ library("FactoMineR")
 library("factoextra")
 library("corrplot")
 library("patchwork")
+library('viridis')
 
 # make sure select() is dplyr, not MASS otherwise loads of code won't work
 select <- dplyr::select
@@ -174,6 +175,7 @@ CCI@data@values
 
 # read in as a sf object
 com.shp <- st_read('Spatial_data/boundary_khum.shp')
+com.shp <- com.shp %>% dplyr::rename(commGIS = CODEKHUM)
 
 # explore shapefile
 plot(com.shp, bg="transparent", add=T)
@@ -197,7 +199,7 @@ length(com.shp$AREA[com.shp$AREA<5000])
 comCode <- unique(dat_merge$commGIS)
 
 # subset
-com.shp <- subset(com.shp, CODEKHUM %in% comCode)
+com.shp <- subset(com.shp, commGIS %in% comCode)
 str(com.shp)
 plot(com.shp)
 
@@ -215,7 +217,10 @@ ggplot(com.shp[com.shp$CODEKHUM %in% comInd,])+
 ggplot(com.shp)+
   geom_sf(aes(fill = CODEKHUM[CODEKHUM %in% comInd]))
 
-# add prop_ind data to the shapefile to facilitate plotting
+
+## add prop_ind data to the shapefile to facilitate plotting
+
+# extract annual data
 prop_ind07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,prop_ind)
 prop_ind08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,prop_ind)
 prop_ind09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,prop_ind)
@@ -234,12 +239,12 @@ dat11 <- dat_merge$commGIS[dat_merge$year=="2011"]
 dat12 <- dat_merge$commGIS[dat_merge$year=="2012"]
 
 # subset shapefile
-com.shp.07 <- subset(com.shp, CODEKHUM %in% dat07)
-com.shp.08 <- subset(com.shp, CODEKHUM %in% dat08)
-com.shp.09 <- subset(com.shp, CODEKHUM %in% dat09)
-com.shp.10 <- subset(com.shp, CODEKHUM %in% dat10)
-com.shp.11 <- subset(com.shp, CODEKHUM %in% dat11)
-com.shp.12 <- subset(com.shp, CODEKHUM %in% dat12)
+com.shp.07 <- subset(com.shp, commGIS %in% dat07)
+com.shp.08 <- subset(com.shp, commGIS %in% dat08)
+com.shp.09 <- subset(com.shp, commGIS %in% dat09)
+com.shp.10 <- subset(com.shp, commGIS %in% dat10)
+com.shp.11 <- subset(com.shp, commGIS %in% dat11)
+com.shp.12 <- subset(com.shp, commGIS %in% dat12)
 
 
 ## load using GDAL
@@ -980,6 +985,49 @@ ggplot(dat_merge, aes(x=year, y=tot_pop, group=Commune,colour=Commune))+
   facet_wrap(vars(Province), nrow = 2, ncol=12)+
   theme(legend.position="none")
 # most obvious weird ones (with zigzagging trends) are Battambang, Banteay Meanchey, Kandal, Phnom Penh, Pursat, Takeo, Kampong Cham, Kampot, Koh Kong, Otdar Meanchey, Preah Sihanouk, Pursat, Siem Reap, 
+
+
+## plot maps
+
+# extract tot_pop and commGIS for each year
+tot_pop07 <- dat_merge %>% filter(year=="2007") %>% select(tot_pop, commGIS)
+tot_pop08 <- dat_merge %>% filter(year=="2008") %>% select(tot_pop, commGIS)
+tot_pop09 <- dat_merge %>% filter(year=="2009") %>% select(tot_pop, commGIS)
+tot_pop10 <- dat_merge %>% filter(year=="2010") %>% select(tot_pop, commGIS)
+tot_pop11 <- dat_merge %>% filter(year=="2011") %>% select(tot_pop, commGIS)
+tot_pop12 <- dat_merge %>% filter(year=="2012") %>% select(tot_pop, commGIS)
+
+# join to annual shapefiles
+com.shp.07 <- left_join(com.shp.07, tot_pop07)
+com.shp.08 <- left_join(com.shp.08, tot_pop08)
+com.shp.09 <- left_join(com.shp.09, tot_pop09)
+com.shp.10 <- left_join(com.shp.10, tot_pop10)
+com.shp.11 <- left_join(com.shp.11, tot_pop11)
+com.shp.12 <- left_join(com.shp.12, tot_pop12)
+
+
+tot_pop_plot07 <- ggplot(com.shp.07)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+tot_pop_plot08 <- ggplot(com.shp.08)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+tot_pop_plot09 <- ggplot(com.shp.09)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+tot_pop_plot10 <- ggplot(com.shp.10)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+tot_pop_plot11 <- ggplot(com.shp.11)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+tot_pop_plot12 <- ggplot(com.shp.12)+
+                  geom_sf(aes(fill=tot_pop))+
+                  scale_fill_viridis()
+
+(tot_pop_plot07 | tot_pop_plot08) /
+(tot_pop_plot09 | tot_pop_plot10) /
+(tot_pop_plot11 | tot_pop_plot12)
 
 
 
