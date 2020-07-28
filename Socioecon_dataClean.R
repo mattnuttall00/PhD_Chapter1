@@ -2203,6 +2203,267 @@ dat_merge$tot_pop[
 
 
 #
+        # Siem Reap ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Siem Reap"]))
+# will need to split
+
+sr <- dat_merge[dat_merge$Province=="Siem Reap",]
+sr <- arrange(sr,Commune)
+nrow(sr)
+sr[270:280,]
+sr1 <- sr[1:276,]
+sr2 <- sr[277:556,]
+
+
+# plot first lot
+ggplot(sr1,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Chreav, Doun Kaev, Kampong Khleang, Khnar Sanday, Khun Ream, 
+
+
+# Chreav
+dat_merge %>% filter(Commune=="Chreav") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(9164,12859)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Chreav" & dat_merge$year=="2008"] <- 9903
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Chreav" & dat_merge$year=="2009"] <- 10642
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Chreav" & dat_merge$year=="2010"] <- 11381
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Chreav" & dat_merge$year=="2011"] <- 12120
+
+
+# Doun Kaev
+dat_merge %>% filter(Commune=="Doun Kaev") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(12113,14590)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Doun Kaev" & dat_merge$year=="2008"] <- 12608
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Doun Kaev" & dat_merge$year=="2009"] <- 13104
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Doun Kaev" & dat_merge$year=="2010"] <- 13599
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Doun Kaev" & dat_merge$year=="2011"] <- 14095
+
+
+# Kampong Khleang
+dat_merge %>% filter(Commune=="Kampong Khleang") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(9822,10200)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Kampong Khleang" & dat_merge$year=="2008"] <- 9898
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Kampong Khleang" & dat_merge$year=="2009"] <- 9973
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Kampong Khleang" & dat_merge$year=="2010"] <- 10049
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Kampong Khleang" & dat_merge$year=="2011"] <- 10124
+
+
+# Khnar Sanday
+dat_merge %>% filter(Commune=="Khnar Sanday") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(8431,9128)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khnar Sanday" & dat_merge$year=="2008"] <- 8570
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khnar Sanday" & dat_merge$year=="2009"] <- 8710
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khnar Sanday" & dat_merge$year=="2010"] <- 8849
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khnar Sanday" & dat_merge$year=="2011"] <- 8989
+
+
+# Khun Ream
+dat_merge %>% filter(Commune=="Khun Ream") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(4209,5395)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khun Ream" & dat_merge$year=="2008"] <- 4446
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khun Ream" & dat_merge$year=="2009"] <- 4683
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khun Ream" & dat_merge$year=="2010"] <- 4921
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Khun Ream" & dat_merge$year=="2011"] <- 5158
+
+
+
+# plot second lot
+ggplot(sr2,aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Pongro Kraom, Pongro Leu, Ruessei Lok, Sala Kamraeuk, Sla Kram, Tbaeng, Trapeang Thum
+
+
+# Pongro Kraom
+dat_merge %>% filter(Commune=="Pongro Kraom") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(8688,10134)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Kraom" & dat_merge$year=="2008"] <- 8977
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Kraom" & dat_merge$year=="2009"] <- 9266
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Kraom" & dat_merge$year=="2010"] <- 9556
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Kraom" & dat_merge$year=="2011"] <- 9845
+
+
+# Pongro Leu
+dat_merge %>% filter(Commune=="Pongro Leu") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(9923,10666)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Leu" & dat_merge$year=="2008"] <- 10072
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Leu" & dat_merge$year=="2009"] <- 10220
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Leu" & dat_merge$year=="2010"] <- 10369
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Pongro Leu" & dat_merge$year=="2011"] <- 10517
+
+
+# Ruessei Lok
+dat_merge %>% filter(Commune=="Ruessei Lok") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(12655,13226)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Ruessei Lok" & dat_merge$year=="2008"] <- 12769
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Ruessei Lok" & dat_merge$year=="2009"] <- 12883
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Ruessei Lok" & dat_merge$year=="2010"] <- 12998
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Ruessei Lok" & dat_merge$year=="2011"] <- 13112
+
+
+# Sala Kamraeuk
+dat_merge %>% filter(Commune=="Sala Kamraeuk") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(20435,23277)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sala Kamraeuk" & dat_merge$year=="2008"] <- 21003
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sala Kamraeuk" & dat_merge$year=="2009"] <- 21572
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sala Kamraeuk" & dat_merge$year=="2010"] <- 22140
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sala Kamraeuk" & dat_merge$year=="2011"] <- 22709
+
+
+
+# Sla Kram
+dat_merge %>% filter(Province=="Siem Reap" & Commune=="Sla Kram") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(38475,37449)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sla Kram" & dat_merge$year=="2008"] <- 38270
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sla Kram" & dat_merge$year=="2009"] <- 38065
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sla Kram" & dat_merge$year=="2010"] <- 37859
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Sla Kram" & dat_merge$year=="2011"] <- 37654
+
+
+
+#  Tbaeng
+dat_merge %>% filter(Province=="Siem Reap" & Commune=="Tbaeng") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7221,8888)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Tbaeng" & dat_merge$year=="2008"] <- 7554
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Tbaeng" & dat_merge$year=="2009"] <- 7888
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Tbaeng" & dat_merge$year=="2010"] <- 8221
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Tbaeng" & dat_merge$year=="2011"] <- 8555
+
+
+
+# Trapeang Thum
+dat_merge %>% filter(Province=="Siem Reap" & Commune=="Trapeang Thum") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7777,8787)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Trapeang Thum" & dat_merge$year=="2008"] <- 7979
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Trapeang Thum" & dat_merge$year=="2009"] <- 8181
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Trapeang Thum" & dat_merge$year=="2010"] <- 8383
+dat_merge$tot_pop[
+  dat_merge$Province=="Siem Reap" & dat_merge$Commune=="Trapeang Thum" & dat_merge$year=="2011"] <- 8585
+
+
+
+#
     # family ####
 
 hist(dat_merge$family)
