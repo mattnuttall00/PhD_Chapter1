@@ -713,7 +713,7 @@ length(dat_merge$PA[is.na(dat_merge$PA)])
 
 # save current version of dat_merge (ALL COMMUNES)
 write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
-dat_merge <- read.csv("Data/commune/dat_merge_allComs.csv", header = T)
+dat_merge <- read.csv("Data/commune/dat_merge_allComs.csv", header = T, stringsAsFactors = T)
 
 
 # save working version of the data with ALL communes (i.e. communes with zero forest NOT removed)
@@ -1652,6 +1652,165 @@ dat_merge$tot_pop[
 dat_merge$tot_pop[
   dat_merge$Province=="Kampong Cham" & dat_merge$Commune=="Trapeang Phlong" & 
     dat_merge$year=="2011"] <- 18985
+
+
+
+#
+        # Kampot ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Kampot"]))
+
+ggplot(dat_merge[dat_merge$Province=="Kampot",],aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Kampong Kandal, Kampong Trach Khang Kaeut, Mean Rith, Prey Khmum, Satv Pong, 
+
+
+# Kampong Kandal
+dat_merge %>% filter(Province=="Kampot" & Commune=="Kampong Kandal") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7751,6881)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Kampong Kandal" & dat_merge$year=="2008"] <- 7577
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Kampong Kandal" & dat_merge$year=="2009"] <- 7403
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Kampong Kandal" & dat_merge$year=="2010"] <- 7229
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Kampong Kandal" & dat_merge$year=="2011"] <- 7055
+
+
+# Kampong Trach Khang Kaeut
+dat_merge %>% filter(Commune=="Kampong Trach Khang Kaeut") %>% select(year,Commune,tot_pop)
+# repeated values 
+
+# interpolate
+x <- c(1,6)
+y <- c(11141,11075)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Commune=="Kampong Trach Khang Kaeut" & dat_merge$year=="2008"] <- 11128
+dat_merge$tot_pop[
+  dat_merge$Commune=="Kampong Trach Khang Kaeut" & dat_merge$year=="2009"] <- 11115
+dat_merge$tot_pop[
+  dat_merge$Commune=="Kampong Trach Khang Kaeut" & dat_merge$year=="2010"] <- 11101
+dat_merge$tot_pop[
+  dat_merge$Commune=="Kampong Trach Khang Kaeut" & dat_merge$year=="2011"] <- 11088
+
+
+# Mean Ritth
+dat_merge %>% filter(Province=="Kampot" & Commune=="Mean Ritth") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(6674,5447)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Mean Ritth" & dat_merge$year=="2008"] <- 6429
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Mean Ritth" & dat_merge$year=="2009"] <- 6183
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Mean Ritth" & dat_merge$year=="2010"] <- 5938
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Mean Ritth" & dat_merge$year=="2011"] <- 5692
+
+
+# Prey Khmum
+dat_merge %>% filter(Province=="Kampot" & Commune=="Prey Khmum") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7958,6731)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Prey Khmum" & dat_merge$year=="2008"] <- 7713
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Prey Khmum" & dat_merge$year=="2009"] <- 7467
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Prey Khmum" & dat_merge$year=="2010"] <- 7222
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Prey Khmum" & dat_merge$year=="2011"] <- 6976
+
+
+# Satv Pong
+dat_merge %>% filter(Province=="Kampot" & Commune=="Satv Pong") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(7150,8617)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Satv Pong" & dat_merge$year=="2008"] <- 7443
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Satv Pong" & dat_merge$year=="2009"] <- 7737
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Satv Pong" & dat_merge$year=="2010"] <- 8030
+dat_merge$tot_pop[
+  dat_merge$Province=="Kampot" & dat_merge$Commune=="Satv Pong" & dat_merge$year=="2011"] <- 8324
+
+
+
+
+#
+        # Koh Kong ####
+
+length(unique(dat_merge$Commune[dat_merge$Province=="Koh Kong"]))
+
+ggplot(dat_merge[dat_merge$Province=="Koh Kong",],aes(x=year,y=tot_pop,group=Commune,colour=Commune))+
+  geom_line(show.legend = F)+
+  facet_wrap(vars(Commune))
+# Dang Peaeng, Kandaol
+
+
+# Dang Peaeng
+dat_merge %>% filter(Commune=="Dang Peaeng") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(6551,8229)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Dang Peaeng" & dat_merge$year=="2008"] <- 6887
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Dang Peaeng" & dat_merge$year=="2009"] <- 7222
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Dang Peaeng" & dat_merge$year=="2010"] <- 7558
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Dang Peaeng" & dat_merge$year=="2011"] <- 7893
+
+
+# Kandaol
+dat_merge %>% filter(Commune=="Kandaol") %>% select(year,Commune,tot_pop)
+# repeated values
+
+# interpolate
+x <- c(1,6)
+y <- c(3373,4215)
+approx(x=x,y=y,xout=c(2,3,4,5))
+
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Kandaol" & dat_merge$year=="2008"] <- 3541
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Kandaol" & dat_merge$year=="2009"] <- 3710
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Kandaol" & dat_merge$year=="2010"] <- 3878
+dat_merge$tot_pop[
+  dat_merge$Province=="Koh Kong" & dat_merge$Commune=="Kandaol" & dat_merge$year=="2011"] <- 4047
+
 
 
 
