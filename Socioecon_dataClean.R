@@ -4,7 +4,7 @@
 
 ## If errors are detected in raw data, they must be fixed in socioecon_vars_07-12.csv and then all data aggregation and cleaning must be run again and the corrected version saved as dat_merge. 
 
-## There are two 'sets' of data cleaning. The first is on a subset of the communes - only the ones with forest. This was the first analysis I did when I was going to be looking at change in forest cover. The second set is with ALL communes (minus some with missing data etc.). 
+## In many of the data cleaning sections there are two 'sets' of data cleaning. The first is on a subset of the communes - only the ones with forest. This was the first analysis I did when I was going to be looking at change in forest cover. The second set is with ALL communes (minus some with missing data etc.). 
 
 #### Load libraries ####
 
@@ -28,6 +28,7 @@ library('viridis')
 
 # make sure select() is dplyr, not MASS otherwise loads of code won't work
 select <- dplyr::select
+rename <- dplyr::rename
 
 #### Socioeconomic data -----------------------------------------------------------------
 ### Load socioeconomic variable and commune data ####
@@ -175,7 +176,7 @@ CCI@data@values
 
 # read in as a sf object
 com.shp <- st_read('Spatial_data/boundary_khum.shp')
-com.shp <- com.shp %>% dplyr::rename(commGIS = CODEKHUM)
+com.shp <- com.shp %>% rename(commGIS = CODEKHUM)
 
 # explore shapefile
 plot(com.shp, bg="transparent", add=T)
@@ -217,6 +218,44 @@ ggplot(com.shp[com.shp$CODEKHUM %in% comInd,])+
 ggplot(com.shp)+
   geom_sf(aes(fill = CODEKHUM[CODEKHUM %in% comInd]))
 
+
+
+myFun <- function(var){
+
+# function for extracting annual variable data
+datExtrFunc <- function(var,yr){
+  v <- dat_merge[dat_merge$year==yr, c("commGIS",var)]
+}  
+
+yrs <- c("2007","2008","2009","2010","2011","2012")
+
+# extract data and add to list
+var.list <- list()
+for(i in yrs){
+  var_i <- datExtrFunc(var,i)
+  var.list[[i]] <- var_i
+}
+
+# rename list elements
+names(var.list) <- c()
+
+# append data onto annual shapefiles
+
+
+}
+
+
+datShpFunc <- function()
+  com.shp.07 <- left_join(com.shp.07, var.07, by="commGIS")
+  com.shp.08 <- left_join(com.shp.08, var.08, by="commGIS")
+  com.shp.09 <- left_join(com.shp.09, var.09, by="commGIS")
+  com.shp.10 <- left_join(com.shp.10, var.10, by="commGIS")
+  com.shp.11 <- left_join(com.shp.11, var.11, by="commGIS")
+  com.shp.12 <- left_join(com.shp.12, var.12, by="commGIS")
+  
+}
+
+datPlotFunc("garbage")
 
 ## add prop_ind data to the shapefile to facilitate plotting
 
@@ -719,7 +758,8 @@ length(dat_merge$PA[is.na(dat_merge$PA)])
 # save current version of dat_merge (ALL COMMUNES)
 write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
 dat_merge <- read.csv("Data/commune/dat_merge_allComs.csv", header = T, stringsAsFactors = T)
-
+str(dat_merge)
+dat_merge <- dat_merge[, -c(1:2)]
 
 # save working version of the data with ALL communes (i.e. communes with zero forest NOT removed)
 write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
@@ -2534,14 +2574,38 @@ dat_merge[c(879,890,7528,8124), c(2:4,9:10)]
 ggplot(dat_merge, aes(dat_merge$family))+
   geom_histogram()+
   facet_grid(cols = vars(year))
+# lower overall number of obs, but I think this will be partly (or entirely) due to there being more missing communes in 2011 and 2012 (this can be seen when plotting the annual maps)
 
     # male_18_60 ####
+
+## plot some maps
+
+# extract variable for each year
+male.07 <- dat_merge %>% filter(year=="2007") %>% select(male_18_60, commGIS)
+male.08 <- dat_merge %>% filter(year=="2008") %>% select(male_18_60, commGIS)
+male.09 <- dat_merge %>% filter(year=="2009") %>% select(male_18_60, commGIS)
+male.10 <- dat_merge %>% filter(year=="2010") %>% select(male_18_60, commGIS)
+male.11 <- dat_merge %>% filter(year=="2011") %>% select(male_18_60, commGIS)
+male.12 <- dat_merge %>% filter(year=="2012") %>% select(male_18_60, commGIS)
+
+# merge with annual shapefiles
+com.shp.07 <- left_join(com.shp.07, male.07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, male.08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, male.09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, male.10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, male.11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, male.12, by="commGIS")
+
+# plot
+male.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+
+
 
 hist(dat_merge$male_18_60)
 
 # make sure there are no stupidly low numbers
 dat_merge %>% filter(male_18_60 <500)
-# 372 
+# 393
 
 # of those above, what are the proprtions of males to the total population
 dat_merge %>% filter(male_18_60 <500) %>% select(Province,Commune,tot_pop,male_18_60) %>% 
