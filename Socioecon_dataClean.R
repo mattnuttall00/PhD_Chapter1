@@ -245,17 +245,7 @@ names(var.list) <- c()
 }
 
 
-datShpFunc <- function()
-  com.shp.07 <- left_join(com.shp.07, var.07, by="commGIS")
-  com.shp.08 <- left_join(com.shp.08, var.08, by="commGIS")
-  com.shp.09 <- left_join(com.shp.09, var.09, by="commGIS")
-  com.shp.10 <- left_join(com.shp.10, var.10, by="commGIS")
-  com.shp.11 <- left_join(com.shp.11, var.11, by="commGIS")
-  com.shp.12 <- left_join(com.shp.12, var.12, by="commGIS")
-  
-}
 
-datPlotFunc("garbage")
 
 ## add prop_ind data to the shapefile to facilitate plotting
 
@@ -2598,6 +2588,19 @@ com.shp.12 <- left_join(com.shp.12, male.12, by="commGIS")
 
 # plot
 male.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.08 <- ggplot(com.shp.08)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.09 <- ggplot(com.shp.09)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.10 <- ggplot(com.shp.10)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.11 <- ggplot(com.shp.11)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+
+# plot all years
+(male.plot.07 | male.plot.08)/
+(male.plot.09 | male.plot.10)/
+(male.plot.11 | male.plot.12)
+
+# plot 2007 and 2012
+male.plot.07+male.plot.12
 
 
 
@@ -2612,17 +2615,25 @@ dat_merge %>% filter(male_18_60 <500) %>% select(Province,Commune,tot_pop,male_1
   mutate(prop_males = male_18_60/tot_pop*100) 
 # vast majority are between 20-30% of the population are males. The provinces tend to be rural provinces. I would guess that a lot of the working age males head to the cities for work.
 
+# check high values
+dat_merge %>% filter(male_18_60 >15000) %>% select(Province,Commune,tot_pop,male_18_60) %>% 
+  mutate(prop_males = male_18_60/tot_pop*100)
+# all Phnom Penh, where the proportion of males to general population is higher than above, which kind of supports my above hypothesis.
+
 # make sure there are no weird values where there are more males than the total population
 dat_merge %>% filter(male_18_60 > tot_pop)
 # no
 
 # check histo for years
-ggplot(dat_merge, aes(dat_merge$male_18_60))+
+ggplot(dat_merge, aes(male_18_60))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
 
     # fem_18_60 ####
+
+
+### Cleaning for forested communes only
 
 # I identified some errors in the raw data for this variable in 2008. I have gone back and corrected them.
 
@@ -2634,6 +2645,40 @@ hist(dat_merge$fem_18_60)
 ggplot(dat_merge, aes(dat_merge$fem_18_60))+
   geom_histogram()+
   facet_grid(cols = vars(year))
+
+
+
+### Cleaning for ALL communes
+
+hist(dat_merge$fem_18_60)
+# some very large values 
+
+dat_merge %>% filter(fem_18_60 > 30000) %>% select(year,Province, Commune,tot_pop,fem_18_60)
+# All in PP
+
+summary(dat_merge$male_18_60)
+summary(dat_merge$fem_18_60)
+# Much larger range for women. 
+
+dat_merge %>% filter(fem_18_60 > 20000) %>% select(year,Province, Commune,tot_pop,fem_18_60)
+# still all in PP. 
+
+# check there are no values larger than the tot_pop value
+dat_merge %>% filter(fem_18_60 > tot_pop)
+# no.
+
+sum(dat_merge$fem_18_60)
+sum(dat_merge$male_18_60)
+# apparently there are ~2M more women than men in Cambodia...may well be true!?  
+
+# check histo for years
+ggplot(dat_merge, aes(fem_18_60))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
+#I can't spot any obvious issues.
+
+
 
     # pop_over61 ####
 
