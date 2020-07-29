@@ -246,17 +246,6 @@ names(var.list) <- c()
 
 
 
-
-## add prop_ind data to the shapefile to facilitate plotting
-
-# extract annual data
-prop_ind07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,prop_ind)
-prop_ind08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,prop_ind)
-prop_ind09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,prop_ind)
-prop_ind10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,prop_ind)
-prop_ind11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,prop_ind)
-prop_ind12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,prop_ind)
-
 ## subset shapefile for each year (because each year of dat_merge has different number of rows to the shapefile)
 
 # extract annual commGIS values
@@ -2735,43 +2724,42 @@ old.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=prop_old))+scale_fill_viridis
 
     # tot_ind & prop_ind (RUN) ####
 
+
+# make some maps
+
+# extract annual data
+prop_ind07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,prop_ind)
+prop_ind08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,prop_ind)
+prop_ind09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,prop_ind)
+prop_ind10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,prop_ind)
+prop_ind11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,prop_ind)
+prop_ind12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,prop_ind)
+
 ### adding prop_ind to the annual shapefiles for plotting
-com.shp.07 <- com.shp.07 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.07 <- left_join(com.shp.07,prop_ind07, by="commGIS")
-
-com.shp.08 <- com.shp.08 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.08 <- left_join(com.shp.08,prop_ind08, by="commGIS")
-
-com.shp.09 <- com.shp.09 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.09 <- left_join(com.shp.09,prop_ind09, by="commGIS")
-
-com.shp.10 <- com.shp.10 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.10 <- left_join(com.shp.10,prop_ind10, by="commGIS")
-
-com.shp.11 <- com.shp.11 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.11 <- left_join(com.shp.11,prop_ind11, by="commGIS")
-
-com.shp.12 <- com.shp.12 %>% dplyr::rename(commGIS = CODEKHUM)
 com.shp.12 <- left_join(com.shp.12,prop_ind12, by="commGIS")
 
-# plot prop_ind > 0.8 for all years
-prop_ind_plot_07 <- ggplot(com.shp.07)+
-  geom_sf(aes(fill = prop_ind > 0.8))
-prop_ind_plot_08 <- ggplot(com.shp.08)+
-  geom_sf(aes(fill = prop_ind > 0.8))
-prop_ind_plot_09 <- ggplot(com.shp.09)+
-  geom_sf(aes(fill = prop_ind > 0.8))
-prop_ind_plot_10 <- ggplot(com.shp.10)+
-  geom_sf(aes(fill = prop_ind > 0.8))
-prop_ind_plot_11 <- ggplot(com.shp.11)+
-  geom_sf(aes(fill = prop_ind > 0.8))
-prop_ind_plot_12 <- ggplot(com.shp.12)+
-  geom_sf(aes(fill = prop_ind > 0.8))
+# plot prop_ind for all years
+prop_ind_plot_07 <- ggplot(com.shp.07) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+prop_ind_plot_08 <- ggplot(com.shp.08) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+prop_ind_plot_09 <- ggplot(com.shp.09) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+prop_ind_plot_10 <- ggplot(com.shp.10) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+prop_ind_plot_11 <- ggplot(com.shp.11) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+prop_ind_plot_12 <- ggplot(com.shp.12) + geom_sf(aes(fill = prop_ind)) + scale_fill_viridis()
+
+prop_ind_plot_07
+# interesting to see the odd communes with low prop_ind amongst all the high ones in the NE. I guess these are the communes with the larger/provincial towns? 
 
 (prop_ind_plot_07 | prop_ind_plot_08) / 
   (prop_ind_plot_09 | prop_ind_plot_10) /
   (prop_ind_plot_11 | prop_ind_plot_12)
 
+
+      # Cleaning for forested communes only ####
 
 ## data checking
 
@@ -2810,6 +2798,35 @@ dat_merge %>% filter(prop_ind>1) # 0 rows
 
 # check histo for years
 ggplot(dat_merge, aes(dat_merge$prop_ind))+
+  geom_histogram()+
+  facet_grid(cols = vars(year))
+
+      # Cleaning for ALL communes ####
+
+# tot_ind
+hist(dat_merge$tot_ind)
+dat_merge %>% filter(tot_ind>tot_pop) %>% select(year,Province,Commune,tot_pop,tot_ind)
+# there are 30 communes where tot_ind is larger than tot_pop
+
+# as above, I will replace the tot_pop value with the tot_ind value
+dat_merge <- dat_merge %>% 
+              mutate(tot_pop = replace(tot_pop, tot_pop<tot_ind, tot_ind[tot_pop<tot_ind]))
+# now 0 rows when you check
+
+# now for prop_ind
+dat_merge %>% filter(prop_ind>1) %>% select(year,Province,Commune,prop_ind,tot_pop,tot_ind)
+# 45 communes where prop_ind is > 1
+
+# first create new prop_ind using corrected tot_pop and tot_ind, then replace prop_ind values
+dat_merge <- dat_merge %>% 
+              mutate(new_prop_ind = tot_ind/tot_pop) %>% 
+              mutate(prop_ind = replace(prop_ind, prop_ind>1, new_prop_ind[prop_ind>1])) %>% 
+              select(-new_prop_ind)
+# now 0 rows
+
+
+# check histo for years
+ggplot(dat_merge, aes(prop_ind))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
