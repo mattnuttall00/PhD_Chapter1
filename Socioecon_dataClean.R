@@ -2889,6 +2889,40 @@ new.demog.2008 %>% filter(totals>tot_pop)
 
     # pop_den ####
 
+## make some maps
+
+# extract variable for each year (need to log pop_den otherwise the maps don't show anything because of a few really high values i.e. the main cities)
+pop_den.07 <- dat_merge %>% filter(year=="2007") %>% select(pop_den, commGIS) %>% 
+              mutate(log_pop_den = log(pop_den))
+pop_den.08 <- dat_merge %>% filter(year=="2008") %>% select(pop_den, commGIS)%>% 
+              mutate(log_pop_den = log(pop_den))
+pop_den.09 <- dat_merge %>% filter(year=="2009") %>% select(pop_den, commGIS)%>% 
+              mutate(log_pop_den = log(pop_den))
+pop_den.10 <- dat_merge %>% filter(year=="2010") %>% select(pop_den, commGIS)%>% 
+              mutate(log_pop_den = log(pop_den))
+pop_den.11 <- dat_merge %>% filter(year=="2011") %>% select(pop_den, commGIS)%>% 
+              mutate(log_pop_den = log(pop_den))
+pop_den.12 <- dat_merge %>% filter(year=="2012") %>% select(pop_den, commGIS)%>% 
+              mutate(log_pop_den = log(pop_den))
+
+# merge with annual shapefiles
+com.shp.07 <- left_join(com.shp.07, pop_den.07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, pop_den.08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, pop_den.09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, pop_den.10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, pop_den.11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, pop_den.12, by="commGIS")
+
+# plot
+pop_den.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+pop_den.plot.08 <- ggplot(com.shp.08)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+pop_den.plot.09 <- ggplot(com.shp.09)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+pop_den.plot.10 <- ggplot(com.shp.10)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+pop_den.plot.11 <- ggplot(com.shp.11)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+pop_den.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=log_pop_den))+scale_fill_viridis()
+
+pop_den.plot.07 + pop_den.plot.12
+
 hist(dat_merge$pop_den)
 # a few larger values
 
