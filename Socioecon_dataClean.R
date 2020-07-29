@@ -2571,12 +2571,18 @@ ggplot(dat_merge, aes(dat_merge$family))+
 ## plot some maps
 
 # extract variable for each year
-male.07 <- dat_merge %>% filter(year=="2007") %>% select(male_18_60, commGIS)
-male.08 <- dat_merge %>% filter(year=="2008") %>% select(male_18_60, commGIS)
-male.09 <- dat_merge %>% filter(year=="2009") %>% select(male_18_60, commGIS)
-male.10 <- dat_merge %>% filter(year=="2010") %>% select(male_18_60, commGIS)
-male.11 <- dat_merge %>% filter(year=="2011") %>% select(male_18_60, commGIS)
-male.12 <- dat_merge %>% filter(year=="2012") %>% select(male_18_60, commGIS)
+male.07 <- dat_merge %>% filter(year=="2007") %>% select(male_18_60,tot_pop, commGIS) %>% 
+            mutate(prop_male = male_18_60/tot_pop)
+male.08 <- dat_merge %>% filter(year=="2008") %>% select(male_18_60,tot_pop, commGIS)%>% 
+            mutate(prop_male = male_18_60/tot_pop)
+male.09 <- dat_merge %>% filter(year=="2009") %>% select(male_18_60,tot_pop, commGIS)%>% 
+            mutate(prop_male = male_18_60/tot_pop)
+male.10 <- dat_merge %>% filter(year=="2010") %>% select(male_18_60,tot_pop, commGIS)%>% 
+            mutate(prop_male = male_18_60/tot_pop)
+male.11 <- dat_merge %>% filter(year=="2011") %>% select(male_18_60,tot_pop, commGIS)%>% 
+            mutate(prop_male = male_18_60/tot_pop)
+male.12 <- dat_merge %>% filter(year=="2012") %>% select(male_18_60,tot_pop, commGIS)%>% 
+            mutate(prop_male = male_18_60/tot_pop)
 
 # merge with annual shapefiles
 com.shp.07 <- left_join(com.shp.07, male.07, by="commGIS")
@@ -2587,12 +2593,12 @@ com.shp.11 <- left_join(com.shp.11, male.11, by="commGIS")
 com.shp.12 <- left_join(com.shp.12, male.12, by="commGIS")
 
 # plot
-male.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
-male.plot.08 <- ggplot(com.shp.08)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
-male.plot.09 <- ggplot(com.shp.09)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
-male.plot.10 <- ggplot(com.shp.10)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
-male.plot.11 <- ggplot(com.shp.11)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
-male.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=male_18_60))+scale_fill_viridis()
+male.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
+male.plot.08 <- ggplot(com.shp.08)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
+male.plot.09 <- ggplot(com.shp.09)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
+male.plot.10 <- ggplot(com.shp.10)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
+male.plot.11 <- ggplot(com.shp.11)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
+male.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=prop_male))+scale_fill_viridis()
 
 # plot all years
 (male.plot.07 | male.plot.08)/
@@ -2688,9 +2694,44 @@ dat_merge %>% filter(pop_over61 > 3000) %>% select(year,Province,Commune,pop_ove
 # well below tot_pop so no reason to doubt it
 
 # check histo for years
-ggplot(dat_merge, aes(dat_merge$pop_over61))+
+ggplot(dat_merge, aes(pop_over61))+
   geom_histogram()+
   facet_grid(cols = vars(year))
+
+## plot some maps. I am interested to see where all the old folk are. Although I want to see proportion rather than raw values
+
+# extract variable for each year
+old.07 <- dat_merge %>% filter(year=="2007") %>% select(pop_over61,tot_pop, commGIS) %>% 
+          mutate(prop_old = pop_over61/tot_pop)
+old.08 <- dat_merge %>% filter(year=="2008") %>% select(pop_over61,tot_pop, commGIS)%>% 
+          mutate(prop_old = pop_over61/tot_pop)
+old.09 <- dat_merge %>% filter(year=="2009") %>% select(pop_over61,tot_pop, commGIS)%>% 
+          mutate(prop_old = pop_over61/tot_pop)
+old.10 <- dat_merge %>% filter(year=="2010") %>% select(pop_over61,tot_pop, commGIS)%>% 
+          mutate(prop_old = pop_over61/tot_pop)
+old.11 <- dat_merge %>% filter(year=="2011") %>% select(pop_over61,tot_pop, commGIS)%>% 
+          mutate(prop_old = pop_over61/tot_pop)
+old.12 <- dat_merge %>% filter(year=="2012") %>% select(pop_over61,tot_pop, commGIS)%>% 
+          mutate(prop_old = pop_over61/tot_pop)
+
+# merge with annual shapefiles
+com.shp.07 <- left_join(com.shp.07, old.07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, old.08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, old.09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, old.10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, old.11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, old.12, by="commGIS")
+
+# plot
+old.plot.07 <- ggplot(com.shp.07)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+old.plot.08 <- ggplot(com.shp.08)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+old.plot.09 <- ggplot(com.shp.09)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+old.plot.10 <- ggplot(com.shp.10)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+old.plot.11 <- ggplot(com.shp.11)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+old.plot.12 <- ggplot(com.shp.12)+geom_sf(aes(fill=prop_old))+scale_fill_viridis()
+
+
+
 
     # tot_ind & prop_ind (RUN) ####
 
