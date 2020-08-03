@@ -176,7 +176,7 @@ CCI@data@values
 
 # read in as a sf object
 com.shp <- st_read('Spatial_data/boundary_khum.shp')
-com.shp <- com.shp %>% rename(commGIS = CODEKHUM)
+com.shp <- com.shp %>% dplyr::rename(commGIS = CODEKHUM)
 
 # explore shapefile
 plot(com.shp, bg="transparent", add=T)
@@ -738,6 +738,7 @@ length(dat_merge$PA[is.na(dat_merge$PA)])
 write.csv(dat_merge, file="Data/commune/dat_merge_allComs.csv")
 dat_merge <- read.csv("Data/commune/dat_merge_allComs.csv", header = T, stringsAsFactors = T)
 str(dat_merge)
+dat_merge <- dat_merge[ ,-1]
 dat_merge <- dat_merge[, -c(1:2)]
 
 # save working version of the data with ALL communes (i.e. communes with zero forest NOT removed)
@@ -2927,22 +2928,27 @@ hist(dat_merge$pop_den)
 # a few larger values
 
 dat_merge %>% filter(pop_den>2000) %>% select(Province,Commune,commGIS,pop_den,areaKM,tot_pop) 
-# Phnom Penh. Acceptable
+# Mostly Phnom Penh, Battambang, Kandal, Kampong Cham etc. What I would expect
 
-dat_merge %>% filter(pop_den>1500) %>% select(Province,Commune,commGIS,pop_den,areaKM,tot_pop) 
+dat_merge %>% filter(pop_den>5000) %>% select(Province,Commune,commGIS,pop_den,areaKM,tot_pop) 
 # mostly Phnom Penh, plus Sihanouk and Kampong Cham. Believable 
 
 # check the small values
 dat_merge %>% filter(pop_den<1) %>% select(year,Province,Commune,commGIS,pop_den,areaKM,tot_pop)
-# Koh Kong and Mondulkiri - fine.
+# Koh Kong, Mondulkiri, Pursat - fine.
 
 # check histo per year
-ggplot(dat_merge, aes(dat_merge$pop_den))+
+ggplot(dat_merge, aes(pop_den))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
+dat_merge %>% filter(pop_den > 15000) %>% select(year,Province,Commune,commGIS,pop_den,areaKM,tot_pop)
+# some of these seem ridiculous. Some have pop_den values of over 140,000 people per km2. This is because the total population is several thousand and the communes are tiny ones in the centre of PP.  I don't really know if this is possible, but I guess it could be. I am not sure how to check...
+
 
     # F6_24_sch ####
+
+## This var is not used in the final models
 
 # are there any with propotion > 1
 dat_merge %>% filter(F6_24_sch>1) %>% select(year,Province,Commune,commGIS) # none
@@ -2952,9 +2958,10 @@ dat_merge %>% filter(F6_24_sch < 0.1) %>% select(year,Province,Commune,commGIS)
 # only a handful each year.  Rattankiri and Stung Treng. Probably the two most remote and rural provinces. Believable
 
 # check histo for years
-ggplot(dat_merge, aes(dat_merge$F6_24_sch))+
+ggplot(dat_merge, aes(F6_24_sch))+
   geom_histogram()+
   facet_grid(cols = vars(year))
+# shape changes over time, with proportions getting larger which is believable.
 
     # M6_24_sch ####
 
@@ -2965,7 +2972,7 @@ dat_merge %>% filter(M6_24_sch>1, year==2009) %>% select(year,Province,Commune,c
 # there were errors, but I have fixed them in the raw data
 
 # check histo for years
-ggplot(dat_merge, aes(dat_merge$M6_24_sch))+
+ggplot(dat_merge, aes(M6_24_sch))+
   geom_histogram()+
   facet_grid(cols = vars(year))
 
@@ -3117,7 +3124,7 @@ hist(dat_merge$propPrimSec)
 # some values > 1
 
 dat_merge %>% filter(propPrimSec>1) %>% select(year,Province,Commune,tot_pop,propPrimSec)
-# 198 records.  All 2011 and 2012. Appears to be large chunks of entire provinces.  I'm guessing a mismatch with tot_pop.
+# 286 records.  All 2011 and 2012. Appears to be large chunks of entire provinces.  I'm guessing a mismatch with tot_pop.
 
 # I've checked the raw data and the errors are in the raw data, not in my summaries. None of the values are much over 1, so I will just change them to 1
 dat_merge <- dat_merge %>% mutate(propPrimSec = replace(propPrimSec, propPrimSec>1, 1))
