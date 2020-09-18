@@ -8,9 +8,7 @@
 
 #### Load libraries ####
 
-library('tidyverse')
 library('plyr')
-library('cowplot')
 library('raster')
 library('rgdal')
 library('rgeos')
@@ -25,6 +23,7 @@ library("factoextra")
 library("corrplot")
 library("patchwork")
 library('viridis')
+library('tidyverse')
 
 # make sure select() is dplyr, not MASS otherwise loads of code won't work
 select <- dplyr::select
@@ -3160,7 +3159,7 @@ hist(dat_merge$propSecSec)
 
 # Check the high numbers 
 dat_merge %>% filter(propSecSec > 0.6) %>% select(year,Province,Commune,propSecSec)
-# one commune with all the high values in 2007, 2009, 2010
+# one commune with all the high values in 2007, 2008, 2009, 2010
 
 # plot all the years for that commune
 ggplot(dat_merge, aes(x=year,y=propSecSec))+
@@ -3172,7 +3171,7 @@ dat_merge %>% filter(Commune=="Kaoh Dach") %>% select(year,Province, Commune,pro
 
 # check village data
 socioecon.dat %>% filter(Commune=="Kaoh Dach") %>% select(Year,Province, Commune)
-# It's not in the village data so I must have removed it previously.
+# In the village data 2011 and 2012 are a different province. I think perhaps the commune was moved to the PP province from Kandal (as they are right next to each other and PP is likely expanding)
 
 # I will double check the 2008 raw data as it's the anomoly
 
@@ -3191,6 +3190,8 @@ str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
 
     # propTerSec ####
+
+### this variable is not used in the final models 
 
 hist(dat_merge$propTerSec)
 # this looks fine
@@ -3211,6 +3212,8 @@ ggplot(dat_merge, aes(dat_merge$propTerSec))+
 
 
     # propQuatSec (RUN) ####
+
+### this variable is not used ###
 
 hist(dat_merge$propQuatSec)
 # some values over 1
@@ -3258,6 +3261,8 @@ ggplot(dat_merge, aes(dat_merge$Les1_R_Land))+
 
     # Les1_F_Land (RUN) ####
 
+### this variable not used ###
+
 hist(dat_merge$Les1_F_Land)
 # very different shape to Les1_R_Land. I suppose far fewer people will have absolutely no land to plant anything.  Most people will have a small vegetabloe patch or garden, even if they don't have enough land to plant rice.
 
@@ -3290,6 +3295,8 @@ ggplot(dat_merge, aes(x=year, y=Les1_F_Land))+
 dat_merge <- dat_merge %>% select(-Les1_F_Land)
 
     # buff_fam (RUN) ####
+
+### this variable not used ###
 
 hist(dat_merge$buff_fam)
 # no obvious problems
@@ -3325,9 +3332,10 @@ dat_merge %>% filter(pig_fam > 1)
 # none
 
 # histo for each year
-ggplot(dat_merge, aes(dat_merge$pig_fam))+
+ggplot(dat_merge, aes(pig_fam))+
   geom_histogram()+
   facet_grid(cols = vars(year))
+# 2011 and 2012 are different shapes
 
 # there was an issue with the 2008 raw data - fixed now
 
@@ -3341,10 +3349,91 @@ dat_merge %>% filter(dist_sch > 60) %>% select(year,Province,Commune,dist_sch)
 # mostly the same commune just different years - Mondulkiri province which is believable 
 
 dat_merge %>% filter(dist_sch > 40) %>% select(year,Province,Commune,dist_sch)
-# Mondulkiri, Rattankiri, Preah Vihear, Stung Streng - all believable
+# Mondulkiri, Rattankiri, Preah Vihear, Stung Streng - all believable. Some from Kracheh, Koh Kong etc which are slightly suspicious 
+
+dat_merge %>% filter(Commune=="Ta Sal") %>% select(year,Province,Commune,dist_sch)
+# Looks like a new school was buit in 2011.  Not implausible 
+
+dat_merge %>% filter(Commune=="Andoung Tuek") %>% select(year,Province,Commune,dist_sch)
+dat_merge %>% filter(Commune=="Ta Nuon") %>% select(year,Province,Commune,dist_sch)
+dat_merge %>% filter(Commune=="Ta Tey Leu") %>% select(year,Province,Commune,dist_sch)
+# 2009 seems to be the odd one out in many of these
+
+# save the data for distances greater than 40km, then split into smaller groups to see lines better
+dat_sch_40 <- dat_merge %>% filter(dist_sch > 40)
+dat_sch_40 <- dat_sch_40 %>% arrange(Commune,year)
+dat_sch_40 %>% select(Commune,year)
+dat_sch_40.1 <- dat_sch_40[1:38,]
+dat_sch_40.2 <- dat_sch_40[39:71,]
+dat_sch_40.3 <- dat_sch_40[72:106,]
+
+
+# plot lines for each commune to see
+ggplot(dat_sch_40.1, aes(x=year, y=dist_sch, group=Commune, colour=Commune))+
+  geom_line(show.legend = F)
+# all plausible
+    
+ggplot(dat_sch_40.2, aes(x=year, y=dist_sch, group=Commune, colour=Commune))+
+  geom_line(show.legend = T)
+# the zigzag is the implausible one
+
+# plot with facets
+ggplot(dat_sch_40.2, aes(x=year, y=dist_sch, group=Commune, colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))
+# Sokh Sant
+
+dat_merge %>% filter(Commune=="Sokh Sant") %>% select(year, Commune,dist_sch)
+# The drop in 2012 is plausible, but the zigzagging in earlier years is not. I will replace them with their mean
+
+dat_merge$dist_sch[dat_merge$Commune=="Sokh Sant" & dat_merge$year=="2007"] <- 46.9
+dat_merge$dist_sch[dat_merge$Commune=="Sokh Sant" & dat_merge$year=="2008"] <- 46.9
+dat_merge$dist_sch[dat_merge$Commune=="Sokh Sant" & dat_merge$year=="2009"] <- 46.9
+dat_merge$dist_sch[dat_merge$Commune=="Sokh Sant" & dat_merge$year=="2010"] <- 46.9
+dat_merge$dist_sch[dat_merge$Commune=="Sokh Sant" & dat_merge$year=="2011"] <- 46.9
+
+
+ggplot(dat_sch_40.3, aes(x=year, y=dist_sch, group=Commune, colour=Commune))+
+  geom_line(show.legend = T)
+
+
+# plot using panels
+ggplot(dat_sch_40.3, aes(x=year, y=dist_sch, group=Commune, colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))
+
+# 2 communes only have one data point. check these
+dat_merge %>% filter(Commune=="Ta Lat") %>% select(year, Province,Commune,dist_sch)
+# others below 40
+
+dat_merge %>% filter(Commune=="Ta Nuon") %>% select(year, Province,Commune,dist_sch)
+# all other values below 40. There are issues with the other years though.
+
+
+### I think I need to check this variable for all communes and all values (not just >40km)
+
+# Plot distances by province
+ggplot(dat_merge, aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Province), nrow = 2, ncol=12)+
+  theme(legend.position="none")
+
+# most obvious provinces with issues: Kampong Cham, Kampong Chhnang, Kampong Thom, Koh Kong, Kracheh, Mondul Kiri, Otdar MEanchey, Preah Vihear, Pursat, Siem Reap, Stung Treng
+
+      # Kampong Cham ####
+
+# Plot distances by commune
+ggplot(dat_merge[dat_merge$Province=="Kampong Cham",], aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))+
+  theme(legend.position="none")
+# areaks Tnaot, Choam Ta Mau, Chumnik, Doun Tei, Kak, Kokor, Seda, Soupheas, Srak, Svay Sach Phnum, Trapeang Pring, 
+
+dat_merge %>% filter(Commune=="areaks Tnaot") %>% select(year,Province,Commune,dist_sch)
 
 
 
+#
     # garbage ####
 
 hist(dat_merge$garbage)
