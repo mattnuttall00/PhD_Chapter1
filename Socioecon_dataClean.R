@@ -3420,6 +3420,21 @@ ggplot(dat_merge, aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
 
 # most obvious provinces with issues: Kampong Cham, Kampong Chhnang, Kampong Thom, Koh Kong, Kracheh, Mondul Kiri, Otdar MEanchey, Preah Vihear, Pursat, Siem Reap, Stung Treng
 
+# function for finding the mean of distances (no province)
+distFun <- function(commune, years){
+  mean <- mean(dat_merge$dist_sch[dat_merge$Commune==commune & dat_merge$year %in% years])
+  return(mean)
+}
+
+# function for finding the mean of distances (where you need to also filter by province)
+distFun2 <- function(commune, province, years){
+  mean <- mean(dat_merge$dist_sch[dat_merge$Commune==commune & dat_merge$Province==province & 
+                                    dat_merge$year %in% years])
+  return(mean)
+}
+
+
+
       # Kampong Cham ####
 
 # Plot distances by commune
@@ -3429,7 +3444,121 @@ ggplot(dat_merge[dat_merge$Province=="Kampong Cham",], aes(x=year, y=dist_sch, g
   theme(legend.position="none")
 # areaks Tnaot, Choam Ta Mau, Chumnik, Doun Tei, Kak, Kokor, Seda, Soupheas, Srak, Svay Sach Phnum, Trapeang Pring, 
 
+# areaks Tnaot
 dat_merge %>% filter(Commune=="areaks Tnaot") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007,2008,2009,2010)
+areaks_Tnaot_mean <- distFun("areaks Tnaot", years)
+dat_merge$dist_sch[dat_merge$Commune=="areaks Tnaot" & dat_merge$year %in% years] <- areaks_Tnaot_mean
+
+# Choam Ta Mau
+dat_merge %>% filter(Commune=="Choam Ta Mau") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Choam_Ta_Mau_mean <- distFun("Choam Ta Mau", years)
+dat_merge$dist_sch[dat_merge$Commune=="Choam Ta Mau" & dat_merge$year %in% years] <- Choam_Ta_Mau_mean
+
+# Chumnik
+dat_merge %>% filter(Commune=="Chumnik") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Chumnik_mean <- distFun("Chumnik", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chumnik" & dat_merge$year %in% years] <- Chumnik_mean
+
+# Doun Tei
+dat_merge %>% filter(Commune=="Doun Tei") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Doun_Tei_mean <- distFun("Doun Tei", years)
+dat_merge$dist_sch[dat_merge$Commune=="Doun Tei" & dat_merge$year %in% years] <- Doun_Tei_mean
+
+# Kak
+dat_merge %>% filter(Commune=="Kak" & Province=="Kampong Cham") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kak_mean <- distFun2("Kak","Kampong Cham", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kak" & dat_merge$year %in% years] <- Kak_mean
+
+# Kokor
+dat_merge %>% filter(Commune=="Kokor") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kokor_mean <- distFun("Kokor", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kokor" & dat_merge$year %in% years] <- Kokor_mean
+
+# Seda
+dat_merge %>% filter(Commune=="Seda" & Province=="Kampong Cham") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Seda_mean <- distFun2("Kokor","Kampong Cham", years)
+dat_merge$dist_sch[dat_merge$Commune=="Seda" & dat_merge$Province=="Kampong Cham" & 
+                     dat_merge$year %in% years] <- Seda_mean
+
+# Soupheas
+dat_merge %>% filter(Commune=="Soupheas") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Soupheas_mean <- distFun("Soupheas", years)
+dat_merge$dist_sch[dat_merge$Commune=="Soupheas" & dat_merge$year %in% years] <- Soupheas_mean
+
+# Srak
+dat_merge %>% filter(Commune=="Srak") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Srak_mean <- distFun("Srak", years)
+dat_merge$dist_sch[dat_merge$Commune=="Srak" & dat_merge$year %in% years] <- Srak_mean
+
+# Svay Sach Phnum
+dat_merge %>% filter(Commune=="Svay Sach Phnum") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Svay_Sach_Phnum_mean <- distFun("Svay Sach Phnum", years)
+dat_merge$dist_sch[dat_merge$Commune=="Svay Sach Phnum" & dat_merge$year %in% years] <- Svay_Sach_Phnum_mean
+
+# Trapeang Pring
+dat_merge %>% filter(Commune=="Trapeang Pring") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Trapeang_Pring_mean <- distFun("Trapeang Pring", years)
+dat_merge$dist_sch[dat_merge$Commune=="Trapeang Pring" & dat_merge$year %in% years] <- Trapeang_Pring_mean
+
+
+#
+      # Kampong Chhnang ####
+
+# Plot distances by commune
+ggplot(dat_merge[dat_merge$Province=="Kampong Chhnang",], 
+       aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))+
+  theme(legend.position="none")
+# Chhean Laeung, Chieb, Khlong Popok, Kouk Banteay, Peam, Peam Chhkaok, Svay Chuk
+
+# Chhean Laeung
+dat_merge %>% filter(Commune=="Chhean Laeung") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Chhean_Laeung_mean <- distFun("Chhean Laeung", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chhean Laeung" & dat_merge$year %in% years] <- Chhean_Laeung_mean
+
+# Chieb
+dat_merge %>% filter(Commune=="Chieb") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Chieb_mean <- distFun("Chieb", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chieb" & dat_merge$year %in% years] <- Chieb_mean
+
+# Khlong Popok
+dat_merge %>% filter(Commune=="Khlong Popok") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Khlong_Popok_mean <- distFun("Khlong Popok", years)
+dat_merge$dist_sch[dat_merge$Commune=="Khlong Popok" & dat_merge$year %in% years] <- Khlong_Popok_mean
+
+# Kouk Banteay
+dat_merge %>% filter(Commune=="Kouk Banteay") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kouk_Banteay_mean <- distFun("Kouk Banteay", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kouk Banteay" & dat_merge$year %in% years] <- Kouk_Banteay_mean
+
+# Peam
+dat_merge %>% filter(Commune=="Peam") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Peam" & dat_merge$year==2009] <- 12.46
+
+# Peam Chhkaok
+dat_merge %>% filter(Commune=="Peam Chhkaok") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Peam Chhkaok" & dat_merge$year==2009] <- 7.66
+
+# Svay Chuk
+dat_merge %>% filter(Commune=="Svay Chuk") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Svay Chuk" & dat_merge$year==2009] <- 8.16
+dat_merge$dist_sch[dat_merge$Commune=="Svay Chuk" & dat_merge$year==2007] <- 8.16
 
 
 
