@@ -3563,6 +3563,88 @@ dat_merge$dist_sch[dat_merge$Commune=="Svay Chuk" & dat_merge$year==2007] <- 8.1
 
 
 #
+      # Kampong Thom ####
+
+# Plot distances by commune
+ggplot(dat_merge[dat_merge$Province=="Kampong Thom",], 
+       aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))+
+  theme(legend.position="none")
+# Kakoah, Mean Ritth, Sochet, 
+
+# Kakaoh
+dat_merge %>% filter(Commune=="Kakaoh" & Province=="Kampong Thom") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kakaoh_mean <- distFun2("Kakaoh", "Kampong Thom", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kakaoh" & dat_merge$Province=="Kampong Thom" & 
+                     dat_merge$year %in% years] <- Kakaoh_mean
+
+#  Mean Ritth
+dat_merge %>% filter(Commune=="Mean Ritth") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Mean Ritth" & dat_merge$year==2009] <- 15.36
+
+# Sochet
+dat_merge %>% filter(Commune=="Sochet") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Sochet_mean <- distFun("Sochet", years)
+dat_merge$dist_sch[dat_merge$Commune=="Sochet" & dat_merge$year %in% years] <- Sochet_mean
+
+
+      # Koh Kong ####
+
+# Plot distances by commune
+ggplot(dat_merge[dat_merge$Province=="Koh Kong",], 
+       aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  facet_wrap(vars(Commune))+
+  theme(legend.position="none")
+# Andoung Tuek, Chumnoab, Phnhi Meas, Pralay, Ruessei Chrum, Ta Nuon, Ta Tey Leu, Trapeang Rung,
+
+# Andoung Tuek
+dat_merge %>% filter(Commune=="Andoung Tuek") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Andoung_Tuek_mean <- distFun("Andoung Tuek", years)
+dat_merge$dist_sch[dat_merge$Commune=="Andoung Tuek" & dat_merge$year %in% years] <- Andoung_Tuek_mean
+
+# Chumnoab
+dat_merge %>% filter(Commune=="Chumnoab") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Chumnoab" & dat_merge$year==2009] <- 37.16
+years <- c(2011,2012)
+Chumnoab_mean <- distFun("Chumnoab", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chumnoab" & dat_merge$year %in% years] <- Chumnoab_mean
+
+# Phnhi Meas
+dat_merge %>% filter(Commune=="Phnhi Meas") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Phnhi Meas" & dat_merge$year==2009] <- 28.73
+years <- c(2011,2012)
+Phnhi_Meas_mean <- distFun("Phnhi Meas", years)
+dat_merge$dist_sch[dat_merge$Commune=="Phnhi Meas" & dat_merge$year %in% years] <- Phnhi_Meas_mean
+
+# Pralay
+dat_merge %>% filter(Commune=="Pralay"&Province=="Kampong Thom") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Pralay" & dat_merge$Province=="Kampong Thom" & 
+                     dat_merge$year==2009] <- 4
+
+# Ruessei Chrum
+dat_merge %>% filter(Commune=="Ruessei Chrum") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Ruessei Chrum" & dat_merge$year==2009] <- 48.33
+
+# Ta Nuon
+dat_merge %>% filter(Commune=="Ta Nuon") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Ta_Nuon_mean <- distFun("Ta Nuon", years)
+dat_merge$dist_sch[dat_merge$Commune=="Ta Nuon" & dat_merge$year %in% years] <- Ta_Nuon_mean
+
+# Ta Tey Leu
+dat_merge %>% filter(Commune=="Ta Tey Leu") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Ta Tey Leu" & dat_merge$year==2009] <- 54
+
+
+
+
+
+#
     # garbage ####
 
 hist(dat_merge$garbage)
