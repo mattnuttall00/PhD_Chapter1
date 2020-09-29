@@ -3181,14 +3181,6 @@ ggplot(dat_merge, aes(dat_merge$propSecSec))+
   facet_grid(cols=vars(year))
 
 
-    # LOAD LATEST VERSION ####
-
-write.csv(dat_merge, file="Data/commune/dat_merge.csv")
-
-dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
-str(dat_merge)
-dat_merge <- dat_merge %>% select(-X)
-
     # propTerSec ####
 
 ### this variable is not used in the final models 
@@ -3314,14 +3306,6 @@ ggplot(dat_merge, aes(dat_merge$buff_fam))+
 
 dat_merge <- dat_merge %>% select(-buff_fam)
 
-
-    # LOAD LATEST VERSION ####
-
-write.csv(dat_merge, file="Data/commune/dat_merge.csv")
-
-dat_merge <- read.csv("Data/commune/dat_merge.csv", header = TRUE)
-str(dat_merge)
-dat_merge <- dat_merge %>% select(-X)
 
     # pig_fam ####
 
@@ -4096,7 +4080,7 @@ dat_merge %>% filter(KM_Heal_cent>50) %>% select(Province,Commune,KM_Heal_cent)
 hist(dat_merge$land_confl)
 # handful of very large values. Not sure how to check this, but I will look at the proportion to the population
 
-dat_merge %>% filter(land_confl > 100) %>% select(year,Province,Commune,land_confl,tot_pop)
+dat_merge %>% filter(land_confl > 200) %>% select(year,Province,Commune,land_confl,tot_pop)
 # all the communes with high values have relatively large populations, so there is no reason to doubt the numbers
 
     # crim_case ####
@@ -4283,16 +4267,6 @@ ggplot(dat_merge, aes(x=year, y=mean_elev, group=Commune))+
   geom_line()+
   facet_wrap(dat_merge$Province,nrow=2, ncol=12)
 # No communes have changing elevation which is good!  All look fine
-
-    # LOAD LATEST VERSION ####
-
-write.csv(dat_merge, file="Data/commune/dat_merge.csv")
-
-dat_merge <- read.csv("Data/commune/dat_merge.csv")
-str(dat_merge)
-dat_merge <- dat_merge %>% select(-X)
-dat_merge <- dat_merge %>% select(-X.1)
-dat_merge$year <- as.factor(dat_merge$year)
 
     # habitat ####
 
