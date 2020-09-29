@@ -3442,7 +3442,11 @@ ggplot(dat_merge[dat_merge$Province=="Kampong Cham",], aes(x=year, y=dist_sch, g
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# areaks Tnaot, Choam Ta Mau, Chumnik, Doun Tei, Kak, Kokor, Seda, Soupheas, Srak, Svay Sach Phnum, Trapeang Pring, 
+# areaks Tnaot, Choam Ta Mau, Chumnik, Doun Tei, Kak, Kokor, Seda, Soupheas, Srak, Svay Sach Phnum, Trapeang Pring, Neang Teut, Chbar Ampov, Chong Cheach, Kang Ta Noeng, Kaoh Tontuem, Krala, Preaek Rumdeng, prey Char, Tang Krasang, 
+
+ggplot(dat_merge[dat_merge$Province=="Kampong Cham",], aes(x=year, y=dist_sch, group=Commune,colour=Commune))+
+  geom_line()+
+  theme(legend.position="none")
 
 # areaks Tnaot
 dat_merge %>% filter(Commune=="areaks Tnaot") %>% select(year,Province,Commune,dist_sch)
@@ -3511,6 +3515,63 @@ years <- c(2007:2012)
 Trapeang_Pring_mean <- distFun("Trapeang Pring", years)
 dat_merge$dist_sch[dat_merge$Commune=="Trapeang Pring" & dat_merge$year %in% years] <- Trapeang_Pring_mean
 
+# Neang Teut 
+dat_merge %>% filter(Commune=="Neang Teut") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Neang_Teut_mean <- distFun("Neang Teut", years)
+dat_merge$dist_sch[dat_merge$Commune=="Neang Teut" & dat_merge$year %in% years] <- Neang_Teut_mean
+
+# Chbar Ampov, 
+dat_merge %>% filter(Commune=="Chbar Ampov") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Chbar_Ampov_mean <- distFun("Chbar Ampov", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chbar Ampov" & dat_merge$year %in% years] <- Chbar_Ampov_mean
+
+# Chong Cheach, 
+dat_merge %>% filter(Commune=="Chong Cheach") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Chong_Cheach_mean <- distFun("Chong Cheach", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chong Cheach" & dat_merge$year %in% years] <- Chong_Cheach_mean
+
+# Kang Ta Noeng, 
+dat_merge %>% filter(Commune=="Kang Ta Noeng") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kang_Ta_Noengh_mean <- distFun("Kang Ta Noeng", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kang Ta Noeng" & dat_merge$year %in% years] <- Kang_Ta_Noengh_mean
+
+# Kaoh Tontuem, 
+dat_merge %>% filter(Commune=="Kaoh Tontuem") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Kaoh_Tontuem_mean <- distFun("Kaoh Tontuem", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kaoh Tontuem" & dat_merge$year %in% years] <- Kaoh_Tontuem_mean
+
+# Krala, 
+dat_merge %>% filter(Commune=="Krala") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2012)
+Krala_mean <- distFun("Krala", years)
+dat_merge$dist_sch[dat_merge$Commune=="Krala" & dat_merge$year %in% years] <- Krala_mean
+
+# Preaek Rumdeng, 
+dat_merge %>% filter(Commune=="Preaek Rumdeng") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Preaek_Rumdeng_mean <- distFun("Preaek Rumdeng", years)
+dat_merge$dist_sch[dat_merge$Commune=="Preaek Rumdeng" & dat_merge$year %in% years] <- Preaek_Rumdeng_mean
+
+# prey Char, 
+dat_merge %>% filter(Commune=="Prey Char") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Prey_Char_mean <- distFun("Prey Char", years)
+dat_merge$dist_sch[dat_merge$Commune=="Prey Char" & dat_merge$year %in% years] <- Prey_Char_mean
+
+# Tang Krasang, 
+dat_merge %>% filter(Commune=="Tang Krasang" & Province=="Kampong Cham") %>% 
+  select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Tang_Krasang_mean <- distFun2("Tang Krasang", "Kampong Cham", years)
+dat_merge$dist_sch[dat_merge$Commune=="Tang Krasang" & dat_merge$Province=="Kampong Cham" & 
+                     dat_merge$year %in% years] <- Tang_Krasang_mean
+
+
 
 #
       # Kampong Chhnang ####
@@ -3521,7 +3582,7 @@ ggplot(dat_merge[dat_merge$Province=="Kampong Chhnang",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Chhean Laeung, Chieb, Khlong Popok, Kouk Banteay, Peam, Peam Chhkaok, Svay Chuk
+# Chhean Laeung, Chieb, Khlong Popok, Kouk Banteay, Peam, Peam Chhkaok, Svay Chuk, Chol Sar, Prey Kri, Svay
 
 # Chhean Laeung
 dat_merge %>% filter(Commune=="Chhean Laeung") %>% select(year,Province,Commune,dist_sch)
@@ -3560,7 +3621,17 @@ dat_merge %>% filter(Commune=="Svay Chuk") %>% select(year,Province,Commune,dist
 dat_merge$dist_sch[dat_merge$Commune=="Svay Chuk" & dat_merge$year==2009] <- 8.16
 dat_merge$dist_sch[dat_merge$Commune=="Svay Chuk" & dat_merge$year==2007] <- 8.16
 
+# Chol Sar, 
+dat_merge %>% filter(Commune=="Chol Sar") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Chol Sar" & dat_merge$year==2009] <- 6.66
 
+# Prey Kri, 
+dat_merge %>% filter(Commune=="Prey Kri") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Prey Kri" & dat_merge$year==2009] <- 12
+
+# Svay
+dat_merge %>% filter(Commune=="Svay") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Svay" & dat_merge$year==2009] <- 2.33
 
 #
       # Kampong Thom ####
@@ -3599,7 +3670,7 @@ ggplot(dat_merge[dat_merge$Province=="Koh Kong",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Andoung Tuek, Chumnoab, Phnhi Meas, Pralay, Ruessei Chrum, Ta Nuon, Ta Tey Leu, Trapeang Rung,
+# Andoung Tuek, Chumnoab, Phnhi Meas, Pralay, Ruessei Chrum, Ta Nuon, Ta Tey Leu, Trapeang Rung, Chrouy Pras, Ta Tai Kraom 
 
 # Andoung Tuek
 dat_merge %>% filter(Commune=="Andoung Tuek") %>% select(year,Province,Commune,dist_sch)
@@ -3646,7 +3717,16 @@ years <- c(2007:2012)
 Trapeang_Rung_mean <- distFun("Trapeang Rung", years)
 dat_merge$dist_sch[dat_merge$Commune=="Trapeang Rung" & dat_merge$year %in% years] <- Trapeang_Rung_mean
 
+# Chrouy Pras, 
+dat_merge %>% filter(Commune=="Chrouy Pras") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Chrouy_Pras_mean <- distFun("Chrouy Pras", years)
+dat_merge$dist_sch[dat_merge$Commune=="Chrouy Pras" & dat_merge$year %in% years] <- Chrouy_Pras_mean
 
+# Ta Tai Kraom
+dat_merge %>% filter(Commune=="Ta Tai Kraom") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Ta Tai Kraom" & dat_merge$year==2007] <- 14.66
+dat_merge$dist_sch[dat_merge$Commune=="Ta Tai Kraom" & dat_merge$year==2009] <- 14.66
 
 #
       # Kracheh ####
@@ -3657,7 +3737,7 @@ ggplot(dat_merge[dat_merge$Province=="Kracheh",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Bos Leav, Changkrang, Ou Krieng, Roluos Mean Chey, 
+# Bos Leav, Changkrang, Ou Krieng, Roluos Mean Chey, Voadthonak
 
 # Bos Leav
 dat_merge %>% filter(Commune=="Bos Leav") %>% select(year,Province,Commune,dist_sch)
@@ -3677,6 +3757,11 @@ dat_merge$dist_sch[dat_merge$Commune=="Ou Krieng" & dat_merge$year %in% years] <
 dat_merge %>% filter(Commune=="Roluos Mean Chey") %>% select(year,Province,Commune,dist_sch)
 dat_merge$dist_sch[dat_merge$Commune=="Roluos Mean Chey" & dat_merge$year==2009] <- 35.16
 
+# Voadthonak
+dat_merge %>% filter(Commune=="Voadthonak") %>% select(year,Province,Commune,dist_sch)
+years <- c(2011:2012)
+Voadthonak_mean <- distFun("Voadthonak", years)
+dat_merge$dist_sch[dat_merge$Commune=="Voadthonak" & dat_merge$year %in% years] <- Voadthonak_mean
 
 #
       # Mondul Kiri ####
@@ -3716,7 +3801,7 @@ ggplot(dat_merge[dat_merge$Province=="Otdar Meanchey",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Chong Kal, Kouk Mon, Ou Svay, Ph'av, Pongro, Trapeang Tav
+# Chong Kal, Kouk Mon, Ou Svay, Ph'av, Pongro, Trapeang Tav, Ampil, Kouk Khpos
 
 # Chong Kal
 dat_merge %>% filter(Commune=="Chong Kal") %>% select(year,Province,Commune,dist_sch)
@@ -3752,6 +3837,18 @@ years <- c(2008:2012)
 Trapeang_Tav_mean <- distFun("Trapeang Tav", years)
 dat_merge$dist_sch[dat_merge$Commune=="Trapeang Tav" & dat_merge$year %in% years] <- Trapeang_Tav_mean
 
+# Ampil, 
+dat_merge %>% filter(Commune=="Ampil" & Province=="Otdar Meanchey") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Ampil" & dat_merge$Province=="Otdar Meanchey" &
+                     dat_merge$year==2007] <- 10
+dat_merge$dist_sch[dat_merge$Commune=="Ampil" & dat_merge$Province=="Otdar Meanchey" &
+                     dat_merge$year==2012] <- 8.33
+
+# Kouk Khpos
+dat_merge %>% filter(Commune=="Kouk Khpos" & Province=="Otdar Meanchey") %>% 
+  select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Kouk Khpos" & dat_merge$Province=="Otdar Meanchey" &
+                     dat_merge$year==2012] <- 5.86
 
 
 #
@@ -3763,7 +3860,7 @@ ggplot(dat_merge[dat_merge$Province=="Preah Vihear",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Chhaeb Muoy, Phnum Tbaeng Pir, Reaksa, Rumdaoh, Sangkae Muoy, Srayang, 
+# Chhaeb Muoy, Phnum Tbaeng Pir, Reaksa, Rumdaoh, Sangkae Muoy, Srayang, Kantuot, Mlu Prey Muoy, Mlu Prey Pir, 
 
 # Chhaeb Muoy
 dat_merge %>% filter(Commune=="Chhaeb Muoy") %>% select(year,Province,Commune,dist_sch)
@@ -3793,7 +3890,27 @@ dat_merge$dist_sch[dat_merge$Commune=="Sangkae Muoy" & dat_merge$year %in% years
 dat_merge %>% filter(Commune=="Srayang") %>% select(year,Province,Commune,dist_sch)
 dat_merge$dist_sch[dat_merge$Commune=="Srayang" & dat_merge$year==2009] <- 29
 
+# Kantuot, 
+dat_merge %>% filter(Commune=="Kantuot", Province=="Preah Vihear") %>% select(year,Province,Commune,dist_sch)
+years <- c(2008:2011)
+Kantuot_mean <- distFun2("Kantuot", "Preah Vihear", years)
+dat_merge$dist_sch[dat_merge$Commune=="Kantuot" & dat_merge$Province=="Preah Vihear" & 
+                     dat_merge$year %in% years] <- Kantuot_mean
 
+# Mlu Prey Muoy, 
+dat_merge %>% filter(Commune=="Mlu Prey Muoy") %>% select(year,Province,Commune,dist_sch)
+years <- c(2008:2011)
+Mlu_Prey_Muoy_mean <- distFun("Mlu Prey Muoy", years)
+dat_merge$dist_sch[dat_merge$Commune=="Mlu Prey Muoy" & dat_merge$year %in% years] <- Mlu_Prey_Muoy_mean
+
+# Mlu Prey Pir
+dat_merge %>% filter(Commune=="Mlu Prey Pir") %>% select(year,Province,Commune,dist_sch)
+years <- c(2007:2010)
+Mlu_Prey_Pir_mean <- distFun("Mlu Prey Pir", years)
+dat_merge$dist_sch[dat_merge$Commune=="Mlu Prey Pir" & dat_merge$year %in% years] <- Mlu_Prey_Pir_mean
+years <- c(2011:2012)
+Mlu_Prey_Pir_mean <- distFun("Mlu Prey Pir", years)
+dat_merge$dist_sch[dat_merge$Commune=="Mlu Prey Pir" & dat_merge$year %in% years] <- Mlu_Prey_Pir_mean
 
 #
       # Pursat ####
@@ -3804,7 +3921,7 @@ ggplot(dat_merge[dat_merge$Province=="Pursat",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Ou Saom, Phteah Rung, Svay Sa
+# Ou Saom, Phteah Rung, Svay Sa, Sya, Ta Lou, 
 
 # Ou Saom
 dat_merge %>% filter(Commune=="Ou Saom") %>% select(year,Province,Commune,dist_sch)
@@ -3819,6 +3936,15 @@ dat_merge %>% filter(Commune=="Svay Sa") %>% select(year,Province,Commune,dist_s
 years <- c(2007:2010)
 Svay_Sa_mean <- distFun("Svay Sa", years)
 dat_merge$dist_sch[dat_merge$Commune=="Svay Sa" & dat_merge$year %in% years] <- Svay_Sa_mean
+
+# Sya, 
+dat_merge %>% filter(Commune=="Sya") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Sya" & dat_merge$year==2009] <- 5.33
+
+# Ta Lou,
+dat_merge %>% filter(Commune=="Ta Lou") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Ta Lou" & dat_merge$year==2007] <- 9
+dat_merge$dist_sch[dat_merge$Commune=="Ta Lou" & dat_merge$year==2009] <- 9
 
 #
       # Siem Reap ####
@@ -3853,7 +3979,7 @@ ggplot(dat_merge[dat_merge$Province=="Stung Treng",],
   geom_line()+
   facet_wrap(vars(Commune))+
   theme(legend.position="none")
-# Anlong Chrey, Anlong Phe, Kampun, Kaoh Snaeng, Ou Mreah, Ou Svay, Preaek Meas, Preah Rumkel, Santepheap, Sekong, Siem Bouk, Srae Kor, Srae Sambour, Thma Kaev 
+# Anlong Chrey, Anlong Phe, Kampun, Kaoh Snaeng, Ou Mreah, Ou Svay, Preaek Meas, Preah Rumkel, Santepheap, Sekong, Siem Bouk, Srae Kor, Srae Sambour, Thma Kaev , Kaoh Sralay, Phluk, Sdau, 
 
 # Anlong Chrey
 dat_merge %>% filter(Commune=="Anlong Chrey") %>% select(year,Province,Commune,dist_sch)
@@ -3916,6 +4042,20 @@ dat_merge$dist_sch[dat_merge$Commune=="Srae Sambour" & dat_merge$year==2009] <- 
 dat_merge %>% filter(Commune=="Thma Kaev") %>% select(year,Province,Commune,dist_sch)
 dat_merge$dist_sch[dat_merge$Commune=="Thma Kaev" & dat_merge$year==2009] <- 36
 
+# Kaoh Sralay, 
+dat_merge %>% filter(Commune=="Kaoh Sralay") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Kaoh Sralay" & dat_merge$year==2009] <- 8
+
+# Phluk, 
+dat_merge %>% filter(Commune=="Phluk") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Phluk" & dat_merge$year==2009] <- 9.83
+
+# Sdau, 
+dat_merge %>% filter(Commune=="Sdau" & Province=="Stung Treng") %>% select(year,Province,Commune,dist_sch)
+dat_merge$dist_sch[dat_merge$Commune=="Sdau" & dat_merge$Province=="Stung Treng" & 
+                     dat_merge$year==2007] <- 8.66
+dat_merge$dist_sch[dat_merge$Commune=="Sdau" & dat_merge$Province=="Stung Treng" & 
+                     dat_merge$year==2009] <- 8.66
 
 #
     # garbage ####
