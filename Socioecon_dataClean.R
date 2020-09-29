@@ -4006,6 +4006,10 @@ dat_merge <- dat_merge %>% select(-U5_mort)
 
 hist(dat_merge$Pax_migt_in)
 
+
+### First is the data cleaning I did for only the forested communes. The data cleaning for ALL communes is below
+
+
 # check outlier
 dat_merge %>% filter(Pax_migt_in > 5000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
 # This is defo an error - the number of migrants is more than 2000 people larger than the total population
@@ -4067,6 +4071,52 @@ dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in,
 
 # all the other large Pax_migt_in values (> 2000 look reasonable)
 
+
+
+### data checking for ALL communes
+
+# check outliers
+dat_merge %>% filter(Pax_migt_in > 2000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
+# Chhnok Tru in Kampong Chhnang is the only one where the number of in-migrants is relatively close to the total popaulation. 
+
+# plot it to see where it is
+
+# subset dat_merge to get Pax_migt_in and commGIS for each year
+Pax_in07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,Pax_migt_in)
+Pax_in08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,Pax_migt_in)
+Pax_in09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,Pax_migt_in)
+Pax_in10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,Pax_migt_in)
+Pax_in11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,Pax_migt_in)
+Pax_in12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,Pax_migt_in)
+
+# add onto the annual shapefiles
+com.shp.07 <- left_join(com.shp.07, Pax_in07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, Pax_in08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, Pax_in09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, Pax_in10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, Pax_in11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, Pax_in12, by="commGIS")
+
+
+# plot all
+Pax_in_plot07 <- ggplot(com.shp.07)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+Pax_in_plot08 <- ggplot(com.shp.08)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+Pax_in_plot09 <- ggplot(com.shp.09)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+Pax_in_plot10 <- ggplot(com.shp.10)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+Pax_in_plot11 <- ggplot(com.shp.11)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+Pax_in_plot12 <- ggplot(com.shp.12)+
+  geom_sf(aes(fill=Pax_migt_in > 2000))
+
+(Pax_in_plot07 | Pax_in_plot08)/
+  (Pax_in_plot09 | Pax_in_plot10)/
+  (Pax_in_plot11 | Pax_in_plot12)
+
+
     # Pax_migt_out ####
 
 hist(dat_merge$Pax_migt_out)
@@ -4101,6 +4151,7 @@ write.csv(dat_merge, file="Data/commune/dat_merge.csv")
 dat_merge <- read.csv("Data/commune/dat_merge.csv")
 str(dat_merge)
 dat_merge <- dat_merge %>% select(-X)
+dat_merge <- dat_merge %>% select(-X.1)
 dat_merge$year <- as.factor(dat_merge$year)
 
     # habitat ####
