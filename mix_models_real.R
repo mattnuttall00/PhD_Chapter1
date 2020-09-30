@@ -3244,33 +3244,83 @@ ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
 
 #
     ## ALL COMMUNES ####
-      # popdem.m1 (tot_pop, pop_dem, prop_ind - no interactions) ####
+      # popdem.m1 (pop_den, prop_ind - no interactions) ####
 
 
-# model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes
-popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
+# model with pop dem vars as fixed effects. I have not included tot_pop as it is instrincally linked to pop_den, and previous analyses above suggest that pop_den is way more importatn. Offset as areaKM to account for differences in size of communes
+popdem.m1 <- glmer(ForPix ~ pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
                    data=dat1, family="poisson")
 
 summary(popdem.m1)
 ranef(popdem.m1)
 fixef(popdem.m1)
 
-# variance component analysis
+        # variance component analysis ####
+
+
 print(VarCorr(popdem.m1),comp="Variance") 
 vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
-                   variance = c(11.49,0.0046,12.72,0.00051))
+                   variance = c(11.52,0.0074,34.63,0.0059))
 vars$relative.contrib <- vars$variance/sum(vars$variance)
+# Province is contributing the most variance proportionately (75%), followed by Commune (24.9%). The two years then make up the negligable rest
 
 # marginal and conditional r2
 r.squaredGLMM(popdem.m1)
-# marginal r2 (fixed effects) is quite high 0.8, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance.
+# marginal r2 (fixed effects) is relatively high 0.65, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance.
 
 
-# quick plots
-plot_model(popdem.m1, type="pred")
+        # manual predictions (observed data) ####
+
+# create prediction dataframe using real data
+m1_est <- subset(dat1, select = c("ForPix","pop_den","prop_ind","Province","Commune", "Provcomm", "year"))
+m1_est$Iglobal <- fixef(popdem.m1)[["(Intercept)"]]
+m1_est$Iprovince <- ranef(popdem.m1)$Province[,"(Intercept)"][match(m1_est$Province, row.names(ranef(popdem.m1)$Province))]
+m1_est$CommProv <- paste(m1_est$Provcomm,m1_est$Province,sep=":")
+m1_est$Icommune <- ranef(popdem.m1)[[1]][,"(Intercept)"][match(m1_est$CommProv, row.names(ranef(popdem.m1)[[1]]))]
+m1_est$b_year_province <- ranef(popdem.m1)$Province[,"year"][match(m1_est$Province, row.names(ranef(popdem.m1)$Province))]
+m1_est$b_year_commune <- ranef(popdem.m1)[[1]][,"year"][match(m1_est$CommProv, row.names(ranef(popdem.m1)[[1]]))]
+m1_est$b_pop_den <- fixef(popdem.m1)[["pop_den"]]
+m1_est$b_prop_ind <- fixef(popdem.m1)[["prop_ind"]]
+m1_est$offset <- log(dat1$areaKM)[match(m1_est$Provcomm, dat1$Provcomm)]
 
 
-  ## Education ####
+# Manually predict (using actual data)
+mpred_m1 <- with(m1_est, {
+  Iglobal+                            
+    pop_den*b_pop_den +
+    prop_ind*b_prop_ind +
+    Iprovince +                       
+    Icommune +                         
+    year*(b_year_province+b_year_commune)+
+    offset
+})
+
+# using predict and real data
+pred_m1 <- predict(popdem.m1, type="response")
+
+# plot together to check
+plot(exp(mpred_m1), pred_m1)
+abline(a = 0, b = 1, col = "red")
+
+
+
+        # predict main effects ####
+
+m1.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),max(dat1$pop_den), length.out = 100),
+                               prop_ind = mean(dat1$prop_ind),
+                               areaKM = mean(dat1$areaKM))
+m1.popden.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.popden.newdat, type="response", re.form=NA))
+
+m1.propind.newdat <- data.frame(prop_ind = seq(min(dat1$prop_ind), max(dat1$prop_ind), length.out=100),
+                                pop_den = mean(dat1$pop_den),
+                                areaKM = mean(dat1$areaKM))
+m1.propind.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.propind.newdat, type="response", re.form=NA))
+ 
+ggplot(m1.popden.newdat, aes(x=pop_den, y=pred))+
+  geom_line()
+
+#
+    ## Education ####
 
 # just one var - M6_24_sch
 
