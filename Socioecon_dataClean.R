@@ -4801,7 +4801,7 @@ dat_use <- dat_merge %>% select(year,Province, Commune,commGIS,areaKM,ForPix,dif
                                 dist_sch, garbage, KM_Comm,
                                 land_confl, crim_case,
                                 Pax_migt_in, Pax_migt_out,
-                                mean_elev, habitat,
+                                mean_elev, 
                                 dist_border, dist_provCap, elc, PA, PA_cat)
 
 str(dat_use)
