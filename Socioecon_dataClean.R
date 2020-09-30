@@ -636,6 +636,8 @@ length(dat_merge$dist_provCap)
 # load in data
 elc_dat <- read.csv("Data/commune/ELC_in_communes_yrs.csv", header=T)
 str(elc_dat)
+length(unique(elc_dat$commGIS))
+
 
 # First correct for communes with multiple rows (due to multiple polygons per commune)
 # group rows by commGIS and take the maximum value (so if there is a 1 then the value will be 1). 
@@ -4199,11 +4201,25 @@ dat_merge <- dat_merge %>% mutate(Pax_migt_in = replace(Pax_migt_in,
 
 ### data checking for ALL communes
 
+hist(dat_merge$Pax_migt_in)
+
 # check outliers
 dat_merge %>% filter(Pax_migt_in > 2000) %>%  select(year,Province,Commune,Pax_migt_in,tot_pop)
-# Chhnok Tru in Kampong Chhnang is the only one where the number of in-migrants is relatively close to the total popaulation. 
+# Cheyyou in Kampong Cham looks dodgy
 
-# plot it to see where it is
+dat_merge %>% filter(Commune=="Cheyyou") %>% select(year, Commune, Pax_migt_in, tot_pop)
+# 2011 must be an error. I will interpolate between 2010 and 2012. 
+
+# interpolate
+x <- c(1,3)
+y <- c(18,946)
+approx(x=x, y=y, xout = 2)
+
+# change value
+dat_merge$Pax_migt_in[dat_merge$Commune=="Cheyyou" & dat_merge$year==2011] <- 482
+
+
+# plot  
 
 # subset dat_merge to get Pax_migt_in and commGIS for each year
 Pax_in07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,Pax_migt_in)
@@ -4240,6 +4256,45 @@ Pax_in_plot12 <- ggplot(com.shp.12)+
   (Pax_in_plot09 | Pax_in_plot10)/
   (Pax_in_plot11 | Pax_in_plot12)
 
+# what about migration as a proportion of the total population?
+Pax_in07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+Pax_in08 <- dat_merge %>% filter(year=="2008") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+Pax_in09 <- dat_merge %>% filter(year=="2009") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+Pax_in10 <- dat_merge %>% filter(year=="2010") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+Pax_in11 <- dat_merge %>% filter(year=="2011") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+Pax_in12 <- dat_merge %>% filter(year=="2012") %>% select(commGIS,Pax_migt_in, tot_pop) %>% 
+  mutate(mig_prop = Pax_migt_in/tot_pop)
+
+com.shp.07 <- left_join(com.shp.07, Pax_in07, by="commGIS")
+com.shp.08 <- left_join(com.shp.08, Pax_in08, by="commGIS")
+com.shp.09 <- left_join(com.shp.09, Pax_in09, by="commGIS")
+com.shp.10 <- left_join(com.shp.10, Pax_in10, by="commGIS")
+com.shp.11 <- left_join(com.shp.11, Pax_in11, by="commGIS")
+com.shp.12 <- left_join(com.shp.12, Pax_in12, by="commGIS")
+
+Pax_in_plot07 <- ggplot(com.shp.07)+
+  geom_sf(aes(fill=mig_prop))
+Pax_in_plot08 <- ggplot(com.shp.08)+
+  geom_sf(aes(fill=mig_prop))
+Pax_in_plot09 <- ggplot(com.shp.09)+
+  geom_sf(aes(fill=mig_prop))
+Pax_in_plot10 <- ggplot(com.shp.10)+
+  geom_sf(aes(fill=mig_prop))
+Pax_in_plot11 <- ggplot(com.shp.11)+
+  geom_sf(aes(fill=mig_prop))
+Pax_in_plot12 <- ggplot(com.shp.12)+
+  geom_sf(aes(fill=mig_prop))
+
+(Pax_in_plot07 | Pax_in_plot08)/
+  (Pax_in_plot09 | Pax_in_plot10)/
+  (Pax_in_plot11 | Pax_in_plot12)
+# Looks like in many cases it is the provincial capital (especially in ruiral provinces) that attracts a lot of in-migration.  Makes sense
+
 
     # Pax_migt_out ####
 
@@ -4247,7 +4302,7 @@ hist(dat_merge$Pax_migt_out)
 # some large values that need checking
 
 dat_merge %>% filter(Pax_migt_out > 2000) %>% select(year,Province,Commune,Pax_migt_out,tot_pop)
-# actually don't look unreasonable. Not ridiculously large relative to the total population.  All in Banteay Meanchey though
+# actually don't look unreasonable. Not ridiculously large relative to the total population.  
 # plot the province
 
 ggplot(dat_merge[dat_merge$Province=="Banteay Meanchey",], aes(x=year, y=tot_pop, group=Commune))+
@@ -4266,7 +4321,22 @@ hist(dat_merge$mean_elev)
 ggplot(dat_merge, aes(x=year, y=mean_elev, group=Commune))+
   geom_line()+
   facet_wrap(dat_merge$Province,nrow=2, ncol=12)
-# No communes have changing elevation which is good!  All look fine
+# No communes have changing elevation which is good!  
+
+dat_merge %>% filter(mean_elev > 400) %>% select(Province, Commune, mean_elev)
+
+# plot
+# subset dat_merge to get mean_elev and commGIS for 2007 (elev doesn't change over time)
+elev07 <- dat_merge %>% filter(year=="2007") %>% select(commGIS,mean_elev)
+
+# add onto the annual shapefile
+com.shp.07 <- left_join(com.shp.07, elev07, by="commGIS")
+
+# plot 
+ggplot(com.shp.07)+
+  geom_sf(aes(fill=mean_elev))
+
+
 
     # habitat ####
 
@@ -4295,12 +4365,8 @@ dat_merge %>% filter(Province=="Mondul Kiri" & dist_border > 75) %>% select(year
 
 dat_merge %>% filter(Province=="Prey Veng" & dist_border > 50) %>% select(year,Commune,dist_border)
 hist(dat_merge$dist_border[dat_merge$Province=="Prey Veng"])
-# slightly odd gap in distances between the largest and the next largest
+# fine
 
-dat_merge %>% filter(Province=="Prey Veng" & dist_border > 40) %>% 
-  select(year,Commune,dist_border) %>% 
-  arrange(dist_border)
-# ok so I think the issue is that not all of the communes are present (probably because the missing ones didn't have any forest (false zeros)). So this is fine
 
 dat_merge %>% filter(Province=="Pursat" & dist_border < 25) %>% 
   select(year,Commune,dist_border) %>% 
@@ -4339,7 +4405,7 @@ ggplot(dat_merge, aes(x=year, y=elc))+
   facet_wrap(dat_merge$Province, nrow=2, ncol=12)
 
 
-# although in QGIS there are two ELCs in Battambang, the communes are not in the dat-merge dataset, therefore were removed at an earlier stage (e.g because of no forest)
+# although in QGIS there are two ELCs in Battambang, the communes are not in the dat-merge dataset
 
 # All of the rest with no ELCs have none in the GIS layer so are correct. 
 
