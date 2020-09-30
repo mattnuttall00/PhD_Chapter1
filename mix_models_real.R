@@ -1580,6 +1580,9 @@ dat1$year.orig <- dat$year
 #### Mixed models -----------------------------------------------------------
 ### Approach ####
 
+### NOTE there will be 2 sections within each model set - one for the analysis which only considered communes with forest, and one with ALL communes.
+
+
 # I am going to follow the below approach for each set
 
 # 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
@@ -1612,7 +1615,8 @@ dat1$year.orig <- dat$year
 # total population (tot_pop), population density (pop_den), proportion indigneous (prop_ind)
 
 
-    # popdem.m1 (tot_pop, pop_den, prop_ind - no interactions) ####
+    ## FORESTED COMMUNES ONLY ####
+      # popdem.m1 (tot_pop, pop_den, prop_ind - no interactions) ####
 
 
 # model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes
@@ -1634,7 +1638,7 @@ ranef(popdem.m1)
 plot_model(popdem.m1, type="re")
 
 
-      # diagnostics ####
+        # diagnostics ####
 
 
 # USing DHARMa package for diagnostics - first calculate residuals using all RE levels
@@ -1708,7 +1712,7 @@ plotResiduals(simulationOutput.prov)
 
 
 
-      # predictions (manual, observed data) ####
+        # predictions (manual, observed data) ####
 
 ## manually calculate predictions
 
@@ -1772,7 +1776,7 @@ abline(a = 0, b = 1, col = "red")
 
 
 
-      # predictions (newdata, tot_pop varying) ####
+        # predictions (newdata, tot_pop varying) ####
 
 # create new dataframe for predict (offset as term, so required here). I am predicting for an average commune and so the offset will be set to an "average sized" commune
 tot_pop_newdat <- data.frame(tot_pop = seq(from=min(dat1$tot_pop), to=max(dat1$tot_pop), length.out = 100),
@@ -1943,7 +1947,7 @@ ggplot()+
 ### However, we can see that the effect of tot_pop is greater (steeper positive slope) in communes with more forest. This could be reflecting the fact that communes with more forest tend to be larger communes, which will tend to have larger absolute total populations. 
 
 
-      # Predictions (newdata, pop_den varying) ####
+        # Predictions (newdata, pop_den varying) ####
 
 # create new dataframe for predict (offset as term, so need to specify). Here we are predicting for an "average" commune and so the area should be set the mean
 pop_den_newdat <- data.frame(pop_den = seq(from=min(dat1$pop_den), to=max(dat1$pop_den), length.out = 100),
@@ -2084,7 +2088,7 @@ p <- p + geom_line(data=top5_newdat4, aes(pop_den, y=pred), colour="yellow", siz
 
 
 #
-      # Predictions (newdata, prop_ind varying) ####
+        # Predictions (newdata, prop_ind varying) ####
 
 # create new dataframe for predict (offset as term so required here). Predicting for "average" commune and so mean area will be used
 prop_ind_newdat <- data.frame(prop_ind = seq(from=min(dat1$prop_ind), to=max(dat1$prop_ind), length.out = 100),
@@ -2178,7 +2182,7 @@ p <- p + geom_line(data=top5_newdat2, aes(prop_ind, y=pred), colour="orange", si
 
 
 
-    # popdem.m2 (tot_pop, pop_den, prop_ind - interactions) ####
+      # popdem.m2 (tot_pop, pop_den, prop_ind - interactions) ####
 
 # model with all pop dem vars as fixed effects. Offset (areaKM) as term to account for differences in size of communes. All interactions tested
 popdem.m2 <- glmer(ForPix ~ tot_pop * pop_den * prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -2203,7 +2207,7 @@ plot_model(popdem.m2, type="re")
 
 
 
-      # model comparison  ####
+        # model comparison  ####
 
 # when using pbkrtest package, always ensure the simpler model is listed second, or else the function will fail
 
@@ -2271,8 +2275,8 @@ anova(popdem.m4, popdem.m6, test="Chisq")
 
 
 #
-      # model diagnostics popdem.m4 ####
-        # DHARMa ####
+        # model diagnostics popdem.m4 ####
+          # DHARMa ####
 
 # USing DHARMa package for diagnostics - first calculate residuals using all RE levels
 simulationOutput <- simulateResiduals(fittedModel = popdem.m4, plot = T, 
@@ -2345,7 +2349,7 @@ outliers(simulationOutput)
 str(simulationOutput)
 
 
-        # Manual diagnostics ####
+          # Manual diagnostics ####
 
 # copy data
 m4.diag.dat <- dat1
@@ -2523,8 +2527,8 @@ bic
 
 
 #
-    # predictions - popdem.m4 ####
-      # manual predictions from observed data ####
+      # predictions - popdem.m4 ####
+        # manual predictions from observed data ####
 
 summary(popdem.m4)
 # RE variances for province and commune, and for year at each level are similar to m1 and m2.  Approximate p values suggest sig effects for tot_pop, pop_den and tot_pop:pop_den.  tot_pop has a positive effect, and pop_den has a negative effect. The interaction suggests that as pop_den increases, the effect of tot_pop gets larger.  
@@ -2601,7 +2605,7 @@ plot(exp(m_popdem.m4_pred),pred_popdem.m4)
 
 
 #
-      # predict main effects ####
+        # predict main effects ####
 
 ## for average commune. In this case, the offset needs to be set to the mean i.e. an "average sized" commune
 
@@ -2680,7 +2684,7 @@ p.tot_pop + p.pop_den
 ### population density has a negative effect on forest cover.  Communes with the lowest population density have the most forest, which makes sense. Communes with lower total populations are affected more by increasing population density (i.e. steeper slopes). This could reflect the more remote communes (which have more forest), being more impacted by increases in population density.  Communes with a higher absolute population, are affected less by increasing population density.
 ### I am still not sure whether tot_pop is a sensible variable to have in, and whether it is actually telling me anything. Jeroen is concerned about collinearity between the two, which I understand, but I don't think they are always directly linked. Population density can change without the total population changing, depending on the size of the commune. But Kez pointed out that tot_pop is not that meaningful because communes are "arbitrary" delineations, and tot_pop reflects those arbitrary deliniations. And so surely pop_den is the more relevant measure of the impact of population?  
 #
-      # predict for sets of communes ####
+        # predict for sets of communes ####
 
 # here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
 
@@ -2848,8 +2852,8 @@ for(i in 1:length(provcomm_lvls)) {
 }
 
 #
-    # popdem.m6 (pop_den only) ####
-      # manual diagnostics ####
+      # popdem.m6 (pop_den only) ####
+        # manual diagnostics ####
 
 # copy data
 m6.diag.dat <- dat1
@@ -2979,7 +2983,7 @@ ggplot()+
 ### If you look at the plot of the main effect in the section below, the line is pretty flat, even at low pop_den and ForPix values. This is where the model is not predicitng well for communes with low population density but higher forest cover. This is because there is so much variation in the communes - i.e. there are so many that have low pop_den but low ForPix, which is dragging the model down.  So the communes with large residuals are going to be the commune with low pop_den values and higher ForPix values I think.
 
 #
-      # predict main effects ####
+        # predict main effects ####
 
 ### predict main effects for an average commune
 
@@ -3005,7 +3009,7 @@ popdem.m6.p1 + popdem.m6.p2
 
 
 #
-      # predict for sets of communes ####
+        # predict for sets of communes ####
 
 # here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
 
@@ -3239,6 +3243,33 @@ ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
 
 
 #
+    ## ALL COMMUNES ####
+      # popdem.m1 (tot_pop, pop_dem, prop_ind - no interactions) ####
+
+
+# model with all pop dem vars as fixed effects. Offset as areaKM to account for differences in size of communes
+popdem.m1 <- glmer(ForPix ~ tot_pop + pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
+                   data=dat1, family="poisson")
+
+summary(popdem.m1)
+ranef(popdem.m1)
+fixef(popdem.m1)
+
+# variance component analysis
+print(VarCorr(popdem.m1),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(11.49,0.0046,12.72,0.00051))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+
+# marginal and conditional r2
+r.squaredGLMM(popdem.m1)
+# marginal r2 (fixed effects) is quite high 0.8, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance.
+
+
+# quick plots
+plot_model(popdem.m1, type="pred")
+
+
   ## Education ####
 
 # just one var - M6_24_sch
