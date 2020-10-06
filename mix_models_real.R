@@ -3348,23 +3348,61 @@ ggplot(m1.popden.newdat2, aes(x=pop_den, y=pred))+
 
 fun <- function(dat,province){
   
+  # extract list of communes 
   communes <- dat$Provcomm[dat$Province==province]
-  compred <- data.frame()
   
+  # Initialise empty dataframe
+  compred <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$Province==province]),
+                                      max(dat1$pop_den[dat1$Province==province]),length.out = 100))
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
   for(i in communes){
-    newdat <- data.frame(pop_den = seq(min(dat$pop_den),max(dat$pop_den), length.out = 100),
-                         prop_ind = mean(dat$prop_ind),
-                         areaKM = dat$areaKM[dat$Provcomm==communes[i]],
+    newdat <- data.frame(pop_den = seq(min(dat$pop_den[dat$Province==province]),
+                                       max(dat$pop_den[dat$Province==province]), length.out = 100), # range in province
+                         prop_ind = mean(dat$prop_ind[dat$Province==province]), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
                          year = mean(dat$year),
                          Province = province,
                          Provcomm = communes[i])
     newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
     
-    compred <- newdat[ ,c("pop_den","pred")]
+    df <- newdat[ ,c("pop_den","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    names(df)[names(df)=="pred"] <- comname 
+    compred <- left_join(compred, df, by="pop_den")
     
   }
+  
+  return(compred)
 }
  
+Stung_Treng <- fun(dat1,"Stung Treng")
+
+communes <- unique(dat1$Provcomm[dat1$Province=="Stung Treng"])
+
+# Initialise empty dataframe
+compred <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$Province=="Stung Treng"]),
+                                    max(dat1$pop_den[dat1$Province=="Stung Treng"]),length.out = 100))
+
+# loop through list of communes and predict for each one, and attach results into dataframe
+for(i in communes){
+  newdat <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$Province=="Stung Treng"]),
+                                     max(dat1$pop_den[dat1$Province=="Stung Treng"]),length.out = 100),#range within province?
+                       prop_ind = mean(dat1$prop_ind[dat1$Province=="Stung Treng"]), #mean within province
+                       areaKM = dat1$areaKM[dat1$Provcomm==communes[i]][1],
+                       year = mean(dat1$year),
+                       Province = "Stung Treng",
+                       Provcomm = communes[i])
+  newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+  
+  df <- newdat[ ,c("pop_den","pred")]
+  split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+  comname <- split[1,2]
+  names(df)[names(df)=="pred"] <- comname 
+  compred <- left_join(compred, df, by="pop_den")
+  
+}
 
 
 
