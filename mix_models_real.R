@@ -3247,7 +3247,7 @@ ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
       # popdem.m1 (pop_den, prop_ind - no interactions) ####
 
 
-# model with pop dem vars as fixed effects. I have not included tot_pop as it is instrincally linked to pop_den, and previous analyses above suggest that pop_den is way more importatn. Offset as areaKM to account for differences in size of communes
+# model with pop dem vars as fixed effects. I have not included tot_pop as it is instrincally linked to pop_den, and previous analyses above suggest that pop_den is way more important. Offset as areaKM to account for differences in size of communes
 popdem.m1 <- glmer(ForPix ~ pop_den + prop_ind + offset(log(areaKM)) + (year|Province/Provcomm),
                    data=dat1, family="poisson")
 
@@ -3306,6 +3306,7 @@ abline(a = 0, b = 1, col = "red")
 
         # predict main effects ####
 
+# population density
 m1.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),max(dat1$pop_den), length.out = 100),
                                prop_ind = mean(dat1$prop_ind),
                                areaKM = mean(dat1$areaKM))
@@ -3317,9 +3318,89 @@ m1.propind.newdat <- data.frame(prop_ind = seq(min(dat1$prop_ind), max(dat1$prop
 m1.propind.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.propind.newdat, type="response", re.form=NA))
  
 ggplot(m1.popden.newdat, aes(x=pop_den, y=pred))+
-  geom_line()
+  geom_line()+
+  theme(element_blank())
+# pretty narli effect - predicted forest cover decreases almost vertically at very low values of population density, and then is essentially 0 beyond that. This suggests that the vast majority of communes with any decent level of pop_den have no forest whatsoever.
+
+
+# What if we take a closer look at predictions for communes at the lower end of the pop_den scale
+m1.popden.newdat2 <- data.frame(pop_den = seq(min(dat1$pop_den),0, length.out = 100),
+                               prop_ind = mean(dat1$prop_ind),
+                               areaKM = mean(dat1$areaKM))
+m1.popden.newdat2$pred <- as.vector(predict(popdem.m1, newdata=m1.popden.newdat2, type="response", re.form=NA))
+
+ggplot(m1.popden.newdat2, aes(x=pop_den, y=pred))+
+  geom_line()+
+  theme(element_blank())
+
+
+
 
 #
+        # predict effects for specific locations ####
+
+# as we have discovered, the global effects are quite misleading, as there is so much between commune variation. So now I want to explore the differences in effects for different provinces and communes
+
+
+## effects between provinces
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+fun <- function(dat,province){
+  
+  communes <- dat$Provcomm[dat$Province==province]
+  compred <- data.frame()
+  
+  for(i in communes){
+    newdat <- data.frame(pop_den = seq(min(dat$pop_den),max(dat$pop_den), length.out = 100),
+                         prop_ind = mean(dat$prop_ind),
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]],
+                         year = mean(dat$year),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    compred <- newdat[ ,c("pop_den","pred")]
+    
+  }
+}
+ 
+
+
+
+
+
+
+# create vector of provinces
+provinces <- unique(dat1$Province)
+
+# create dataframe of provinces with their mean areaKM value (i.e. mean commune area)
+areas <- dat1 %>% group_by(Province) %>% 
+          mutate(meanArea = mean(areaKM)) %>%
+          select(Province,meanArea) %>% 
+          distinct(Province, .keep_all=TRUE)
+
+# find 1 commune per province with the intercept closest to 0
+m1.ranef <- ranef(popdem.m1)$"Provcomm:Province"
+m1.ranef <- m1.ranef %>% rownames_to_column("Provcomm:Province") 
+provsplit <- as.vector(strsplit(m1.ranef$`Provcomm:Province`, ":"))
+m1.ranef$Province <- strsplit(m1.ranef$`Provcomm:Province`, ":")
+
+
+# create newdata with all provinces
+m1.popdem.newdat.prov <- expand.grid(pop_den = seq(min(dat1$pop_den),max(dat1$pop_den), length.out = 100),
+                                     prop_ind = mean(dat1$prop_ind),
+                                     year = mean(dat1$year),
+                                     Province = provinces)
+
+# add mean areas
+m1.popdem.newdat.prov$areaKM <- areas$meanArea[match(m1.popdem.newdat.prov$Province,areas$Province)]
+
+# predict
+m1.popdem.newdat.prov$pred <- as.vector(predict(popdem.m1, type="response", re.form=~(year|Province)))
+
+
+
     ## Education ####
 
 # just one var - M6_24_sch
