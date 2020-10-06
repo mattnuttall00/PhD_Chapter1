@@ -3394,7 +3394,8 @@ for(i in communes){
                        year = mean(dat1$year),
                        Province = "Stung Treng",
                        Provcomm = communes[i])
-  newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+  newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm),
+                                   allow.new.levels=TRUE))
   
   df <- newdat[ ,c("pop_den","pred")]
   split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
