@@ -3368,6 +3368,7 @@ ProvMeanEff <- function(dat,province){
                          Provcomm = communes[i])
     newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
     
+    # pull out values of pop_den and the predictions, and attach commune and province name. 
     df <- newdat[ ,c("pop_den","pred")]
     split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
     comname <- split[1,2]
@@ -3379,11 +3380,17 @@ ProvMeanEff <- function(dat,province){
     
   }
   
-  return(compred)
+mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+return(mean.df)
+  
 }
  
 Stung_Treng <- ProvMeanEff(dat1,"Stung Treng")
-
+Stung_Treng %>% group_by(pop_den) %>% 
+                summarise_at(vars(pred),mean)
+                
 
 
 
