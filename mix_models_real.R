@@ -3383,14 +3383,29 @@ ProvMeanEff <- function(dat,province){
 mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
             mutate(Province = province)
 
-return(mean.df)
+output.list <- list(mean.df,compred)
+return(output.list)
   
 }
  
 Stung_Treng <- ProvMeanEff(dat1,"Stung Treng")
-Stung_Treng %>% group_by(pop_den) %>% 
-                summarise_at(vars(pred),mean)
-                
+df.names <- c("mean.df","compred")
+names(Stung_Treng) <- df.names
+list2env(Stung_Treng, globalenv())                
+
+str(compred)
+compred %>% group_by(pop_den) %>% summarise_at(vars(pred), quantile(., probs = c(0.025,0.975)))
+
+
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+quants <- data.frame(apply(compred_wide[ ,3:36], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(pop_den = compred_wide$pop_den,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+
+
 
 
 
