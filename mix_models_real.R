@@ -3346,14 +3346,16 @@ ggplot(m1.popden.newdat2, aes(x=pop_den, y=pred))+
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
-fun <- function(dat,province){
+ProvMeanEff <- function(dat,province){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
   
   # Initialise empty dataframe
-  compred <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$Province==province]),
-                                      max(dat1$pop_den[dat1$Province==province]),length.out = 100))
+  compred <- data.frame(pop_den = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
   
   # loop through list of communes and predict for each one, and attach results into dataframe
   for(i in 1:length(communes)){
@@ -3369,15 +3371,18 @@ fun <- function(dat,province){
     df <- newdat[ ,c("pop_den","pred")]
     split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
     comname <- split[1,2]
-    names(df)[names(df)=="pred"] <- comname 
-    compred <- left_join(compred, df, by="pop_den")
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
     
   }
   
   return(compred)
 }
  
-Stung_Treng <- fun(dat1,"Stung Treng")
+Stung_Treng <- ProvMeanEff(dat1,"Stung Treng")
 
 
 
