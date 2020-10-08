@@ -3436,7 +3436,15 @@ ggplot(popden_allprovs, aes(x=pop_den, y=pred, group=Province))+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~Province, nrow=6, scales = "free")
+# phnom penh is messing with the axes ranges
 
+# remove PP and no free axis
+ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)+
+  ylim(0,15000)
 
 
 
