@@ -3534,7 +3534,7 @@ pa_mean <- PAmean.popden(pa="1")
 
 
 # extract list of communes 
-communes <- unique(dat1$Provcomm[dat$PA=="1"])
+communes <- unique(dat1$Provcomm[dat1$PA=="1"])
 
 # Initialise empty dataframe
 compred <- data.frame(pop_den = NULL,
@@ -3583,6 +3583,32 @@ quants.vec <- data.frame(pop_den = compred_wide$pop_den,
 mean.df <- left_join(mean.df, quants.vec, by="pop_den")
 
 
+
+
+
+
+
+
+newdat <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$PA=="1"]),
+                                   max(dat1$pop_den[dat1$PA=="1"]), length.out = 100), # range in group
+                     prop_ind = mean(dat1$prop_ind[dat1$PA=="1"]), # range in group
+                     areaKM = dat1$areaKM[dat1$Provcomm==communes[i]][1],
+                     year = mean(dat1$year[dat1$PA=="1"]),
+                     Province = dat1$Province[dat1$Provcomm==communes[i]][1],
+                     Provcomm = communes[i])
+newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+
+df <- newdat[ ,c("pop_den","pred")]
+split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+comname <- split[1,2]
+df$commune <- comname 
+df$PA <- "1"
+
+
+compred_wide <- compred %>% 
+  mutate(row=row_number()) %>% 
+  pivot_wider(., names_from = commune, values_from = pred) %>% 
+  select(-row)
 
 #
     ## Education ####
