@@ -3342,7 +3342,7 @@ ggplot(m1.popden.newdat2, aes(x=pop_den, y=pred))+
 # as we have discovered, the global effects are quite misleading, as there is so much between commune variation. So now I want to explore the differences in effects for different provinces and communes
 
 
-## effects between provinces
+          # effects between provinces ####
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
@@ -3445,7 +3445,15 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~Province, nrow=6)+
   ylim(0,15000)
+# This plot shows that there is huge variation in pop_den between provinces, but also that despite this, there are still visible differences in the effect of pop_den on forest cover. The provinces that stand out as having larger relative effects are Otdar Meanchey, Preah Vihear, Stung Treng, Kratie, Pursat, Koh Kong. These are more remote provinces, with higher forest cover values, and more PAs. 
 
+# remove PP and free axis
+ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+# This plot shows the same as above but with free axes. It means you can see more of what is going on at the individual province level. This shows that in some provinces, even though they don't have much foret cover, pop_den has some effect.  This is particularly obvious in Battambang, Kampot, Preah Sihanouk.  Interestingly this shows that Mondulkiri and Ratanakiri (the only two very forested provinces that are not obvious in the above plot) do not have much of an effect. But these two provinces have such low pop_den values, that no effect can be detected. 
 
 
 
