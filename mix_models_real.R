@@ -3527,8 +3527,9 @@ PAmean.popden <- function(dat=dat1,pa){
 
 pa_mean <- PAmean.popden(pa="1")
 nopa_mean <- PAmean.popden(pa="0")
+pa_all <- rbind(pa_mean,nopa_mean)
 
-ggplot(pa_mean, aes(x=pop_den, y=pred))+
+ggplot(pa_all, aes(x=pop_den, y=pred, group=PA))+
   geom_line()+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))
