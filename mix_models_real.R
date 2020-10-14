@@ -3467,7 +3467,7 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
 
 # I need to do the same as above - split the communes into groups, predict for each commune within a group, and then get the mean, using the quantiles to show variation.  I can adapt my function from above
 
-# I can use the PA variable in dat1
+# I can use the PA variable in dat1 to split the groups
 
 
 
@@ -3509,10 +3509,8 @@ PAmean.popden <- function(dat=dat1,pa){
     mutate(PA = pa)
   
   # get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
-  compred_wide <- compred %>% group_by(commune) %>% 
-                  mutate(row=row_number()) %>% 
-                  pivot_wider(., names_from = commune, values_from = pred) %>% 
-                  select(-row) 
+  compred_wide <- compred %>% 
+                  pivot_wider(., names_from = commune, values_from = pred, values_fn = list(pred=mean))  
   lnth <- ncol(compred_wide)
   quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
   
@@ -3528,59 +3526,29 @@ PAmean.popden <- function(dat=dat1,pa){
 }
 
 pa_mean <- PAmean.popden(pa="1")
+nopa_mean <- PAmean.popden(pa="0")
 
+ggplot(pa_mean, aes(x=pop_den, y=pred))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))
+# phnom penh is messing with the axes ranges
 
+# remove PP and no free axis
+ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)+
+  ylim(0,15000)
+ 
 
-
-
-# extract list of communes 
-communes <- unique(dat1$Provcomm[dat1$PA=="1"])
-
-# Initialise empty dataframe
-compred <- data.frame(pop_den = NULL,
-                      pred = NULL,
-                      commune = NULL,
-                      PA = NULL)
-
-# loop through list of communes and predict for each one, and attach results into dataframe
-for(i in 1:length(communes)){
-  newdat <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$PA=="1"]),
-                                     max(dat1$pop_den[dat1$PA=="1"]), length.out = 100), # range in group
-                       prop_ind = mean(dat1$prop_ind[dat1$PA=="1"]), # range in group
-                       areaKM = dat1$areaKM[dat1$Provcomm==communes[i]][1],
-                       year = mean(dat1$year[dat1$PA=="1"]),
-                       Province = dat1$Province[dat1$Provcomm==communes[i]][1],
-                       Provcomm = communes[i])
-  newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
-  
-  # pull out values of pop_den and the predictions, and attach commune name and PA status. 
-  df <- newdat[ ,c("pop_den","pred")]
-  split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
-  comname <- split[1,2]
-  df$commune <- comname 
-  df$PA <- "1"
-  compred <- rbind(compred,df)
-
-}
-
-# get the mean prediction for the province (i.e. mean of all communes for a given value of pop_den)  
-mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
-  mutate(PA = "1")
-
-# get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
-compred_wide <- compred %>% group_by(commune) %>% 
-                mutate(row=row_number()) %>% 
-                pivot_wider(., names_from = commune, values_from = pred) %>% 
-                select(-row)
-lnth <- ncol(compred_wide)
-quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
-
-quants.vec <- data.frame(pop_den = compred_wide$pop_den,
-                         Q2.5 = as.numeric(quants[1,]),
-                         Q97.5 = as.numeric(quants[2,]))
-
-# join together
-mean.df <- left_join(mean.df, quants.vec, by="pop_den")
+# remove PP and free axis
+ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
 
 
 
@@ -3589,26 +3557,7 @@ mean.df <- left_join(mean.df, quants.vec, by="pop_den")
 
 
 
-newdat <- data.frame(pop_den = seq(min(dat1$pop_den[dat1$PA=="1"]),
-                                   max(dat1$pop_den[dat1$PA=="1"]), length.out = 100), # range in group
-                     prop_ind = mean(dat1$prop_ind[dat1$PA=="1"]), # range in group
-                     areaKM = dat1$areaKM[dat1$Provcomm==communes[i]][1],
-                     year = mean(dat1$year[dat1$PA=="1"]),
-                     Province = dat1$Province[dat1$Provcomm==communes[i]][1],
-                     Provcomm = communes[i])
-newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
 
-df <- newdat[ ,c("pop_den","pred")]
-split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
-comname <- split[1,2]
-df$commune <- comname 
-df$PA <- "1"
-
-
-compred_wide <- compred %>% 
-  mutate(row=row_number()) %>% 
-  pivot_wider(., names_from = commune, values_from = pred) %>% 
-  select(-row)
 
 #
     ## Education ####
