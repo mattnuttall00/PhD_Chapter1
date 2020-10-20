@@ -3252,24 +3252,46 @@ popdem.m1 <- glmer(ForPix ~ pop_den + prop_ind + offset(log(areaKM)) + (year|Pro
                    data=dat1, family="poisson")
 
 summary(popdem.m1)
+# prop_ind has very small effect and non-sig approximate p value
 ranef(popdem.m1)
 fixef(popdem.m1)
+
+
+
+# Likelihood ratio test
+
+# test just the terms in popdem.m1
+drop1(popdem.m1, test="Chisq")
+# not entirely clear about the output here
+
+
+# drop prop_ind
+popdem.m2 <- glmer(ForPix ~ pop_den + offset(log(areaKM)) + (year|Province/Provcomm),
+                   data=dat1, family="poisson")
+
+summary(popdem.m2)
+
+# anova
+anova(popdem.m2, popdem.m1, test="Chisq")
+# simpler model is better
 
         # variance component analysis ####
 
 
-print(VarCorr(popdem.m1),comp="Variance") 
+print(VarCorr(popdem.m2),comp="Variance") 
 vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
-                   variance = c(11.52,0.0074,34.63,0.0059))
+                   variance = c(11.5,0.0047,11.25,0.00048))
 vars$relative.contrib <- vars$variance/sum(vars$variance)
-# Province is contributing the most variance proportionately (75%), followed by Commune (24.9%). The two years then make up the negligable rest
+# Interestingly quite large changes between m1 and m2.  For m1 Province is contributing the most variance proportionately (75%), followed by Commune (24.9%). The two years then make up the negligable rest. Whereas for m2 Commune and Province make up roughly 50% each, with Commune slightly higher at 50.3 and Province at 49.4. Year makes up the neglible rest. 
 
 # marginal and conditional r2
-r.squaredGLMM(popdem.m1)
-# marginal r2 (fixed effects) is relatively high 0.65, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance.
+r.squaredGLMM(popdem.m2)
+# For m1 marginal r2 (fixed effects) is relatively high 0.65, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance. For m2 the marginal r2 (fixed effects) is even higher at 0.78.  I think this is further evidence that prop_ind wasn't doing very much. 
 
 
         # manual predictions (observed data) ####
+
+## m1
 
 # create prediction dataframe using real data
 m1_est <- subset(dat1, select = c("ForPix","pop_den","prop_ind","Province","Commune", "Provcomm", "year"))
@@ -3304,19 +3326,51 @@ abline(a = 0, b = 1, col = "red")
 
 
 
-        # predict main effects ####
 
-# population density
+## m2
+
+# create prediction dataframe using real data
+m2_est <- subset(dat1, select = c("ForPix","pop_den","Province","Commune", "Provcomm", "year"))
+m2_est$Iglobal <- fixef(popdem.m2)[["(Intercept)"]]
+m2_est$Iprovince <- ranef(popdem.m2)$Province[,"(Intercept)"][match(m2_est$Province, row.names(ranef(popdem.m2)$Province))]
+m2_est$CommProv <- paste(m2_est$Provcomm,m2_est$Province,sep=":")
+m2_est$Icommune <- ranef(popdem.m2)[[1]][,"(Intercept)"][match(m2_est$CommProv, row.names(ranef(popdem.m2)[[1]]))]
+m2_est$b_year_province <- ranef(popdem.m2)$Province[,"year"][match(m2_est$Province, row.names(ranef(popdem.m2)$Province))]
+m2_est$b_year_commune <- ranef(popdem.m2)[[1]][,"year"][match(m2_est$CommProv, row.names(ranef(popdem.m2)[[1]]))]
+m2_est$b_pop_den <- fixef(popdem.m2)[["pop_den"]]
+m2_est$offset <- log(dat1$areaKM)[match(m2_est$Provcomm, dat1$Provcomm)]
+
+
+# Manually predict (using actual data)
+mpred_m2 <- with(m2_est, {
+  Iglobal+                            
+    pop_den*b_pop_den +
+    Iprovince +                       
+    Icommune +                         
+    year*(b_year_province+b_year_commune)+
+    offset
+})
+
+# using predict and real data
+pred_m2 <- predict(popdem.m2, type="response")
+
+# plot together to check
+plot(exp(mpred_m2), pred_m2)
+abline(a = 0, b = 1, col = "red")
+
+
+        # predict main effects ####
+          # m1 ####
+
+# m2 is the prefered model
+
+### population density
 m1.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),max(dat1$pop_den), length.out = 100),
                                prop_ind = mean(dat1$prop_ind),
                                areaKM = mean(dat1$areaKM))
 m1.popden.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.popden.newdat, type="response", re.form=NA))
 
-m1.propind.newdat <- data.frame(prop_ind = seq(min(dat1$prop_ind), max(dat1$prop_ind), length.out=100),
-                                pop_den = mean(dat1$pop_den),
-                                areaKM = mean(dat1$areaKM))
-m1.propind.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.propind.newdat, type="response", re.form=NA))
- 
+# plot 
 ggplot(m1.popden.newdat, aes(x=pop_den, y=pred))+
   geom_line()+
   theme(element_blank())
@@ -3336,18 +3390,45 @@ ggplot(m1.popden.newdat2, aes(x=pop_den, y=pred))+
 
 
 
+### proportion indigneous 
+m1.propind.newdat <- data.frame(prop_ind = seq(min(dat1$prop_ind),max(dat1$prop_ind), length.out = 100),
+                               pop_den = mean(dat1$pop_den),
+                               areaKM = mean(dat1$areaKM))
+m1.propind.newdat$pred <- as.vector(predict(popdem.m1, newdata=m1.propind.newdat, type="response", re.form=NA))
+
+
+
+ggplot(m1.propind.newdat, aes(x=prop_ind, y=pred))+
+  geom_line()+
+  theme(element_blank())+
+  ylim(0,1000)
+
+
 #
+          # m2 ####
+
+m2.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),max(dat1$pop_den), length.out = 100),
+                               areaKM = mean(dat1$areaKM))
+m2.popden.newdat$pred <- as.vector(predict(popdem.m2, newdata=m2.popden.newdat, type="response", re.form=NA))
+
+# plot 
+ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  theme(element_blank())
+# The problem with displaying this is that places like Phnom Penh that have very large pop_den values are dragging the x axis out.
+
+
         # predict effects for specific locations ####
 
 # as we have discovered, the global effects are quite misleading, as there is so much between commune variation. So now I want to explore the differences in effects for different provinces and communes
 
 
-          # effects between provinces ####
+          # pop_den effects between provinces ####
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
 # this function spits out a dataframe with a range of pop_den values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
-ProvMean.popden <- function(dat=dat1,province){
+ProvMean.popden <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -3367,7 +3448,7 @@ ProvMean.popden <- function(dat=dat1,province){
                          year = mean(dat$year[dat$Province==province]),
                          Province = province,
                          Provcomm = communes[i])
-    newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
     
     # pull out values of pop_den and the predictions, and attach commune and province name. 
     df <- newdat[ ,c("pop_den","pred")]
@@ -3413,7 +3494,7 @@ output.list <- list()
 # loop through list of provinces, applying the function to each one
 for(i in 1:length(provs)){
   
-  df <- ProvMean.popden(province=provs[i])
+  df <- ProvMean.popden(province=provs[i], model=popdem.m2)
   output.list[[i]] <- df
 }
 
@@ -3461,7 +3542,7 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
 
 
 
-          # effects between selected communes ####
+          # pop_den effects between selected communes ####
 
 ## now I want to have a look at differences between groups of communes. Specifically I want to look at communes in and around PAs. This is to see if there is a difference in effect of pop_den on the more rural/remote areas with high forest cover and PAs. 
 
@@ -3525,31 +3606,28 @@ PAmean.popden <- function(dat=dat1,pa){
   
 }
 
+# run function for communes with PAs
 pa_mean <- PAmean.popden(pa="1")
-nopa_mean <- PAmean.popden(pa="0")
+
+# run function for communes with no PAs. Remove PP for the noPA group
+nopa_mean <- PAmean.popden(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
 pa_all <- rbind(pa_mean,nopa_mean)
 
+# plot
+ggplot(pa_all, aes(x=pop_den, y=pred, group=PA, colour=PA, fill=PA))+
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.3, colour=NA)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  xlim(-0.15,0.2)
+  #ylim(0,7500)
+
+
+# facet wrap and free axis
 ggplot(pa_all, aes(x=pop_den, y=pred, group=PA))+
   geom_line()+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
-  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))
-# phnom penh is messing with the axes ranges
-
-# remove PP and no free axis
-ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
-  geom_line()+
-  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  facet_wrap(~Province, nrow=6)+
-  ylim(0,15000)
- 
-
-# remove PP and free axis
-ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, y=pred, group=Province))+
-  geom_line()+
-  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
-  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  facet_wrap(~Province, nrow=6, scales = "free")
+  facet_wrap(~PA, nrow=1, scales = "free")
 
 
 
@@ -3561,6 +3639,12 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
 
 
 #
+          # prop_ind effects between provinces ####
+
+
+
+
+
     ## Education ####
 
 # just one var - M6_24_sch
