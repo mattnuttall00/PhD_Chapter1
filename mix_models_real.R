@@ -4089,7 +4089,8 @@ summary(mig.m4)
 # pax_migt_out will be taken forward
 
   ## Environmental vars ####
-    # env.m1 ####
+    ## FORESTED COMMUNES ####
+      # env.m1 ####
 
 ### UPDATE - I have decided not to use habitat.  This is because the habitat layer was used to create the response (ForPix), and so the two are intrinsically linked, and makes interpretation challenging. Skip to env.m2 sections 
 
@@ -4120,7 +4121,7 @@ ranef(env.m1)
 
 fixef(env.m1)
 
-    # Diagnostics m1 - IGNORE ####
+      # Diagnostics m1 - IGNORE ####
 
 # copy data
 env.m1.diag <- dat1
@@ -4208,7 +4209,7 @@ par(mfrow=c(1,1))
 qqnorm(resid(env.m1))
 qqline(resid(env.m1))
 
-    # model selection ####
+      # model selection ####
 
 env.m2 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
                 family = "poisson", data=dat1)
@@ -4225,7 +4226,7 @@ anova(env.m1, env.m3, test="Chisq")
 ### UPDATE - I am not using habitat anymore (see text in env.m1 section above)
 
 #
-    # predictions - env.m1 - IGNORE ####
+      # predictions - env.m1 - IGNORE ####
 
 ### predict for an average commune (i.e. ignoring REs) 
 
@@ -4257,7 +4258,7 @@ ggplot(m1_newdat, aes(x=mean_elev, y=pred, group=habitat, colour=habitat))+
 # Ok so predicted forest cover increases as mean elevation increases. The effect is differnet for the different habitats. The highest predicted forest cover is in Mosaic (tree, shrub, herbaceous), Forest (broadleaved, evergree), and water.  The lowest predicted forest cover is in mosaic (natural), shrubland. Interestingly predicted forest cover is higher in cropland than in mosaic (natural) and shrubland. This is possible because the habitat is allocated based on >50% of the commune, which means that there can still be a decent proportion of the communes that is forested, despite the habitat being classified as, say, cropland. 
 
 #
-    # diagnostics m2 ####
+      # diagnostics m2 ####
 
 # copy data
 env.m2.diag <- dat1
@@ -4408,7 +4409,7 @@ plot(m4.diag.dat$mean_elev, m4.diag.dat$m4res)
 # pattern is still there
 
 #
-    # predict main effects m2 ####
+      # predict main effects m2 ####
 
 ### predict from env.m2 for an average commune
 
@@ -4427,7 +4428,7 @@ ggplot(env_m2_newdata, aes(x=mean_elev, y=pred))+
   xlab("Mean elevation (scaled)")+
   ylab("Predicted forest cover (pixels)")
 
-    # predict for sets of communes ####
+      # predict for sets of communes ####
 
 # here I want to plot grids of different communes with the overall predicted effect, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes
 
@@ -4641,8 +4642,20 @@ for(i in 1:length(provcomm_lvls)) {
 
 
 #
+    ## ALL COMMUNES ####
+
+env.m1 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
+                family = "poisson", data=dat1)
+
+summary(env.m1)
+# decent positive effect, very small approx p value
+
+# variable taken forward
+
+
   ## Human additional variables ####
-    # hum.m1 ####
+    ## FORESTED COMMUNES ####
+      # hum.m1 ####
 
 # there are 5 variables in this set - distance to border (dist_border), distance to the provincial captial (dist_provCap), presence of economic land concession (elc), presence of any protected area (PA), and the protecte area category (PA_cat, includes "none")
 
@@ -4662,7 +4675,7 @@ plot_model(hum.m1, type="pred", terms="PA_cat") # surprised RMS level is not sig
 
 
 #
-    # model selection ####
+      # model selection ####
 
 # remove PA_cat
 hum.m2 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+offset(log(areaKM)) +
@@ -4721,7 +4734,7 @@ aic.comp$dAICc <- aic.comp$AICc - min(aic.comp$AICc)
 aic.comp <- arrange(aic.comp, dAICc)
 # based on AICc hum.m2, hum.m4, and hum.m5 all have some support (dAICc < 3). Therefore there is cause to investigate dist_border, dist_provCap, elc, and PA. I will progress with hum.m2 
 
-    # diagnostics hum.m2 ####
+      # diagnostics hum.m2 ####
 
 # copy data for diagnostics
 hum.diag.dat <- dat1
@@ -4831,7 +4844,7 @@ nrow(other.coms[other.coms$elc=="1",])
 ### There didn't appear to be any obvious issues with the residual spread for PA / ELC presence
 
 #
-    # predict main effects hum.m2 ####
+      # predict main effects hum.m2 ####
 
 ### dist_border
 
@@ -4900,7 +4913,7 @@ ggplot(PA_elc_newdat, aes(x=PA,y=pred))+
 # So here we see that if a commune has a PA, it is predicted to have more forest, but only by a really tiny amount (~4 pixels...).  The presence of an ELC appears to make no difference
 
 
-    # predict for sets of communes ####
+      # predict for sets of communes ####
 
 # here I want to plot grids of different communes with the overall predicted effects, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes. Because of the presence of 2 categorical predictors, I will need 4 plots per commune
 
@@ -5182,7 +5195,7 @@ ggplot(hum_m2_newdat_bord, aes(x=dist_border))+
 ### elc is clearly doing nothing (well, PA isn't exactly doing a lot, but more than elc).  If you look back at the AIC table, m5 and m4 were almost the same, and m2 - which had elc - had a dAICc > 2.  I wanted to see if it did anything, but clearly not. Therefore I need to check the model predictions for m4 (dist_border, dist_provCap, PA)
 
 #
-    # diagnostics hum.m4 ####
+      # diagnostics hum.m4 ####
 
 summary(hum.m4)
 
@@ -5191,7 +5204,7 @@ plot_model(hum.m4, type="pred")
 # I firs ran predictions and plotted them, see sectino below
 
 
-    # predict main effects hum.m4 ####
+      # predict main effects hum.m4 ####
 
 # create new data
 dist_border_newdat <- expand.grid(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), 
@@ -5235,7 +5248,7 @@ ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred, group=PA, colour=PA))+
 # PA just doesn't do that much. I think I will continue with hum.m5 (dist_border and dist_provCap only)
 
 #
-    # diagnostics hum.m5 ####
+      # diagnostics hum.m5 ####
 
 # copy data for diagnostics
 hum.diag.dat <- dat1
@@ -5335,7 +5348,7 @@ ggplot(all.coms, aes(x=Provcomm, y=dist_provCap, colour=type))+
 
 
 
-    # predict main effects hum.m5 ####
+      # predict main effects hum.m5 ####
 
 # create new data
 dist_border_newdat <- expand.grid(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), 
@@ -5376,7 +5389,7 @@ ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
 # as distance to provincial capital increases, so does predicted forest cover. This appears to be a stronger effect than dist_border.
 
 
-    # predict for commune sets ####
+      # predict for commune sets ####
 
 
 # here I want to plot grids of different communes with the overall predicted effects, plus the commune-specific effect. I want to do this for communes with commune-level intercepts close to the mean, and communes with commune-level intercpets at the extremes. Because of the presence of 2 categorical predictors, I will need 4 plots per commune
@@ -5613,6 +5626,29 @@ for(i in 1:length(provcomm_lvls)) {
 ### similar conclusions to the dist_border model
 
 #
+    ## ALL COMMUNES ####
+
+# there are 5 variables in this set - distance to border (dist_border), distance to the provincial captial (dist_provCap), presence of economic land concession (elc), presence of any protected area (PA), and the protecte area category (PA_cat, includes "none")
+
+# attempt saturated model
+hum.m1 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+PA_cat+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m1)
+# dist_provCap has decent effect size and p value. dist_border potentially. Rank deficiency warning. Based on previous model selection above, I will remove PA_cat as I think that is the one that is causing the warning. There are probably too many categories
+
+# remove PA_Cat
+hum.m2 <- glmer(ForPix ~ dist_border+dist_provCap+elc+PA+offset(log(areaKM)) +
+                  (year|Province/Provcomm), family = "poisson", data=dat1)
+
+summary(hum.m2)
+# dist_provCap still good. Effect size of dist_border (and maybe PA) suggest potentially some interest.
+
+# Although elc doesn't appear to hav a strong effect, I want to take it forward because theoretically it is important to control for this in the models. I will be criticised by lots of people if I don't!
+
+# will take dist_provCap, dist_border, PA, and elc forward.
+
+
 ## Models with multiple sets ####
 
 # Above I have only modelled variables within a single set together. There is argument however that variables from different sets may inflence each other. Therefore I think it is worth exploring models that have pre-selected (i.e. selected because of a priori hypotheses) variables from different sets together.
@@ -5631,7 +5667,8 @@ for(i in 1:length(provcomm_lvls)) {
 
 # pop_den * pax_migt_in.  Population density may well be influenced by in-migration. If a commune's population is made up of more and more migrants, there may be more land grabbing, and traditional land management may be less influential i.e. if khmer people migrate into indigenous areas.
 
-  # pop_den * education ####
+  ## FORESTED COMMUNES ####
+   # pop_den * education ####
 
 popdem.edu.m1 <- glmer(ForPix ~ pop_den *  M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), 
                    data = dat1, family = "poisson")
@@ -5641,7 +5678,7 @@ summary(popdem.edu.m1)
 plot_model(popdem.edu.m1, type = "int")
 # There doesn't appear to be an interaction. M6_24_sch does nothing
 
-  # pop_den * employment ####
+   # pop_den * employment ####
 
 popdem.emp.m1 <- glmer(ForPix ~ pop_den *  propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), 
                        data = dat1, family = "poisson")
@@ -5652,7 +5689,7 @@ summary(popdem.emp.m1)
 plot_model(popdem.emp.m1, type = "int")
 # the interaction is what I would have expected. When the population density increases, if the proportion of people engaged in the primary sector is low, forest cover decreases slower. If the proportion of people engaged in the primary sector is high, forest cover decreases quicker.
 
-  # pop_den * economic security ####
+   # pop_den * economic security ####
 
 popdem.ecsec.m1 <- glmer(ForPix ~ pop_den * Les1_R_Land + offset(log(areaKM)) + (year|Province/Provcomm), 
                        data = dat1, family = "poisson")
@@ -5662,7 +5699,7 @@ summary(popdem.ecsec.m1)
 
 plot_model(popdem.ecsec.m1, type = "int")
 
-  # pop_den * land conflict ####
+   # pop_den * land conflict ####
 
 popdem.lconf.m1 <- glmer(ForPix ~ pop_den * land_confl + offset(log(areaKM)) + (year|Province/Provcomm), 
                          data = dat1, family = "poisson", 
@@ -5673,7 +5710,7 @@ summary(popdem.lconf.m1)
 
 plot_model(popdem.lconf.m1, type = "int")
 
-  # pop_den * migration ####
+   # pop_den * migration ####
 
 popdem.mig.m1 <- glmer(ForPix ~ pop_den * Pax_migt_in + offset(log(areaKM)) + (year|Province/Provcomm), 
                          data = dat1, family = "poisson", 
@@ -5686,7 +5723,7 @@ plot_model(popdem.mig.m1, type = "int")
 # some evidence of an interaction in the plot but not hugely convincing.
 
 
-  # Multiple vars ####
+   # Multiple vars ####
 
 # a couple of the models above showed some interesting interactions - pop_den*propPrimSec and pop_den*land_confl
 
@@ -5771,6 +5808,101 @@ plot_model(multi.mod.5, type="int")
 
 
 #
+  ## ALL COMMUNES ####
+
+
+# first try saturated model and see if it runs
+sat1 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
+                Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+                data=dat1, family="poisson")
+
+summary(sat1)
+# pop_den, mean_elev, dist_border, and dist_provCap all have decent effect sizes and p values. None of the others have much going for them.
+
+
+## stepwise removal of terms. I will not remove elc or PA for conceptual reasons - I want to control for those two factors, even if they are not "important"
+
+# remove weakest term (crim_case)
+sat2 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage +
+                Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat2)
+
+# anova
+anova(sat1, sat2)
+# simpler model is better
+
+# remove next weakest term (M6_24_sch)
+sat3 <- glmer(ForPix ~ pop_den + propPrimSec + pig_fam + dist_sch + garbage +
+                Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat3)
+
+# anova
+anova(sat2, sat3)
+# simpler model is better
+
+# remove next weakest (propPrimSec)
+sat4 <- glmer(ForPix ~ pop_den + pig_fam + dist_sch + garbage + Pax_migt_out + 
+                       mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat4)
+
+# anova
+anova(sat3, sat4)
+# simpler model is better
+
+# remove dist_sch
+sat5 <- glmer(ForPix ~ pop_den + pig_fam + garbage + Pax_migt_out + 
+                mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat5)
+# garbage now is looking more interesting. half-decent effect size and decent approx p value. 
+
+# anova
+anova(sat4, sat5)
+# anova suggests that the simpler model (sat5) is worse than sat4. 
+
+AIC(sat4)
+AIC(sat5)
+# sat 4 is better.
+
+# instead of removing dist_sch, remove pig_fam (the next weakest in sat4 after dist_sch)
+sat6 <- glmer(ForPix ~ pop_den + dist_sch + garbage + Pax_migt_out + 
+                mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat6)
+
+# anova
+anova(sat4,sat6)
+# the simpler model is better
+
+# test whether sat 6 is better than sat5
+anova(sat5,sat6)
+# the simpler model is worse
+
+
+
+
+# compare with AIC
+aic.comp <- data.frame(model = c("m1","m2","m3","m4","m5","m6"),
+                       AICc = c(AICc(hum.m1),AICc(hum.m2),AICc(hum.m3),AICc(hum.m4),
+                                AICc(hum.m5),AICc(hum.m6)))
+aic.comp$dAICc <- aic.comp$AICc - min(aic.comp$AICc)
+aic.comp <- arrange(aic.comp, dAICc)
+
+
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
