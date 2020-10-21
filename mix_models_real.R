@@ -1588,17 +1588,18 @@ dat1$year.orig <- dat$year
 # 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
 # 2) assess each variables effect via plotting 
 # 3) run maximal model with interactions (if I think that interactions are plausible and if I have an a priori hypothesis about the interactions) and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
-# 4) conduct model simplification and selection until the best model is selected
-# 5) after all sets have been run and I have a final set of variables, I will try to run a maximal model with all final variables. If this doesn't work I will construct several smaller models (with environmental and other human vars as controls) which represent hypotheses.
-# 6) model simplification of the above model(s)
-# 7) Plot effects from selected model(s):
+# 4) If there is only 1 variable in the set then that variable will be carried forward and I will move on to the next set
+# 5) conduct model simplification and selection until the best model is selected
+# 6) after all sets have been run and I have a final set of variables, I will try to run a maximal model with all final variables. If this doesn't work I will construct several smaller models (with environmental and other human vars as controls) which represent hypotheses.
+# 7) model simplification of the above model(s)
+# 8) Plot effects from selected model(s):
   # a) manual predict from observed data and compare to predict()
   # b) predict main effects, from an "average" commune
   # c) add on predictions from communes with highest intercepts
   # d) plot the "mean effect" from each Province (using function)
   # e) plot the "mean effect" from each set of communes (PA / no PA) using function
   # f) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid        with the global effect plus the effect for that commune
-# 8) run simple binomial glm (as per Jeroen's suggestion) to check that the results are vaguely plausible 
+# 9) run simple binomial glm (as per Jeroen's suggestion) to check that the results are vaguely plausible 
 
   ### Random effects structure ####
 
@@ -3650,7 +3651,8 @@ ggplot(pa_all, aes(x=pop_den, y=pred, group=PA))+
 
 # just one var - M6_24_sch
 
-    # edu.m1 ####
+      ## FORESTED COMMUNES ONLY ####
+        # edu.m1 ####
 
 # only one variable here
 edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
@@ -3662,7 +3664,7 @@ summary(edu.m1)
 plot_model(edu.m1, type="pred", terms="M6_24_sch")
 # flat as a pancake
 
-    # diagnostics ####
+        # diagnostics ####
 
 # check fixed var 
 drop1(edu.m1, test="Chisq")
@@ -3670,7 +3672,7 @@ drop1(edu.m1, test="Chisq")
 # Not much point in going any further - there is no relationship
 
 #
-    # Predict for sets of communes ####
+        # Predict for sets of communes ####
 
 # randomly sample communes
 rand.com <- sample(dat1$Provcomm, 12, replace = FALSE)
@@ -3744,8 +3746,38 @@ for(i in 1:length(provcomm_lvls)) {
 }
 
 
+      ## ALL COMMUNES ####
+        # edu.m1 ####
+
+# only one variable here
+edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province/Provcomm), 
+                family="poisson", data=dat1)
+
+summary(edu.m1)
+# very tiny effect
+
+# quick plot
+plot_model(edu.m1, type="pred", terms="M6_24_sch")
+# flat as you like
+
+        # variance component analysis ####
+
+
+print(VarCorr(edu.m1),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(12.5,0.0046,13.3,0.00051))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+# Commune and province contributing pretty much all the variance (year is tiny). Province is ~51% and commune ~48%
+
+# marginal and conditional r2
+r.squaredGLMM(edu.m1)
+# Marginal effect (fixed effect) is miniscule - 1.65E-10. Education has not effect 
+
+
+
   ## Employment ####
-    # emp.m1 (propPrimsec, propSecSec) ####
+    ## FORESTED COMMUNES ONLY ####
+      # emp.m1 (propPrimsec, propSecSec) ####
 
 # I am not going to test an interaction because these two variables are likely to be related, i.e. when there are fewer people in the primary sector there are likely to be more people in the secondary sector, and vice versa
 emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3757,7 +3789,7 @@ summary(emp.m1)
 # quick plot
 plot_model(emp.m1, type="pred")
 
-    # model selection ####
+      # model selection ####
 
 # see if we remove propSecSec
 emp.m2 <- glmer(ForPix ~ propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm), family="poisson", data=dat1)
@@ -3772,11 +3804,39 @@ plot_model(emp.m2, type="pred")
 # still a useless model though. No relationship
 
 #
+    ## ALL COMMUNES ####
+      # emp.m1 ####
+
+# I am not going to test an interaction because these two variables are likely to be related, i.e. when there are fewer people in the primary sector there are likely to be more people in the secondary sector, and vice versa
+emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(emp.m1)
+# tiny effect sizes and large approx p values
+
+# quick plot
+plot_model(emp.m1, type="pred")
+# flat
+
+# try removing the smallest effect (propSecSec)
+emp.m2 <- glmer(ForPix ~ propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(emp.m2)
+# tiny increase in effect size
+
+# quick plot
+plot_model(emp.m2, type="pred")
+# still flat
+
+# I will probably take propPrimSec forward, even though it is unlikely to have an effect
+
   ## Economic security ####
 
 # Les_1_R_Land & pig_fam
 
-    # econ.m1 ####
+    ## FORESTED COMMUNES ####
+      # econ.m1 ####
 
 # model with both variables. I don't have any a priori hypothesis about an interaction, and so I will not test one
 econ.m1 <- glmer(ForPix ~ Les1_R_Land + pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3787,7 +3847,7 @@ summary(econ.m1)
 # quick plot
 plot_model(econ.m1, type="pred")
 
-    # model selection ####
+      # model selection ####
 
 # try models with only single vars
 econ.m2 <- glmer(ForPix ~ Les1_R_Land + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3816,11 +3876,35 @@ plot_model(econ.m3, type="pred")
 ## no relationship with either variable
 
 #
+    ## ALL COMMUNES ####
+      # econ.m1 ####
+
+# model with both variables. I don't have any a priori hypothesis about an interaction, and so I will not test one
+econ.m1 <- glmer(ForPix ~ Les1_R_Land + pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m1)
+# Tiny effect sizes and large approx p values.
+
+# quick plot
+plot_model(econ.m1, type="pred")
+
+# try removing the smallest effect (Les1_R_Land)
+econ.m2 <- glmer(ForPix ~ pig_fam + offset(log(areaKM)) + (year|Province/Provcomm),
+                 family="poisson", data=dat1)
+
+summary(econ.m2)
+# no change in effect size
+
+# I will take pig_fam forward
+
+
   ## Access to services ####
 
 # dist_sch, garbage, KM_Comm
 
-    # acc.m1 ####
+    ## FORESTED COMMUNES ####
+      # acc.m1 ####
 
 # I have no a priori hypotheses regarding interactions, and so I won't test them
 acc.m1 <- glmer(ForPix ~ dist_sch + garbage + KM_Comm + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3831,7 +3915,7 @@ summary(acc.m1)
 # quick plot
 plot_model(acc.m1, type="pred")
 
-    # model selection ####
+      # model selection ####
 
 acc.m2 <- glmer(ForPix ~ dist_sch + garbage + offset(log(areaKM)) + (year|Province/Provcomm),
                 family="poisson", data=dat1)
@@ -3870,11 +3954,34 @@ acc.AIC <- arrange(acc.AIC,dAICc)
 # acc.m3 - acc.m5 are all similar in terms of AICc
 
 #
+    ## ALL COMMUNES ####
+      # acc.m1 ####
+
+acc.m1 <- glmer(ForPix ~ dist_sch + garbage + KM_Comm + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(acc.m1)
+# tiny effect sizes and large approx p values
+
+# quick plot
+plot_model(acc.m1, type="pred")
+
+# remove weakest effect (KM_Comm)
+acc.m2 <- glmer(ForPix ~ dist_sch + garbage + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(acc.m2)
+# no change in effect size
+
+# I will take two strongest effects forward - dist_sch and garbage
+
+
   ## Social justice ####
 
 # crim_case, land_confl
 
-    # jus.m1 ####
+    ## FORESTED COMMUNES ####
+      # jus.m1 ####
 
 # no a priori reason to think there is an interaction and so I won't test
 jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3885,7 +3992,7 @@ summary(jus.m1)
 # quick plot
 plot_model(jus.m1, type="pred")
 
-    # jus.m2 ####
+      # jus.m2 ####
 
 # remove land_confl
 jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3898,8 +4005,32 @@ anova(jus.m1,jus.m2, test="Chisq")
 
 
 #
+    ## ALL COMMUNES ####
+      # jus.m1 ####
+
+# no a priori reason to think there is an interaction and so I won't test
+jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(jus.m1)
+# tiny effect sizes and large approx p values.
+
+# quick plot
+plot_model(jus.m1, type="pred")
+
+# remove weakest effect (land_confl)
+jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(jus.m2)
+# no real change in effect
+
+# I will tkae crim_case forward
+
+
   ## migration ####
-    # mig.m1 ####
+    ## FORESTED COMMUNES ####
+      # mig.m1 ####
 
 # Here I think there is a possible cause to test interactions. Migration in an out of a commune, and what this means for socioeconomics and forest cover is potentially quite complex. 
 mig.m1 <- glmer(ForPix ~ Pax_migt_in*Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3910,7 +4041,7 @@ summary(mig.m1)
 plot_model(mig.m1, type="int")
 plot_model(mig.m1, type="pred")
 
-    # mig.m2 ####
+      # mig.m2 ####
 
 # remove migt_in
 mig.m2 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -3924,6 +4055,39 @@ anova(mig.m1,mig.m2,test="Chisq")
 plot_model(mig.m2, type="pred")
 
 #
+    ## ALL COMMUNES ####
+      # mig.m1 ####
+
+# Here I think there is a possible cause to test interactions. Migration in an out of a commune, and what this means for socioeconomics and forest cover is potentially quite complex. 
+mig.m1 <- glmer(ForPix ~ Pax_migt_in*Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m1)
+# tiny effect sizes and large approx p values
+
+# remove smallest effect (interaction)
+mig.m2 <- glmer(ForPix ~ Pax_migt_in + Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m2)
+# effect size of migt_in gone down and migt_out gone up
+
+# remove smallest effect (migt_in)
+mig.m3 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m3)
+# effect size down a tiny bit
+
+# try just migt_in
+mig.m4 <- glmer(ForPix ~ Pax_migt_in + offset(log(areaKM)) + (year|Province/Provcomm),
+                family="poisson", data=dat1)
+
+summary(mig.m4)
+# much smaller effect size than migt_out
+
+# pax_migt_out will be taken forward
+
   ## Environmental vars ####
     # env.m1 ####
 
