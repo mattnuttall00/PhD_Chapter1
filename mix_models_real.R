@@ -1586,17 +1586,18 @@ dat1$year.orig <- dat$year
 # I am going to follow the below approach for each set
 
 # 1) Run maximal model (with no interactions) to get a feel for the effects of variables without interactions
-# 2) assess the model diagnostics
-# 3) assess each variables effect via plotting (main effect plot plus communes with highest intercept)
-# 4) run maximal model with interactions (if I think that interactions are plausible and if I have an a priori hypothesis about the interactions) and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
-# 5) conduct model simplification and selection until the best model is selected
-# 6) assess model diagnostics
-# 7) Plot effects from selected model:
+# 2) assess each variables effect via plotting 
+# 3) run maximal model with interactions (if I think that interactions are plausible and if I have an a priori hypothesis about the interactions) and compare with the first model (LRT, profiled confidence intervals &       parametric bootstrapping)
+# 4) conduct model simplification and selection until the best model is selected
+# 5) after all sets have been run and I have a final set of variables, I will try to run a maximal model with all final variables. If this doesn't work I will construct several smaller models (with environmental and other human vars as controls) which represent hypotheses.
+# 6) model simplification of the above model(s)
+# 7) Plot effects from selected model(s):
   # a) manual predict from observed data and compare to predict()
   # b) predict main effects, from an "average" commune
   # c) add on predictions from communes with highest intercepts
-  # d) plot the communes within the two provinces with the highest RE intercept and lowest RE intercept. 
-  # e) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid with the         global effect plus the effect for that commune
+  # d) plot the "mean effect" from each Province (using function)
+  # e) plot the "mean effect" from each set of communes (PA / no PA) using function
+  # f) select the province with RE intercept closest to 0 and plot all the communes (or subset) in a panel grid        with the global effect plus the effect for that commune
 # 8) run simple binomial glm (as per Jeroen's suggestion) to check that the results are vaguely plausible 
 
   ### Random effects structure ####
