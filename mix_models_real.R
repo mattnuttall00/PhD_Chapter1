@@ -5821,7 +5821,7 @@ summary(sat1)
 # pop_den, mean_elev, dist_border, and dist_provCap all have decent effect sizes and p values. None of the others have much going for them.
 
 
-## stepwise removal of terms. I will not remove elc or PA for conceptual reasons - I want to control for those two factors, even if they are not "important"
+## stepwise removal of terms. I will not remove elc or PA for conceptual reasons - I want to control for those two factors, even if they have small effect sizes
 
 # remove weakest term (crim_case)
 sat2 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage +
@@ -5888,19 +5888,59 @@ summary(sat6)
 anova(sat4,sat6)
 # the simpler model is better
 
-# test whether sat 6 is better than sat5
+# test whether sat6 is better than sat5
 anova(sat5,sat6)
-# the simpler model is worse
+# the model with dist_sch (sat6) is better 
+
+# remove garbage
+sat7 <- glmer(ForPix ~ pop_den + dist_sch + Pax_migt_out + 
+                mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat7)
+
+# compare with sat6
+anova(sat6,sat7)
+# simpler model (sat7) is better
+
+# remove dist_sch again as it is the weaker term
+sat8 <- glmer(ForPix ~ pop_den + Pax_migt_out + 
+                mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat8)
+
+# anova
+anova(sat7,sat8)
+# simpler model (sat8) is better
+
+# remove Pax_migt_out
+sat9 <- glmer(ForPix ~ pop_den + 
+                mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+summary(sat9)
+
+# anova
+anova(sat8,sat9)
+# simpler model (sat9) is better
 
 
 
-
-# compare with AIC
-aic.comp <- data.frame(model = c("m1","m2","m3","m4","m5","m6"),
-                       AICc = c(AICc(hum.m1),AICc(hum.m2),AICc(hum.m3),AICc(hum.m4),
-                                AICc(hum.m5),AICc(hum.m6)))
+# compare with AICc
+aic.comp <- data.frame(model = c("sat1","sat2","sat3","sat4","sat5","sat6","sat7","sat8","sat9"),
+                       AICc = c(AICc(sat1),AICc(sat2),AICc(sat3),AICc(sat4),
+                                AICc(sat5),AICc(sat6), AICc(sat7), AICc(sat8), AICc(sat9)))
 aic.comp$dAICc <- aic.comp$AICc - min(aic.comp$AICc)
 aic.comp <- arrange(aic.comp, dAICc)
+
+# check if AIC agrees
+aic.comp$AIC <- c(AIC(sat1),AIC(sat2),AIC(sat3),AIC(sat4),AIC(sat5),AIC(sat6),AIC(sat7),AIC(sat8),AIC(sat9))
+aic.comp$dAIC <- aic.comp$AIC - min(aic.comp$AIC)
+aic.comp <- arrange(aic.comp, dAIC)
 
 
 ### simple test ####
