@@ -3484,6 +3484,8 @@ return(mean.df)
   
 }
  
+test <- ProvMean.popden(dat1,"Stung Treng",popdem.m2)
+
 
 ## now use the function to get the mean effects for all provinces
 
@@ -5809,7 +5811,7 @@ plot_model(multi.mod.5, type="int")
 
 #
   ## ALL COMMUNES ####
-
+    # Global model ####
 
 # first try saturated model and see if it runs
 sat1 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
@@ -5941,6 +5943,8 @@ aic.comp <- arrange(aic.comp, dAICc)
 aic.comp$AIC <- c(AIC(sat1),AIC(sat2),AIC(sat3),AIC(sat4),AIC(sat5),AIC(sat6),AIC(sat7),AIC(sat8),AIC(sat9))
 aic.comp$dAIC <- aic.comp$AIC - min(aic.comp$AIC)
 aic.comp <- arrange(aic.comp, dAIC)
+
+# AIC suggests that models with dist_sch an pax_migt_out have some support. 
 
 
 ### simple test ####
