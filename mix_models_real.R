@@ -5015,7 +5015,7 @@ anova(jus.m1,jus.m2, test="Chisq")
 
 #
     ## ALL COMMUNES ####
-      # jus.m1 ####
+      # jus.m1, jus.2 ####
 
 # no a priori reason to think there is an interaction and so I won't test
 jus.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -5025,7 +5025,7 @@ summary(jus.m1)
 # tiny effect sizes and large approx p values.
 
 # quick plot
-plot_model(jus.m1, type="pred")
+#plot_model(jus.m1, type="pred")
 
 # remove weakest effect (land_confl)
 jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -5034,7 +5034,217 @@ jus.m2 <- glmer(ForPix ~ crim_case + offset(log(areaKM)) + (year|Province/Provco
 summary(jus.m2)
 # no real change in effect
 
+# anova
+anova(jus.m1,jus.m2)
+# simpler model is better
+
 # I will tkae crim_case forward
+
+
+      # crim_case effects between provinces ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### crim_case
+
+# this function spits out a dataframe with a range of crim_case values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.jus <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(crim_case = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(crim_case = seq(min(dat$crim_case[dat$Province==province]),
+                                       max(dat$crim_case[dat$Province==province]), length.out = 100), 
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of crim_case and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("crim_case","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of crim_case)  
+mean.df <- compred %>% group_by(crim_case) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(crim_case = compred_wide$crim_case,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="crim_case")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.jus(dat1,"Stung Treng",jus.m2)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.jus(province=provs[i], model=jus.m2)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+jus_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and no free axis
+ggplot(jus_allprovs, aes(x=crim_case, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(jus_allprovs[jus_allprovs$Province!="Phnom Penh",], aes(x=crim_case, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# This plot shows that there is no effect at the province level
+
+# remove PP and free axis
+ggplot(jus_allprovs[jus_allprovs$Province!="Phnom Penh",], aes(x=crim_case, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+# Yep - no effect at all 
+
+
+
+
+
+
+      # crim_case effects between PA and non_PA communes ####
+
+## now I want to have a look at differences between groups of communes. Specifically I want to look at communes in and around PAs. This is to see if there is a difference in effect of crim_case on the more rural/remote areas with high forest cover and PAs. 
+
+# I need to do the same as above - split the communes into groups, predict for each commune within a group, and then get the mean, using the quantiles to show variation.  I can adapt my function from above
+
+# I can use the PA variable in dat1 to split the groups
+
+
+### garbage
+
+PAmean.jus <- function(dat=dat1,pa){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$PA==pa])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(crim_case = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        PA = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(crim_case = seq(min(dat$crim_case[dat$PA==pa]),
+                                       max(dat$crim_case[dat$PA==pa]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$PA==pa]),
+                         Province = dat$Province[dat$Provcomm==communes[i]][1],
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(jus.m2, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of garbage and the predictions, and attach commune name and PA status. 
+    df <- newdat[ ,c("crim_case","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    df$commune <- comname 
+    df$PA <- pa
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of garbage)  
+  mean.df <- compred %>% group_by(crim_case) %>% summarise_at(vars(pred),mean) %>% 
+    mutate(PA = pa)
+  
+  # get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
+  compred_wide <- compred %>% 
+                  pivot_wider(., names_from = commune, values_from = pred, values_fn = list(pred=mean))  
+  lnth <- ncol(compred_wide)
+  quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+  
+  quants.vec <- data.frame(crim_case = compred_wide$crim_case,
+                           Q2.5 = as.numeric(quants[1,]),
+                           Q97.5 = as.numeric(quants[2,]))
+  
+  # join together
+  mean.df <- left_join(mean.df, quants.vec, by="crim_case")
+  
+  return(mean.df)
+  
+}
+
+# run function for communes with PAs
+pa_mean <- PAmean.jus(pa="1")
+
+# run function for communes with no PAs. Remove PP for the noPA group
+nopa_mean <- PAmean.jus(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
+pa_all <- rbind(pa_mean,nopa_mean)
+
+# plot
+ggplot(pa_all, aes(x=crim_case, y=pred, group=PA, colour=PA, fill=PA))+
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.3, colour=NA)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))
+  #xlim(-0.15,0.2)
+  #ylim(0,7500)
+# no effect at all for either group
+
+
 
 
   ## migration ####
@@ -5065,7 +5275,7 @@ plot_model(mig.m2, type="pred")
 
 #
     ## ALL COMMUNES ####
-      # mig.m1 ####
+      # mig.m1, mig.2, mig.3, mig.4 ####
 
 # Here I think there is a possible cause to test interactions. Migration in an out of a commune, and what this means for socioeconomics and forest cover is potentially quite complex. 
 mig.m1 <- glmer(ForPix ~ Pax_migt_in*Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -5081,12 +5291,21 @@ mig.m2 <- glmer(ForPix ~ Pax_migt_in + Pax_migt_out + offset(log(areaKM)) + (yea
 summary(mig.m2)
 # effect size of migt_in gone down and migt_out gone up
 
+# anova
+anova(mig.m1,mig.m2)
+# simpler model is better
+
+
 # remove smallest effect (migt_in)
 mig.m3 <- glmer(ForPix ~ Pax_migt_out + offset(log(areaKM)) + (year|Province/Provcomm),
                 family="poisson", data=dat1)
 
 summary(mig.m3)
 # effect size down a tiny bit
+
+# anova
+anova(mig.m2,mig.m3)
+# simpler model is better
 
 # try just migt_in
 mig.m4 <- glmer(ForPix ~ Pax_migt_in + offset(log(areaKM)) + (year|Province/Provcomm),
@@ -5095,7 +5314,217 @@ mig.m4 <- glmer(ForPix ~ Pax_migt_in + offset(log(areaKM)) + (year|Province/Prov
 summary(mig.m4)
 # much smaller effect size than migt_out
 
+AICc(mig.m3)
+AICc(mig.m4)
+
+# mig.m3 will be used for the province/PA no-PA analysis below
+
 # pax_migt_out will be taken forward
+
+      # Pax_migt_out effects between provinces ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### Pax_migt_out
+
+# this function spits out a dataframe with a range of Pax_migt_out values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.mig <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(Pax_migt_out = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(Pax_migt_out = seq(min(dat$Pax_migt_out[dat$Province==province]),
+                                       max(dat$Pax_migt_out[dat$Province==province]), length.out = 100), 
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of Pax_migt_out and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("Pax_migt_out","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of Pax_migt_out)  
+mean.df <- compred %>% group_by(Pax_migt_out) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(Pax_migt_out = compred_wide$Pax_migt_out,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="Pax_migt_out")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.mig(dat1,"Stung Treng",mig.m3)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.mig(province=provs[i], model=mig.m3)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+mig_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and no free axis
+ggplot(mig_allprovs, aes(x=Pax_migt_out, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(mig_allprovs[mig_allprovs$Province!="Phnom Penh",], aes(x=Pax_migt_out, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# This plot shows that there is no effect at the province level
+
+# remove PP and free axis
+ggplot(mig_allprovs[mig_allprovs$Province!="Phnom Penh",], aes(x=Pax_migt_out, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+# Yep - no effect at all 
+
+
+
+
+      # Pax_migt_out effects between PA and non_PA communes ####
+
+## now I want to have a look at differences between groups of communes. Specifically I want to look at communes in and around PAs. This is to see if there is a difference in effect of Pax_migt_out on the more rural/remote areas with high forest cover and PAs. 
+
+# I need to do the same as above - split the communes into groups, predict for each commune within a group, and then get the mean, using the quantiles to show variation.  I can adapt my function from above
+
+# I can use the PA variable in dat1 to split the groups
+
+
+### garbage
+
+PAmean.mig <- function(dat=dat1,pa){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$PA==pa])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(Pax_migt_out = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        PA = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(Pax_migt_out = seq(min(dat$Pax_migt_out[dat$PA==pa]),
+                                       max(dat$Pax_migt_out[dat$PA==pa]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$PA==pa]),
+                         Province = dat$Province[dat$Provcomm==communes[i]][1],
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(mig.m3, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of garbage and the predictions, and attach commune name and PA status. 
+    df <- newdat[ ,c("Pax_migt_out","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    df$commune <- comname 
+    df$PA <- pa
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of garbage)  
+  mean.df <- compred %>% group_by(Pax_migt_out) %>% summarise_at(vars(pred),mean) %>% 
+    mutate(PA = pa)
+  
+  # get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
+  compred_wide <- compred %>% 
+                  pivot_wider(., names_from = commune, values_from = pred, values_fn = list(pred=mean))  
+  lnth <- ncol(compred_wide)
+  quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+  
+  quants.vec <- data.frame(Pax_migt_out = compred_wide$Pax_migt_out,
+                           Q2.5 = as.numeric(quants[1,]),
+                           Q97.5 = as.numeric(quants[2,]))
+  
+  # join together
+  mean.df <- left_join(mean.df, quants.vec, by="Pax_migt_out")
+  
+  return(mean.df)
+  
+}
+
+# run function for communes with PAs
+pa_mean <- PAmean.mig(pa="1")
+
+# run function for communes with no PAs. Remove PP for the noPA group
+nopa_mean <- PAmean.mig(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
+pa_all <- rbind(pa_mean,nopa_mean)
+
+# plot
+ggplot(pa_all, aes(x=Pax_migt_out, y=pred, group=PA, colour=PA, fill=PA))+
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.3, colour=NA)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))
+  #xlim(-0.15,0.2)
+  #ylim(0,7500)
+
+# VERY slight positive effect for both groups, but barely. The PA group does appear to have a very slightly larger positive effect. 
+
+
+
 
   ## Environmental vars ####
     ## FORESTED COMMUNES ####
