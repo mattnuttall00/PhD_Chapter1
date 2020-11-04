@@ -6091,6 +6091,127 @@ summary(env.m1)
 # variable taken forward
 
 
+      # elevation effects between provinces ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### mean_elev
+
+# this function spits out a dataframe with a range of mean_elev values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.elev <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(mean_elev = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(mean_elev = seq(min(dat$mean_elev[dat$Province==province]),
+                                       max(dat$mean_elev[dat$Province==province]), length.out = 100), 
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of mean_elev and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("mean_elev","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of elevation)  
+mean.df <- compred %>% group_by(mean_elev) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(mean_elev = compred_wide$mean_elev,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="mean_elev")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.elev(dat1,"Stung Treng",env.m1)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.elev(province=provs[i], model=env.m1)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+elev_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP, free axis
+ggplot(elev_allprovs, aes(x=mean_elev, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(elev_allprovs[elev_allprovs$Province!="Phnom Penh",], aes(x=mean_elev, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# 
+
+# remove PP and free axis
+ggplot(elev_allprovs[elev_allprovs$Province!="Phnom Penh",], aes(x=mean_elev, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+# Here we see that there is an effect of elevation, and this effect varies between provinces.
+
+
+
+
   ## Human additional variables ####
     ## FORESTED COMMUNES ####
       # hum.m1 ####
