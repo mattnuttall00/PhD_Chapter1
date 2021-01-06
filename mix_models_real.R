@@ -3246,7 +3246,7 @@ ggplot(com.for.all, aes(x=type, y=diffPix_sum, colour=type))+
 
 #
     ## ALL COMMUNES ####
-      # popdem.m1 (pop_den, prop_ind - no interactions) ####
+      # popdem.m1 & popdem.m2 ####
 
 
 # model with pop dem vars as fixed effects. I have not included tot_pop as it is instrincally linked to pop_den, and previous analyses above suggest that pop_den is way more important. Offset as areaKM to account for differences in size of communes
@@ -3420,6 +3420,19 @@ ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
 # The problem with displaying this is that places like Phnom Penh that have very large pop_den values are dragging the x axis out.
 
 
+# if you look at a histogram of pop_den there are only a couple of very high values (>10). I will try and remove these and see what it does to the curve
+m2.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),5, length.out = 100),
+                               areaKM = mean(dat1$areaKM))
+m2.popden.newdat$pred <- as.vector(predict(popdem.m2, newdata=m2.popden.newdat, type="response", re.form=NA))
+
+# plot 
+ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  ylim(0,20)+
+  theme(element_blank())
+# doesn't make much difference really - just shortens the x axis but the result is the same
+
+
         # predict effects for specific locations ####
 
 # as we have discovered, the global effects are quite misleading, as there is so much between commune variation. So now I want to explore the differences in effects for different provinces and communes
@@ -3538,7 +3551,7 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~Province, nrow=6, scales = "free")
-# This plot shows the same as above but with free axes. It means you can see more of what is going on at the individual province level. This shows that in some provinces, even though they don't have much foret cover, pop_den has some effect.  This is particularly obvious in Battambang, Kampot, Preah Sihanouk.  Interestingly this shows that Mondulkiri and Ratanakiri (the only two very forested provinces that are not obvious in the above plot) do not have much of an effect. But these two provinces have such low pop_den values, that no effect can be detected. 
+# This plot shows the same as above but with free axes. It means you can see more of what is going on at the individual province level. This shows that in some provinces, even though they don't have much forest cover, pop_den has some effect.  This is particularly obvious in Battambang, Kampot, Preah Sihanouk.  Interestingly this shows that Mondulkiri and Ratanakiri (the only two very forested provinces that are not obvious in the above plot) do not have much of an effect. But these two provinces have such low pop_den values, that no effect can be detected. 
 
 
 
@@ -7586,4 +7599,6 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 ### to remember ####
 
 
+# one thing to ask Jeoren/Nils about is when predicting for provincial means and predicting for PA/no-PA, I have been using a range of the predictor (e.g. pop_den) that is found within that province. Ie in Stung Treng I have only used the range of pop_den values that actually exists in Stunf Treng. I guess it would be interesting to see what the predictions say when you are looking at plausible increases/decreases in the predictor beyond the range of that province.  I know you're not really supposed to predict beyond the range of the data, but what if you were only predicting within the national range?
 
+# I think it is worth plotting the provincial mean predictions differently. I shouuld try to tweak the function so that the output is not just the mean and the two CIs, but output the mean plus ALL other predictions. Then plot them with the mean as a big fat line and the others a thin faded lines. This might show the within-province variation better. 
