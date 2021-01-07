@@ -3650,6 +3650,9 @@ popden_allprovs$grp <- ifelse(popden_allprovs$commune=="mean", "mean", "commune"
 popden_allprovs$grp <- as.factor(popden_allprovs$grp)
 popden_allprovs$grp <- factor(popden_allprovs$grp, levels=c("commune","mean"))
 
+# extract all mean predictions (plus province) into new dataframe
+means.df <- popden_allprovs %>% filter(commune=="mean") %>% select(pop_den,pred,commune,province)
+
 
 # no PP, free axis
 ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, y=pred, group=commune))+
@@ -3659,6 +3662,17 @@ ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, 
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~province, nrow=6, scales = "free")+
   ylim(0,26000)
+
+# no PP, free axis, separate dataframes
+ggplot(NULL, aes(x=pop_den, y=pred))+
+  geom_line(data=popden_allprovs[popden_allprovs$province!="Phnom Penh",], 
+            aes(group=commune),  col="grey", size=0.5)+
+  geom_line(data=means.df, col="black", size=1)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~province, nrow=6, scales = "free")+
+  ylim(0,26000)+
+  xlab("Population density (Centerd and scaled)")+
+  ylab("Predicted number of forest pixels")
   
 
 # plot single provinces
