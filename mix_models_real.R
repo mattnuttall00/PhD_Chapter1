@@ -3442,6 +3442,9 @@ ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
+
+### The below produces 95% variation error bars
+
 # this function spits out a dataframe with a range of pop_den values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
 ProvMean.popden <- function(dat=dat1,province, model){
   
@@ -3552,6 +3555,108 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~Province, nrow=6, scales = "free")
 # This plot shows the same as above but with free axes. It means you can see more of what is going on at the individual province level. This shows that in some provinces, even though they don't have much forest cover, pop_den has some effect.  This is particularly obvious in Battambang, Kampot, Preah Sihanouk.  Interestingly this shows that Mondulkiri and Ratanakiri (the only two very forested provinces that are not obvious in the above plot) do not have much of an effect. But these two provinces have such low pop_den values, that no effect can be detected. 
+
+
+### The below is the same as above but instead of 95% error bars it outputs a prediction line for each commune. I will plot the mean as a thick line and the others as thin faded lines. It might show the within-province variation better
+
+ProvMeanLine.popden <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(pop_den = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(pop_den = seq(min(dat$pop_den[dat$Province==province]),
+                                       max(dat$pop_den[dat$Province==province]), length.out = 100), # range in province
+                         prop_ind = mean(dat$prop_ind[dat$Province==province]), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of pop_den and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("pop_den","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of pop_den)  
+    mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+  }
+
+test <- ProvMeanLine.popden(dat1,"Stung Treng", popdem.m2)  
+
+
+## now use the function to get the mean effects and all other predictions for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+str() <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.popden(province=provs[i], model=popdem.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+popden_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+### plot
+
+# no PP, fixed axis
+ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, y=pred, group=commune))+
+  geom_line()+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~province, nrow=6)+
+  ylim(0,15000)
+
+# no PP, free axis
+ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, y=pred, group=commune))+
+  geom_line()+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~province, nrow=6, scales = "free")+
+  ylim(0,15000)
+
+# plot single provinces
+ggplot(popden_allprovs[popden_allprovs$province=="Koh Kong" & popden_allprovs$commune=="Trapeang Rung",], 
+       aes(x=pop_den, y=pred))+
+  geom_line()+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  ylim(0,15000)
 
 
 
