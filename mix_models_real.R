@@ -3720,7 +3720,7 @@ PAmean.popden <- function(dat=dat1,pa){
                          year = mean(dat$year[dat$PA==pa]),
                          Province = dat$Province[dat$Provcomm==communes[i]][1],
                          Provcomm = communes[i])
-    newdat$pred <- as.vector(predict(popdem.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    newdat$pred <- as.vector(predict(popdem.m2, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
     
     # pull out values of pop_den and the predictions, and attach commune name and PA status. 
     df <- newdat[ ,c("pop_den","pred")]
@@ -3766,7 +3766,9 @@ ggplot(pa_all, aes(x=pop_den, y=pred, group=PA, colour=PA, fill=PA))+
   geom_line(size=1)+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.3, colour=NA)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  xlim(-0.15,0.2)
+  xlim(-0.15,0.2)+
+  xlab("Population density (centered and scaled)")+
+  ylab("Predicted number of forest pixels)")
   #ylim(0,7500)
 
 
