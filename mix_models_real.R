@@ -3644,17 +3644,29 @@ ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, 
   facet_wrap(~province, nrow=6)+
   ylim(0,15000)
 
+
+# add new grouping level to allow line types to be set
+popden_allprovs$grp <- ifelse(popden_allprovs$commune=="mean", "mean", "commune")
+popden_allprovs$grp <- as.factor(popden_allprovs$grp)
+popden_allprovs$grp <- factor(popden_allprovs$grp, levels=c("commune","mean"))
+
+
 # no PP, free axis
 ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, y=pred, group=commune))+
-  geom_line()+
+  geom_line(aes(color=grp, size=grp))+
+  scale_color_manual(values=c('#000000','#FF0000'), breaks=c("commune","mean"))+
+  scale_size_manual(values=c(0.5,2))+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~province, nrow=6, scales = "free")+
-  ylim(0,15000)
+  ylim(0,26000)
+  
 
 # plot single provinces
-ggplot(popden_allprovs[popden_allprovs$province=="Koh Kong" & popden_allprovs$commune=="Trapeang Rung",], 
-       aes(x=pop_den, y=pred))+
-  geom_line()+
+ggplot(popden_allprovs[popden_allprovs$province=="Koh Kong",], 
+       aes(x=pop_den, y=pred, group=commune))+
+  geom_line(aes(color=grp, size=grp))+
+  scale_color_manual(values=c('#999999','#000000'), breaks=c("commune","mean"))+
+  scale_size_manual(values=c(0.2,1.5))+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   ylim(0,15000)
 
