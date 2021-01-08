@@ -3712,7 +3712,7 @@ ggplot(popden_allprovs[popden_allprovs$province=="Koh Kong",],
 # I can use the PA variable in dat1 to split the groups
 
 
-
+### This function outputs the mean predictions for each group, and the 95% quantiles.  Further below is an edited function that will output all of the individual commune predictions
 PAmean.popden <- function(dat=dat1,pa){
   
   # extract list of communes 
@@ -3804,10 +3804,77 @@ ggplot(pa_all, aes(x=pop_den, y=pred, group=PA))+
 
 
 
+### The below function outputs all of the individual communes predictions instead of the 95% quantiles
+PAmeanLines.popden <- function(dat=dat1,pa){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$PA==pa])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(pop_den = NULL,
+                        pred = NULL,
+                        Provcomm = NULL,
+                        PA = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(pop_den = seq(min(dat$pop_den[dat$PA==pa]),
+                                       max(dat$pop_den[dat$PA==pa]), length.out = 100), # range in group
+                         prop_ind = mean(dat$prop_ind[dat$PA==pa]), # range in group
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$PA==pa]),
+                         Province = dat$Province[dat$Provcomm==communes[i]][1],
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(popdem.m2, type="response",newdata=newdat, 
+                                     re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of pop_den and the predictions, and attach commune name and PA status. 
+    df <- newdat[ ,c("pop_den","pred","Provcomm")]
+    #split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    #comname <- split[1,2]
+    #df$commune <- comname 
+    df$PA <- pa
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of pop_den)  
+  mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
+    mutate(Provcomm = "mean") %>% mutate(PA = pa)
+  
+  # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+  
+}
 
 
+# run function for communes with PAs
+pa_mean <- PAmeanLines.popden(pa="1")
 
+# run function for communes with no PAs. Remove PP for the noPA group
+nopa_mean <- PAmeanLines.popden(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
+pa_all <- rbind(pa_mean,nopa_mean)
 
+# extract mean predictions
+pa_means <- pa_all %>% filter(Provcomm=="mean") %>% select(pop_den,pred,Provcomm,PA) 
+
+popden.m2.PA.lines <- ggplot(NULL, aes(x=pop_den, y=pred))+
+                      geom_line(data=pa_all, aes(group=Provcomm), col="grey", size=0.5)+
+                      geom_line(data=pa_means, col="black", size=1)+
+                      theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                      facet_wrap(~PA)+
+                      ylim(0,26000)+
+                      xlim(-0.24,0.25)+
+                      xlab("Population density (Centerd and scaled)")+
+                                        ylab("Predicted number of forest pixels")+
+                                        theme(axis.title = element_text(size=20))+
+                                        theme(axis.text = element_text(size=13))
+
+ggsave("Results/Socioeconomics/Plots/population_density/popden.m2.PA.lines.png", popden.m2.PA.lines,
+       height=20, width=30, units="cm", dpi=300)
 
 
 
