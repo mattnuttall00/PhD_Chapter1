@@ -3565,6 +3565,8 @@ ggplot(popden_allprovs[popden_allprovs$Province!="Phnom Penh",], aes(x=pop_den, 
 # This plot shows the same as above but with free axes. It means you can see more of what is going on at the individual province level. This shows that in some provinces, even though they don't have much forest cover, pop_den has some effect.  This is particularly obvious in Battambang, Kampot, Preah Sihanouk.  Interestingly this shows that Mondulkiri and Ratanakiri (the only two very forested provinces that are not obvious in the above plot) do not have much of an effect. But these two provinces have such low pop_den values, that no effect can be detected. 
 
 
+
+
 ### The below is the same as above but instead of 95% error bars it outputs a prediction line for each commune. I will plot the mean as a thick line and the others as thin faded lines. It might show the within-province variation better
 
 ProvMeanLine.popden <- function(dat=dat1,province, model){
@@ -4017,7 +4019,9 @@ r.squaredGLMM(edu.m1)
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
-# this function spits out a dataframe with a range of M6_24_sch values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+
+
+### this function spits out a dataframe with a range of M6_24_sch values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
 ProvMean.edu <- function(dat=dat1,province, model){
   
   # extract list of communes 
@@ -4071,7 +4075,7 @@ return(mean.df)
   
 }
  
-test <- ProvMean.edu(dat1,"Stung Treng",edu.m1)
+#test <- ProvMean.edu(dat1,"Stung Treng",edu.m1)
 
 
 ## now use the function to get the mean effects for all provinces
@@ -4126,6 +4130,105 @@ ggplot(edu_allprovs[edu_allprovs$Province!="Phnom Penh",], aes(x=M6_24_sch, y=pr
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
   facet_wrap(~Province, nrow=6, scales = "free")
 # Yep - no effect at all 
+
+
+
+
+### this function spits out a dataframe with a range of M6_24_sch values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.edu <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(M6_24_sch = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(M6_24_sch = seq(min(dat$M6_24_sch[dat$Province==province]),
+                                       max(dat$M6_24_sch[dat$Province==province]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of M6_24_sch and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("M6_24_sch","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of M6_24_sch)  
+    mean.df <- compred %>% group_by(M6_24_sch) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.edu(dat1, "Stung Treng", edu.m1)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.edu(province=provs[i], model=edu.m1)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+edu_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+edu_means <- edu_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+edu.m1.provs <- ggplot(NULL, aes(x=M6_24_sch, y=pred))+
+                    geom_line(data=edu_allprovs[edu_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=edu_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Number of males aged 16 to 24 in school (Centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+# no effect at all, from any of the communes
+
+#
 
         # M6_24_sch effects between PA and non-PA communes ####
 
@@ -4207,6 +4310,10 @@ ggplot(pa_all, aes(x=M6_24_sch, y=pred, group=PA, colour=PA, fill=PA))+
 
 
 
+
+### I am not going to bother to run the predictions and pull out the individual communes as I did for pop_den as there is clearly nothing going on.
+
+
   ## Employment ####
     ## FORESTED COMMUNES ONLY ####
       # emp.m1 (propPrimsec, propSecSec) ####
@@ -4254,21 +4361,25 @@ plot_model(emp.m1, type="pred")
 emp.m2 <- glmer(ForPix ~ propPrimSec + offset(log(areaKM)) + (year|Province/Provcomm),
                 family="poisson", data=dat1)
 
-& summary(emp.m2)
+summary(emp.m2)
 # tiny increase in effect size
 
 # quick plot
 plot_model(emp.m2, type="pred")
 # still flat
 
-# I will probably take propPrimSec forward, even though it is unlikely to have an effect
+
+anova(emp.m1, emp.m2)
+# Simpler model better. I will take propPrimSec forward, even though it is unlikely to have an effect
 
       # propPrimSec effects between provinces ####
 
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
-# this function spits out a dataframe with a range of propPrimSec values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+
+
+### this function spits out a dataframe with a range of propPrimSec values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
 ProvMean.emp <- function(dat=dat1,province, model){
   
   # extract list of communes 
@@ -4378,6 +4489,103 @@ ggplot(emp_allprovs[emp_allprovs$Province!="Phnom Penh",], aes(x=propPrimSec, y=
 # Yep - no effect at all 
 
 
+
+
+
+### this function spits out a dataframe with a range of propPrimSec values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.emp <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(propPrimSec = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(propPrimSec = seq(min(dat$propPrimSec[dat$Province==province]),
+                                       max(dat$propPrimSec[dat$Province==province]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of propPrimSec and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("propPrimSec","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of M6_24_sch)  
+    mean.df <- compred %>% group_by(propPrimSec) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.emp(dat1, "Stung Treng", emp.m2)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.emp(province=provs[i], model=emp.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+emp_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+emp_means <- emp_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+emp.m1.provs <- ggplot(NULL, aes(x=propPrimSec, y=pred))+
+                    geom_line(data=emp_allprovs[emp_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=emp_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Proportion of population employed in the primary sector (centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+# no effect at all in any province
+
       # propPrimSec effects between PA and non-PA communes ####
 
 ## now I want to have a look at differences between groups of communes. Specifically I want to look at communes in and around PAs. This is to see if there is a difference in effect of propPrimSec on the more rural/remote areas with high forest cover and PAs. 
@@ -4458,6 +4666,8 @@ ggplot(pa_all, aes(x=propPrimSec, y=pred, group=PA, colour=PA, fill=PA))+
 
 
 
+### I am not bothering to extract the individual commune prediction lines as I did for some of the above because there are no effects visible for any commune in the above section
+
   ## Economic security ####
 
 # Les_1_R_Land & pig_fam
@@ -4523,7 +4733,9 @@ econ.m2 <- glmer(ForPix ~ pig_fam + offset(log(areaKM)) + (year|Province/Provcom
 summary(econ.m2)
 # no change in effect size
 
-# I will take pig_fam forward for the global model
+anova(econ.m1, econ.m2)
+
+# Simpler model is better. I will take pig_fam forward for the global model
 
 AIC(econ.m1)
 AIC(econ.m2)
@@ -4622,7 +4834,7 @@ econ_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,
                          Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
                          Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
 
-# plot with PP and no free axis
+# plot with PP and free axis
 ggplot(econ_allprovs, aes(x=Les1_R_Land, y=pred, group=Province))+
   geom_line()+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
