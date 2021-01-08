@@ -3416,7 +3416,8 @@ m2.popden.newdat$pred <- as.vector(predict(popdem.m2, newdata=m2.popden.newdat, 
 # plot 
 ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
   geom_line()+
-  theme(element_blank())
+  theme(element_blank())+
+  ylim(0,20000)
 # The problem with displaying this is that places like Phnom Penh that have very large pop_den values are dragging the x axis out.
 
 
@@ -3426,11 +3427,18 @@ m2.popden.newdat <- data.frame(pop_den = seq(min(dat1$pop_den),5, length.out = 1
 m2.popden.newdat$pred <- as.vector(predict(popdem.m2, newdata=m2.popden.newdat, type="response", re.form=NA))
 
 # plot 
-ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
-  geom_line()+
-  ylim(0,20)+
-  theme(element_blank())
-# doesn't make much difference really - just shortens the x axis but the result is the same
+popden.m2.glob <- ggplot(m2.popden.newdat, aes(x=pop_den, y=pred))+
+                  geom_line(size=1)+
+                  ylim(0,20000)+
+                  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                  ylab("Predicted number of forest pixels")+
+                  xlab("Population density")+
+                  theme(axis.title = element_text(size=20))+
+                  theme(axis.text = element_text(size=17))
+# doesn't make much difference really - just shortens the x axis but the result is the same. When you give the plot a realistic y axis the line is flat
+
+ggsave("Results/Socioeconomics/Plots/population_density/popdenm2_global_effect.png", popden.m2.glob,
+       height = 20, width = 30, units = "cm", dpi = 300)
 
 
         # predict effects for specific locations ####
