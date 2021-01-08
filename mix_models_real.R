@@ -3621,7 +3621,7 @@ test <- ProvMeanLine.popden(dat1,"Stung Treng", popdem.m2)
 provs <- as.character(unique(dat1$Province))
 
 # initialise list
-str() <- list()
+output.list <- list()
 
 # loop through list of provinces, applying the function to each one
 for(i in 1:length(provs)){
@@ -3653,7 +3653,7 @@ ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, 
   ylim(0,15000)
 
 
-# add new grouping level to allow line types to be set
+# add new grouping level to allow line types to be set. This was for plotting the communes predictions and mean predictions from the same dataframe. But I can't for the life of me get ggplot to plot the lines in the correct order so that the mean line is on top of the commune lines. Therefore I have had to use the approach immediately below where I plot using two separate dataframes
 popden_allprovs$grp <- ifelse(popden_allprovs$commune=="mean", "mean", "commune")
 popden_allprovs$grp <- as.factor(popden_allprovs$grp)
 popden_allprovs$grp <- factor(popden_allprovs$grp, levels=c("commune","mean"))
@@ -3672,15 +3672,20 @@ ggplot(popden_allprovs[popden_allprovs$province!="Phnom Penh",], aes(x=pop_den, 
   ylim(0,26000)
 
 # no PP, free axis, separate dataframes
-ggplot(NULL, aes(x=pop_den, y=pred))+
-  geom_line(data=popden_allprovs[popden_allprovs$province!="Phnom Penh",], 
-            aes(group=commune),  col="grey", size=0.5)+
-  geom_line(data=means.df, col="black", size=1)+
-  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  facet_wrap(~province, nrow=6, scales = "free")+
-  ylim(0,26000)+
-  xlab("Population density (Centerd and scaled)")+
-  ylab("Predicted number of forest pixels")
+popden.m2.provs <- ggplot(NULL, aes(x=pop_den, y=pred))+
+                    geom_line(data=popden_allprovs[popden_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=means.df, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Population density (Centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+ggsave("Results/Socioeconomics/Plots/population_density/popden.m2.provs.png",popden.m2.provs,
+       height=20, width=30, units="cm", dpi=300)
   
 
 # plot single provinces
@@ -3770,14 +3775,24 @@ nopa_mean <- PAmean.popden(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
 pa_all <- rbind(pa_mean,nopa_mean)
 
 # plot
-ggplot(pa_all, aes(x=pop_den, y=pred, group=PA, colour=PA, fill=PA))+
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.3, colour=NA)+
-  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  xlim(-0.15,0.2)+
-  xlab("Population density (centered and scaled)")+
-  ylab("Predicted number of forest pixels)")
-  #ylim(0,7500)
+popden.m2.PA.plot <- ggplot(pa_all, aes(x=pop_den, y=pred, group=PA, colour=PA, fill=PA))+
+                      geom_line(size=1.5)+
+                      scale_color_manual(values=c('gray1','gray1'))+
+                      geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5, fill=PA), alpha=0.5, color=NA)+
+                      scale_fill_manual(values=c('blue1','green4'))+
+                      theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"),
+                            axis.title = element_text(size=20),
+                            axis.text = element_text(size=17),
+                            legend.key.size = unit(1, 'cm'),
+                            legend.title = element_text(size=17),
+                            legend.text = element_text(size=17))+
+                      xlim(-0.15,0.2)+
+                      xlab("Population density (centered and scaled)")+
+                      ylab("Predicted number of forest pixels")
+  
+ggsave("Results/Socioeconomics/Plots/population_density/popden.m2.PA.png", popden.m2.PA.plot,
+       height=20, width=30, units="cm", dpi=300)
+
 
 
 # facet wrap and free axis
