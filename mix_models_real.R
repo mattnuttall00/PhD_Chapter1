@@ -5913,6 +5913,100 @@ ggplot(jus_allprovs[jus_allprovs$Province!="Phnom Penh",], aes(x=crim_case, y=pr
 
 
 
+### this function spits out a dataframe with a range of garbage values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.jus <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(crim_case = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(crim_case = seq(min(dat$crim_case[dat$Province==province]),
+                                       max(dat$crim_case[dat$Province==province]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of crim_case and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("crim_case","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of crim_case)  
+    mean.df <- compred %>% group_by(crim_case) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.jus(dat1, "Stung Treng", jus.m2)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.jus(province=provs[i], model=jus.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+jus_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+jus_means <- jus_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+jus.m2.provs <- ggplot(NULL, aes(x=crim_case, y=pred))+
+                    geom_line(data=jus_allprovs[jus_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=jus_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Criminal cases per capita")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+# nothing of interest.
+
+
 
       # crim_case effects between PA and non_PA communes ####
 
