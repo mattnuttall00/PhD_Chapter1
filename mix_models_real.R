@@ -7019,6 +7019,7 @@ for(i in 1:length(provcomm_lvls)) {
 
 #
     ## ALL COMMUNES ####
+      # env.m1 ####
 
 env.m1 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province/Provcomm),
                 family = "poisson", data=dat1)
@@ -7027,6 +7028,7 @@ summary(env.m1)
 # decent positive effect, very small approx p value
 
 # variable taken forward
+
 
 
       # elevation effects between provinces ####
@@ -7136,7 +7138,9 @@ ggplot(elev_allprovs[elev_allprovs$Province!="Phnom Penh",], aes(x=mean_elev, y=
   geom_line()+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
   theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  ylim(0,30000)+
   facet_wrap(~Province, nrow=6)
+  
 # 
 
 # remove PP and free axis
@@ -7148,6 +7152,100 @@ ggplot(elev_allprovs[elev_allprovs$Province!="Phnom Penh",], aes(x=mean_elev, y=
 # Here we see that there is an effect of elevation, and this effect varies between provinces.
 
 
+
+
+
+### this function spits out a dataframe with a range of Pax_migt_out values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.elev <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(mean_elev = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(mean_elev = seq(min(dat$mean_elev[dat$Province==province]),
+                                       max(dat$mean_elev[dat$Province==province]), length.out = 100), # range in province
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of mean_elev and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("mean_elev","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of mean_elev)  
+    mean.df <- compred %>% group_by(mean_elev) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.elev(dat1, "Stung Treng", env.m1)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.elev(province=provs[i], model=env.m1)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+env_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+env_means <- env_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+env.m1.provs <- ggplot(NULL, aes(x=mean_elev, y=pred))+
+                    geom_line(data=env_allprovs[env_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=env_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,30000)+
+                    xlab("Mean elevation (m)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
 
 
   ## Human additional variables ####
