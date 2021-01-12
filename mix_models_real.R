@@ -8273,7 +8273,7 @@ summary(hum.m2)
 
 
       # dist_border effects between provinces ####
-
+        # PA == 1 ####
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
 
@@ -8405,7 +8405,7 @@ ProvMeanLine.bord1 <- function(dat=dat1,province, model){
   communes <- unique(dat$Provcomm[dat$Province==province])
   
   # Initialise empty dataframe
-  compred <- data.frame(Pax_migt_out = NULL,
+  compred <- data.frame(dist_border = NULL,
                         pred = NULL,
                         commune = NULL,
                         province = NULL)
@@ -8488,12 +8488,236 @@ hum.m2.bordLines <- ggplot(NULL, aes(x=dist_border, y=pred))+
                     theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
                     facet_wrap(~province, nrow=6, scales = "free")+
                     ylim(0,26000)+
-                    xlab("Distance to international border (KM)")+
+                    xlab("Distance to international border (scaled)")+
                     ylab("Predicted number of forest pixels")+
                     theme(axis.title = element_text(size=20))+
                     theme(axis.text = element_text(size=13))
 
 ggsave("Results/Socioeconomics/Plots/dist_border/hum.m2.border.pa1.lines.png",hum.m2.bordLines,
+       width=30, height=30, units="cm", dpi=300)
+
+
+        # PA == 0 ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### dist_border when elc=0 and PA=0
+
+# this function spits out a dataframe with a range of dist_border values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.bord1 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_border = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_border = seq(min(dat$dist_border[dat$Province==province]),
+                                       max(dat$dist_border[dat$Province==province]), length.out = 100),
+                         dist_provCap = mean(dat1$dist_provCap[dat1$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_border and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_border","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of dist_border)  
+mean.df <- compred %>% group_by(dist_border) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(dist_border = compred_wide$dist_border,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="dist_border")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.bord1(dat1,"Stung Treng",hum.m2)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.bord1(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+bord_allprovs2 <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and no free axis
+ggplot(bord_allprovs2, aes(x=dist_border, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(bord_allprovs2[bord_allprovs2$Province!="Phnom Penh",], aes(x=dist_border, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# 
+
+# remove PP and free axis
+ggplot(mig_allprovs[mig_allprovs$Province!="Phnom Penh",], aes(x=Pax_migt_out, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+#
+
+
+
+
+
+### this function spits out a dataframe with a range of dist_border values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.bord2 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_border = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_border = seq(min(dat$dist_border[dat$Province==province]),
+                                       max(dat$dist_border[dat$Province==province]), length.out = 100),
+                         dist_provCap = mean(dat1$dist_provCap[dat1$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_border and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_border","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of dist_border)  
+    mean.df <- compred %>% group_by(dist_border) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.bord2(dat1, "Stung Treng", hum.m2)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.bord2(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+bordLines_allprovs2 <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+bord_means2 <- bordLines_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+hum.m2.bordLines2 <- ggplot(NULL, aes(x=dist_border, y=pred))+
+                    geom_line(data=bordLines_allprovs[bordLines_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=bord_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Distance to international border (scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+ggsave("Results/Socioeconomics/Plots/dist_border/hum.m2.border.pa0.lines.png",hum.m2.bordLines,
        width=30, height=30, units="cm", dpi=300)
 
 
