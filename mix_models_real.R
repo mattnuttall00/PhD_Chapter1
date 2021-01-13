@@ -9640,15 +9640,16 @@ PAmean.elc <- function(dat=dat1,pa){
   # loop through list of communes and predict for each one, and attach results into dataframe
   for(i in 1:length(communes)){
     newdat <- data.frame(elc = c("1","0"),
-                         dist_border = mean(dat$dist_border[dat$PA==pa])
+                         dist_border = mean(dat$dist_border[dat$PA==pa]),
+                         dist_provCap = mean(dat$dist_provCap[dat$PA==pa]),
                          areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
                          year = mean(dat$year[dat$PA==pa]),
                          Province = dat$Province[dat$Provcomm==communes[i]][1],
                          Provcomm = communes[i])
-    newdat$pred <- as.vector(predict(edu.m1, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    newdat$pred <- as.vector(predict(hum.m2, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
     
-    # pull out values of M6_24_sch and the predictions, and attach commune name and PA status. 
-    df <- newdat[ ,c("M6_24_sch","pred")]
+    # pull out values of elc and the predictions, and attach commune name and PA status. 
+    df <- newdat[ ,c("elc","pred")]
     split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
     comname <- split[1,2]
     df$commune <- comname 
@@ -9658,8 +9659,8 @@ PAmean.elc <- function(dat=dat1,pa){
     
   }
   
-  # get the mean prediction for the province (i.e. mean of all communes for a given value of pop_den)  
-  mean.df <- compred %>% group_by(M6_24_sch) %>% summarise_at(vars(pred),mean) %>% 
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of elc)  
+  mean.df <- compred %>% group_by(elc) %>% summarise_at(vars(pred),mean) %>% 
     mutate(PA = pa)
   
   # get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
@@ -9668,17 +9669,23 @@ PAmean.elc <- function(dat=dat1,pa){
   lnth <- ncol(compred_wide)
   quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
   
-  quants.vec <- data.frame(M6_24_sch = compred_wide$M6_24_sch,
+  quants.vec <- data.frame(elc = compred_wide$elc,
                            Q2.5 = as.numeric(quants[1,]),
                            Q97.5 = as.numeric(quants[2,]))
   
   # join together
-  mean.df <- left_join(mean.df, quants.vec, by="M6_24_sch")
+  mean.df <- left_join(mean.df, quants.vec, by="elc")
   
   return(mean.df)
   
 }
 
+# now run function for both groups
+pa_mean_elc <- PAmean.elc(pa="1")
+
+# run function for communes with no PAs. Remove PP for the noPA group
+nopa_mean <- PAmean.mig(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
+pa_all <- rbind(pa_mean,nopa_mean)
 
 ## Models with multiple sets ####
 
