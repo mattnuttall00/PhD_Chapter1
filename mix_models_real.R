@@ -7480,7 +7480,7 @@ dist_border_newdat <- expand.grid(dist_border = seq(min(dat1$dist_border), max(d
 # predict
 dist_border_newdat$pred <- as.vector(predict(hum.m2, type="response", newdata=dist_border_newdat, re.form=NA))
 
-# plot
+# plot panel grid with elc and PA
 ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
   geom_line(size=1)+
   facet_grid(PA ~ elc, labeller = label_both)+
@@ -7488,6 +7488,8 @@ ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
   xlab("Distance to international border (scaled and centered)")+
   ylab("Predicted forest cover (pixels)")
 # PA and ELC appear to make no differnce to the effect of dist_border.  As distance to border increases, so does predicrted forest cover
+
+
 
 
 ### dist_provCap
@@ -7510,7 +7512,17 @@ ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
   theme(element_blank())+
   xlab("Distance to provincial capital (scaled and centered)")+
   ylab("Predicted forest cover (pixels)")
-# very similar slope - as distance to provCap increases, so does predicted forest cover. There does appear to be slight differences in the shapes.  Hard to see, but I think in communes where the is a PA and NO ELC, predicted forest cover increases more sharply than in communes with PAs AND an ELC.  I think this is also the case in communes where there is no PA - if there is an ELC, predicted forest cover increases less steeply. This is godd because it makes sense!
+# very similar slope - as distance to provCap increases, so does predicted forest cover. There does appear to be slight differences in the shapes.  Hard to see, but I think in communes where there is a PA and NO ELC, predicted forest cover increases more sharply than in communes with PAs AND an ELC.  I think this is also the case in communes where there is no PA - if there is an ELC, predicted forest cover increases less steeply. This is good because it makes sense!
+
+# plot with larger y axis
+ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
+  geom_line(size=1)+
+  facet_grid(PA ~ elc, labeller = label_both)+
+  theme(element_blank())+
+  ylim(0,1000)+
+  xlab("Distance to provincial capital (scaled and centered)")+
+  ylab("Predicted forest cover (pixels)")
+# the differences in the effects all but disappears when a more realistic y-axis limit is used - i.e. the effect, and the differences in effect, are pretty small
 
 
 ### PA + ELC
@@ -8721,6 +8733,448 @@ ggsave("Results/Socioeconomics/Plots/dist_border/hum.m2.border.pa0.lines.png",hu
        width=30, height=30, units="cm", dpi=300)
 
 
+      # dist_provCap effects between provinces ####
+        # PA == 1 ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### dist_provCap when elc=0 and PA=1
+
+# this function spits out a dataframe with a range of dist_provCap values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.provCap1 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_provCap = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_provCap = seq(min(dat$dist_provCap[dat$Province==province]),
+                                       max(dat$dist_provCap[dat$Province==province]), length.out = 100),
+                         dist_border = mean(dat1$dist_border[dat1$Province==province]),
+                         elc = "0",
+                         PA = "1",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_provCap and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_provCap","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of dist_provCap)  
+mean.df <- compred %>% group_by(dist_provCap) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(dist_provCap = compred_wide$dist_provCap,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="dist_provCap")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.provCap1(dat1,"Stung Treng",hum.m2)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.provCap1(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+provCap_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and free axis
+ggplot(provCap_allprovs, aes(x=dist_provCap, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(provCap_allprovs[provCap_allprovs$Province!="Phnom Penh",], aes(x=dist_provCap, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# 
+
+
+
+
+
+### this function spits out a dataframe with a range of dist_provCap values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.provCap1 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_provCap = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_provCap = seq(min(dat$dist_provCap[dat$Province==province]),
+                                       max(dat$dist_provCap[dat$Province==province]), length.out = 100),
+                         dist_border = mean(dat1$dist_border[dat1$Province==province]),
+                         elc = "0",
+                         PA = "1",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_provCap and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_provCap","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of dist_provCap)  
+    mean.df <- compred %>% group_by(dist_provCap) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.provCap1(dat1, "Stung Treng", hum.m2)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.provCap1(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+provCapLines_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+provCap_means <- provCapLines_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+hum.m2.provCapLines <- ggplot(NULL, aes(x=dist_provCap, y=pred))+
+                    geom_line(data=provCapLines_allprovs[provCapLines_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=provCap_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Distance to Provincial Capital (scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+ggsave("Results/Socioeconomics/Plots/dist_provCap/hum.m2.provCap.pa1.lines.png",hum.m2.provCapLines,
+       width=30, height=30, units="cm", dpi=300)
+
+
+
+
+
+        # PA == 0 ####
+
+# in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
+
+
+### dist_provCap when elc=0 and PA=0
+
+# this function spits out a dataframe with a range of dist_provCap values (length=100), the mean prediction for the province, the province name, and the 2.5 and 97.5 quantiles around the mean
+ProvMean.provCap2 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_provCap = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_provCap = seq(min(dat$dist_provCap[dat$Province==province]),
+                                       max(dat$dist_provCap[dat$Province==province]), length.out = 100),
+                         dist_border = mean(dat1$dist_border[dat1$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_provCap and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_provCap","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of dist_provCap)  
+mean.df <- compred %>% group_by(dist_provCap) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(dist_provCap = compred_wide$dist_provCap,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="dist_provCap")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.provCap2(dat1,"Stung Treng",hum.m2)
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.provCap1(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+provCap2_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and free axis
+ggplot(provCap2_allprovs, aes(x=dist_provCap, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
+
+
+# remove PP and no free axis
+ggplot(provCap_allprovs[provCap_allprovs$Province!="Phnom Penh",], aes(x=dist_provCap, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6)
+# 
+
+
+
+
+
+### this function spits out a dataframe with a range of dist_provCap values (length=100), the mean prediction for the province, the province name, and the predictions for all communes within that province
+ProvMeanLine.provCap2 <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_provCap = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_provCap = seq(min(dat$dist_provCap[dat$Province==province]),
+                                       max(dat$dist_provCap[dat$Province==province]), length.out = 100),
+                         dist_border = mean(dat1$dist_border[dat1$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_provCap and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_provCap","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of dist_provCap)  
+    mean.df <- compred %>% group_by(dist_provCap) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+test <- ProvMeanLine.provCap2(dat1, "Stung Treng", hum.m2)
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMeanLine.provCap2(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+provCapLines2_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# extract mean predictions
+provCap2_means <- provCapLines_allprovs %>% filter(commune=="mean")
+
+
+# no PP, free axis, separate dataframes
+hum.m2.provCapLines <- ggplot(NULL, aes(x=dist_provCap, y=pred))+
+                    geom_line(data=provCapLines2_allprovs[provCapLines2_allprovs$province!="Phnom Penh",], 
+                              aes(group=commune),  col="grey", size=0.5)+
+                    geom_line(data=provCap2_means, col="black", size=1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    ylim(0,26000)+
+                    xlab("Distance to Provincial Capital (scaled)")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+
+ggsave("Results/Socioeconomics/Plots/dist_provCap/hum.m2.provCap.pa1.lines.png",hum.m2.provCapLines,
+       width=30, height=30, units="cm", dpi=300)
+
+
+
+      # elc effects between provinces ####
+
+
+
+
 ## Models with multiple sets ####
 
 # Above I have only modelled variables within a single set together. There is argument however that variables from different sets may inflence each other. Therefore I think it is worth exploring models that have pre-selected (i.e. selected because of a priori hypotheses) variables from different sets together.
@@ -9102,3 +9556,5 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 # one thing to ask Jeoren/Nils about is when predicting for provincial means and predicting for PA/no-PA, I have been using a range of the predictor (e.g. pop_den) that is found within that province. Ie in Stung Treng I have only used the range of pop_den values that actually exists in Stunf Treng. I guess it would be interesting to see what the predictions say when you are looking at plausible increases/decreases in the predictor beyond the range of that province.  I know you're not really supposed to predict beyond the range of the data, but what if you were only predicting within the national range?
 
 # I think it is worth plotting the provincial mean predictions differently. I shouuld try to tweak the function so that the output is not just the mean and the two CIs, but output the mean plus ALL other predictions. Then plot them with the mean as a big fat line and the others a thin faded lines. This might show the within-province variation better. 
+
+# make an excel spreadsheet that lists all the provinces that have large variation between communes for the different predictions (just use the plots). This will make it easier to see if there are consistencies in which provinces a) have larger effects and b) have the most within-province variation. 
