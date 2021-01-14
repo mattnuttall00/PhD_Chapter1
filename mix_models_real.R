@@ -9626,7 +9626,7 @@ hist(diff_df$diff)
 
 # I know I have looked at PA above, but I want to double check using a different approach. I will use the approach I used in the sections above, an split the communes in to the two groups (PA/no-PA)
 
-PAmean.elc <- function(dat=dat1,pa){
+PA1mean.elc <- function(dat=dat1,pa){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$PA==pa])
@@ -9640,6 +9640,7 @@ PAmean.elc <- function(dat=dat1,pa){
   # loop through list of communes and predict for each one, and attach results into dataframe
   for(i in 1:length(communes)){
     newdat <- data.frame(elc = c("1","0"),
+                         PA = "1",
                          dist_border = mean(dat$dist_border[dat$PA==pa]),
                          dist_provCap = mean(dat$dist_provCap[dat$PA==pa]),
                          areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
@@ -9678,14 +9679,189 @@ PAmean.elc <- function(dat=dat1,pa){
   
   return(mean.df)
   
-}
+} # PA==1 in newdata
+
+PA0mean.elc <- function(dat=dat1,pa){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$PA==pa])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(elc = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        PA = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(elc = c("1","0"),
+                         PA = "0",
+                         dist_border = mean(dat$dist_border[dat$PA==pa]),
+                         dist_provCap = mean(dat$dist_provCap[dat$PA==pa]),
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$PA==pa]),
+                         Province = dat$Province[dat$Provcomm==communes[i]][1],
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(hum.m2, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of elc and the predictions, and attach commune name and PA status. 
+    df <- newdat[ ,c("elc","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    df$commune <- comname 
+    df$PA <- pa
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of elc)  
+  mean.df <- compred %>% group_by(elc) %>% summarise_at(vars(pred),mean) %>% 
+    mutate(PA = pa)
+  
+  # get the 2.5 and 97.5 quantiles. I have to create unique identifier from the row names first, because there are duplicate rows in the data so pivot_wider gets grumpy and spits out something weird
+  compred_wide <- compred %>% 
+                  pivot_wider(., names_from = commune, values_from = pred, values_fn = list(pred=mean))  
+  lnth <- ncol(compred_wide)
+  quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+  
+  quants.vec <- data.frame(elc = compred_wide$elc,
+                           Q2.5 = as.numeric(quants[1,]),
+                           Q97.5 = as.numeric(quants[2,]))
+  
+  # join together
+  mean.df <- left_join(mean.df, quants.vec, by="elc")
+  
+  return(mean.df)
+  
+} # PA==0 in newdata
 
 # now run function for both groups
-pa_mean_elc <- PAmean.elc(pa="1")
+pa_mean_elc <- PA1mean.elc(pa="1")
 
 # run function for communes with no PAs. Remove PP for the noPA group
-nopa_mean <- PAmean.mig(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
-pa_all <- rbind(pa_mean,nopa_mean)
+nopa_mean_elc <- PA0mean.elc(dat=dat1[dat1$Province!="Phnom Penh",], pa="0")
+pa_all_elc <- rbind(pa_mean_elc,nopa_mean_elc)
+
+# plot
+ggplot(pa_all_elc, aes(x=PA, y=pred, group=elc, color=elc))+
+  geom_point(size=3, position = position_dodge(width=0.3))+
+  geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), width=0.2, position = position_dodge(width=0.3))+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"))
+# There is no difference in effect of ELC between communes with PA and communes without
+
+
+#
+      # PA effects between provinces ####
+
+# this function outputs a df with two mean predictions for each province, PA=1 and PA=0. It also outputs the 95% quantile intervals which are taken from the commune-level predictions 
+ProvMean.PA <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(PA = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(PA = c("1","0"),
+                         dist_border = mean(dat$dist_border[dat$Province==province]),
+                         dist_provCap = mean(dat$dist_provCap[dat$Province==province]),
+                         elc = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of PA and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("PA","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+  }
+  
+# get the mean prediction for the province (i.e. mean of all communes for a given value of PA)  
+mean.df <- compred %>% group_by(PA) %>% summarise_at(vars(pred),mean) %>% 
+            mutate(Province = province)
+
+# get the 2.5 and 97.5 quantiles
+compred_wide <- pivot_wider(compred, names_from = commune, values_from = pred) 
+lnth <- ncol(compred_wide)
+quants <- data.frame(apply(compred_wide[ ,3:lnth], 1, quantile, probs=c(0.025,0.975)))
+
+quants.vec <- data.frame(PA = compred_wide$PA,
+                         Q2.5 = as.numeric(quants[1,]),
+                         Q97.5 = as.numeric(quants[2,]))
+
+# join together
+mean.df <- left_join(mean.df, quants.vec, by="PA")
+
+return(mean.df)
+  
+}
+ 
+test <- ProvMean.PA(dat1,"Stung Treng",hum.m2)
+
+
+
+## now use the function to get the mean effects for all provinces
+
+# create list of province names
+provs <- as.character(unique(dat1$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- ProvMean.PA(province=provs[i], model=hum.m2)
+  output.list[[i]] <- df
+}
+
+
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list, globalenv())
+
+# rbind
+PA_allprovs <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+# plot with PP and free axis
+hum.m2.PA.quants <- ggplot(PA_allprovs, aes(x=PA, y=pred, group=PA))+
+                    geom_point(size=2)+
+                    geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), width=0.1)+
+                    theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                    facet_wrap(~Province, nrow=6)+
+                    ylim(0,26000)+
+                    xlab("Presence of Protected Areas")+
+                    ylab("Predicted number of forest pixels")+
+                    theme(axis.title = element_text(size=20))+
+                    theme(axis.text = element_text(size=13))
+# PA doesn't really predict any difference in forest cover within provinces
+
+
+
+
+
 
 ## Models with multiple sets ####
 
