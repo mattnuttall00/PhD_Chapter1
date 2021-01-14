@@ -10407,7 +10407,7 @@ ggplot(PA_newdat, aes(x=PA, y=pred))+
 ### commune-specific predictions and provincial means
 
 ## output dataframe with province mean and 95% quantiles
-ProvMean.popden <- function(dat=dat1,province, model){
+ProvMean.popden  <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10464,7 +10464,7 @@ mean.df <- left_join(mean.df, quants.vec, by="pop_den")
 return(mean.df)
   
 }
-ProvMean.elev <- function(dat=dat1,province, model){
+ProvMean.elev    <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10521,7 +10521,7 @@ mean.df <- left_join(mean.df, quants.vec, by="mean_elev")
 return(mean.df)
   
 }
-ProvMean.border <- function(dat=dat1,province, model){
+ProvMean.border  <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10635,7 +10635,7 @@ mean.df <- left_join(mean.df, quants.vec, by="dist_provCap")
 return(mean.df)
   
 }
-ProvMean.elc <- function(dat=dat1,province, model){
+ProvMean.elc     <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10691,7 +10691,7 @@ mean.df <- left_join(mean.df, quants.vec, by="elc")
 return(mean.df)
   
 }
-ProvMean.PA <- function(dat=dat1,province, model){
+ProvMean.PA      <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10749,7 +10749,7 @@ return(mean.df)
 }
 
 ## output dataframe with province mean and all commune predictions
-ProvMeanLine.popden <- function(dat=dat1,province, model){
+ProvMeanLine.popden  <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10797,7 +10797,7 @@ ProvMeanLine.popden <- function(dat=dat1,province, model){
     
     return(compred)
 }
-ProvMeanLine.elev <- function(dat=dat1,province, model){
+ProvMeanLine.elev    <- function(dat=dat1,province, model){
   
   # extract list of communes 
   communes <- unique(dat$Provcomm[dat$Province==province])
@@ -10845,8 +10845,149 @@ ProvMeanLine.elev <- function(dat=dat1,province, model){
     
     return(compred)
 }
+ProvMeanLine.border  <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_border = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_border = seq(min(dat$dist_border[dat$Province==province]),
+                                       max(dat$dist_border[dat$Province==province]), length.out = 100), # range in province
+                         pop_den = mean(dat$pop_den[dat$Province==province]),
+                         mean_elev = mean(dat$mean_elev[dat$Province==province]),
+                         dist_provCap = mean(dat$dist_provCap[dat$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_border and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_border","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of dist_border)  
+    mean.df <- compred %>% group_by(dist_border) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+ProvMeanLine.provCap <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(dist_provCap = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(dist_provCap = seq(min(dat$dist_provCap[dat$Province==province]),
+                                       max(dat$dist_provCap[dat$Province==province]), length.out = 100), # range in province
+                         pop_den = mean(dat$pop_den[dat$Province==province]),
+                         mean_elev = mean(dat$mean_elev[dat$Province==province]),
+                         dist_border = mean(dat$dist_border[dat$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of dist_provCap and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("dist_provCap","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of dist_provCap)  
+    mean.df <- compred %>% group_by(dist_provCap) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+# I don't need functions for elc and PA because the above qunatile functions output are better for plotting (use the quantiles to plot error bars, rather than lots of faded dots)
 
 
+
+### Function to run the above quantile functions for all provinces
+
+RunFun <- function(dat,fun,model){
+  
+# create list of province names
+provs <- as.character(unique(dat$Province))
+
+# initialise list
+output.list <- list()
+
+# loop through list of provinces, applying the function to each one
+for(i in 1:length(provs)){
+  
+  df <- fun(province=provs[i], model=model)
+  output.list[[i]] <- df
+}
+
+# name list elements
+provname <- sub(" ","_", provs)
+names(output.list) <- provname
+
+# extract list elements
+list2env(output.list)
+
+# rbind
+output.df <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+                         Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+                         Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+                         Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+
+return(output.df)
+
+}
+
+test <- RunFun(dat1, ProvMean.popden, sat9c)
+
+
+
+
+
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
