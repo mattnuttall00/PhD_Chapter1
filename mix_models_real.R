@@ -10206,12 +10206,67 @@ summary(sat9c)
 
 
 #
-      # Predictions ####
+    # Diagnostics sat9c ####
+
+# copy data
+sat9c.diag.dat <- dat1
+sat9c.diag.dat$Provcomm <- as.factor(sat9c.diag.dat$Provcomm)
+
+### Make "fitted" predictions, i.e. fully conditional:
+sat9c.diag.dat$pred <- predict(sat9c, type = "response")
+
+### Plot predicted against observed:
+plot(sat9c.diag.dat$ForPix, sat9c.diag.dat$pred, ylab = "Predicted ForPix", xlab = "Observed ForPix")
+### Nice!
+
+### Extract model residuals:
+sat9c.diag.dat$resid <- resid(sat9c)
+
+### Plot residuals against fitted values:
+plot(sat9c.diag.dat$pred, sat9c.diag.dat$resid)
+# lots of heterogeneity at lower predicted values of ForPix
+
+
+
+
+print(VarCorr(sat9c),comp="Variance") 
+vars <- data.frame(term = c("Commune","year/com", "Province", "year/Prov"),
+                   variance = c(10.4,0.0046,6.7,0.00048))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
+# Commune is making up the majority of the variance (~60%), followed by Province (~39%), with year making up the negligible rest. 
+
+# marginal and conditional r2
+r.squaredGLMM(popdem.m2)
+# For m1 marginal r2 (fixed effects) is relatively high 0.65, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance. For m2 the marginal r2 (fixed effects) is even higher at 0.78.  I think this is further evidence that prop_ind wasn't doing very much. 
+
+
+      # global predictions ####
 
 # sat9c is the model I will be using to predict all partial effects
 
+# I will start by running global predictions (i.e. for the whole country).  Here I am expecting relatively small effects to be shown.  I then expect to see a much wider range of effects when I predict at the province level
+
+        # pop_den ####
 
 
+# create new data. I will set mean_elev, dist_border, dist_provCap at their national means, and I will set elc and PA to 0.
+pop_den_newdat <- data.frame(pop_den = seq(min(dat1$pop_den), max(dat1$pop_den), length.out = 200),
+                             mean_elev = mean(dat1$mean_elev),
+                             dist_border = mean(dat1$dist_border),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = mean(dat1$areaKM))
+pop_den_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=pop_den_newdat, re.form=NA))
+
+# plot
+ggplot(pop_den_newdat, aes(x=pop_den, y=pred))+
+  geom_line()+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"))
+
+
+#
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
