@@ -10236,8 +10236,10 @@ vars$relative.contrib <- vars$variance/sum(vars$variance)
 # Commune is making up the majority of the variance (~60%), followed by Province (~39%), with year making up the negligible rest. 
 
 # marginal and conditional r2
-r.squaredGLMM(popdem.m2)
-# For m1 marginal r2 (fixed effects) is relatively high 0.65, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance. For m2 the marginal r2 (fixed effects) is even higher at 0.78.  I think this is further evidence that prop_ind wasn't doing very much. 
+r.squaredGLMM(sat9c)
+# Marginal r2 (fixed effects) is relatively high 0.78, and the conditional (fixed + random) is 1.  This means that the fixed effects are actually accounting for most of the variance. 
+
+plot(sat9c)
 
 
       # global predictions ####
@@ -10245,6 +10247,7 @@ r.squaredGLMM(popdem.m2)
 # sat9c is the model I will be using to predict all partial effects
 
 # I will start by running global predictions (i.e. for the whole country).  Here I am expecting relatively small effects to be shown.  I then expect to see a much wider range of effects when I predict at the province level
+
 
         # pop_den ####
 
@@ -10261,12 +10264,41 @@ pop_den_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=pop_den
 
 # plot
 ggplot(pop_den_newdat, aes(x=pop_den, y=pred))+
-  geom_line()+
+  geom_line(size=1)+
+  xlim(-0.18,5)+
+  #ylim(0,26000)+
   theme(panel.background = element_blank(),
         axis.line = element_line(colour = "grey20"))
 
 
 #
+        # mean_elev ####
+
+# create new data. I will set pop_den, dist_border, dist_provCap at their national means, and I will set elc and PA to 0.
+mean_elev_newdat <- data.frame(mean_elev = seq(min(dat1$mean_elev), max(dat1$mean_elev), length.out = 200),
+                             pop_den = mean(dat1$pop_den),
+                             dist_border = mean(dat1$dist_border),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = mean(dat1$areaKM))
+mean_elev_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=mean_elev_newdat, re.form=NA))
+
+# plot
+ggplot(mean_elev_newdat, aes(x=mean_elev, y=pred))+
+  geom_line(size=1)+
+  #xlim(-0.18,5)+
+  ylim(0,26000)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2")+
+  xlab("Elevation (scaled)")
+
+## Need to check with Jeroen about what the pred actually is.  Is it predicted forest pixels per unit area?  Becuase if so, these estimates don't make sense - you can't have 10K pixels per km2. In theory you can only have 11.11 pixels per km2 becuase each pixel is 0.09km2
+
+
 ### simple test ####
 
 # becasue there is so little forest cover change over time, we want a simple test to look at the relationship between whether forest cover has changed at all over the years, and the mean of each predictor
@@ -10354,3 +10386,5 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 # I think it is worth plotting the provincial mean predictions differently. I shouuld try to tweak the function so that the output is not just the mean and the two CIs, but output the mean plus ALL other predictions. Then plot them with the mean as a big fat line and the others a thin faded lines. This might show the within-province variation better. 
 
 # make an excel spreadsheet that lists all the provinces that have large variation between communes for the different predictions (just use the plots). This will make it easier to see if there are consistencies in which provinces a) have larger effects and b) have the most within-province variation. 
+
+# need to check with Jeroen about what the global predictions are actually predicting - i.e. what is the output, is it number of forest pixels, or number of pixels per unit area (km2)? If it is pixels per unit area, I need to go back and check all the global predictions, because I will have written off some becuase the pred values were really low, but actually you can only get a maximum of 11.11 pixels into a single km2, so perhaps they weren't as bad as I thought. 
