@@ -10143,6 +10143,13 @@ anova(sat8,sat9)
 # simpler model (sat9) is better
 
 
+# try remove elc and PA and see if convergence warning goes away
+sat10 <- glmer(ForPix ~ pop_den + 
+                mean_elev + dist_border+dist_provCap+PA+
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+# it doesn't
+
 
 # compare with AICc
 aic.comp <- data.frame(model = c("sat1","sat2","sat3","sat4","sat5","sat6","sat7","sat8","sat9"),
@@ -10156,7 +10163,53 @@ aic.comp$AIC <- c(AIC(sat1),AIC(sat2),AIC(sat3),AIC(sat4),AIC(sat5),AIC(sat6),AI
 aic.comp$dAIC <- aic.comp$AIC - min(aic.comp$AIC)
 aic.comp <- arrange(aic.comp, dAIC)
 
-# AIC suggests that models with dist_sch an pax_migt_out have some support. 
+# AIC suggests that models with dist_sch an pax_migt_out have some support. But based on the effect sizes and some quick plots, both of those variables are not important.
+
+# therefore sat9 is the best and final model.  This is supported by all of the individual model sets I ran above - the only variables that have any effect are in the model sat9 (as well as elc and PA for conceptual reasons).
+
+# there is a convergence warning for sat9, which I will tr and deal with below
+
+# run sat 9 with all available optimisers following the guidance in help("convergence")
+sat9.all <- allFit(sat9)
+ss <- summary(sat9.all)
+ss$fixef
+# most of the parameter estimates are very similar. The optimizer "optimx.L-BFGS-B" seems to be different to the rest 
+ss$llik
+# log likelihoods are all very similar, which is good. 
+ss$sdcor
+# not sure what I'm looking for here
+ss$which.OK
+# so apparently they all worked. Below I will try and run them all and see if the warning goes away
+
+# use default bobyqa but with more iterations
+sat9a <- glmer(ForPix ~ pop_den + mean_elev + dist_border + dist_provCap + elc + PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+                data=dat1, family="poisson", 
+                control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+# still has warning
+
+# Nelder-Mead
+sat9b <- glmer(ForPix ~ pop_den + mean_elev + dist_border + dist_provCap + elc + PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+                data=dat1, family="poisson", 
+                control=glmerControl(optimizer="Nelder_Mead",  optCtrl=list(maxfun=100000)))
+# still has warning
+
+
+# nlminbwrap
+sat9c <- glmer(ForPix ~ pop_den + mean_elev + dist_border + dist_provCap + elc + PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+                data=dat1, family="poisson", 
+                control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+summary(sat9c)
+# No warning!!
+
+
+#
+      # Predictions ####
+
+# sat9c is the model I will be using to predict all partial effects
+
 
 
 ### simple test ####
