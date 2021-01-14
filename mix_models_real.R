@@ -10293,11 +10293,113 @@ ggplot(mean_elev_newdat, aes(x=mean_elev, y=pred))+
         axis.line = element_line(colour = "grey20"),
         axis.title = element_text(size=17),
         axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2")+
+  ylab("Predicted forest pixels per unit area (km2)")+
   xlab("Elevation (scaled)")
 
 ## Need to check with Jeroen about what the pred actually is.  Is it predicted forest pixels per unit area?  Becuase if so, these estimates don't make sense - you can't have 10K pixels per km2. In theory you can only have 11.11 pixels per km2 becuase each pixel is 0.09km2
 
+
+        # dist_border ####
+
+
+# create new data. I will set pop_den, mean_elev, dist_provCap at their national means, and I will set elc and PA to 0.
+dist_border_newdat <- data.frame(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), length.out = 200),
+                             pop_den = mean(dat1$pop_den),
+                             mean_elev = mean(dat1$mean_elev),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = mean(dat1$areaKM))
+dist_border_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=dist_border_newdat, re.form=NA))
+
+# plot
+ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
+  geom_line(size=1)+
+  #xlim(-0.18,5)+
+  #ylim(0,26000)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2)")+
+  xlab("Distance to international border (scaled)")
+
+
+
+        # dist_provCap ####
+
+# create new data. I will set pop_den, mean_elev, dist_border at their national means, and I will set elc and PA to 0.
+dist_provCap_newdat <- data.frame(dist_provCap = seq(min(dat1$dist_provCap), max(dat1$dist_provCap), length.out = 200),
+                             pop_den = mean(dat1$pop_den),
+                             mean_elev = mean(dat1$mean_elev),
+                             dist_border = mean(dat1$dist_border),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = mean(dat1$areaKM))
+dist_provCap_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=dist_provCap_newdat, re.form=NA))
+
+# plot
+ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
+  geom_line(size=1)+
+  #xlim(-0.18,5)+
+  #ylim(0,26000)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2)")+
+  xlab("Distance to provincial capital (scaled)")
+
+
+
+        # elc ####
+
+# create new data. I will set pop_den, mean_elev, dist_border, dist_proCap at their national means, and I will set PA to 0.
+elc_newdat <- data.frame(elc = c("1","0"),
+                        pop_den = mean(dat1$pop_den),
+                        mean_elev = mean(dat1$mean_elev),
+                        dist_border = mean(dat1$dist_border),
+                        dist_provCap = mean(dat1$dist_provCap),
+                        PA = "0",
+                        areaKM = mean(dat1$areaKM))
+elc_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=elc_newdat, re.form=NA))
+
+# plot
+ggplot(elc_newdat, aes(x=elc, y=pred))+
+  geom_point(size=3)+
+  #xlim(-0.18,5)+
+  ylim(0,15)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2)")+
+  xlab("Presence of economic land concessions")
+
+
+        # PA ####
+
+# create new data. I will set pop_den, mean_elev, dist_border, dist_proCap at their national means, and I will set elc to 0.
+PA_newdat <- data.frame(PA = c("1","0"),
+                        pop_den = mean(dat1$pop_den),
+                        mean_elev = mean(dat1$mean_elev),
+                        dist_border = mean(dat1$dist_border),
+                        dist_provCap = mean(dat1$dist_provCap),
+                        elc = "0",
+                        areaKM = mean(dat1$areaKM))
+PA_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=PA_newdat, re.form=NA))
+
+# plot
+ggplot(PA_newdat, aes(x=PA, y=pred))+
+  geom_point(size=3)+
+  #xlim(-0.18,5)+
+  ylim(0,15)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2)")+
+  xlab("Presence of protected areas")
 
 ### simple test ####
 
@@ -10388,3 +10490,5 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 # make an excel spreadsheet that lists all the provinces that have large variation between communes for the different predictions (just use the plots). This will make it easier to see if there are consistencies in which provinces a) have larger effects and b) have the most within-province variation. 
 
 # need to check with Jeroen about what the global predictions are actually predicting - i.e. what is the output, is it number of forest pixels, or number of pixels per unit area (km2)? If it is pixels per unit area, I need to go back and check all the global predictions, because I will have written off some becuase the pred values were really low, but actually you can only get a maximum of 11.11 pixels into a single km2, so perhaps they weren't as bad as I thought. 
+
+# ask Jeroen what he thinks about keeing elc and PA in the model when they don't have any effect but conceptually/theoretically they should be accounted for
