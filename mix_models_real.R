@@ -10949,6 +10949,7 @@ ProvMeanLine.provCap <- function(dat=dat1,province, model){
 
 RunFun <- function(dat,fun,model){
   
+  
 # create list of province names
 provs <- as.character(unique(dat$Province))
 
@@ -10967,7 +10968,8 @@ provname <- sub(" ","_", provs)
 names(output.list) <- provname
 
 # extract list elements
-list2env(output.list)
+list2env(output.list, envir = environment())
+
 
 # rbind
 output.df <- rbind(Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
