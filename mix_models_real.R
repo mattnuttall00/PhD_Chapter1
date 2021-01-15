@@ -10945,8 +10945,7 @@ ProvMeanLine.provCap <- function(dat=dat1,province, model){
 
 
 
-### Function to run the above quantile functions for all provinces
-
+### Function to run the above functions (quantiles and all communes) for all provinces
 RunFun <- function(dat,fun,model){
   
   
@@ -10981,8 +10980,16 @@ return(output.df)
 
 }
 
-test <- RunFun(dat1, ProvMean.popden, sat9c)
 
+### Plotting functions
+
+# for quantiles with error ribbons
+
+ggplot(popden_allprovs, aes(x=pop_den, y=pred, group=Province))+
+  geom_line()+
+  geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  facet_wrap(~Province, nrow=6, scales = "free")
 
 
 
