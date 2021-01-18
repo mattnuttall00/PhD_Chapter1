@@ -10944,7 +10944,6 @@ ProvMeanLine.provCap <- function(dat=dat1,province, model){
 # I don't need functions for elc and PA because the above qunatile functions output are better for plotting (use the quantiles to plot error bars, rather than lots of faded dots)
 
 
-
 ### Function to run the above functions (quantiles and all communes) for all provinces
 RunFun <- function(dat,fun,model){
   
@@ -10981,17 +10980,94 @@ return(output.df)
 }
 
 
+
 ### Plotting functions
 
-# for quantiles with error ribbons
-
-ggplot(popden_allprovs, aes(x=pop_den, y=pred, group=Province))+
-  geom_line()+
+## for quantiles with error ribbons. Scales can be either "free" or "fixed"
+plotFunQuants <- function(dat,x,group,scales,xlab,ylab){
+  
+ggplot(dat, aes(x=x, y=pred, group=group))+
+  geom_line(size=1)+
   geom_ribbon(aes(ymin=Q2.5, ymax=Q97.5),fill="grey60", alpha=0.3)+
-  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
-  facet_wrap(~Province, nrow=6, scales = "free")
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.text = element_text(size=12),
+        axis.title = element_text(size=15))+
+  facet_wrap(~Province, nrow=6, scales = scales)+
+  xlab(xlab)+
+  ylab(ylab)
+}
 
 
+## For mean line with faded lines for each communes - NEITHER FUNCTION BELOW IS WORKING
+plotFunLines <- function(datmeans,datlines,x,group,scales,xlab,ylab){
+  
+ggplot(NULL, aes(x=x, y=pred))+
+  geom_line(data=datlines[datlines$province!="Phnom Penh",], aes(group=group),  col="grey", size=0.5)+
+  geom_line(data=datmeans, col="black", size=1)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=13))+
+  facet_wrap(~province, nrow=6, scales = scales)+
+  #ylim(ylim)+
+  xlab(xlab)+
+  ylab(ylab)
+    
+}
+plotFunLines <- function(dat,x,group,scales,xlab,ylab){
+  
+ggplot(NULL)+
+  geom_line(data=dat[dat$commune!="mean",], aes(x=x, y=pred, group=group), col="grey", size=0.5)+
+  geom_line(data=dat[dat$commune=="mean",], aes(x=x, y=pred, group=group), col="black", size=1)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=13))+
+  facet_wrap(~province, nrow=6, scales = scales)+
+  #ylim(ylim)+
+  xlab(xlab)+
+  ylab(ylab)
+    
+}
+# Can't get these to work so will just plot manually
+
+pop_den_plot <- plotFunQuants(pop_den_quants, pop_den_quants$pop_den, pop_den_quants$Province, "free",
+                              "Population density (scaled)","Predicted forest cover (pixels)")
+
+
+
+
+
+ggplot(pop_den_lines, aes(x=pop_den, y=pred, group=commune))+
+  geom_line(data=pop_den_lines[pop_den_lines$commune!="mean",],  col="grey", size=0.5)+
+  geom_line(data=pop_den_lines[pop_den_lines$commune=="mean",], col="black", size=1)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=13))+
+  facet_wrap(~province, nrow=6, scales = "free")
+  #ylim(ylim)+
+  #xlab(xlab)+
+  #ylab(ylab)
+
+
+#
+        # Produce predictions ####
+
+# Below I will produce the predictions and save them all as .csv's so that I don't need to repeatedly run them
+
+## population density 
+pop_den_quants <- RunFun(dat1,ProvMean.popden,sat9c)
+pop_den_lines <- RunFun(dat1, ProvMeanLine.popden, sat9c)
+write.csv(pop_den_quants,"Results/Socioeconomics/sat9c_predictions/pop_den_quants.csv")
+write.csv(pop_den_lines,"Results/Socioeconomics/sat9c_predictions/pop_den_lines.csv")
+
+## mean elevation
+mean_elev_quants <- RunFun(dat1, ProvMean.elev, sat9c)
+mean_elev_lines <- RunFun(dat1, ProvMeanLine.elev, sat9c)
+write.csv(mean_elev_quants,"Results/Socioeconomics/sat9c_predictions/mean_elev_quants.csv")
+write.csv(mean_elev_lines,"Results/Socioeconomics/sat9c_predictions/mean_elev_lines.csv")
 
 
 
