@@ -10402,7 +10402,7 @@ ggplot(PA_newdat, aes(x=PA, y=pred))+
   xlab("Presence of protected areas")
 
       # Province-level predictions ####
-          ### Functions ####
+        # Functions ####
 
 ### commune-specific predictions and provincial means
 
@@ -10944,7 +10944,7 @@ ProvMeanLine.provCap <- function(dat=dat1,province, model){
 # I don't need functions for elc and PA because the above qunatile functions output are better for plotting (use the quantiles to plot error bars, rather than lots of faded dots)
 
 
-### Function to run the above functions (quantiles and all communes) for all provinces
+### Function to run the above functions (quantiles and lines) for all provinces
 RunFun <- function(dat,fun,model){
   
   
@@ -10983,8 +10983,8 @@ return(output.df)
 
 ### Plotting functions
 
-## for quantiles with error ribbons. Scales can be either "free" or "fixed"
-plotFunQuants <- function(dat,x,group,scales,xlab,ylab){
+## for line plots with quantile error ribbons. Scales can be either "free" or "fixed"
+plotFunQuants <- function(dat,x,group,scales,xlab){
   
 ggplot(dat, aes(x=x, y=pred, group=group))+
   geom_line(size=1)+
@@ -10995,9 +10995,24 @@ ggplot(dat, aes(x=x, y=pred, group=group))+
         axis.title = element_text(size=15))+
   facet_wrap(~Province, nrow=6, scales = scales)+
   xlab(xlab)+
-  ylab(ylab)
+  ylab("Predicted forest cover (pixels)")
 }
 
+## for point plots with quantile error bars. Scales can be either "free" or "fixed"
+plotFunQuants2 <- function(dat,x,group,scales,xlab){
+
+  ggplot(dat, aes(x=x, y=pred, group=group))+
+        geom_point(size=2)+
+        geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), width=0.1)+
+        theme(panel.background = element_blank(),
+              axis.line = element_line(colour = "grey20"),
+              axis.title = element_text(size=20),
+              axis.text = element_text(size=13))+
+        facet_wrap(~Province, nrow=6, scales=scales)+
+        xlab(xlab)+
+        ylab("Predicted number of forest pixels")
+                    
+}
 
 ## For mean line with faded lines for each communes - NEITHER FUNCTION BELOW IS WORKING
 plotFunLines <- function(datmeans,datlines,x,group,scales,xlab,ylab){
@@ -11053,22 +11068,124 @@ ggplot(pop_den_lines, aes(x=pop_den, y=pred, group=commune))+
 
 
 #
-        # Produce predictions ####
+        # Predictions ####
 
 # Below I will produce the predictions and save them all as .csv's so that I don't need to repeatedly run them
 
 ## population density 
 pop_den_quants <- RunFun(dat1,ProvMean.popden,sat9c)
-pop_den_lines <- RunFun(dat1, ProvMeanLine.popden, sat9c)
-write.csv(pop_den_quants,"Results/Socioeconomics/sat9c_predictions/pop_den_quants.csv")
-write.csv(pop_den_lines,"Results/Socioeconomics/sat9c_predictions/pop_den_lines.csv")
+pop_den_lines  <- RunFun(dat1, ProvMeanLine.popden, sat9c)
+write.csv(pop_den_quants,"Results/Socioeconomics/sat9c_predictions/Province/pop_den_quants.csv")
+write.csv(pop_den_lines,"Results/Socioeconomics/sat9c_predictions/Province/pop_den_lines.csv")
 
 ## mean elevation
 mean_elev_quants <- RunFun(dat1, ProvMean.elev, sat9c)
-mean_elev_lines <- RunFun(dat1, ProvMeanLine.elev, sat9c)
-write.csv(mean_elev_quants,"Results/Socioeconomics/sat9c_predictions/mean_elev_quants.csv")
-write.csv(mean_elev_lines,"Results/Socioeconomics/sat9c_predictions/mean_elev_lines.csv")
+mean_elev_lines  <- RunFun(dat1, ProvMeanLine.elev, sat9c)
+write.csv(mean_elev_quants,"Results/Socioeconomics/sat9c_predictions/Province/mean_elev_quants.csv")
+write.csv(mean_elev_lines,"Results/Socioeconomics/sat9c_predictions/Province/mean_elev_lines.csv")
 
+## distance to border
+dist_border_quants <- RunFun(dat1, ProvMean.border, sat9c)
+dist_border_lines  <- RunFun(dat1, ProvMeanLine.border, sat9c)
+write.csv(dist_border_quants,"Results/Socioeconomics/sat9c_predictions/Province/dist_border_quants.csv")
+write.csv(dist_border_lines,"Results/Socioeconomics/sat9c_predictions/Province/dist_border_lines.csv")
+
+## distance to provincial capital
+dist_provCap_quants <- RunFun(dat1, ProvMean.provCap, sat9c)
+dist_provCap_lines  <- RunFun(dat1, ProvMeanLine.provCap, sat9c)
+write.csv(dist_provCap_quants,"Results/Socioeconomics/sat9c_predictions/Province/dist_provCap_quants.csv")
+write.csv(dist_provCap_lines,"Results/Socioeconomics/sat9c_predictions/Province/dist_provCap_lines.csv")
+
+## ELC
+elc_quants <- RunFun(dat1, ProvMean.elc, sat9c)
+write.csv(elc_quants,"Results/Socioeconomics/sat9c_predictions/Province/elc_quants.csv")
+
+## PA
+PA_quants <- RunFun(dat1, ProvMean.PA, sat9c)
+write.csv(PA_quants,"Results/Socioeconomics/sat9c_predictions/Province/PA_quants.csv")
+
+
+
+
+#
+        # Plots ####
+
+### Load dataframes
+pop_den_quants      <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/pop_den_quants.csv")
+pop_den_lines       <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/pop_den_lines.csv")
+mean_elev_quants    <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/mean_elev_quants.csv")
+mean_elev_lines     <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/mean_elev_lines.csv")
+dist_border_quants  <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/dist_border_quants.csv")
+dist_border_lines   <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/dist_border_lines.csv")
+dist_provCap_quants <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/dist_provCap_quants.csv")
+dist_provCap_lines  <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/dist_provCap_lines.csv")
+elc_quants          <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/elc_quants.csv")
+elc_quants$elc      <- as.factor(elc_quants$elc) 
+PA_quants           <- read.csv("Results/Socioeconomics/sat9c_predictions/Province/PA_quants.csv")
+PA_quants$PA        <- as.factor(PA_quants$PA)
+
+### Mean and quantile plots 
+pop_den_quants_p      <- plotFunQuants(pop_den_quants, pop_den_quants$pop_den, "Province", "free",
+                                  "Population density (scaled)")
+mean_elev_quants_p    <- plotFunQuants(mean_elev_quants, mean_elev_quants$mean_elev, "Province", "free",
+                                    "Mean elevation (scaled)")
+dist_border_quants_p  <- plotFunQuants(dist_border_quants,dist_border_quants$dist_border,"Province","free",
+                                      "Distance to international border (scaled)")
+dist_provCap_quants_p <- plotFunQuants(dist_provCap_quants, dist_provCap_quants$dist_provCap, "Province", "free",
+                                      "Distance to international border (scaled)")
+elc_quants_p          <- plotFunQuants2(elc_quants, elc_quants$elc, "Province", "free",
+                                      "Presence of economic land concessions")
+PA_quants_p           <- plotFunQuants2(PA_quants, PA_quants$PA, "Province", "free",
+                                      "Presence of protected areas")
+
+### mean and commune line plots
+pop_den_lines_p <- ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
+                    geom_line(data=pop_den_lines[pop_den_lines$commune!="mean",],col="grey", size=0.5)+
+                    geom_line(data=pop_den_lines[pop_den_lines$commune=="mean",],col="black",size=1)+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=13))+
+                    facet_wrap(~province, nrow=6, scales = "free")+
+                    #ylim(0,26000)+
+                    xlab("Population density (Centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")
+
+mean_elev_lines_p <- ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
+                      geom_line(data=mean_elev_lines[mean_elev_lines$commune!="mean",],col="grey", size=0.5)+
+                      geom_line(data=mean_elev_lines[mean_elev_lines$commune=="mean",],col="black",size=1)+
+                      theme(panel.background = element_blank(),
+                            axis.line = element_line(colour = "grey20"),
+                            axis.title = element_text(size=17),
+                            axis.text = element_text(size=13))+
+                      facet_wrap(~province, nrow=6, scales = "free")+
+                      #ylim(0,26000)+
+                      xlab("Mean elevation (scaled)")+
+                      ylab("Predicted number of forest pixels")
+
+dist_border_lines_p <- ggplot(data=NULL,aes(x=dist_border, y=pred, group=commune))+
+                        geom_line(data=dist_border_lines[dist_border_lines$commune!="mean",],col="grey", size=0.5)+
+                        geom_line(data=dist_border_lines[dist_border_lines$commune=="mean",],col="black",size=1)+
+                        theme(panel.background = element_blank(),
+                              axis.line = element_line(colour = "grey20"),
+                              axis.title = element_text(size=17),
+                              axis.text = element_text(size=13))+
+                        facet_wrap(~province, nrow=6, scales = "free")+
+                        #ylim(0,26000)+
+                        xlab("Distance to international border (scaled)")+
+                        ylab("Predicted number of forest pixels")
+
+dist_provCap_lines_p <- ggplot(data=NULL,aes(x=dist_provCap, y=pred, group=commune))+
+                        geom_line(data=dist_provCap_lines[dist_provCap_lines$commune!="mean",],col="grey", size=0.5)+
+                        geom_line(data=dist_provCap_lines[dist_provCap_lines$commune=="mean",],col="black",size=1)+
+                        theme(panel.background = element_blank(),
+                              axis.line = element_line(colour = "grey20"),
+                              axis.title = element_text(size=17),
+                              axis.text = element_text(size=13))+
+                        facet_wrap(~province, nrow=6, scales = "free")+
+                        #ylim(0,26000)+
+                        xlab("Distance to provincial capital (scaled)")+
+                        ylab("Predicted number of forest pixels")
 
 
 
