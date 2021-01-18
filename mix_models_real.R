@@ -11273,11 +11273,12 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 
 
 # one thing to ask Jeoren/Nils about is when predicting for provincial means and predicting for PA/no-PA, I have been using a range of the predictor (e.g. pop_den) that is found within that province. Ie in Stung Treng I have only used the range of pop_den values that actually exists in Stunf Treng. I guess it would be interesting to see what the predictions say when you are looking at plausible increases/decreases in the predictor beyond the range of that province.  I know you're not really supposed to predict beyond the range of the data, but what if you were only predicting within the national range?
-
-# I think it is worth plotting the provincial mean predictions differently. I shouuld try to tweak the function so that the output is not just the mean and the two CIs, but output the mean plus ALL other predictions. Then plot them with the mean as a big fat line and the others a thin faded lines. This might show the within-province variation better. 
+ 
 
 # make an excel spreadsheet that lists all the provinces that have large variation between communes for the different predictions (just use the plots). This will make it easier to see if there are consistencies in which provinces a) have larger effects and b) have the most within-province variation. 
 
+# Ask Jeroen how to find the slopes for each commune for each prediction. Do the same as above but for all communes that have steep slopes - to look for trends and consitencies
+
 # need to check with Jeroen about what the global predictions are actually predicting - i.e. what is the output, is it number of forest pixels, or number of pixels per unit area (km2)? If it is pixels per unit area, I need to go back and check all the global predictions, because I will have written off some becuase the pred values were really low, but actually you can only get a maximum of 11.11 pixels into a single km2, so perhaps they weren't as bad as I thought. 
 
-# ask Jeroen what he thinks about keeing elc and PA in the model when they don't have any effect but conceptually/theoretically they should be accounted for
+# ask Jeroen what he thinks about keeping elc and PA in the model when they don't have any effect but conceptually/theoretically they should be accounted for
