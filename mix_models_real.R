@@ -22,7 +22,14 @@ library(pbkrtest)
 library(MuMIn)
 library(RColorBrewer)
 
-# load data
+# load data (centred)
+dat1 <- read.csv("Data/commune/dat1.csv", header = TRUE, stringsAsFactors = TRUE)
+dat1$elc <- as.factor(dat$elc)
+dat1$PA <- as.factor(dat$PA)
+
+
+
+# load raw data (uncentered)
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
 dat <- dat[ ,-1]
 
@@ -10297,6 +10304,33 @@ ggplot(mean_elev_newdat, aes(x=mean_elev, y=pred))+
   xlab("Elevation (scaled)")
 
 ## Need to check with Jeroen about what the pred actually is.  Is it predicted forest pixels per unit area?  Becuase if so, these estimates don't make sense - you can't have 10K pixels per km2. In theory you can only have 11.11 pixels per km2 becuase each pixel is 0.09km2
+# After chatting with Jeroen - yes the predictions should be per unit area
+
+
+
+## Jeroen pointed out that the distribution of areaKM is quite skewed, and so the mean is probably not the best value to be predicting from.  Below I will try using the median
+
+# create new data. I will set pop_den, dist_border, dist_provCap at their national means, and I will set elc and PA to 0.
+mean_elev_newdat2 <- data.frame(mean_elev = seq(min(dat1$mean_elev), max(dat1$mean_elev), length.out = 200),
+                             pop_den = mean(dat1$pop_den),
+                             dist_border = mean(dat1$dist_border),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = median(dat1$areaKM))
+mean_elev_newdat2$pred <- as.vector(predict(sat9c, type="response", newdata=mean_elev_newdat2, re.form=NA))
+
+# plot
+ggplot(mean_elev_newdat2, aes(x=mean_elev, y=pred))+
+  geom_line(size=1)+
+  #xlim(-0.18,5)+
+  ylim(0,26000)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=15))+
+  ylab("Predicted forest pixels per unit area (km2)")+
+  xlab("Elevation (scaled)")
 
 
         # dist_border ####
@@ -11234,6 +11268,98 @@ ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
                     xlab("Population density (Centerd and scaled)")+
                     ylab("Predicted number of forest pixels")
 
+
+
+
+
+### Here I am following an idea from Jeroen - to add the observed data onto the plots of provincial predictions
+
+# extract ForPix and elevation data to be added to the plot
+elev_pts <- dat1 %>% select(Province,Commune,ForPix,mean_elev) %>% rename(commune=Commune,pred=ForPix,province=Province)
+
+# plot
+ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
+  geom_point(data=elev_pts, shape=1)+
+  geom_line(data=mean_elev_lines[mean_elev_lines$commune!="mean",],col="grey", size=0.5)+
+  geom_line(data=mean_elev_lines[mean_elev_lines$commune=="mean",],col="black",size=1)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=13))+
+  facet_wrap(~province, nrow=6, scales = "free")+
+  #ylim(0,26000)+
+  xlab("Mean elevation (scaled)")+
+  ylab("Predicted number of forest pixels")
+
+# That plot shows how poorly the model is predicting for communes.  Basically, because the random effects estimates are taken from ALL communes and provinces, and they are used in each commune-specific prediction, the predictions are not particularly good for specific communes.
+
+# Another suggestion from Jeroen was to reduce the x axis, so to reduce the "extremes" in the predictors. This will mean the model only has to predict for predictor values that are closer to the "global mean", and thus should make predictions more accurate.  
+
+# I will take the centre 50% of mean_elev (i.e. cut off the smallest 25% and largest 25%)
+elev_quants25 <- quantile(dat1$mean_elev,probs=(0.25))
+elev_quants75 <- quantile(dat1$mean_elev,probs=(0.75))
+
+# quantiles incorporated into the function (as need to do for each province, within the loop)
+ProvMeanLine.elev.red    <- function(dat=dat1,province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(mean_elev = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    
+    # get 25 and 75% quantiles for mean_elev from that Province
+    quant25 <- quantile(dat$mean_elev[dat$Province==province], probs = 0.25)
+    quant75 <- quantile(dat$mean_elev[dat$Province==province], probs = 0.75)
+    
+    # newdata
+    newdat <- data.frame(mean_elev = seq(quant25,quant75, length.out = 100), # centre 50% range in province
+                         pop_den = mean(dat$pop_den[dat$Province==province]),
+                         dist_border = mean(dat$dist_border[dat$Province==province]),
+                         dist_provCap = mean(dat$dist_provCap[dat$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=~(year|Province/Provcomm)))
+    
+    # pull out values of mean_elev and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("mean_elev","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of mean_elev)  
+    mean.df <- compred %>% group_by(mean_elev) %>% summarise_at(vars(pred),mean) %>% 
+                mutate(commune = "mean")  %>% mutate(province = province) 
+    
+    # attach mean to commune df
+    compred <- rbind(compred,mean.df)
+    
+    return(compred)
+}
+
+
+mean_elev_red <- RunFun(dat1, ProvMeanLine.elev.red, sat9c)
+
+
+
+
 #
 ### simple test ####
 
@@ -11327,3 +11453,8 @@ plot_tot_pop+plot_prop_ind+plot_pop_den+plot_M6_24_sch+plot_propPrimSec+plot_Les
 # need to check with Jeroen about what the global predictions are actually predicting - i.e. what is the output, is it number of forest pixels, or number of pixels per unit area (km2)? If it is pixels per unit area, I need to go back and check all the global predictions, because I will have written off some becuase the pred values were really low, but actually you can only get a maximum of 11.11 pixels into a single km2, so perhaps they weren't as bad as I thought. 
 
 # ask Jeroen what he thinks about keeping elc and PA in the model when they don't have any effect but conceptually/theoretically they should be accounted for
+
+# add observed data onto grid plots. do the same for reduced x axis range
+
+# try median area in predictions
+
