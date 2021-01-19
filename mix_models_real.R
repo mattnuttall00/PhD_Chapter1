@@ -11189,6 +11189,51 @@ dist_provCap_lines_p <- ggplot(data=NULL,aes(x=dist_provCap, y=pred, group=commu
 
 
 
+
+
+### Here I am just exploring the variation in individual communes
+
+# plot pop_den effects for just Koh Kong
+Koh_kong <- pop_den_lines %>% filter(province=="Koh Kong")
+
+ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
+                    geom_line(data=Koh_kong[Koh_kong$commune!="mean",],col="grey", size=0.5)+
+                    geom_line(data=Koh_kong[Koh_kong$commune=="mean",],col="black",size=1)+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=13))+
+                    #facet_wrap(~province, nrow=6, scales = "free")+
+                    #ylim(0,26000)+
+                    xlab("Population density (Centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")
+
+# identify communes in Koh Kong with largest intercepts
+sat9c.ranef <- ranef(sat9c)[[1]]
+sat9c.ranef <- sat9c.ranef[order(sat9c.ranef[,"(Intercept)"], decreasing = TRUE), ]
+head(sat9c.ranef)
+sat9c.ranef$Provcomm <- row.names(sat9c.ranef)
+sat9c.ranef <- sat9c.ranef %>% separate(col=Provcomm, into=c("Provcomm","Province"), sep=":")
+KohKong.ranef <- sat9c.ranef %>% filter(Province=="Koh Kong")
+KohKong.ranef <- KohKong.ranef %>% separate(Provcomm, c("province","commune"), sep="_")
+KohKong.ranef <- KohKong.ranef[ ,-5]
+KK_top10 <- KohKong.ranef[1:10,] 
+
+KK_top10_plot <- Koh_kong %>% filter(commune %in% KK_top10$commune)
+
+# plot the 10 communes in Koh Kong with the largest intercepts
+ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
+                    geom_line(data=KK_top10_plot,col="grey", size=0.5)+
+                    #geom_line(data=Koh_kong[Koh_kong$commune=="mean",],col="black",size=1)+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=13))+
+                    #facet_wrap(~province, nrow=6, scales = "free")+
+                    #ylim(0,26000)+
+                    xlab("Population density (Centerd and scaled)")+
+                    ylab("Predicted number of forest pixels")
+
 #
 ### simple test ####
 
