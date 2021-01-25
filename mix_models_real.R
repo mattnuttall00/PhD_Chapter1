@@ -24,8 +24,8 @@ library(RColorBrewer)
 
 # load data (centred)
 dat1 <- read.csv("Data/commune/dat1.csv", header = TRUE, stringsAsFactors = TRUE)
-dat1$elc <- as.factor(dat$elc)
-dat1$PA <- as.factor(dat$PA)
+dat1$elc <- as.factor(dat1$elc)
+dat1$PA <- as.factor(dat1$PA)
 
 
 
@@ -11358,6 +11358,350 @@ ProvMeanLine.elev.red    <- function(dat=dat1,province, model){
 mean_elev_red <- RunFun(dat1, ProvMeanLine.elev.red, sat9c)
 
 
+ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
+  geom_point(data=elev_pts, shape=1)+
+  geom_line(data=mean_elev_red[mean_elev_red$commune!="mean",],col="grey", size=0.5)+
+  geom_line(data=mean_elev_red[mean_elev_red$commune=="mean",],col="black",size=1)+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(colour = "grey20"),
+        axis.title = element_text(size=17),
+        axis.text = element_text(size=13))+
+  facet_wrap(~province, nrow=6, scales = "free")+
+  #ylim(0,26000)+
+  xlab("Mean elevation (scaled)")+
+  ylab("Predicted number of forest pixels")
+
+
+
+#
+### Analysis at Provincial level ####
+  ## Prepare data ####
+
+# load raw data (dat rather than dat1)
+dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
+dat <- dat[ ,-1]
+
+# re-classify the variables
+dat$year <- as.numeric(dat$year)
+dat$elc <- as.factor(dat$elc)
+dat$PA <- as.factor(dat$PA)
+
+str(dat)
+
+## I am going to aggregate all data up to the provinicial level
+
+## The following variables need to be summed:
+  # areaKM, ForPix, diffPix, tot_pop, land_confl, Pax_migt_in, Pax_migt_out
+
+## The following variables need to be averaged:
+  # prop_ind, pop_den, M6_24_sch, propPrimSec, propSecSec, Les1_R_Land, pig_fam, dist_sch, garbage, KM_Comm, 
+  # crim_case, mean_elev, dist_border, dist_provCap
+
+
+# sum
+dat_sum <- dat %>% 
+           select(year,Province,areaKM,ForPix,diffPix,tot_pop,land_confl,Pax_migt_in,Pax_migt_out) %>%  
+           group_by(Province, year) %>% 
+           summarise_at(c("areaKM", "ForPix", "diffPix", "tot_pop", "land_confl", "Pax_migt_in",
+                          "Pax_migt_out"), sum) 
+                   
+# mean
+dat_mean <- dat %>% 
+            select(year,Province, prop_ind, pop_den, M6_24_sch, propPrimSec, propSecSec, Les1_R_Land, 
+                   pig_fam, dist_sch, garbage, KM_Comm, crim_case, mean_elev, dist_border, dist_provCap) %>% 
+            group_by(Province,year) %>% 
+            summarise_at(c("prop_ind", "pop_den", "M6_24_sch", "propPrimSec", "propSecSec", "Les1_R_Land",
+                           "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case", "mean_elev", 
+                           "dist_border", "dist_provCap"), mean)
+
+
+# join
+dat2 <- full_join(dat_sum, dat_mean, by=c("Province","year"))
+
+
+# scale
+dat2 <- dat2 %>% mutate_at(c("year","tot_pop", "land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
+                             "pop_den", "M6_24_sch", "propPrimSec", "propSecSec","Les1_R_Land", 
+                             "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case", "mean_elev", 
+                             "dist_border", "dist_provCap"), ~(scale(.) %>% as.vector))
+
+# elc
+elc_prov <- unique(dat$Province[dat$elc=="1"])
+dat2$elc <- ifelse(dat2$Province %in% elc_prov, "1", "0")
+unique(dat2$Province[dat2$elc=="1"])
+
+# PA
+PA_prov <- unique(dat$Province[dat$PA=="1"])
+dat2$PA <- ifelse(dat2$Province %in% PA_prov, "1", "0")
+unique(dat2$Province[dat2$PA=="1"])
+
+# deal with NaNs (produced when trying to scale vectors of 0). Prop_ind is the only var with the problem
+sum(is.nan(dat2$prop_ind))
+
+dat2$prop_ind <- ifelse(is.nan(dat2$prop_ind), 0, dat2$prop_ind)
+
+
+#
+  ## Exploratory plots ####
+
+
+ggplot(dat2, aes(x=tot_pop, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=land_confl, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=Pax_migt_in, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=Pax_migt_out, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=prop_ind, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=pop_den, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=M6_24_sch, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=propPrimSec, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=propSecSec, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=Les1_R_Land, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=pig_fam, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=dist_sch, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=garbage, y=ForPix))+
+  geom_point
+
+ggplot(dat2, aes(x=KM_Comm, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=crim_case, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=mean_elev, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=dist_border, y=ForPix))+
+  geom_point()
+
+ggplot(dat2, aes(x=dist_provCap, y=ForPix))+
+  geom_point()
+
+par(mfrow=c(3,3))
+hist(dat2$tot_pop)
+hist(dat2$land_confl)
+hist(dat2$Pax_migt_in)
+hist(dat2$Pax_migt_out)
+hist(dat2$prop_ind)
+hist(dat2$pop_den)
+hist(dat2$M6_24_sch)
+hist(dat2$propPrimSec)
+hist(dat2$propSecSec)
+
+hist(dat2$Les1_R_Land)
+hist(dat2$pig_fam)
+hist(dat2$dist_sch)
+hist(dat2$garbage)
+hist(dat2$KM_Comm)
+hist(dat2$crim_case)
+hist(dat2$mean_elev)
+hist(dat2$dist_border)
+hist(dat2$dist_provCap)
+
+# Looking at the histograms, most of the variables appear to have two peaks.  This suggests that perhaps there are two "groups" of provinces for each variable. Perhaps binomial models would be a better approach? 
+
+
+#
+  ## Models ####
+    # Poisson ####
+
+# First I will try models with a Poisson distribution like I did above for the commune level models. Not sure they will work that well based on the histograms above, but worth trying.
+
+# first I will just run models in the individual sets and do global predictions for each model. Then I will plot them with the raw point, as suggested by Jeroen
+
+popdem.m1 <- glmer(ForPix ~ prop_ind + pop_den + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+edu.m1 <- glmer(ForPix ~ M6_24_sch + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+emp.m1 <- glmer(ForPix ~ propPrimSec + propSecSec + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+econ.m1 <- glmer(ForPix ~ Les1_R_Land + pig_fam + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+acc.m1 <- glmer(ForPix ~ dist_sch + garbage + KM_Comm + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+soc.m1 <- glmer(ForPix ~ crim_case + land_confl + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+mig.m1 <- glmer(ForPix ~ Pax_migt_in + Pax_migt_out + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+elev.m1 <- glmer(ForPix ~ mean_elev + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+hum.m1 <- glmer(ForPix ~ dist_border + dist_provCap + elc + PA + offset(log(areaKM)) + (year|Province), 
+                   data=dat2, family="poisson")
+
+
+### predicting
+
+# pop_den
+pop_den.pred <- data.frame(pop_den = seq(min(dat2$pop_den), max(dat2$pop_den), length.out=100),
+                           prop_ind = mean(dat2$prop_ind, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+pop_den.pred$pred <- as.vector(predict(popdem.m1, type="response", newdata=pop_den.pred, re.form=NA))
+
+pop_den.plot <- ggplot(pop_den.pred, aes(x=pop_den, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=pop_den, y=ForPix))+
+                theme_classic()
+                
+
+# prop_ind
+prop_ind.pred <- data.frame(prop_ind = seq(min(dat2$prop_ind), max(dat2$prop_ind), length.out=100),
+                           pop_den = mean(dat2$pop_den, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+prop_ind.pred$pred <- as.vector(predict(popdem.m1, type="response", newdata=prop_ind.pred, re.form=NA))
+
+prop_ind.plot <- ggplot(prop_ind.pred, aes(x=prop_ind, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=prop_ind, y=ForPix))+
+                theme_classic()
+
+
+# M6_24_sch
+edu.pred <- data.frame(M6_24_sch = seq(min(dat2$M6_24_sch), max(dat2$M6_24_sch), length.out=100),
+                           areaKM = mean(dat2$areaKM))
+edu.pred$pred <- as.vector(predict(edu.m1, type="response", newdata=edu.pred, re.form=NA))
+
+edu.plot <- ggplot(edu.pred, aes(x=M6_24_sch, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=M6_24_sch, y=ForPix))+
+                theme_classic()
+
+
+# propPrimSec
+primSec.pred <- data.frame(propPrimSec = seq(min(dat2$propPrimSec), max(dat2$propPrimSec), length.out=100),
+                           propSecSec = mean(dat2$propSecSec, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+primSec.pred$pred <- as.vector(predict(emp.m1, type="response", newdata=primSec.pred, re.form=NA))
+
+primSec.plot <- ggplot(primSec.pred, aes(x=propPrimSec, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=propPrimSec, y=ForPix))+
+                theme_classic()
+
+
+# propSecSec
+secSec.pred <- data.frame(propSecSec = seq(min(dat2$propSecSec), max(dat2$propSecSec), length.out=100),
+                           propPrimSec = mean(dat2$propPrimSec, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+secSec.pred$pred <- as.vector(predict(emp.m1, type="response", newdata=secSec.pred, re.form=NA))
+
+secSec.plot <- ggplot(secSec.pred, aes(x=propSecSec, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=propSecSec, y=ForPix))+
+                theme_classic()
+
+# Les1_R_Land
+rice.pred <- data.frame(Les1_R_Land = seq(min(dat2$Les1_R_Land), max(dat2$Les1_R_Land), length.out=100),
+                           pig_fam = mean(dat2$pig_fam, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+rice.pred$pred <- as.vector(predict(econ.m1, type="response", newdata=rice.pred, re.form=NA))
+
+rice.plot <- ggplot(rice.pred, aes(x=Les1_R_Land, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=Les1_R_Land, y=ForPix))+
+                theme_classic()
+
+
+# pig_fam
+pig.pred <- data.frame(pig_fam = seq(min(dat2$pig_fam), max(dat2$pig_fam), length.out=100),
+                           Les1_R_Land = mean(dat2$Les1_R_Land, na.rm=TRUE),
+                           areaKM = mean(dat2$areaKM))
+pig.pred$pred <- as.vector(predict(econ.m1, type="response", newdata=pig.pred, re.form=NA))
+
+pig.plot <- ggplot(pig.pred, aes(x=pig_fam, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=pig_fam, y=ForPix))+
+                theme_classic()
+
+
+
+# dist_sch
+distSch.pred <- data.frame(dist_sch = seq(min(dat2$dist_sch), max(dat2$dist_sch), length.out=100),
+                       KM_Comm = mean(dat2$KM_Comm, na.rm=TRUE),
+                       garbage = mean(dat2$garbage),      
+                       areaKM = mean(dat2$areaKM))
+distSch.pred$pred <- as.vector(predict(acc.m1, type="response", newdata=distSch.pred, re.form=NA))
+
+distSch.plot <- ggplot(distSch.pred, aes(x=dist_sch, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=dist_sch, y=ForPix))+
+                theme_classic()
+
+# KM_Comm
+KMcomm.pred <- data.frame(KM_Comm = seq(min(dat2$KM_Comm), max(dat2$KM_Comm), length.out=100),
+                       dist_sch = mean(dat2$dist_sch, na.rm=TRUE),
+                       garbage = mean(dat2$garbage),      
+                       areaKM = mean(dat2$areaKM))
+KMcomm.pred$pred <- as.vector(predict(acc.m1, type="response", newdata=KMcomm.pred, re.form=NA))
+
+KMcomm.plot <- ggplot(KMcomm.pred, aes(x=KM_Comm, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=KM_Comm, y=ForPix))+
+                theme_classic()
+
+# garbage
+garbage.pred <- data.frame(garbage = seq(min(dat2$garbage), max(dat2$garbage), length.out=100),
+                       dist_sch = mean(dat2$dist_sch, na.rm=TRUE),
+                       KM_Comm = mean(dat2$KM_Comm),      
+                       areaKM = mean(dat2$areaKM))
+garbage.pred$pred <- as.vector(predict(acc.m1, type="response", newdata=garbage.pred, re.form=NA))
+
+garbage.plot <- ggplot(garbage.pred, aes(x=garbage, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=garbage, y=ForPix))+
+                theme_classic()
+
+# crim_case
+crim.pred <- data.frame(crim_case = seq(min(dat2$crim_case), max(dat2$crim_case), length.out=100),
+                       land_confl = mean(dat2$land_confl),      
+                       areaKM = mean(dat2$areaKM))
+crim.pred$pred <- as.vector(predict(soc.m1, type="response", newdata=crim.pred, re.form=NA))
+
+crim.plot <- ggplot(crim.pred, aes(x=crim_case, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=crim_case, y=ForPix))+
+                theme_classic()
+
+
+# land_confl
+confl.pred <- data.frame(land_confl = seq(min(dat2$land_confl), max(dat2$land_confl), length.out=100),
+                       crim_case = mean(dat2$crim_case),      
+                       areaKM = mean(dat2$areaKM))
+confl.pred$pred <- as.vector(predict(soc.m1, type="response", newdata=confl.pred, re.form=NA))
+
+confl.plot <- ggplot(confl.pred, aes(x=land_confl, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=land_confl, y=ForPix))+
+                theme_classic()
 
 
 #
