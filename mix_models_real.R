@@ -11525,7 +11525,7 @@ hist(dat2$dist_provCap)
 
 #
   ## Models ####
-    # Poisson ####
+    # Continous ####
 
 # First I will try models with a Poisson distribution like I did above for the commune level models. Not sure they will work that well based on the histograms above, but worth trying.
 
@@ -11795,6 +11795,368 @@ PA.plot <- ggplot(PA.pred, aes(x=PA, y=pred))+
                 theme_classic()
 
 
+
+
+#
+    # Categorical ####
+
+# None of the above models showed any effect at all. But based on the histograms from the above exploratory section, many of the variables have two "peaks". In other words, there are two distinct "types" of province when it comes to certain variables, and certain provinces are clumped together based on those variables. Therefore it may be interesting to turn some of the variables into categorical variables. 
+
+# the variables I will try this with (based on histograms) are: land_confl, Pax_migt_in, Pax_migt_out, 
+# pop_den, M6_24_sch, propPrimSec, propSecSec, Les1_R_Land, pig_fam, dist_sch, crim_case, mean_elev, 
+# dist_border, dist_provCap
+
+### The way I will do this for now is to just split the vars by their means
+
+# function that pulls out the variable and assigns it into either the low category or the high category depending on which side of the mean it sits
+split.fun <- function(province,var,dat){
+  
+  df <- dat[dat$Province==province, c("Province", "year", var)]
+  
+  vars <- dat[ ,var]
+  av <- mean(vars) 
+  df$cat <- ifelse(df[,3] < av, "low", "high")
+  
+  return(df)
+  
+  
+}
+
+# list of provinces
+provs <- unique(dat2$Province)
+
+
+### land_confl
+
+# initialise empty dataframe
+land_confl.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            land_confl = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "land_confl", dat2)
+  
+  land_confl.df <- rbind(land_confl.df, df)
+  
+}
+
+# re-name column
+land_confl.df <- land_confl.df %>% rename(land_confl.cat = cat)
+
+
+
+### Pax_migt_in
+
+# initialise empty dataframe
+Pax_migt_in.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            Pax_migt_in = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "Pax_migt_in", dat2)
+  
+  Pax_migt_in.df <- rbind(Pax_migt_in.df, df)
+  
+}
+
+# re-name column
+Pax_migt_in.df <- Pax_migt_in.df %>% rename(Pax_migt_in.cat = cat)
+
+
+
+
+### Pax_migt_out
+
+# initialise empty dataframe
+Pax_migt_out.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            Pax_migt_out = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "Pax_migt_out", dat2)
+  
+  Pax_migt_out.df <- rbind(Pax_migt_out.df, df)
+  
+}
+
+# re-name column
+Pax_migt_out.df <- Pax_migt_out.df %>% rename(Pax_migt_out.cat = cat)
+
+
+
+
+### pop_den
+
+# initialise empty dataframe
+pop_den.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            pop_den = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "pop_den", dat2)
+  
+  pop_den.df <- rbind(pop_den.df, df)
+  
+}
+
+# re-name column
+pop_den.df <- pop_den.df %>% rename(pop_den.cat = cat)
+
+
+
+
+### M6_24_sch
+
+# initialise empty dataframe
+M6_24_sch.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            M6_24_sch = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "M6_24_sch", dat2)
+  
+  M6_24_sch.df <- rbind(M6_24_sch.df, df)
+  
+}
+
+# re-name column
+M6_24_sch.df <- M6_24_sch.df %>% rename(M6_24_sch.cat = cat)
+
+
+
+
+### propPrimSec
+
+# initialise empty dataframe
+propPrimSec.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            propPrimSec = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "propPrimSec", dat2)
+  
+ propPrimSec.df <- rbind(propPrimSec.df, df)
+  
+}
+
+# re-name column
+propPrimSec.df <- propPrimSec.df %>% rename(propPrimSec.cat = cat)
+
+
+
+
+### propSecSec
+
+# initialise empty dataframe
+propSecSec.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            propSecSec = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "propSecSec", dat2)
+  
+ propSecSec.df <- rbind(propSecSec.df, df)
+  
+}
+
+# re-name column
+propSecSec.df <- propSecSec.df %>% rename(propSecSec.cat = cat)
+
+
+
+
+### Les1_R_Land
+
+# initialise empty dataframe
+Les1_R_Land.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            Les1_R_Land = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "Les1_R_Land", dat2)
+  
+ Les1_R_Land.df <- rbind(Les1_R_Land.df, df)
+  
+}
+
+# re-name column
+Les1_R_Land.df <- Les1_R_Land.df %>% rename(Les1_R_Land.cat = cat)
+
+
+
+
+### pig_fam
+
+# initialise empty dataframe
+pig_fam.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            pig_fam = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "pig_fam", dat2)
+  
+ pig_fam.df <- rbind(pig_fam.df, df)
+  
+}
+
+# re-name column
+pig_fam.df <- pig_fam.df %>% rename(pig_fam.cat = cat)
+
+
+
+
+### dist_sch
+
+# initialise empty dataframe
+dist_sch.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            dist_sch = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "dist_sch", dat2)
+  
+ dist_sch.df <- rbind(dist_sch.df, df)
+  
+}
+
+# re-name column
+dist_sch.df <- dist_sch.df %>% rename(dist_sch.cat = cat)
+
+
+
+
+
+### crim_case
+
+# initialise empty dataframe
+crim_case.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            crim_case = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "crim_case", dat2)
+  
+ crim_case.df <- rbind(crim_case.df, df)
+  
+}
+
+# re-name column
+crim_case.df <- crim_case.df %>% rename(crim_case.cat = cat)
+
+
+
+
+### mean_elev
+
+# initialise empty dataframe
+mean_elev.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            mean_elev = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "mean_elev", dat2)
+  
+ mean_elev.df <- rbind(mean_elev.df, df)
+  
+}
+
+# re-name column
+mean_elev.df <- mean_elev.df %>% rename(mean_elev.cat = cat)
+
+
+
+
+### dist_border
+
+# initialise empty dataframe
+dist_border.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            dist_border = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "dist_border", dat2)
+  
+ dist_border.df <- rbind(dist_border.df, df)
+  
+}
+
+# re-name column
+dist_border.df <- dist_border.df %>% rename(dist_border.cat = cat)
+
+
+
+
+### dist_provCap
+
+# initialise empty dataframe
+dist_provCap.df <- data.frame(Province = NULL,
+                            year = NULL,
+                            dist_provCap = NULL,
+                            cat = NULL)
+
+# loop through each province and apply the function
+for(i in 1:length(provs)){
+
+  df <- split.fun(province=provs[i], "dist_provCap", dat2)
+  
+ dist_provCap.df <- rbind(dist_provCap.df, df)
+  
+}
+
+# re-name column
+dist_provCap.df <- dist_provCap.df %>% rename(dist_provCap.cat = cat)
+
+
+
+
+### Now merge them all
+
+# land_confl, Pax_migt_in, Pax_migt_out, pop_den, M6_24_sch, propPrimSec, propSecSec, Les1_R_Land, pig_fam, dist_sch, crim_case, mean_elev, dist_border, dist_provCap
+
+df.list <- list(land_confl.df, Pax_migt_in.df, Pax_migt_out.df, pop_den.df, M6_24_sch.df, 
+                propPrimSec.df, propSecSec.df, Les1_R_Land.df, pig_fam.df, dist_sch.df, crim_case.df, 
+                mean_elev.df, dist_border.df, dist_provCap.df)
+
+dat_cat <- df.list %>% reduce(left_join, by=c("Province","year"))
 
 
 #
