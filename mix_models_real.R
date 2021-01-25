@@ -11704,6 +11704,99 @@ confl.plot <- ggplot(confl.pred, aes(x=land_confl, y=pred))+
                 theme_classic()
 
 
+# Pax_migt_in
+migtIn.pred <- data.frame(Pax_migt_in = seq(min(dat2$Pax_migt_in), max(dat2$Pax_migt_in), length.out=100),
+                       Pax_migt_out = mean(dat2$Pax_migt_out),      
+                       areaKM = mean(dat2$areaKM))
+migtIn.pred$pred <- as.vector(predict(mig.m1, type="response", newdata=migtIn.pred, re.form=NA))
+
+migtIn.plot <- ggplot(migtIn.pred, aes(x=Pax_migt_in, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=Pax_migt_in, y=ForPix))+
+                theme_classic()
+
+
+# Pax_migt_out
+migtOut.pred <- data.frame(Pax_migt_out = seq(min(dat2$Pax_migt_out), max(dat2$Pax_migt_out), length.out=100),
+                       Pax_migt_in = mean(dat2$Pax_migt_in),      
+                       areaKM = mean(dat2$areaKM))
+migtOut.pred$pred <- as.vector(predict(mig.m1, type="response", newdata=migtOut.pred, re.form=NA))
+
+migtOut.plot <- ggplot(migtOut.pred, aes(x=Pax_migt_out, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=Pax_migt_out, y=ForPix))+
+                theme_classic()
+
+
+# mean_elev
+elev.pred <- data.frame(mean_elev = seq(min(dat2$mean_elev), max(dat2$mean_elev), length.out=100),
+                       areaKM = mean(dat2$areaKM))
+elev.pred$pred <- as.vector(predict(elev.m1, type="response", newdata=elev.pred, re.form=NA))
+
+elev.plot <- ggplot(elev.pred, aes(x=mean_elev, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=mean_elev, y=ForPix))+
+                theme_classic()
+
+
+# dist_border
+bord.pred <- data.frame(dist_border = seq(min(dat2$dist_border), max(dat2$dist_border), length.out=100),
+                        dist_provCap = mean(dat2$dist_provCap),
+                        elc = "0",
+                        PA = "0",
+                        areaKM = mean(dat2$areaKM))
+bord.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=bord.pred, re.form=NA))
+
+bord.plot <- ggplot(bord.pred, aes(x=dist_border, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=dist_border, y=ForPix))+
+                theme_classic()
+
+
+# dist_provCap
+provCap.pred <- data.frame(dist_provCap = seq(min(dat2$dist_provCap), max(dat2$dist_provCap), length.out=100),
+                        dist_border = mean(dat2$dist_border),
+                        elc = "0",
+                        PA = "0",
+                        areaKM = mean(dat2$areaKM))
+provCap.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=provCap.pred, re.form=NA))
+
+provCap.plot <- ggplot(provCap.pred, aes(x=dist_provCap, y=pred))+
+                geom_line()+
+                geom_point(data=dat2, aes(x=dist_provCap, y=ForPix))+
+                theme_classic()
+
+
+# elc
+elc.pred <- data.frame(elc = c("1","0"),
+                        dist_border = mean(dat2$dist_border),
+                        dist_provCap = mean(dat2$dist_provCap),
+                        PA = "0",
+                        areaKM = mean(dat2$areaKM))
+elc.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=elc.pred, re.form=NA))
+
+elc.plot <- ggplot(elc.pred, aes(x=elc, y=pred))+
+                geom_point()+
+                geom_point(data=dat2, aes(x=elc, y=ForPix))+
+                theme_classic()
+
+
+# PA
+PA.pred <- data.frame(PA = c("1","0"),
+                        dist_border = mean(dat2$dist_border),
+                        dist_provCap = mean(dat2$dist_provCap),
+                        elc = "0",
+                        areaKM = mean(dat2$areaKM))
+PA.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=PA.pred, re.form=NA))
+
+PA.plot <- ggplot(PA.pred, aes(x=PA, y=pred))+
+                geom_point()+
+                geom_point(data=dat2, aes(x=PA, y=ForPix))+
+                theme_classic()
+
+
+
+
 #
 ### simple test ####
 
