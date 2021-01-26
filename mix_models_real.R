@@ -11441,6 +11441,9 @@ sum(is.nan(dat2$prop_ind))
 dat2$prop_ind <- ifelse(is.nan(dat2$prop_ind), 0, dat2$prop_ind)
 
 
+# save
+write.csv(dat2, file="Data/commune/dat2.csv")
+
 #
   ## Exploratory plots ####
 
@@ -11806,6 +11809,9 @@ PA.plot <- ggplot(PA.pred, aes(x=PA, y=pred))+
 # pop_den, M6_24_sch, propPrimSec, propSecSec, Les1_R_Land, pig_fam, dist_sch, crim_case, mean_elev, 
 # dist_border, dist_provCap
 
+
+      # data preparation ####
+
 ### The way I will do this for now is to just split the vars by their means
 
 # function that pulls out the variable and assigns it into either the low category or the high category depending on which side of the mean it sits
@@ -12157,6 +12163,246 @@ df.list <- list(land_confl.df, Pax_migt_in.df, Pax_migt_out.df, pop_den.df, M6_2
                 mean_elev.df, dist_border.df, dist_provCap.df)
 
 dat_cat <- df.list %>% reduce(left_join, by=c("Province","year"))
+
+# remove original vars
+dat_cat <- dat_cat %>% select(Province,year,land_confl.cat,Pax_migt_in.cat,Pax_migt_out.cat,pop_den.cat,
+                              M6_24_sch.cat,propPrimSec.cat,propSecSec.cat,Les1_R_Land.cat,pig_fam.cat,
+                              dist_sch.cat,crim_case.cat,mean_elev.cat,dist_border.cat,dist_provCap.cat)
+
+# extract the other vars from dat2 that I need
+other.df <- dat2 %>% select(Province,year,ForPix,areaKM,elc,PA)
+
+# merge with dat_cat
+dat_cat <- left_join(dat_cat,other.df, by=c("Province","year"))
+
+# save dat_cat
+write.csv(dat_cat, file="Data/commune/dat_cat.csv")
+
+
+#
+      # models ####
+
+# pop_den
+popden.mcat <- glmer(ForPix ~ pop_den.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(popden.mcat)
+
+popden_pred <- data.frame(pop_den.cat = c("low", "high"),
+                          areaKM = mean(dat_cat$areaKM))
+popden_pred$pred <- as.vector(predict(popden.mcat, type="response", newdata=popden_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=pop_den.cat, y=ForPix), shape=1)+
+  geom_point(data=popden_pred, aes(x=pop_den.cat, y=pred), shape=19, size=5, col="red")+
+  theme_classic()
+# no effect
+
+
+# social justice (land_confl, crim_case)
+socjus.mcat <- glmer(ForPix ~ land_confl.cat + crim_case.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(socjus.mcat)
+
+landconfl_pred <- expand.grid(land_confl.cat = c("low", "high"),
+                             crim_case.cat = c("low", "high"),
+                             areaKM = mean(dat_cat$areaKM))
+landconfl_pred$pred <- as.vector(predict(socjus.mcat, type="response", newdata=landconfl_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=land_confl.cat, y=ForPix), shape=1)+
+  geom_point(data=landconfl_pred, aes(x=land_confl.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~crim_case.cat)+
+  theme_classic()
+# no effect
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=crim_case.cat, y=ForPix), shape=1)+
+  geom_point(data=landconfl_pred, aes(x=crim_case.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~land_confl.cat)+
+  theme_classic()
+# no effect
+
+
+
+# migration
+mig.mcat <- glmer(ForPix ~ Pax_migt_in.cat + Pax_migt_out.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(mig.mcat)
+
+mig_pred <- expand.grid(Pax_migt_in.cat = c("low", "high"),
+                        Pax_migt_out.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+mig_pred$pred <- as.vector(predict(mig.mcat, type="response", newdata=mig_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=Pax_migt_in.cat, y=ForPix), shape=1)+
+  geom_point(data=mig_pred, aes(x=Pax_migt_in.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~Pax_migt_out.cat)+
+  theme_classic()
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=Pax_migt_out.cat, y=ForPix), shape=1)+
+  geom_point(data=mig_pred, aes(x=Pax_migt_out.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~Pax_migt_in.cat)+
+  theme_classic()
+# no effect
+
+
+
+# education
+edu.mcat <- glmer(ForPix ~ M6_24_sch.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(edu.mcat)
+
+edu_pred <- expand.grid(M6_24_sch.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+edu_pred$pred <- as.vector(predict(edu.mcat, type="response", newdata=edu_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=M6_24_sch.cat, y=ForPix), shape=1)+
+  geom_point(data=edu_pred, aes(x=M6_24_sch.cat, y=pred), shape=19, size=5, col="red")+
+  theme_classic()
+# no effect
+
+
+
+# employment
+emp.mcat <- glmer(ForPix ~ propPrimSec.cat + propSecSec.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(emp.mcat)
+
+emp_pred <- expand.grid(propPrimSec.cat = c("low", "high"),
+                        propSecSec.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+emp_pred$pred <- as.vector(predict(emp.mcat, type="response", newdata=emp_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=propPrimSec.cat, y=ForPix), shape=1)+
+  geom_point(data=emp_pred, aes(x=propPrimSec.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~propSecSec.cat)+
+  theme_classic()
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=propSecSec.cat, y=ForPix), shape=1)+
+  geom_point(data=emp_pred, aes(x=propSecSec.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~propPrimSec.cat)+
+  theme_classic()
+# no effect
+
+
+# economic security
+econ.mcat <- glmer(ForPix ~ Les1_R_Land.cat + pig_fam.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(econ.mcat)
+
+econ_pred <- expand.grid(Les1_R_Land.cat = c("low", "high"),
+                        pig_fam.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+econ_pred$pred <- as.vector(predict(econ.mcat, type="response", newdata=econ_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=Les1_R_Land.cat, y=ForPix), shape=1)+
+  geom_point(data=econ_pred, aes(x=Les1_R_Land.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~pig_fam.cat)+
+  theme_classic()
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=pig_fam.cat, y=ForPix), shape=1)+
+  geom_point(data=econ_pred, aes(x=pig_fam.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~Les1_R_Land.cat)+
+  theme_classic()
+# no effect
+
+
+# access to services
+acc.mcat <- glmer(ForPix ~ dist_sch.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(acc.mcat)
+
+acc_pred <- expand.grid(dist_sch.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+acc_pred$pred <- as.vector(predict(acc.mcat, type="response", newdata=acc_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=dist_sch.cat, y=ForPix), shape=1)+
+  geom_point(data=acc_pred, aes(x=dist_sch.cat, y=pred), shape=19, size=5, col="red")+
+  theme_classic()
+# no effect
+
+
+
+# environmental 
+elev.mcat <- glmer(ForPix ~ mean_elev.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(elev.mcat)
+
+elev_pred <- expand.grid(mean_elev.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+elev_pred$pred <- as.vector(predict(elev.mcat, type="response", newdata=elev_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=mean_elev.cat, y=ForPix), shape=1)+
+  geom_point(data=elev_pred, aes(x=mean_elev.cat, y=pred), shape=19, size=5, col="red")+
+  theme_classic()
+# no effect
+
+
+
+# other human vars
+hum.mcat <- glmer(ForPix ~ dist_border.cat + dist_provCap.cat + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(hum.mcat)
+
+hum_pred <- expand.grid(dist_border.cat = c("low", "high"),
+                        dist_provCap.cat = c("low", "high"),
+                        areaKM = mean(dat_cat$areaKM))
+hum_pred$pred <- as.vector(predict(hum.mcat, type="response", newdata=hum_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=dist_border.cat, y=ForPix), shape=1)+
+  geom_point(data=hum_pred, aes(x=dist_border.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~dist_provCap.cat)+
+  theme_classic()
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=dist_provCap.cat, y=ForPix), shape=1)+
+  geom_point(data=hum_pred, aes(x=dist_provCap.cat, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~dist_border.cat)+
+  theme_classic()
+
+
+
+# elcs and PAs
+areas.mcat <- glmer(ForPix ~ elc + PA + offset(log(areaKM)) + (year|Province),
+                     data=dat_cat, family="poisson")
+
+summary(areas.mcat)
+
+areas_pred <- expand.grid(elc = c("0", "1"),
+                        PA = c("0", "1"),
+                        areaKM = mean(dat_cat$areaKM))
+areas_pred$pred <- as.vector(predict(areas.mcat, type="response", newdata=areas_pred, re.form=NA))
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=elc, y=ForPix), shape=1)+
+  geom_point(data=areas_pred, aes(x=elc, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~PA)+
+  theme_classic()
+
+ggplot()+
+  geom_point(data=dat_cat, aes(x=PA, y=ForPix), shape=1)+
+  geom_point(data=areas_pred, aes(x=PA, y=pred), shape=19, size=5, col="red")+
+  facet_wrap(~elc)+
+  theme_classic()
 
 
 #
