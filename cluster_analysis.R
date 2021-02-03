@@ -29,14 +29,26 @@ distgr
 
 
 # load dat2 (provincial level data that is scaled already)
-dat <- read.csv("Data/commune/dat2.csv", header = TRUE, stringsAsFactors = TRUE) 
-socioeconDat <- dat %>% select(Province,tot_pop,land_confl,Pax_migt_in,Pax_migt_out,prop_ind,pop_den,M6_24_sch,propPrimSec,propSecSec,
-                       Les1_R_Land,pig_fam,dist_sch,garbage,KM_Comm,crim_case)
+dat2 <- read.csv("Data/commune/dat2.csv", header = TRUE, stringsAsFactors = TRUE) 
+socioeconDat <- dat2 %>% select(Province,tot_pop,land_confl,Pax_migt_in,Pax_migt_out,prop_ind,pop_den,M6_24_sch,
+                               propPrimSec,propSecSec,Les1_R_Land,pig_fam,dist_sch,garbage,KM_Comm,crim_case)
 
-socioeconDat$year <- rep(c(1,2,3,4,5,6), times=24)
-socioeconDat$Province.yr <- paste(socioeconDat$Province, socioeconDat$year, sep="_")
-socioeconDat <- socioeconDat[ , c(-1, -17)]
-socioeconDat <- socioeconDat[ ,-16]
+
+# load raw data (unscaled, province level). I want to take the provincial means across all years for all variables from the raw data, and then scale, rather than trying to take the mean across all years from the scaled data
+dat_prov <- read.csv("Data/commune/dat_prov.csv", header = TRUE, stringsAsFactors = TRUE) 
+dat_prov <- dat_prov[, -1]
+
+# summarise variables for all years - take the mean for each variable for each province across all years. If I leave all the years in, there are too many rows to deal with. I can explore keeping them all in later
+mean.dat <- dat_prov %>% group_by(Province) %>% summarise_all(mean) 
+mean.dat <- mean.dat %>% select(Province,tot_pop,land_confl,Pax_migt_in,Pax_migt_out,prop_ind,pop_den,M6_24_sch,
+                               propPrimSec,propSecSec,Les1_R_Land,pig_fam,dist_sch,garbage,KM_Comm,crim_case)
+
+# scale all vars
+mean.dat <- mean.dat %>% mutate_at(c("tot_pop", "land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
+                             "pop_den", "M6_24_sch", "propPrimSec", "propSecSec","Les1_R_Land", 
+                             "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case"),
+                             ~(scale(.) %>% as.vector))
+
 
 
 socio.dist <- vegdist(socioeconDat,"euc")
