@@ -1,4 +1,4 @@
-### Load libraries and data ####
+### Load libraries and data preparation ####
 
 library(ade4)
 library(adespatial)
@@ -19,19 +19,13 @@ library(agricolae)
 library(picante)
 library(tidyverse)
 
-# Function to compute a binary dissimilarity matrix from clusters
+# Function to compute a binary dissimilarity matrix from clusters (from book)
 grpdist <- function(X) {
 require(cluster)
 gr <- as.data.frame(as.factor(X))
 distgr <- daisy(gr, "gower")
 distgr
 }
-
-
-# load dat2 (provincial level data that is scaled already)
-dat2 <- read.csv("Data/commune/dat2.csv", header = TRUE, stringsAsFactors = TRUE) 
-socioeconDat <- dat2 %>% select(Province,tot_pop,land_confl,Pax_migt_in,Pax_migt_out,prop_ind,pop_den,M6_24_sch,
-                               propPrimSec,propSecSec,Les1_R_Land,pig_fam,dist_sch,garbage,KM_Comm,crim_case)
 
 
 # load raw data (unscaled, province level). I want to take the provincial means across all years for all variables from the raw data, and then scale, rather than trying to take the mean across all years from the scaled data
@@ -51,8 +45,50 @@ mean.dat <- mean.dat %>% mutate_at(c("tot_pop", "land_confl", "Pax_migt_in","Pax
 
 
 
-socio.dist <- vegdist(socioeconDat,"euc")
-attr(socio.dist, "labels") <- socioeconDat$Province.yr
-single.link.aglom <- hclust(socio.dist, method="single")
+### Single linkage agglomerative clusering (nearest neighbour sorting) ####
 
-plot(single.link.aglom, labels=socioeconDat$Province.yr, main = "Single linkage")
+# from Borcard 2018 cluster analysis chapter
+
+# remove Province column and save as vector
+provs <- mean.dat$Province
+mean.dat <- mean.dat[ ,-1]
+
+# compute matrix of distance
+dist <- vegdist(mean.dat,"euc")
+
+# attach province names
+attr(dist, "labels") <- provs
+
+# compute single linkage clustering
+single.link.aglom <- hclust(dist, method="single")
+
+# plot dendrogram using default options
+plot(single.link.aglom, labels=provs, main = "Single linkage")
+
+# phnom penh is clearly an outlier, and in terms of provinces, I am not that interested in where it sits as it is not really a true province
+
+# remove PP
+mean.dat <- mean.dat[-15,]
+provs <- provs[! provs %in% "Phnom Penh"]
+
+# compute matrix of distance
+dist <- vegdist(mean.dat,"euc")
+
+# attach province names
+attr(dist, "labels") <- provs
+
+# compute single linkage clustering
+single.link.aglom <- hclust(dist, method="single")
+
+# plot dendrogram using default options
+plot(single.link.aglom, labels=provs, main = "Single linkage")
+
+### Complete linkage agglomerative clusering (furthest neighour sorting) ####
+
+
+# compute complete linkage clustering
+complete.link.aglom <- hclust(dist, method="complete")
+
+# plot dendrogram using default options
+plot(complete.link.aglom, labels=provs, main = "Complete linkage")
+
