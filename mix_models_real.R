@@ -11418,6 +11418,9 @@ dat_mean <- dat %>%
 # join
 dat2 <- full_join(dat_sum, dat_mean, by=c("Province","year"))
 
+# save unscaled provincial-level data
+write.csv(dat2, file="Data/commune/dat_prov.csv")
+
 
 # scale
 dat2 <- dat2 %>% mutate_at(c("year","tot_pop", "land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
