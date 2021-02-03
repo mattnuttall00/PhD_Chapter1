@@ -92,3 +92,31 @@ complete.link.aglom <- hclust(dist, method="complete")
 # plot dendrogram using default options
 plot(complete.link.aglom, labels=provs, main = "Complete linkage")
 
+
+### Average agglomerative clustering ####
+  ## Unweighted pair-group using arithmetic averages (UPGMA) ####
+
+# compute UPGMA clustering
+UPGMA.aglom <- hclust(dist, method="average")
+
+# plot dendrogram using default options
+plot(UPGMA.aglom, labels=provs, main = "UPGMA")
+
+  ## Unweighted pair-group using centroids (UPGMC) ####
+
+
+# compute UPGMC clustering
+UPGMC.aglom <- hclust(dist, method="centroid")
+
+# plot dendrogram using default options
+plot(UPGMC.aglom, labels=provs, main = "UPGMC")
+
+### Ward's minimum variance clustering ####
+
+# ward.D2 - with minimum variance clustering criterion 
+
+# compute Ward's clustering
+ward2.aglom <- hclust(dist, method="ward.D2")
+
+# plot dendrogram using default options
+plot(ward2.aglom, labels=provs, main = "Ward2")
