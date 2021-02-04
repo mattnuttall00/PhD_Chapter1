@@ -181,6 +181,9 @@ cor(dist,ward.coph)
 flex.coph <- cophenetic(flex.b)
 cor(dist,flex.coph)
 
+# UPGMA produces best correlation
+
+
 # plot original distances versus cophenetic distances
 
 # Shepard-like diagrams
@@ -270,3 +273,126 @@ plot(
 )
 abline(0, 1)
 lines(lowess(dist, flex.coph), col = "red")
+
+# UPGMA produces best correlation
+
+
+
+### Gower distance ####
+
+# Another possible statistic for the comparison of clustering results is the Gower (1983) distance1, computed as the sum of squared differences between the original dissimilarities and cophenetic distances. The clustering method that produces the smallest Gower distance may be seen as the one that provides the best clustering model of the dissimilarity matrix.
+
+# note - need to have run the cophenetic() calls in the secion above
+
+# Gower (1983) distance
+(gow.dist.single <- sum((dist - single.coph) ^ 2))
+(gow.dist.comp <- sum((dist - comp.coph) ^ 2))
+(gow.dist.UPGMA <- sum((dist - UPGMA.coph) ^ 2))
+(gow.dist.UPGMC <- sum((dist - UPGMC.coph) ^ 2))
+(gow.dist.ward <- sum((dist - ward.coph) ^ 2))
+(gow.dist.flex <- sum((dist - flex.coph) ^ 2))
+
+# UPGMA produces the lowest Gower score
+
+### Graphing fusion levels ####
+
+par(mfrow=c(2,3))
+
+# Plot the fusion level values of the sinlge linkage clustering
+plot(
+  single.link.aglom$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - single linkage",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(single.link.aglom$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+# Plot the fusion level values of the complete linkage clustering
+plot(
+  complete.link.aglom$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - Complete linkage",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(complete.link.aglom$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+# Plot the fusion level values of the UPGMA clustering
+plot(
+  UPGMA.aglom$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - UPGMA",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(UPGMA.aglom$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+# Plot the fusion level values of the UPGMC clustering
+plot(
+  UPGMC.aglom$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - UPGMC",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(UPGMC.aglom$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+# Plot the fusion level values of the Ward clustering
+plot(
+  ward2.aglom$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - Ward",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(ward2.aglom$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+
+# Plot the fusion level values of the flexible clustering
+plot(
+  flex.b$height,
+  nrow(mean.dat):2,
+  type = "S",
+  main = "Fusion levels - beta flexible",
+  ylab = "k (number of clusters)",
+  xlab = "h (node height)",
+  col = "grey"
+)
+text(flex.b$height,
+     nrow(mean.dat):2,
+     nrow(mean.dat):2,
+     col ="red",
+     cex=0.8)
+
+# majority of methods suggest 4 clusters would be a good cut off
