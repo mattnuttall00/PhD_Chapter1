@@ -45,19 +45,26 @@ mean.dat <- mean.dat %>% mutate_at(c("tot_pop", "land_confl", "Pax_migt_in","Pax
 
 
 
-### Single linkage agglomerative clusering (nearest neighbour sorting) ####
-
-# from Borcard 2018 cluster analysis chapter
-
 # remove Province column and save as vector
 provs <- mean.dat$Province
 mean.dat <- mean.dat[ ,-1]
+
+# remove PP
+mean.dat <- mean.dat[-15,]
+provs <- provs[! provs %in% "Phnom Penh"]
 
 # compute matrix of distance
 dist <- vegdist(mean.dat,"euc")
 
 # attach province names
 attr(dist, "labels") <- provs
+
+
+
+
+## Single linkage agglomerative clusering (nearest neighbour sorting) ####
+
+# from Borcard 2018 cluster analysis chapter
 
 # compute single linkage clustering
 single.link.aglom <- hclust(dist, method="single")
@@ -83,7 +90,7 @@ single.link.aglom <- hclust(dist, method="single")
 # plot dendrogram using default options
 plot(single.link.aglom, labels=provs, main = "Single linkage")
 
-### Complete linkage agglomerative clusering (furthest neighour sorting) ####
+## Complete linkage agglomerative clusering (furthest neighour sorting) ####
 
 
 # compute complete linkage clustering
@@ -93,8 +100,8 @@ complete.link.aglom <- hclust(dist, method="complete")
 plot(complete.link.aglom, labels=provs, main = "Complete linkage")
 
 
-### Average agglomerative clustering ####
-  ## Unweighted pair-group using arithmetic averages (UPGMA) ####
+## Average agglomerative clustering ####
+  # Unweighted pair-group using arithmetic averages (UPGMA) ####
 
 # compute UPGMA clustering
 UPGMA.aglom <- hclust(dist, method="average")
@@ -102,7 +109,7 @@ UPGMA.aglom <- hclust(dist, method="average")
 # plot dendrogram using default options
 plot(UPGMA.aglom, labels=provs, main = "UPGMA")
 
-  ## Unweighted pair-group using centroids (UPGMC) ####
+  # Unweighted pair-group using centroids (UPGMC) ####
 
 
 # compute UPGMC clustering
@@ -111,7 +118,7 @@ UPGMC.aglom <- hclust(dist, method="centroid")
 # plot dendrogram using default options
 plot(UPGMC.aglom, labels=provs, main = "UPGMC")
 
-### Ward's minimum variance clustering ####
+## Ward's minimum variance clustering ####
 
 # ward.D2 - with minimum variance clustering criterion 
 
@@ -120,3 +127,146 @@ ward2.aglom <- hclust(dist, method="ward.D2")
 
 # plot dendrogram using default options
 plot(ward2.aglom, labels=provs, main = "Ward2")
+
+## Flexible clustering ####
+
+# using the cluster package and agnes() function
+
+# try a beta-flexible clustering, where you set only the beta value (set to -0.25)
+
+flex.b <- agnes(dist, method="flexible", par.method = 0.625)
+
+# Change the class of agnes object
+class(flex.b) # [1] "agnes" "twins"
+
+flex.b <- as.hclust(flex.b)
+
+plot(flex.b,
+     labels = provs,
+     main = "Beta-flexible (beta=-0.25)")
+
+
+# try change the beta value to -0.5 to see what happens
+flex.b2 <- agnes(dist, method="flexible", par.method = 0.75)
+flex.b2 <- as.hclust(flex.b2)
+
+plot(flex.b2,
+     labels = provs,
+     main = "Beta-flexible (beta=-0.5)")
+
+summary(flex.b2)
+
+### Cophenetic correlation ####
+
+# The cophenetic distance between two objects in a dendrogram is the distance where the two objects become members of the same group. Locate any two objects, start from one, and “climb up the tree” to the first node leading down to the second object:  the level of that node along the distance scale is the cophenetic distance between the two objects. A cophenetic matrix is a matrix representing the cophenetic distances among all pairs of objects.
+
+# A Pearson’s r correlation, called the cophenetic correlation in this context, can be computed between the original dissimilarity matrix and the cophenetic matrix. The method with the highest cophenetic correlation may be seen as the one that produces the clustering model that retains most of the information contained in the dissimilarity matrix. This does not necessarily mean, however, that this clustering model is the most adequate for the researcher’s goal.
+
+# compute cophenetic matrix and correlation between all the above methods
+single.coph <- cophenetic(single.link.aglom)
+cor(dist,single.coph)
+
+comp.coph <- cophenetic(complete.link.aglom)
+cor(dist,comp.coph)
+
+UPGMA.coph <- cophenetic(UPGMA.aglom)
+cor(dist,UPGMA.coph)
+
+UPGMC.coph <- cophenetic(UPGMC.aglom)
+cor(dist,UPGMC.coph)
+
+ward.coph <- cophenetic(ward2.aglom)
+cor(dist,ward.coph)
+
+flex.coph <- cophenetic(flex.b)
+cor(dist,flex.coph)
+
+# plot original distances versus cophenetic distances
+
+# Shepard-like diagrams
+par(mfrow = c(2, 3))
+
+plot(
+  dist,
+  single.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(single.link.aglom$height)),
+  main = c("Single linkage", paste("Cophenetic correlation =",
+                                   round(cor(dist, single.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, single.coph), col = "red")
+
+plot(
+  dist,
+  comp.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(complete.link.aglom$height)),
+  main = c("Complete linkage", paste("Cophenetic correlation =",
+                                     round(cor(dist, comp.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, comp.coph), col = "red")
+
+plot(
+  dist,
+  UPGMA.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(UPGMA.aglom$height)),
+  main = c("UPGMA", paste("Cophenetic correlation =",
+                          round(cor(dist, UPGMA.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, UPGMA.coph), col = "red")
+
+plot(
+  dist,
+  UPGMC.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(UPGMC.aglom$height)),
+  main = c("UPGMC", paste("Cophenetic correlation =",
+                         round(cor(dist, UPGMC.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, UPGMC.coph), col = "red")
+
+plot(
+  dist,
+  ward.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(ward2.aglom$height)),
+  main = c("Ward", paste("Cophenetic correlation =",
+                          round(cor(dist, ward.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, ward.coph), col = "red")
+
+
+plot(
+  dist,
+  flex.coph,
+  xlab = "distance (matrix)",
+  ylab = "Cophenetic distance",
+  asp = 1,
+  xlim = c(0, max(dist)),
+  ylim = c(0, max(flex.b$height)),
+  main = c("Flexible", paste("Cophenetic correlation =",
+                         round(cor(dist, flex.coph), 3)))
+)
+abline(0, 1)
+lines(lowess(dist, flex.coph), col = "red")
