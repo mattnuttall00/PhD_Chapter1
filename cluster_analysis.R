@@ -280,7 +280,7 @@ lines(lowess(dist, flex.coph), col = "red")
 
 ### Gower distance ####
 
-# Another possible statistic for the comparison of clustering results is the Gower (1983) distance1, computed as the sum of squared differences between the original dissimilarities and cophenetic distances. The clustering method that produces the smallest Gower distance may be seen as the one that provides the best clustering model of the dissimilarity matrix.
+# Another possible statistic for the comparison of clustering results is the Gower (1983) distance, computed as the sum of squared differences between the original dissimilarities and cophenetic distances. The clustering method that produces the smallest Gower distance may be seen as the one that provides the best clustering model of the dissimilarity matrix.
 
 # note - need to have run the cophenetic() calls in the secion above
 
@@ -395,4 +395,221 @@ text(flex.b$height,
      col ="red",
      cex=0.8)
 
-# majority of methods suggest 4 clusters would be a good cut off
+# methods suggest 2, 3 or 4 clusters would be a good cut off
+
+### Compare contingency tables ####
+
+# we can cut off all the trees at the same point and compare
+k3 <- 3
+k4 <- 4
+k5 <- 5
+
+# 3 clusters
+single.link.aglom.g3   <- cutree(single.link.aglom, k=k3)
+complete.link.aglom.g3 <- cutree(complete.link.aglom, k=k3)
+UPGMA.aglom.g3         <- cutree(UPGMA.aglom, k=k3)
+UPGMC.aglom.g3         <- cutree(UPGMC.aglom, k=k3)
+ward2.aglom.g3         <- cutree(ward2.aglom, k=k3)
+flex.b.g3              <- cutree(flex.b, k=k3)
+
+# 4 cluster
+single.link.aglom.g4   <- cutree(single.link.aglom, k=k4)
+complete.link.aglom.g4 <- cutree(complete.link.aglom, k=k4)
+UPGMA.aglom.g4         <- cutree(UPGMA.aglom, k=k4)
+UPGMC.aglom.g4         <- cutree(UPGMC.aglom, k=k4)
+ward2.aglom.g4         <- cutree(ward2.aglom, k=k4)
+flex.b.g4              <- cutree(flex.b, k=k4)
+
+# 5 cluster
+single.link.aglom.g5   <- cutree(single.link.aglom, k=k5)
+complete.link.aglom.g5 <- cutree(complete.link.aglom, k=k5)
+UPGMA.aglom.g5         <- cutree(UPGMA.aglom, k=k5)
+UPGMC.aglom.g5         <- cutree(UPGMC.aglom, k=k5)
+ward2.aglom.g5         <- cutree(ward2.aglom, k=k5)
+flex.b.g5              <- cutree(flex.b, k=k5)
+
+
+# contingency tables for 3 clusters. I will only compare UPGMA (the best) to single and UPGMC (the next best using coph correlations and gower distances)
+
+# 3 clusters
+table(UPGMA.aglom.g3, single.link.aglom.g3)
+# not a bad match. Both agree that most provinces fall into group 1
+
+table(UPGMA.aglom.g3, UPGMC.aglom.g3)
+# perfect agreement
+
+
+# 4 clusters
+table(UPGMA.aglom.g4, single.link.aglom.g4)
+# high agreement - 16 provs in group 1
+
+table(UPGMA.aglom.g4, UPGMC.aglom.g4)
+# exactly the same as above
+
+
+# 5 clusters
+table(UPGMA.aglom.g5, single.link.aglom.g5)
+# not much agreement
+
+table(UPGMA.aglom.g5, UPGMC.aglom.g5)
+# not much agreement
+
+
+### Tangelgrams ####
+
+# Objects of class "hclust" must be first converted into objects of
+# class "dendrogram"
+UPGMA.dend  <- as.dendrogram(UPGMA.aglom)
+UPGMC.dend  <- as.dendrogram(UPGMC.aglom)
+single.dend <- as.dendrogram(single.link.aglom)
+
+dend1 <- dendlist(UPGMA.dend, UPGMC.dend)
+dend2 <- dendlist(UPGMA.dend, single.dend)
+
+
+tanglegram(
+untangle(dend1),
+sort = TRUE,
+common_subtrees_color_branches = TRUE,
+main_left = "UPGMA",
+main_right = "UPGMC"
+)
+
+
+## UPGMA and UPGMC agree on the following groupings:
+# Rattankiri, Mondulkiri
+# Takeo, Kandal
+# Prey veng, Kampong Cham
+# Preah Sihanouk, Svay Rieng
+# Kampot, Kep
+
+# Pursat, Kampong Chhnang    these two pairs are close together
+# Siem Reap, Kampong Thom
+
+# Otdar Meanchey, Kracheh
+# Battambang, Banteay Meanchey
+
+
+tanglegram(
+untangle(dend2),
+sort = TRUE,
+common_subtrees_color_branches = TRUE,
+main_left = "UPGMA",
+main_right = "Single"
+)
+
+## UPGMA and single agree on the following groups:
+# Mondulkiri, Pailin,
+# Takeo, Kandal
+# Prey Veng, Kampong Cham
+# Svay Rieng, Kampot
+# Pursat, Kampong Chhnang, Siem Reap, Kampong Thom, Kampong Speu
+# Stung Treng, Preah Vihear
+# Otdar Meanchey, Kracheh
+# Battambang, Banteay Meanchey
+
+
+
+
+
+### Matrix correlation ####
+
+# Optimal number of clusters according to matrix correlation
+# statistic (Pearson)
+hc <- UPGMA.dend
+kt <- data.frame(k = 1:nrow(mean.dat), r = 0)
+for (i in 2:(nrow(mean.dat) - 1)) {
+gr <- cutree(hc, i)
+distgr <- grpdist(gr)
+mt <- cor(dist, distgr, method = "pearson")
+kt[i, 2] <- mt
+}
+k.best <- which.max(kt$r)
+plot(
+kt$k,
+kt$r,
+type = "h",
+main = "Matrix correlation-optimal number of clusters",
+xlab = "k (number of clusters)",
+ylab = "Pearson's correlation"
+)
+axis(
+1,
+k.best,
+paste("optimum", k.best, sep = "\n"),
+col = "red",
+font = 2,
+col.axis = "red"
+)
+points(k.best,
+max(kt$r),
+pch = 16,
+col = "red",
+cex = 1.5)
+
+# The plot shows that a partition of 3 to 7 clusters would achieve a high matrix correlation between chord distance matrix and the binary allocation matrix
+
+
+### Final cluster plots ####
+
+# plotting function (from: https://github.com/JoeyBernhardt/NumericalEcology/blob/master/hcoplot.R)
+"hcoplot" <- function(tree, diss, k, 
+	title=paste("Reordered dendrogram from", deparse(tree$call), sep="\n"))
+{
+	require(gclus)
+	gr <- cutree(tree, k=k)
+	tor <- reorder.hclust(tree, diss)
+	plot(tor, hang=-1, xlab=paste(length(gr),"sites"), sub=paste(k,"clusters"), 
+		main=title)
+	so <- gr[tor$order]
+	gro <- numeric(k)
+	for (i in 1:k)
+	{
+		gro[i] <- so[1]
+		if (i<k) so <- so[so!=gro[i]]
+	}
+	rect.hclust(tor, k=k, border=gro+1, cluster=gr)
+	legend("topright", paste("Cluster",1:k), pch=22, col=2:(k+1), bty="n")
+}
+
+
+par(mfrow=c(2,2))
+
+# Fast method using the additional hcoplot() function:
+hcoplot(UPGMA.aglom, dist, k = 4)
+hcoplot(UPGMA.aglom, dist, k = 5)
+hcoplot(UPGMA.aglom, dist, k = 6)
+hcoplot(UPGMA.aglom, dist, k = 7)
+
+# Based on the above plots, I think that 5 clusters is probably the best partitioning. If you go to 6 clusters, you split up Mondulkiri and Ratanikiri which doesn't make sense in the dendogram, or in reality. But then splitting by 6 and 7 clusters splits up the 6 provinces on the far right into smaller pair groups, which is interesting. 
+
+# re-order clusters
+cr <- reorder.hclust(UPGMA.aglom, dist)
+
+# set number of clusters
+k4 <- 4
+k5 <- 5
+k6 <- 6
+
+# Plot reordered dendrogram with group labels - 4 groups
+plot(
+cr,
+hang = -1,
+xlab = "4 groups",
+sub = "",
+ylab = "Height",
+main = "UPGMA (reordered)",
+labels = cutree(cr, k = k4)
+)
+rect.hclust(cr, k = k4)
+# Plot the final dendrogram with group colors (RGBCMY...)
+
+
+
+### K-means with random start ####
+
+# use if you have a pre-determined number of clusters
+
+# I decided 5 was good before so I'll start with that
+
+dist.kmeans <- kmeans(dist, centers = 5, nstart = 100)
