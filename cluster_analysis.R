@@ -57,9 +57,11 @@ provs <- provs[! provs %in% "Phnom Penh"]
 dist <- vegdist(mean.dat,"euc")
 
 # attach province names
-attr(dist, "labels") <- provs
+#attr(dist, "labels") <- provs
 
-
+# set row names to be provinces, which means they will be included in later plots as the labels
+mean.dat <- as.data.frame(mean.dat)
+row.names(mean.dat) <- provs
 
 
 ## Single linkage agglomerative clusering (nearest neighbour sorting) ####
@@ -581,31 +583,143 @@ hcoplot(UPGMA.aglom, dist, k = 5)
 hcoplot(UPGMA.aglom, dist, k = 6)
 hcoplot(UPGMA.aglom, dist, k = 7)
 
+hcoplot(single.link.aglom, dist, k = 4)
+hcoplot(single.link.aglom, dist, k = 5)
+hcoplot(single.link.aglom, dist, k = 6)
+hcoplot(single.link.aglom, dist, k = 7)
+
 # Based on the above plots, I think that 5 clusters is probably the best partitioning. If you go to 6 clusters, you split up Mondulkiri and Ratanikiri which doesn't make sense in the dendogram, or in reality. But then splitting by 6 and 7 clusters splits up the 6 provinces on the far right into smaller pair groups, which is interesting. 
 
-# re-order clusters
-cr <- reorder.hclust(UPGMA.aglom, dist)
 
-# set number of clusters
-k4 <- 4
-k5 <- 5
-k6 <- 6
+# Bar plot dendrograms with coloured branches
 
-# Plot reordered dendrogram with group labels - 4 groups
-plot(
-cr,
-hang = -1,
-xlab = "4 groups",
-sub = "",
-ylab = "Height",
-main = "UPGMA (reordered)",
-labels = cutree(cr, k = k4)
+# The "hclust" objects need to be "dendrogram" objects (see tangelgram section above)
+
+# UPGMA - 4 cluster
+UPGMA.dend %>% set("branches_k_color", k = 4) %>% plot
+# Use standard colours for clusters
+clusters <- cutree(UPGMA.dend, 4)[order.dendrogram(UPGMA.dend)]
+
+UPGMA.dend %>%
+set("branches_k_color", k = 4, value = unique(clusters) + 1) %>%
+plot(main="UPGMA, 4 clusters")
+# Add a coloured bar
+colored_bars(clusters + 1,
+y_shift = -2.5,
+text_shift = 1.5,
+rowLabels = "")
+
+# UPGMA - 5 cluster
+UPGMA.dend %>% set("branches_k_color", k = 5) %>% plot
+# Use standard colours for clusters
+clusters <- cutree(UPGMA.dend, 5)[order.dendrogram(UPGMA.dend)]
+
+UPGMA.dend %>%
+set("branches_k_color", k = 5, value = unique(clusters) + 1) %>%
+plot(main="UPGMA, 5 clusters")
+# Add a coloured bar
+colored_bars(clusters + 1,
+y_shift = -2.5,
+text_shift = 0.1,
+rowLabels = "")
+
+# Single link - 4 cluster
+single.dend %>% set("branches_k_color", k = 4) %>% plot
+# Use standard colours for clusters
+clusters <- cutree(single.dend, 4)[order.dendrogram(single.dend)]
+single.dend %>%
+set("branches_k_color", k = 4, value = unique(clusters) + 1) %>%
+plot(main="Single link, 4 clusters")
+# Add a coloured bar
+colored_bars(clusters + 1,
+y_shift = -1.5,
+text_shift = 0.1,
+rowLabels = "")
+
+# Single link - 5 cluster
+single.dend %>% set("branches_k_color", k = 5) %>% plot
+# Use standard colours for clusters
+clusters <- cutree(single.dend, 5)[order.dendrogram(single.dend)]
+single.dend %>%
+set("branches_k_color", k = 5, value = unique(clusters) + 1) %>%
+plot(main="Single link, 5 clusters")
+# Add a coloured bar
+colored_bars(clusters + 1,
+y_shift = -1.5,
+text_shift = 0.1,
+rowLabels = "")
+
+
+
+## setting custom colours. 
+
+# example
+# Color in function of the cluster
+par(mar=c(12,1,1,1))
+dend %>%
+  set("labels_col", value = c("skyblue", "orange", "grey"), k=3) %>%
+  set("branches_k_color", value = c("skyblue", "orange", "grey"), k = 3) %>%
+  plot(horiz=TRUE, axes=FALSE)
+abline(v = 350, lty = 2)
+
+UPGMA.dend %>%
+  set("labels_col", value = c("chartreuse3", "cyan4", "darkorange", "seagreen"), k=4) %>%
+  set("branches_k_color", value = c("chartreuse3", "cyan4", "darkorange", "seagreen"), k = 4) %>%
+  plot
+colored_bars(colors = cols, UPGMA.dend)
+
+cols <- c("chartreuse3","chartreuse3","cyan4","darkorange","darkorange","darkorange","darkorange",
+          "seagreen","seagreen","seagreen","seagreen","seagreen","seagreen","seagreen","seagreen","seagreen",
+          "seagreen","seagreen","seagreen","seagreen","seagreen","seagreen","seagreen")
+
+
+# set colours
+cols <- c("blue","green","orange","red")
+
+clusters <- cutree(UPGMA.dend, 4)[order.dendrogram(UPGMA.dend)]
+
+# for UPGMA, 4 clusters
+UPGMA.dend %>% 
+  set("labels_col", value = cols, k=4) %>% 
+  set("branches_k_color", value = cols, k=4) %>% 
+  plot()
+
+
+k4 <- cutree(UPGMA.dend, k=4)[order.dendrogram(UPGMA.dend)]
+plot(UPGMA.dend)
+cols <- c("blue","green","orange","red")[k4]
+colored_bars(cols, UPGMA.dend)
+
+
+
+rows_picking <- c(1:5, 25:30)
+dend <- (iris[rows_picking, -5] * 10) %>%
+  dist() %>%
+  hclust() %>%
+  as.dendrogram()
+odd_numbers <- rows_picking %% 2
+cols <- c("gold", "grey")[odd_numbers + 1]
+# scale is off
+plot(dend)
+colored_bars(cols, dend)
+# move and scale a bit
+plot(dend)
+colored_bars(cols, dend,
+  y_shift = -1,
+  rowLabels = "Odd\n numbers"
 )
-rect.hclust(cr, k = k4)
-# Plot the final dendrogram with group colors (RGBCMY...)
+# Now let's cut the tree and add that info to the plot:
+k2 <- cutree(dend, k = 2)
+cols2 <- c("#0082CE", "#CC476B")[k2]
+plot(dend)
+colored_bars(cols2,dend)
+colored_bars(cbind(cols2, cols), dend,
+  rowLabels = c("2 clusters", "Odd numbers"))
 
 
 
+
+#
 ### K-means with random start ####
 
 # use if you have a pre-determined number of clusters
