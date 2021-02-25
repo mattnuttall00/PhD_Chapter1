@@ -57,7 +57,7 @@ provs <- provs[! provs %in% "Phnom Penh"]
 dist <- vegdist(mean.dat,"euc")
 
 # attach province names
-#attr(dist, "labels") <- provs
+attr(dist, "labels") <- provs
 
 # set row names to be provinces, which means they will be included in later plots as the labels
 mean.dat <- as.data.frame(mean.dat)
@@ -727,3 +727,33 @@ colored_bars(cbind(cols2, cols), dend,
 # I decided 5 was good before so I'll start with that
 
 dist.kmeans <- kmeans(dist, centers = 5, nstart = 100)
+
+table(dist.kmeans$cluster, UPGMA.aglom.g5)
+# they are not that similar. Some agreement on clusters 3 and 5
+
+### K-means - cascadeKM - iteratively run kmeans with different number of groups ####
+
+## inf.gr and sup.gr are the min and max number of cluster for the function to try 
+# using ssi statistic
+dist.kM.cascade <- cascadeKM(dist, inf.gr = 2, sup.gr = 10, iter = 100, criterion = "ssi")
+summary(dist.kM.cascade)
+plot(dist.kM.cascade, sortg=TRUE)
+
+# using calinksi
+dist.kM.cascade.2 <- cascadeKM(dist, inf.gr = 2, sup.gr = 10, iter = 100, criterion = "calinski")
+plot(dist.kM.cascade.2, sortg=TRUE)
+
+# the documentation for cascadeKM() says that calinksi should not be used if the groups are not of equal size, which based on the above plots, they are not. Therefore the ssi criterion is probably better.
+
+
+### re-order data based on the kmeans (using 9 groups)
+
+# first run k-means with k=9
+dist.kM.k9 <- kmeans(dist, centers = 9, nstart = 100)
+k9.clus <- dist.kM.k9$cluster
+
+# attach provinces and cluster back onto main data
+mean.dat$province <- provs
+mean.dat$cluster <- k9.clus 
+
+mean.dat <- mean.dat %>% arrange(cluster)
