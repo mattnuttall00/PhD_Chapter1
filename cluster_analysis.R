@@ -757,3 +757,42 @@ mean.dat$province <- provs
 mean.dat$cluster <- k9.clus 
 
 mean.dat <- mean.dat %>% arrange(cluster)
+
+
+### Comparing typology of provinces ####
+
+
+# first test anova assumptions for the socioecon vars
+  shapiro.test(resid(aov(mean.dat$tot_pop ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$land_confl ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$Pax_migt_in ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$Pax_migt_out ~ as.factor(mean.dat$cluster)))) # no
+  shapiro.test(resid(aov(mean.dat$prop_ind ~ as.factor(mean.dat$cluster)))) # no
+  shapiro.test(resid(aov(mean.dat$pop_den ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$M6_24_sch ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$propPrimSec ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$propSecSec ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$Les1_R_Land ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$pig_fam ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$dist_sch ~ as.factor(mean.dat$cluster)))) # no
+  shapiro.test(resid(aov(mean.dat$garbage ~ as.factor(mean.dat$cluster)))) # no
+  shapiro.test(resid(aov(mean.dat$KM_Comm ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(mean.dat$crim_case ~ as.factor(mean.dat$cluster)))) # fine
+
+# test homogeneity of variances (have to exclude cluster 1 as there is only one province in that cluster)
+bartlett.test(mean.dat$tot_pop[mean.dat$cluster != 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$land_confl[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$Pax_migt_in[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) #fine
+bartlett.test(mean.dat$pop_den[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$M6_24_sch[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1]))# fine
+bartlett.test(mean.dat$propPrimSec[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$propSecSec[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$Les1_R_Land[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(mean.dat$pig_fam[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # NO
+bartlett.test(mean.dat$KM_Comm[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # NO
+bartlett.test(mean.dat$crim_case[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+
+# anovas
+
+
+              
