@@ -885,6 +885,8 @@ test.df <- rbind(test.df,kw.df)
 
 test.df %>% filter(Pval > 0.05)
 
+# tukey post-hoc test
+
   ## plots ####
 
 # load in updated Province shapefile
@@ -918,7 +920,52 @@ prov.shp$KHETTRN
 st_write(prov.shp, "Spatial_data/province_cluster.shp")
 
 
-# plot based on cluster
-ggplot(prov.shp,aes(group=cluster, fill=cluster))+
-  geom_sf()+
-  scale_fill_viridis(discrete=TRUE, option = "C")
+# plot map based on cluster
+kmean.map <- ggplot(prov.shp,aes(group=cluster, fill=cluster))+
+              geom_sf()+
+              scale_fill_brewer(palette = "Set1")+
+              theme(panel.background = element_blank())
+
+ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20, width = 20, units = "cm",
+       dpi=300)
+
+
+## plot the variable means for each cluster
+
+# remove the columns I don't want to mean
+dat_prov_clus <- dat_prov %>% select(!c(year,diffPix,Province))
+
+# group by cluster and calculate cluster means
+#dat_prov_clus <- dat_prov_clus %>% group_by(cluster) %>% 
+                  #summarise_all(mean)
+
+dat_prov_clus$cluster <- as.factor(dat_prov_clus$cluster)
+dat_prov_clus <- dat_prov_clus %>% rename(Cluster=cluster)
+
+## plot
+
+# areaKM
+ggplot(dat_prov_clus, aes(x=Cluster, y=areaKM, group=Cluster, fill=Cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab(expression(Province~area~(km^{-2})))+
+  xlab("Cluster (K-means)")
+# provinces within clusters tend to have similar areas. The exception is cluster 3 (but it is one of the largest clusters)
+
+# ForPix
+ggplot(dat_prov_clus, aes(x=Cluster, y=ForPix, group=Cluster, fill=Cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Forest pixels")+
+  xlab("Cluster (K-means)")
+
+# tot_pop
+ggplot(dat_prov_clus, aes(x=Cluster, y=tot_pop, group=Cluster, fill=Cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Total population")+
+  xlab("Cluster (K-means)")
+
