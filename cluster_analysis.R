@@ -18,6 +18,8 @@ library(colorspace)
 library(agricolae)
 library(picante)
 library(tidyverse)
+library(sf)
+library(viridis)
 
 # Function to compute a binary dissimilarity matrix from clusters (from book)
 grpdist <- function(X) {
@@ -762,70 +764,81 @@ mean.dat <- mean.dat %>% arrange(cluster)
 ### Comparing typology of provinces ####
   ## anovas & KW tests ####
 
+## I want to use the un-scaled province data for testing and plotting
+
+# get the mean values across all years (i.e. one variable value per province)
+dat_prov <- dat_prov %>% group_by(Province) %>% summarise_all(mean) 
+
+# remove PP
+dat_prov <- dat_prov %>% filter(Province != "Phnom Penh")
+
+# attach the cluster
+dat_prov$cluster <- k9.clus
+
 # first test anova assumptions for the socioecon vars
-  shapiro.test(resid(aov(mean.dat$tot_pop ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$land_confl ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$Pax_migt_in ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$Pax_migt_out ~ as.factor(mean.dat$cluster)))) # no
-  shapiro.test(resid(aov(mean.dat$prop_ind ~ as.factor(mean.dat$cluster)))) # no
-  shapiro.test(resid(aov(mean.dat$pop_den ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$M6_24_sch ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$propPrimSec ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$propSecSec ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$Les1_R_Land ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$pig_fam ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$dist_sch ~ as.factor(mean.dat$cluster)))) # no
-  shapiro.test(resid(aov(mean.dat$garbage ~ as.factor(mean.dat$cluster)))) # no
-  shapiro.test(resid(aov(mean.dat$KM_Comm ~ as.factor(mean.dat$cluster)))) # fine
-  shapiro.test(resid(aov(mean.dat$crim_case ~ as.factor(mean.dat$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$tot_pop ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$land_confl ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$Pax_migt_in ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$Pax_migt_out ~ as.factor(dat_prov$cluster)))) # no
+  shapiro.test(resid(aov(dat_prov$prop_ind ~ as.factor(dat_prov$cluster)))) # no
+  shapiro.test(resid(aov(dat_prov$pop_den ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$M6_24_sch ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$propPrimSec ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$propSecSec ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$Les1_R_Land ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$pig_fam ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$dist_sch ~ as.factor(dat_prov$cluster)))) # no
+  shapiro.test(resid(aov(dat_prov$garbage ~ as.factor(dat_prov$cluster)))) # no
+  shapiro.test(resid(aov(dat_prov$KM_Comm ~ as.factor(dat_prov$cluster)))) # fine
+  shapiro.test(resid(aov(dat_prov$crim_case ~ as.factor(dat_prov$cluster)))) # fine
 
 # test homogeneity of variances (have to exclude cluster 1 as there is only one province in that cluster)
-bartlett.test(mean.dat$tot_pop[mean.dat$cluster != 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$land_confl[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$Pax_migt_in[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) #fine
-bartlett.test(mean.dat$pop_den[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$M6_24_sch[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1]))# fine
-bartlett.test(mean.dat$propPrimSec[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$propSecSec[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$Les1_R_Land[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
-bartlett.test(mean.dat$pig_fam[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # NO
-bartlett.test(mean.dat$KM_Comm[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # NO
-bartlett.test(mean.dat$crim_case[mean.dat$cluster!= 1], as.factor(mean.dat$cluster[mean.dat$cluster!=1])) # fine
+bartlett.test(dat_prov$tot_pop[dat_prov$cluster != 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$land_confl[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$Pax_migt_in[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) #fine
+bartlett.test(dat_prov$pop_den[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$M6_24_sch[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1]))# fine
+bartlett.test(dat_prov$propPrimSec[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$propSecSec[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$Les1_R_Land[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
+bartlett.test(dat_prov$pig_fam[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # NO
+bartlett.test(dat_prov$KM_Comm[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # NO
+bartlett.test(dat_prov$crim_case[dat_prov$cluster!= 1], as.factor(dat_prov$cluster[dat_prov$cluster!=1])) # fine
 
 # anovas (tot_pop, land_confl,Pax_migt_in,pop_den,M6_24_sch,propPrimSec,propSecSec,Les1_R_Land,crim_case)
-aov.tot_pop <- aov(tot_pop ~ as.factor(cluster), data = mean.dat)
+aov.tot_pop <- aov(tot_pop ~ as.factor(cluster), data = dat_prov)
 tot_pop.f <- summary(aov.tot_pop)[[1]][1,4]
 tot_pop.p <- summary(aov.tot_pop)[[1]][1,5]
 
-aov.land_confl <- aov(land_confl ~ as.factor(cluster), data = mean.dat)
+aov.land_confl <- aov(land_confl ~ as.factor(cluster), data = dat_prov)
 land_confl.f <- summary(aov.land_confl)[[1]][1,4]
 land_confl.p <- summary(aov.land_confl)[[1]][1,5]
 
-aov.Pax_migt_in <- aov(Pax_migt_in ~ as.factor(cluster), data = mean.dat)
+aov.Pax_migt_in <- aov(Pax_migt_in ~ as.factor(cluster), data = dat_prov)
 Pax_migt_in.f <- summary(aov.Pax_migt_in)[[1]][1,4]
 Pax_migt_in.p <- summary(aov.Pax_migt_in)[[1]][1,5]
 
-aov.pop_den <- aov(pop_den ~ as.factor(cluster), data = mean.dat)
+aov.pop_den <- aov(pop_den ~ as.factor(cluster), data = dat_prov)
 pop_den.f <- summary(aov.pop_den)[[1]][1,4]
 pop_den.p <- summary(aov.pop_den)[[1]][1,5]
 
-aov.M6_24_sch <- aov(M6_24_sch ~ as.factor(cluster), data = mean.dat)
+aov.M6_24_sch <- aov(M6_24_sch ~ as.factor(cluster), data = dat_prov)
 M6_24_sch.f <- summary(aov.M6_24_sch)[[1]][1,4]
 M6_24_sch.p <- summary(aov.M6_24_sch)[[1]][1,5]
 
-aov.propPrimSec <- aov(propPrimSec ~ as.factor(cluster), data = mean.dat)
+aov.propPrimSec <- aov(propPrimSec ~ as.factor(cluster), data = dat_prov)
 propPrimSec.f <- summary(aov.propPrimSec)[[1]][1,4]
 propPrimSec.p <- summary(aov.propPrimSec)[[1]][1,5]
 
-aov.propSecSec <- aov(propSecSec ~ as.factor(cluster), data = mean.dat)
+aov.propSecSec <- aov(propSecSec ~ as.factor(cluster), data = dat_prov)
 propSecSec.f <- summary(aov.propSecSec)[[1]][1,4]
 propSecSec.p <- summary(aov.propSecSec)[[1]][1,5]
 
-aov.Les1_R_Land <- aov(Les1_R_Land ~ as.factor(cluster), data = mean.dat)
+aov.Les1_R_Land <- aov(Les1_R_Land ~ as.factor(cluster), data = dat_prov)
 Les1_R_Land.f <- summary(aov.Les1_R_Land)[[1]][1,4]
 Les1_R_Land.p <- summary(aov.Les1_R_Land)[[1]][1,5]
 
-aov.crim_case <- aov(crim_case ~ as.factor(cluster), data = mean.dat)
+aov.crim_case <- aov(crim_case ~ as.factor(cluster), data = dat_prov)
 crim_case.f <- summary(aov.crim_case)[[1]][1,4]
 crim_case.p <- summary(aov.crim_case)[[1]][1,5]
 
@@ -839,27 +852,27 @@ test.df <- data.frame(variable = c("tot_pop","land_confl","Pax_migt_in","pop_den
 
 
 # Kruskal-Wallis tests (Pax_migt_out,prop_ind,dist_sch,garbage,pig_fam,KM_Comm)
-kw.Pax_migt_out <- kruskal.test(Pax_migt_out ~ as.factor(cluster), data = mean.dat)
+kw.Pax_migt_out <- kruskal.test(Pax_migt_out ~ as.factor(cluster), data = dat_prov)
 Pax_migt_out.csq <- as.vector(kw.Pax_migt_out$statistic)
 Pax_migt_out.p <- kw.Pax_migt_out$p.value
 
-kw.prop_ind <- kruskal.test(prop_ind ~ as.factor(cluster), data = mean.dat)
+kw.prop_ind <- kruskal.test(prop_ind ~ as.factor(cluster), data = dat_prov)
 prop_ind.csq <- as.vector(kw.prop_ind$statistic)
 prop_ind.p <- kw.prop_ind$p.value
 
-kw.dist_sch <- kruskal.test(dist_sch ~ as.factor(cluster), data = mean.dat)
+kw.dist_sch <- kruskal.test(dist_sch ~ as.factor(cluster), data = dat_prov)
 dist_sch.csq <- as.vector(kw.dist_sch$statistic)
 dist_sch.p <- kw.dist_sch$p.value
 
-kw.garbage <- kruskal.test(garbage ~ as.factor(cluster), data = mean.dat)
+kw.garbage <- kruskal.test(garbage ~ as.factor(cluster), data = dat_prov)
 garbage.csq <- as.vector(kw.garbage$statistic)
 garbage.p <- kw.garbage$p.value
 
-kw.pig_fam <- kruskal.test(pig_fam ~ as.factor(cluster), data = mean.dat)
+kw.pig_fam <- kruskal.test(pig_fam ~ as.factor(cluster), data = dat_prov)
 pig_fam.csq <- as.vector(kw.pig_fam$statistic)
 pig_fam.p <- kw.pig_fam$p.value
 
-kw.KM_Comm <- kruskal.test(KM_Comm ~ as.factor(cluster), data = mean.dat)
+kw.KM_Comm <- kruskal.test(KM_Comm ~ as.factor(cluster), data = dat_prov)
 KM_Comm.csq <- as.vector(kw.KM_Comm$statistic)
 KM_Comm.p <- kw.KM_Comm$p.value
 
@@ -874,7 +887,38 @@ test.df %>% filter(Pval > 0.05)
 
   ## plots ####
 
-mean.dat$cluster <- as.factor(mean.dat$cluster)
+# load in updated Province shapefile
+prov.shp <- st_read('Spatial_data/province_cluster.shp')
+prov.shp$cluster <- as.factor(prov.shp$cluster)
+
+# plot using ggplot
+ggplot(prov.shp)+
+  geom_sf()
+
+## NO need to do the below each time (continue after "save shapefile")
+
+# remove PP & Tonle Sap
+prov.shp <- prov.shp %>% filter(KHETTRN != "Phnom Penh")
+nrow(prov.shp)
+prov.shp <- prov.shp %>% filter(KHETTRN != "Tonle Sap")
+
+# standardise Province names
+prov.shp[1,4] <- "Ratanak Kiri"
+prov.shp[3,4] <- "Otdar Meanchey"
+prov.shp[8,4] <- "Mondul Kiri"
+prov.shp[9,4] <- "Kracheh"
+prov.shp[19,4] <- "Preah Sihanouk"
+prov.shp[21,4] <- "Pailin"
+
+# add cluster
+prov.shp$cluster <- dat_prov$cluster[match(prov.shp$KHETTRN,dat_prov$Province)]
+prov.shp$KHETTRN
+
+# save shapefile
+st_write(prov.shp, "Spatial_data/province_cluster.shp")
 
 
-ggplot(mean.dat)
+# plot based on cluster
+ggplot(prov.shp,aes(group=cluster, fill=cluster))+
+  geom_sf()+
+  scale_fill_viridis(discrete=TRUE, option = "C")
