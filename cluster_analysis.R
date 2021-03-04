@@ -20,6 +20,7 @@ library(picante)
 library(tidyverse)
 library(sf)
 library(viridis)
+library(patchwork)
 
 # Function to compute a binary dissimilarity matrix from clusters (from book)
 grpdist <- function(X) {
@@ -887,7 +888,34 @@ test.df %>% filter(Pval > 0.05)
 
 # tukey post-hoc test
 
+  ## Tukey post-hoc tests ####
+
+# The anovas and KW tests have confirmed that there are some differences between the variable values of the provinces, but I want to know which are different. 
+
+# you first have to run a lm(), then an aov(), then the Tueky test
+
+## population demographics
+# total population
+tot_pop.lm <- lm(tot_pop ~ cluster, data=dat_prov)
+tot_pop.aov <- aov(tot_pop.lm)
+aov.tot_pop.Tuk <- HSD.test(tot_pop.aov, "cluster", group = TRUE)
+
+# proportion indigenous
+prop_ind.lm <- lm(prop_ind ~ cluster, data=dat_prov)
+prop_ind.aov <- aov(prop_ind.lm)
+aov.prop_ind.Tuk <- HSD.test(prop_ind.aov, "cluster", group = TRUE)
+aov.prop_ind.Tuk
+
+# population density
+pop_den.lm <- lm(pop_den ~ cluster, data=dat_prov)
+pop_den.aov <- aov(pop_den.lm)
+aov.pop_den.Tuk <- HSD.test(pop_den.aov, "cluster", group = TRUE)
+aov.pop_den.Tuk
+
+
+
   ## plots ####
+    # maps ####
 
 # load in updated Province shapefile
 prov.shp <- st_read('Spatial_data/province_cluster.shp')
@@ -930,22 +958,26 @@ ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20,
        dpi=300)
 
 
+    # variable plots ####
+
 ## plot the variable means for each cluster
 
 # remove the columns I don't want to mean
-dat_prov_clus <- dat_prov %>% select(!c(year,diffPix,Province))
+#dat_prov_clus <- dat_prov %>% select(!c(year,diffPix,Province))
 
 # group by cluster and calculate cluster means
 #dat_prov_clus <- dat_prov_clus %>% group_by(cluster) %>% 
                   #summarise_all(mean)
 
-dat_prov_clus$cluster <- as.factor(dat_prov_clus$cluster)
-dat_prov_clus <- dat_prov_clus %>% rename(Cluster=cluster)
+#dat_prov_clus$cluster <- as.factor(dat_prov_clus$cluster)
+#dat_prov_clus <- dat_prov_clus %>% rename(Cluster=cluster)
+
+dat_prov$cluster <- as.factor(dat_prov$cluster)
 
 ## plot
 
 # areaKM
-ggplot(dat_prov_clus, aes(x=Cluster, y=areaKM, group=Cluster, fill=Cluster))+
+ggplot(dat_prov, aes(x=cluster, y=areaKM, group=cluster, fill=cluster))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
@@ -954,18 +986,72 @@ ggplot(dat_prov_clus, aes(x=Cluster, y=areaKM, group=Cluster, fill=Cluster))+
 # provinces within clusters tend to have similar areas. The exception is cluster 3 (but it is one of the largest clusters)
 
 # ForPix
-ggplot(dat_prov_clus, aes(x=Cluster, y=ForPix, group=Cluster, fill=Cluster))+
+ggplot(dat_prov, aes(x=cluster, y=ForPix, group=cluster, fill=cluster))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
   ylab("Forest pixels")+
   xlab("Cluster (K-means)")
 
+
+## population demographics
 # tot_pop
-ggplot(dat_prov_clus, aes(x=Cluster, y=tot_pop, group=Cluster, fill=Cluster))+
+tot_pop_plot <- ggplot(dat_prov, aes(x=cluster, y=tot_pop, group=cluster, fill=cluster))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
   ylab("Total population")+
-  xlab("Cluster (K-means)")
+  xlab("Cluster (K-means)")+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$tot_pop[dat_prov$cluster==1])+70000, label="c")+
+  annotate("text", x=2, y=max(dat_prov$tot_pop[dat_prov$cluster==2])+70000, label="c")+
+  annotate("text", x=3, y=max(dat_prov$tot_pop[dat_prov$cluster==3])+70000, label="b")+
+  annotate("text", x=4, y=max(dat_prov$tot_pop[dat_prov$cluster==4])+70000, label="c")+
+  annotate("text", x=5, y=max(dat_prov$tot_pop[dat_prov$cluster==5])+70000, label="ab")+
+  annotate("text", x=6, y=max(dat_prov$tot_pop[dat_prov$cluster==6])+70000, label="b")+
+  annotate("text", x=7, y=max(dat_prov$tot_pop[dat_prov$cluster==7])+70000, label="c")+
+  annotate("text", x=8, y=max(dat_prov$tot_pop[dat_prov$cluster==8])+70000, label="a")+
+  annotate("text", x=9, y=max(dat_prov$tot_pop[dat_prov$cluster==9])+70000, label="bc")
 
+# prop_ind
+prop_ind_plot <- ggplot(dat_prov, aes(x=cluster, y=prop_ind, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion indigenous")+
+  xlab("Cluster (K-means)")+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$prop_ind[dat_prov$cluster==1])+0.05, label="b")+
+  annotate("text", x=2, y=max(dat_prov$prop_ind[dat_prov$cluster==2])+0.05, label="a")+
+  annotate("text", x=3, y=max(dat_prov$prop_ind[dat_prov$cluster==3])+0.05, label="b")+
+  annotate("text", x=4, y=max(dat_prov$prop_ind[dat_prov$cluster==4])+0.05, label="b")+
+  annotate("text", x=5, y=max(dat_prov$prop_ind[dat_prov$cluster==5])+0.05, label="b")+
+  annotate("text", x=6, y=max(dat_prov$prop_ind[dat_prov$cluster==6])+0.05, label="b")+
+  annotate("text", x=7, y=max(dat_prov$prop_ind[dat_prov$cluster==7])+0.05, label="b")+
+  annotate("text", x=8, y=max(dat_prov$prop_ind[dat_prov$cluster==8])+0.05, label="b")+
+  annotate("text", x=9, y=max(dat_prov$prop_ind[dat_prov$cluster==9])+0.05, label="b")
+
+# pop_den
+pop_den_plot <- ggplot(dat_prov, aes(x=cluster, y=pop_den, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Population density")+
+  xlab("Cluster (K-means)")+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$pop_den[dat_prov$cluster==1])+30, label="b")+
+  annotate("text", x=2, y=max(dat_prov$pop_den[dat_prov$cluster==2])+30, label="b")+
+  annotate("text", x=3, y=max(dat_prov$pop_den[dat_prov$cluster==3])+30, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$pop_den[dat_prov$cluster==4])+30, label="b")+
+  annotate("text", x=5, y=max(dat_prov$pop_den[dat_prov$cluster==5])+30, label="a")+
+  annotate("text", x=6, y=max(dat_prov$pop_den[dat_prov$cluster==6])+30, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$pop_den[dat_prov$cluster==7])+30, label="ab")+
+  annotate("text", x=8, y=max(dat_prov$pop_den[dat_prov$cluster==8])+30, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$pop_den[dat_prov$cluster==9])+30, label="ab")
+
+# grouped plot - map and population demographic plots
+pop_demog_plot <- (kmean.map + tot_pop_plot)  / (prop_ind_plot + pop_den_plot)
+
+
+# reduce margin space
+pop_demog_plot + theme(plot.margin = unit(c(0,0,0,0), "cm"))
