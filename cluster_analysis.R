@@ -947,6 +947,69 @@ aov.pig_fam.Tuk <- HSD.test(pig_fam.aov, "cluster", group = TRUE)
 aov.pig_fam.Tuk
 
 
+### access to services
+# dist_sch
+dist_sch.lm <- lm(dist_sch ~ cluster, data=dat_prov)
+dist_sch.aov <- aov(dist_sch.lm)
+aov.dist_sch.Tuk <- HSD.test(dist_sch.aov, "cluster", group = TRUE)
+aov.dist_sch.Tuk
+
+# garbage
+garbage.lm <- lm(garbage ~ cluster, data=dat_prov)
+garbage.aov <- aov(garbage.lm)
+aov.garbage.Tuk <- HSD.test(garbage.aov, "cluster", group = TRUE)
+aov.garbage.Tuk
+
+# KM_Comm
+KM_Comm.lm <- lm(KM_Comm ~ cluster, data=dat_prov)
+KM_Comm.aov <- aov(KM_Comm.lm)
+aov.KM_Comm.Tuk <- HSD.test(KM_Comm.aov, "cluster", group = TRUE)
+aov.KM_Comm.Tuk
+
+
+### social justice
+# crim_case
+crim_case.lm <- lm(crim_case ~ cluster, data=dat_prov)
+crim_case.aov <- aov(crim_case.lm)
+aov.crim_case.Tuk <- HSD.test(crim_case.aov, "cluster", group = TRUE)
+aov.crim_case.Tuk
+
+# land_confl
+land_confl.lm <- lm(land_confl ~ cluster, data=dat_prov)
+land_confl.aov <- aov(land_confl.lm)
+aov.land_confl.Tuk <- HSD.test(land_confl.aov, "cluster", group = TRUE)
+aov.land_confl.Tuk
+
+
+### migration
+# Pax_migt_in
+Pax_migt_in.lm <- lm(Pax_migt_in ~ cluster, data=dat_prov)
+Pax_migt_in.aov <- aov(Pax_migt_in.lm)
+aov.Pax_migt_in.Tuk <- HSD.test(Pax_migt_in.aov, "cluster", group = TRUE)
+aov.Pax_migt_in.Tuk
+
+# Pax_migt_out
+Pax_migt_out.lm <- lm(Pax_migt_out ~ cluster, data=dat_prov)
+Pax_migt_out.aov <- aov(Pax_migt_out.lm)
+aov.Pax_migt_out.Tuk <- HSD.test(Pax_migt_out.aov, "cluster", group = TRUE)
+aov.Pax_migt_out.Tuk
+
+
+### environmental
+# mean_elev
+mean_elev.lm <- lm(mean_elev ~ cluster, data=dat_prov)
+mean_elev.aov <- aov(mean_elev.lm)
+aov.mean_elev.Tuk <- HSD.test(mean_elev.aov, "cluster", group = TRUE)
+aov.mean_elev.Tuk
+
+
+### human additional
+# dist_border
+dist_border.lm <- lm(dist_border ~ cluster, data=dat_prov)
+dist_border.aov <- aov(dist_border.lm)
+aov.dist_border.Tuk <- HSD.test(dist_border.aov, "cluster", group = TRUE)
+aov.dist_border.Tuk
+
   ## plots ####
     # maps ####
 
@@ -1021,7 +1084,8 @@ dat_prov$cluster <- as.factor(dat_prov$cluster)
 
 ## plot
 
-# areaKM
+      # areaKM ####
+
 ggplot(dat_prov, aes(x=cluster, y=areaKM, group=cluster, fill=cluster))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
@@ -1039,7 +1103,8 @@ ggplot(dat_prov, aes(x=cluster, y=ForPix, group=cluster, fill=cluster))+
   xlab("Cluster (K-means)")
 
 
-## population demographics
+      # population demographics ####
+
 # tot_pop
 tot_pop_plot <- ggplot(dat_prov, aes(x=cluster, y=tot_pop, group=cluster, fill=cluster))+
   geom_boxplot()+
@@ -1099,7 +1164,8 @@ pop_demog_plot <- (kmean.map + tot_pop_plot)  / (prop_ind_plot + pop_den_plot)
 # the more rural provinces have lower total population, and thsoe surrounding PP and tonle sap are higher. ONly MDK and RTK have signficantly different prop_ind - much higher than anywhere else. the other "remote" cluster (Stung Treng, Preah Vihear etc) have some variation of prop_ind, but not sig different from the others. The cluster around PP has sig differnet pop_den compared to all other clusters which is expected. clusters 1 and 2 (MDK/RTK + ST/PVH etc) plus the Pailin cluster are in their own group of low pop_den. The rest of the clusters sit in the middle
 
 
-### education
+      # education ####
+
 # M6_24_sch
 M6_24_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=M6_24_sch, group=cluster, fill=cluster))+
   geom_boxplot()+
@@ -1118,11 +1184,12 @@ M6_24_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=M6_24_sch, group=cluster, fi
   annotate("text", x=8, y=max(dat_prov$M6_24_sch[dat_prov$cluster==8])+0.01, label="a")+
   annotate("text", x=9, y=max(dat_prov$M6_24_sch[dat_prov$cluster==9])+0.01, label="a")
 
-# grouped plot - map and population demographic plots
+# grouped plot - map and plots
 edu_plot <- kmean.map + M6_24_sch_plot
 # cluster 2 (MDK/RTK) is in it's own low group, and the clusters around PP plus kep and kampot are in a high group. clusters 6 (around TS), 4 (Pailin), 3 (western 2), and 1 (PVH/ST etc) are in the middle
 
-### employment
+      # employment ####
+
 # propPrimSec
 propPrimSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propPrimSec, group=cluster, fill=cluster))+
   geom_boxplot()+
@@ -1161,12 +1228,13 @@ propSecSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propSecSec, group=cluster, 
   annotate("text", x=8, y=max(dat_prov$propSecSec[dat_prov$cluster==8])+0.003, label="b")+
   annotate("text", x=9, y=max(dat_prov$propSecSec[dat_prov$cluster==9])+0.003, label="b")
 
-# grouped plot - map and population demographic plots
+# grouped plot - map and plots
 emp_plot <- kmean.map | propPrimSec_plot / propSecSec_plot
 # There is no sig difference between any of the clusters for propPrimSec. There are only two groups for prpoSecSec - cluster 5 (around PP) which is relatively high propSecSec, and then the rest are low. But all values of propSecSec are super low
 
 
-### economic security
+      # economic security ####
+
 # Les1_R_Land
 Les1_R_Land_plot <- ggplot(dat_prov, aes(x=cluster, y=Les1_R_Land, group=cluster, fill=cluster))+
   geom_boxplot()+
@@ -1205,6 +1273,207 @@ pig_fam_plot <- ggplot(dat_prov, aes(x=cluster, y=pig_fam, group=cluster, fill=c
   annotate("text", x=8, y=max(dat_prov$pig_fam[dat_prov$cluster==8])+0.04, label="a")+
   annotate("text", x=9, y=max(dat_prov$pig_fam[dat_prov$cluster==9])+0.04, label="a")
 
-# grouped plot - map and population demographic plots
+# grouped plot - map and plots
 econ_plot <- kmean.map | Les1_R_Land_plot / pig_fam_plot
 # two distinct groups for rice land - very low Les1_R_Land for cluster 1 (PVH/ST etc), cluster 2 (MDK/RTK), cluster 3 (western 2), and pailin. This means that in these provinces, very few people have no farm land. This is expected as they are very rural and there is still lots of land. Cluster 5 (around PP) is in its own group and has high Les1_R_Land values (i.e. is very urbanised). Cluster 6-9 are also very high, but sit in a middle group. Interestingly, there is no sig difference in pig_fam. 
+
+
+      # access to services ####
+
+# dist_sch
+dist_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=dist_sch, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Distance to school (KM)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$dist_sch[dat_prov$cluster==1])+1, label="b")+
+  annotate("text", x=2, y=max(dat_prov$dist_sch[dat_prov$cluster==2])+1, label="a")+
+  annotate("text", x=3, y=max(dat_prov$dist_sch[dat_prov$cluster==3])+1, label="c")+
+  annotate("text", x=4, y=max(dat_prov$dist_sch[dat_prov$cluster==4])+1, label="c")+
+  annotate("text", x=5, y=max(dat_prov$dist_sch[dat_prov$cluster==5])+1, label="c")+
+  annotate("text", x=6, y=max(dat_prov$dist_sch[dat_prov$cluster==6])+1, label="c")+
+  annotate("text", x=7, y=max(dat_prov$dist_sch[dat_prov$cluster==7])+1, label="c")+
+  annotate("text", x=8, y=max(dat_prov$dist_sch[dat_prov$cluster==8])+1, label="c")+
+  annotate("text", x=9, y=max(dat_prov$dist_sch[dat_prov$cluster==9])+1, label="c")
+
+# garbage
+garbage_plot <- ggplot(dat_prov, aes(x=cluster, y=garbage, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Poportion with access to waste disposal")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$garbage[dat_prov$cluster==1])+0.005, label="a")+
+  annotate("text", x=2, y=max(dat_prov$garbage[dat_prov$cluster==2])+0.005, label="a")+
+  annotate("text", x=3, y=max(dat_prov$garbage[dat_prov$cluster==3])+0.005, label="a")+
+  annotate("text", x=4, y=max(dat_prov$garbage[dat_prov$cluster==4])+0.005, label="a")+
+  annotate("text", x=5, y=max(dat_prov$garbage[dat_prov$cluster==5])+0.005, label="a")+
+  annotate("text", x=6, y=max(dat_prov$garbage[dat_prov$cluster==6])+0.005, label="a")+
+  annotate("text", x=7, y=max(dat_prov$garbage[dat_prov$cluster==7])+0.005, label="a")+
+  annotate("text", x=8, y=max(dat_prov$garbage[dat_prov$cluster==8])+0.005, label="a")+
+  annotate("text", x=9, y=max(dat_prov$garbage[dat_prov$cluster==9])+0.005, label="a")
+
+# KM_Comm
+KM_Comm_plot <- ggplot(dat_prov, aes(x=cluster, y=KM_Comm, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Mean distance to Commune office")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$KM_Comm[dat_prov$cluster==1])+0.5, label="ab")+
+  annotate("text", x=2, y=max(dat_prov$KM_Comm[dat_prov$cluster==2])+0.5, label="a")+
+  annotate("text", x=3, y=max(dat_prov$KM_Comm[dat_prov$cluster==3])+0.5, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$KM_Comm[dat_prov$cluster==4])+0.5, label="ab")+
+  annotate("text", x=5, y=max(dat_prov$KM_Comm[dat_prov$cluster==5])+0.5, label="b")+
+  annotate("text", x=6, y=max(dat_prov$KM_Comm[dat_prov$cluster==6])+0.5, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$KM_Comm[dat_prov$cluster==7])+0.5, label="b")+
+  annotate("text", x=8, y=max(dat_prov$KM_Comm[dat_prov$cluster==8])+0.5, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$KM_Comm[dat_prov$cluster==9])+0.5, label="b")
+
+# grouped plot - map and plots
+acc_serv_plot <- (kmean.map + dist_sch_plot)  / (garbage_plot + KM_Comm_plot)
+# clusters 1 and 2 have sig different (larger) distances to school, and all the other clusters are the same. No sig difference between clusters for access to waste disposal. cluster 2 has sig difference (higher) distance to KM office. South east clusters have their own low group, and then all the others are in between. 
+
+
+      # social justice ####
+
+# crim_case
+crim_case_plot <- ggplot(dat_prov, aes(x=cluster, y=crim_case, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Criminal cases per capita")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$crim_case[dat_prov$cluster==1])+0.001, label="b")+
+  annotate("text", x=2, y=max(dat_prov$crim_case[dat_prov$cluster==2])+0.001, label="b")+
+  annotate("text", x=3, y=max(dat_prov$crim_case[dat_prov$cluster==3])+0.001, label="b")+
+  annotate("text", x=4, y=max(dat_prov$crim_case[dat_prov$cluster==4])+0.001, label="a")+
+  annotate("text", x=5, y=max(dat_prov$crim_case[dat_prov$cluster==5])+0.001, label="b")+
+  annotate("text", x=6, y=max(dat_prov$crim_case[dat_prov$cluster==6])+0.001, label="b")+
+  annotate("text", x=7, y=max(dat_prov$crim_case[dat_prov$cluster==7])+0.001, label="b")+
+  annotate("text", x=8, y=max(dat_prov$crim_case[dat_prov$cluster==8])+0.001, label="b")+
+  annotate("text", x=9, y=max(dat_prov$crim_case[dat_prov$cluster==9])+0.001, label="b")
+
+# land_confl
+land_confl_plot <- ggplot(dat_prov, aes(x=cluster, y=land_confl, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Land conflict cases")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$land_confl[dat_prov$cluster==1])+200, label="d")+
+  annotate("text", x=2, y=max(dat_prov$land_confl[dat_prov$cluster==2])+200, label="d")+
+  annotate("text", x=3, y=max(dat_prov$land_confl[dat_prov$cluster==3])+200, label="bcd")+
+  annotate("text", x=4, y=max(dat_prov$land_confl[dat_prov$cluster==4])+200, label="d")+
+  annotate("text", x=5, y=max(dat_prov$land_confl[dat_prov$cluster==5])+200, label="ab")+
+  annotate("text", x=6, y=max(dat_prov$land_confl[dat_prov$cluster==6])+200, label="bc")+
+  annotate("text", x=7, y=max(dat_prov$land_confl[dat_prov$cluster==7])+200, label="d")+
+  annotate("text", x=8, y=max(dat_prov$land_confl[dat_prov$cluster==8])+200, label="a")+
+  annotate("text", x=9, y=max(dat_prov$land_confl[dat_prov$cluster==9])+200, label="cd")
+
+# grouped plot - map and plots
+soc_jus_plot <- kmean.map | crim_case_plot / land_confl_plot
+# no sig diff between crim cases between any cluster excpet 4 (pailin) which has significantly higher crim cases than any other cluster. land confl is more complex - south east clusters have sig higher number of conflict cases, followed by central tonle sap cluster, then western cluster, south coast, and then all the rural clusters are together with very few.  
+
+      # Migration ####
+
+# Pax_migt_in
+Pax_migt_in_plot <- ggplot(dat_prov, aes(x=cluster, y=Pax_migt_in, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Number of in-migrants")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==1])+2000, label="c")+
+  annotate("text", x=2, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==2])+2000, label="c")+
+  annotate("text", x=3, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==3])+2000, label="b")+
+  annotate("text", x=4, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==4])+2000, label="c")+
+  annotate("text", x=5, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==5])+2000, label="b")+
+  annotate("text", x=6, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==6])+2000, label="bc")+
+  annotate("text", x=7, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==7])+2000, label="c")+
+  annotate("text", x=8, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==8])+2000, label="a")+
+  annotate("text", x=9, y=max(dat_prov$Pax_migt_in[dat_prov$cluster==9])+2000, label="b")
+
+# Pax_migt_out
+Pax_migt_out_plot <- ggplot(dat_prov, aes(x=cluster, y=Pax_migt_out, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Number of out-migrants")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==1])+2000, label="c")+
+  annotate("text", x=2, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==2])+2000, label="c")+
+  annotate("text", x=3, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==3])+2000, label="a")+
+  annotate("text", x=4, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==4])+2000, label="c")+
+  annotate("text", x=5, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==5])+2000, label="bc")+
+  annotate("text", x=6, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==6])+2000, label="bc")+
+  annotate("text", x=7, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==7])+2000, label="c")+
+  annotate("text", x=8, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==8])+2000, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$Pax_migt_out[dat_prov$cluster==9])+2000, label="c")
+
+
+# grouped plot - map and plots
+mig_plot <- kmean.map | Pax_migt_in_plot / Pax_migt_out_plot
+# clusters around PP have lots of in-migs, whicih makes sense, but so does the western cluster which I don't have a reason for. Remote and coastal clusters have low in-mig.  The western cluster has massive out-mig, which I also don't have a reason for. All the rest have quite low out-mig, although clusters around PP and TS are a bit higher 
+
+      # Environmental ####
+
+# mean_elev
+mean_elev_plot <- ggplot(dat_prov, aes(x=cluster, y=mean_elev, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Mean elevation (m)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$mean_elev[dat_prov$cluster==1])+20, label="b")+
+  annotate("text", x=2, y=max(dat_prov$mean_elev[dat_prov$cluster==2])+20, label="a")+
+  annotate("text", x=3, y=max(dat_prov$mean_elev[dat_prov$cluster==3])+20, label="b")+
+  annotate("text", x=4, y=max(dat_prov$mean_elev[dat_prov$cluster==4])+20, label="a")+
+  annotate("text", x=5, y=max(dat_prov$mean_elev[dat_prov$cluster==5])+20, label="b")+
+  annotate("text", x=6, y=max(dat_prov$mean_elev[dat_prov$cluster==6])+20, label="b")+
+  annotate("text", x=7, y=max(dat_prov$mean_elev[dat_prov$cluster==7])+20, label="b")+
+  annotate("text", x=8, y=max(dat_prov$mean_elev[dat_prov$cluster==8])+20, label="b")+
+  annotate("text", x=9, y=max(dat_prov$mean_elev[dat_prov$cluster==9])+20, label="b")
+
+# grouped plot - map and plots
+env_plot <- kmean.map + mean_elev_plot
+# Cluster 2 (MDK/RTK) and Palin sig different (higher) than all the others. Koh kong obvioulsy being dragged down by all the other provs in the cluster
+
+      # Human additional ####
+
+# dist_border
+dist_border_plot <- ggplot(dat_prov, aes(x=cluster, y=dist_border, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Distance to border (km)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$dist_border[dat_prov$cluster==1])+20, label="b")+
+  annotate("text", x=2, y=max(dat_prov$dist_border[dat_prov$cluster==2])+20, label="b")+
+  annotate("text", x=3, y=max(dat_prov$dist_border[dat_prov$cluster==3])+20, label="b")+
+  annotate("text", x=4, y=max(dat_prov$dist_border[dat_prov$cluster==4])+20, label="b")+
+  annotate("text", x=5, y=max(dat_prov$dist_border[dat_prov$cluster==5])+20, label="b")+
+  annotate("text", x=6, y=max(dat_prov$dist_border[dat_prov$cluster==6])+20, label="a")+
+  annotate("text", x=7, y=max(dat_prov$dist_border[dat_prov$cluster==7])+20, label="b")+
+  annotate("text", x=8, y=max(dat_prov$dist_border[dat_prov$cluster==8])+20, label="b")+
+  annotate("text", x=9, y=max(dat_prov$dist_border[dat_prov$cluster==9])+20, label="b")
+
