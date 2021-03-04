@@ -919,6 +919,33 @@ M6_24_sch.aov <- aov(M6_24_sch.lm)
 aov.M6_24_sch.Tuk <- HSD.test(M6_24_sch.aov, "cluster", group = TRUE)
 aov.M6_24_sch.Tuk
 
+### employment
+# propPrimSec
+propPrimSec.lm <- lm(propPrimSec ~ cluster, data=dat_prov)
+propPrimSec.aov <- aov(propPrimSec.lm)
+aov.propPrimSec.Tuk <- HSD.test(propPrimSec.aov, "cluster", group = TRUE)
+aov.propPrimSec.Tuk
+
+# propSecSec
+propSecSec.lm <- lm(propSecSec ~ cluster, data=dat_prov)
+propSecSec.aov <- aov(propSecSec.lm)
+aov.propSecSec.Tuk <- HSD.test(propSecSec.aov, "cluster", group = TRUE)
+aov.propSecSec.Tuk
+
+
+### economic securtiy
+# Les1_R_Land
+Les1_R_Land.lm <- lm(Les1_R_Land ~ cluster, data=dat_prov)
+Les1_R_Land.aov <- aov(Les1_R_Land.lm)
+aov.Les1_R_Land.Tuk <- HSD.test(Les1_R_Land.aov, "cluster", group = TRUE)
+aov.Les1_R_Land.Tuk
+
+# pig_fam
+pig_fam.lm <- lm(pig_fam ~ cluster, data=dat_prov)
+pig_fam.aov <- aov(pig_fam.lm)
+aov.pig_fam.Tuk <- HSD.test(pig_fam.aov, "cluster", group = TRUE)
+aov.pig_fam.Tuk
+
 
   ## plots ####
     # maps ####
@@ -1069,6 +1096,7 @@ pop_den_plot <- ggplot(dat_prov, aes(x=cluster, y=pop_den, group=cluster, fill=c
 
 # grouped plot - map and population demographic plots
 pop_demog_plot <- (kmean.map + tot_pop_plot)  / (prop_ind_plot + pop_den_plot)
+# the more rural provinces have lower total population, and thsoe surrounding PP and tonle sap are higher. ONly MDK and RTK have signficantly different prop_ind - much higher than anywhere else. the other "remote" cluster (Stung Treng, Preah Vihear etc) have some variation of prop_ind, but not sig different from the others. The cluster around PP has sig differnet pop_den compared to all other clusters which is expected. clusters 1 and 2 (MDK/RTK + ST/PVH etc) plus the Pailin cluster are in their own group of low pop_den. The rest of the clusters sit in the middle
 
 
 ### education
@@ -1092,3 +1120,91 @@ M6_24_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=M6_24_sch, group=cluster, fi
 
 # grouped plot - map and population demographic plots
 edu_plot <- kmean.map + M6_24_sch_plot
+# cluster 2 (MDK/RTK) is in it's own low group, and the clusters around PP plus kep and kampot are in a high group. clusters 6 (around TS), 4 (Pailin), 3 (western 2), and 1 (PVH/ST etc) are in the middle
+
+### employment
+# propPrimSec
+propPrimSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propPrimSec, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion employed in the primary sector")+
+  xlab("Cluster (K-means)")+
+  ylim(0.25,1.2)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$propPrimSec[dat_prov$cluster==1])+0.1, label="a")+
+  annotate("text", x=2, y=max(dat_prov$propPrimSec[dat_prov$cluster==2])+0.1, label="a")+
+  annotate("text", x=3, y=max(dat_prov$propPrimSec[dat_prov$cluster==3])+0.1, label="a")+
+  annotate("text", x=4, y=max(dat_prov$propPrimSec[dat_prov$cluster==4])+0.1, label="a")+
+  annotate("text", x=5, y=max(dat_prov$propPrimSec[dat_prov$cluster==5])+0.1, label="a")+
+  annotate("text", x=6, y=max(dat_prov$propPrimSec[dat_prov$cluster==6])+0.1, label="a")+
+  annotate("text", x=7, y=max(dat_prov$propPrimSec[dat_prov$cluster==7])+0.1, label="a")+
+  annotate("text", x=8, y=max(dat_prov$propPrimSec[dat_prov$cluster==8])+0.1, label="a")+
+  annotate("text", x=9, y=max(dat_prov$propPrimSec[dat_prov$cluster==9])+0.1, label="a")
+
+# propSecSec
+propSecSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propSecSec, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion employed in the secondary sector")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$propSecSec[dat_prov$cluster==1])+0.003, label="b")+
+  annotate("text", x=2, y=max(dat_prov$propSecSec[dat_prov$cluster==2])+0.003, label="b")+
+  annotate("text", x=3, y=max(dat_prov$propSecSec[dat_prov$cluster==3])+0.003, label="b")+
+  annotate("text", x=4, y=max(dat_prov$propSecSec[dat_prov$cluster==4])+0.003, label="b")+
+  annotate("text", x=5, y=max(dat_prov$propSecSec[dat_prov$cluster==5])+0.003, label="a")+
+  annotate("text", x=6, y=max(dat_prov$propSecSec[dat_prov$cluster==6])+0.003, label="b")+
+  annotate("text", x=7, y=max(dat_prov$propSecSec[dat_prov$cluster==7])+0.003, label="b")+
+  annotate("text", x=8, y=max(dat_prov$propSecSec[dat_prov$cluster==8])+0.003, label="b")+
+  annotate("text", x=9, y=max(dat_prov$propSecSec[dat_prov$cluster==9])+0.003, label="b")
+
+# grouped plot - map and population demographic plots
+emp_plot <- kmean.map | propPrimSec_plot / propSecSec_plot
+# There is no sig difference between any of the clusters for propPrimSec. There are only two groups for prpoSecSec - cluster 5 (around PP) which is relatively high propSecSec, and then the rest are low. But all values of propSecSec are super low
+
+
+### economic security
+# Les1_R_Land
+Les1_R_Land_plot <- ggplot(dat_prov, aes(x=cluster, y=Les1_R_Land, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion with no farm land")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==1])+0.03, label="b")+
+  annotate("text", x=2, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==2])+0.03, label="b")+
+  annotate("text", x=3, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==3])+0.03, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==4])+0.03, label="b")+
+  annotate("text", x=5, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==5])+0.03, label="a")+
+  annotate("text", x=6, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==6])+0.03, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==7])+0.03, label="ab")+
+  annotate("text", x=8, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==8])+0.03, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$Les1_R_Land[dat_prov$cluster==9])+0.03, label="ab")
+
+# pig_fam
+pig_fam_plot <- ggplot(dat_prov, aes(x=cluster, y=pig_fam, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion with pigs")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$pig_fam[dat_prov$cluster==1])+0.04, label="a")+
+  annotate("text", x=2, y=max(dat_prov$pig_fam[dat_prov$cluster==2])+0.04, label="a")+
+  annotate("text", x=3, y=max(dat_prov$pig_fam[dat_prov$cluster==3])+0.04, label="a")+
+  annotate("text", x=4, y=max(dat_prov$pig_fam[dat_prov$cluster==4])+0.04, label="a")+
+  annotate("text", x=5, y=max(dat_prov$pig_fam[dat_prov$cluster==5])+0.04, label="a")+
+  annotate("text", x=6, y=max(dat_prov$pig_fam[dat_prov$cluster==6])+0.04, label="a")+
+  annotate("text", x=7, y=max(dat_prov$pig_fam[dat_prov$cluster==7])+0.04, label="a")+
+  annotate("text", x=8, y=max(dat_prov$pig_fam[dat_prov$cluster==8])+0.04, label="a")+
+  annotate("text", x=9, y=max(dat_prov$pig_fam[dat_prov$cluster==9])+0.04, label="a")
+
+# grouped plot - map and population demographic plots
+econ_plot <- kmean.map | Les1_R_Land_plot / pig_fam_plot
+# two distinct groups for rice land - very low Les1_R_Land for cluster 1 (PVH/ST etc), cluster 2 (MDK/RTK), cluster 3 (western 2), and pailin. This means that in these provinces, very few people have no farm land. This is expected as they are very rural and there is still lots of land. Cluster 5 (around PP) is in its own group and has high Les1_R_Land values (i.e. is very urbanised). Cluster 6-9 are also very high, but sit in a middle group. Interestingly, there is no sig difference in pig_fam. 
