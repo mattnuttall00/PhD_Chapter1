@@ -894,7 +894,7 @@ test.df %>% filter(Pval > 0.05)
 
 # you first have to run a lm(), then an aov(), then the Tueky test
 
-## population demographics
+### population demographics
 # total population
 tot_pop.lm <- lm(tot_pop ~ cluster, data=dat_prov)
 tot_pop.aov <- aov(tot_pop.lm)
@@ -912,6 +912,12 @@ pop_den.aov <- aov(pop_den.lm)
 aov.pop_den.Tuk <- HSD.test(pop_den.aov, "cluster", group = TRUE)
 aov.pop_den.Tuk
 
+### education
+# proportion males in school
+M6_24_sch.lm <- lm(M6_24_sch ~ cluster, data=dat_prov)
+M6_24_sch.aov <- aov(M6_24_sch.lm)
+aov.M6_24_sch.Tuk <- HSD.test(M6_24_sch.aov, "cluster", group = TRUE)
+aov.M6_24_sch.Tuk
 
 
   ## plots ####
@@ -927,25 +933,37 @@ ggplot(prov.shp)+
 
 ## NO need to do the below each time (continue after "save shapefile")
 
+# load in province shapefile
+khet <- st_read('Spatial_data/boundary_khet.shp')
+str(khet)
+
 # remove PP & Tonle Sap
-prov.shp <- prov.shp %>% filter(KHETTRN != "Phnom Penh")
-nrow(prov.shp)
-prov.shp <- prov.shp %>% filter(KHETTRN != "Tonle Sap")
+khet <- khet %>% filter(KHETTRN != "Phnom Penh")
+khet <- khet %>% filter(KHETTRN != "Tonle Sap")
+nrow(khet)
 
 # standardise Province names
-prov.shp[1,4] <- "Ratanak Kiri"
-prov.shp[3,4] <- "Otdar Meanchey"
-prov.shp[8,4] <- "Mondul Kiri"
-prov.shp[9,4] <- "Kracheh"
-prov.shp[19,4] <- "Preah Sihanouk"
-prov.shp[21,4] <- "Pailin"
+khet[1,4] <- "Ratanak Kiri"
+khet[3,4] <- "Otdar Meanchey"
+khet[8,4] <- "Mondul Kiri"
+khet[9,4] <- "Kracheh"
+khet[19,4] <- "Preah Sihanouk"
+khet[21,4] <- "Pailin"
 
 # add cluster
-prov.shp$cluster <- dat_prov$cluster[match(prov.shp$KHETTRN,dat_prov$Province)]
-prov.shp$KHETTRN
+khet$cluster <- dat_prov$cluster[match(khet$KHETTRN,dat_prov$Province)]
+khet$KHETTRN
+
+# check
+test.df <- data.frame(prov_shp = khet$KHETTRN,
+                      shp_cluster = as.vector(khet$cluster),
+                      prov_dat = dat_prov$Province,
+                      dat_cluster = dat_prov$cluster,
+                      prov_old = prov.shp$KHETTRN,
+                      old_cluster = prov.shp$cluster)
 
 # save shapefile
-st_write(prov.shp, "Spatial_data/province_cluster.shp")
+st_write(khet, "Spatial_data/province_cluster.shp", append = FALSE)
 
 
 # plot map based on cluster
@@ -1053,5 +1071,24 @@ pop_den_plot <- ggplot(dat_prov, aes(x=cluster, y=pop_den, group=cluster, fill=c
 pop_demog_plot <- (kmean.map + tot_pop_plot)  / (prop_ind_plot + pop_den_plot)
 
 
-# reduce margin space
-pop_demog_plot + theme(plot.margin = unit(c(0,0,0,0), "cm"))
+### education
+# M6_24_sch
+M6_24_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=M6_24_sch, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Proportion of males (aged 6-24) in education")+
+  xlab("Cluster (K-means)")+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$M6_24_sch[dat_prov$cluster==1])+0.01, label="ab")+
+  annotate("text", x=2, y=max(dat_prov$M6_24_sch[dat_prov$cluster==2])+0.01, label="b")+
+  annotate("text", x=3, y=max(dat_prov$M6_24_sch[dat_prov$cluster==3])+0.01, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$M6_24_sch[dat_prov$cluster==4])+0.01, label="ab")+
+  annotate("text", x=5, y=max(dat_prov$M6_24_sch[dat_prov$cluster==5])+0.01, label="a")+
+  annotate("text", x=6, y=max(dat_prov$M6_24_sch[dat_prov$cluster==6])+0.01, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$M6_24_sch[dat_prov$cluster==7])+0.01, label="a")+
+  annotate("text", x=8, y=max(dat_prov$M6_24_sch[dat_prov$cluster==8])+0.01, label="a")+
+  annotate("text", x=9, y=max(dat_prov$M6_24_sch[dat_prov$cluster==9])+0.01, label="a")
+
+# grouped plot - map and population demographic plots
+edu_plot <- kmean.map + M6_24_sch_plot
