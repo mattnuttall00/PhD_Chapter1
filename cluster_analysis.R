@@ -1665,9 +1665,75 @@ write.csv(prov.Clus, file="Results/Cluster_analysis/k_means/provinces_clusters.c
 
 ### now I want to make a heatmap
 
-# remove "x" and columns
+# remove "x" columns and year, province, tot_pop, diffPix
 dat_prov <- dat_prov %>% select(!c(X.1,X))
+dat_prov <- dat_prov %>% select(!c(year,Province))
+dat_prov <- dat_prov %>% select(!c(tot_pop, diffPix))
+
+# now I need to scale the vars
+dat_prov.s <- dat_prov %>% mutate_at(c("land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
+                             "pop_den", "M6_24_sch", "propPrimSec", "propSecSec","Les1_R_Land", 
+                             "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case","ForPix",
+                             "areaKM","dist_provCap","dist_border","mean_elev"),
+                             ~(scale(.) %>% as.vector))
+
+# Mean the variables for clusters
+dat_prov.m <- dat_prov.s %>% group_by(cluster) %>% summarise_all(mean)
+
+# re-order vars
+dat_prov.m <- dat_prov.m %>% select(cluster,
+                                    mean_elev,areaKM,dist_provCap,dist_border,ForPix,
+                                    pop_den,prop_ind,
+                                    M6_24_sch,
+                                    propPrimSec,propSecSec,
+                                    Les1_R_Land,pig_fam,
+                                    dist_sch,garbage,KM_Comm,
+                                    crim_case,land_confl,
+                                    Pax_migt_in,Pax_migt_out)
+
+# put dat_prov into long format
+dat_prov.l <- melt(dat_prov.m)
+
+# add column that groups variables into sets
+physchar <- c("mean_elev","areaKM","dist_provCap","dist_border","ForPix")
+popdem <- c("pop_den","prop_ind")
+edu <- "M6_24_sch"
+emp <- c("propPrimSec","propSecSec")
+econ <- c("Les1_R_Land","pig_fam")
+acc <- c("dist_sch","garbage","KM_Comm")
+soc <- c("crim_case","land_confl")
+mig <- c("Pax_migt_in","Pax_migt_out")
+
+dat_prov.l$set <- ifelse(dat_prov.l$variable %in% physchar,1,
+                    ifelse(dat_prov.l$variable %in% popdem,2,
+                      ifelse(dat_prov.l$variable %in% edu,3,
+                        ifelse(dat_prov.l$variable %in% emp,4,
+                          ifelse(dat_prov.l$variable %in% econ,5,
+                            ifelse(dat_prov.l$variable %in% acc,6,
+                              ifelse(dat_prov.l$variable %in% soc,7,
+                                ifelse(dat_prov.l$variable %in% mig,8,NA))))))))  
+
+# re-order
+#dat_prov.l <- dat_prov.l %>% arrange(set)
+
+# heatmap
+ggplot(dat_prov.l, aes(x=cluster, y=variable, group=set))+
+  geom_tile(aes(fill=value))+
+  scale_fill_gradient(low="white", high="red")
 
 
-# first I need to put dat_prov into long format
-dat_prov_l <- melt(dat_prov)
+# physical characteristics - cluster 1, 2, 4 have higher elevation, all the rest are low.  Clustes 3, 5, 6, 8 have high distance to border values, all others are low. Clusters 1, 2, 6, 8 have high distance to provincial capital values, the others are low. Clusters 1, 2, 3, 6, 8 are made up of provinces with larger areas. Clusters 1, 2, and 6 have high forest cover values.
+
+# population demographics - clusters 1, 2, 4, 6 have low population density, and clusters 3, 5, 7, 8, 9 have high population density. Clusters 1 and 2 have high proportion of indigneous people, and all the other clusters are very low.
+
+# education - clusters 1, 2 and 6 are low levels of education.  All other clusters are higher but Cluster 5 and 9 are highest.
+
+# employment - clusters 1, 2, 6, 8, 9 have the highest proprtion of primary sector workers, all the rest are low.. Clusters 4 and 7 have the lowest. CLusters 5 and 4 have the highest proportino of secondary sector workers, all the rest are very low
+
+# economic security - CLusters 1 and 2 have few people with no farm land and lots of people with pigs. clusters 3 adn 4 have low numbers of people with no farm land and low number of people with pigs. cluster 5, 6, 8 have high number of people with no farm land, but low number of people with pigs. cluster 7 and 9 have high numbers of people with no farm land but higher number of people with pigs.
+
+# access to services - Broadly cluster 1 and 2 have higher values for distance to school, and distance to commune office. clusters 3-9 all have low distances to school. clusters 1,3 7, and 9 have higher values of access to garbage collection. clusters 3-9 all have low distances to commune office. 
+
+# social justice - clusters 1, 2, 4, and 7 have higher values of criminal cases, with 4 being very high. clusters 3, 5, 6, 8 all ahve high values of land conflict. 
+
+# migration - clusters 3, 5, 6, 8 all have high levels of in and out migration. cluster 9 has a bit of in-migration. Interestingly, there is a clear pattern between migraiton and land conflict - all clusters that have high migration have high land conflict. 
