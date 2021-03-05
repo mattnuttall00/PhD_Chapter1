@@ -21,6 +21,7 @@ library(tidyverse)
 library(sf)
 library(viridis)
 library(patchwork)
+library(reshape2)
 
 # Function to compute a binary dissimilarity matrix from clusters (from book)
 grpdist <- function(X) {
@@ -1064,6 +1065,22 @@ aov.PA.Tuk
 # as above - doesn't really make sense
 
 
+### forest cover and loss
+# ForPix
+ForPix.lm <- lm(ForPix ~ cluster, data=dat_prov)
+ForPix.aov <- aov(ForPix.lm)
+aov.ForPix.Tuk <- HSD.test(ForPix.aov, "cluster", group = TRUE)
+aov.ForPix.Tuk
+
+# diffPix
+diffPix.lm <- lm(diffPix ~ cluster, data=dat_prov)
+diffPix.aov <- aov(diffPix.lm)
+aov.diffPix.Tuk <- HSD.test(diffPix.aov, "cluster", group = TRUE)
+aov.diffPix.Tuk
+
+
+
+
   ## plots ####
     # maps ####
 
@@ -1591,3 +1608,66 @@ PA_plot <- ggplot(dat_prov, aes(x=cluster, y=PA, group=cluster, fill=cluster))+
 # grouped plot - map and plots
 hum_plot <- kmean.map | dist_border_plot / dist_provCap_plot
 # The distance to border makes sense - cluster 6 s all the interior prvinces, and they are sig diff from all the rest. Distance to provCap is mostly about the size of the provinces in the clusters I think. cluster 1 is the largest provinces and is sig diff from custers 4 and 7 which are the smallest. all the others sit in the middle. 
+      # Forest cover and loss ####
+
+# ForPix
+ForPix_plot <- ggplot(dat_prov, aes(x=cluster, y=ForPix, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Forest cover (pixels)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$ForPix[dat_prov$cluster==1])+10000, label="a")+
+  annotate("text", x=2, y=max(dat_prov$ForPix[dat_prov$cluster==2])+10000, label="a")+
+  annotate("text", x=3, y=max(dat_prov$ForPix[dat_prov$cluster==3])+10000, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$ForPix[dat_prov$cluster==4])+10000, label="ab")+
+  annotate("text", x=5, y=max(dat_prov$ForPix[dat_prov$cluster==5])+10000, label="ab")+
+  annotate("text", x=6, y=max(dat_prov$ForPix[dat_prov$cluster==6])+10000, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$ForPix[dat_prov$cluster==7])+10000, label="ab")+
+  annotate("text", x=8, y=max(dat_prov$ForPix[dat_prov$cluster==8])+10000, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$ForPix[dat_prov$cluster==9])+10000, label="ab")
+
+# diffPix
+diffPix_plot <- ggplot(dat_prov, aes(x=cluster, y=diffPix, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Forest cover loss (pixels)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$diffPix[dat_prov$cluster==1])+150, label="a")+
+  annotate("text", x=2, y=max(dat_prov$diffPix[dat_prov$cluster==2])+150, label="a")+
+  annotate("text", x=3, y=max(dat_prov$diffPix[dat_prov$cluster==3])+150, label="a")+
+  annotate("text", x=4, y=max(dat_prov$diffPix[dat_prov$cluster==4])+150, label="a")+
+  annotate("text", x=5, y=max(dat_prov$diffPix[dat_prov$cluster==5])+150, label="a")+
+  annotate("text", x=6, y=max(dat_prov$diffPix[dat_prov$cluster==6])+150, label="a")+
+  annotate("text", x=7, y=max(dat_prov$diffPix[dat_prov$cluster==7])+150, label="a")+
+  annotate("text", x=8, y=max(dat_prov$diffPix[dat_prov$cluster==8])+150, label="a")+
+  annotate("text", x=9, y=max(dat_prov$diffPix[dat_prov$cluster==9])+150, label="a")
+
+
+# grouped plot - map and plots
+for_plot <- kmean.map | ForPix_plot / diffPix_plot
+
+
+  ## Describing clusters ####
+
+
+# I want to save a table that shows the clusters and the provinces
+provClus <- dat_prov[ ,c("Province","cluster")]
+prov.Clus <- provClus %>% mutate(row=row_number()) %>% 
+              pivot_wider(names_from = cluster, values_from = Province) 
+write.csv(prov.Clus, file="Results/Cluster_analysis/k_means/provinces_clusters.csv")
+
+
+### now I want to make a heatmap
+
+# remove "x" and columns
+dat_prov <- dat_prov %>% select(!c(X.1,X))
+
+
+# first I need to put dat_prov into long format
+dat_prov_l <- melt(dat_prov)
