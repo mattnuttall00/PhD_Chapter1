@@ -31,6 +31,9 @@ distgr
 }
 
 
+## For the agglomerative clustering, and K-means clustering load the data below and produce "dist".  For the dataset with the k-means clusters already attached, skip down to the "comparing typology of provinces" section where you can load the data in
+
+
 # load raw data (unscaled, province level). I want to take the provincial means across all years for all variables from the raw data, and then scale, rather than trying to take the mean across all years from the scaled data
 dat_prov <- read.csv("Data/commune/dat_prov.csv", header = TRUE, stringsAsFactors = TRUE) 
 dat_prov <- dat_prov[, -1]
@@ -765,7 +768,20 @@ mean.dat <- mean.dat %>% arrange(cluster)
 ### Comparing typology of provinces ####
   ## anovas & KW tests ####
 
+# load the data with the vars meaned over all years and the clusters already attached
+dat_prov <- read.csv("Data/commune/dat_prov_clus.csv")
+
+# make cluster factor
+dat_prov$cluster <- as.factor(dat_prov$cluster)
+
+
+
+### DO NOT repeat the below. THis was to create the above file. Skip down to testing anovas
+
 ## I want to use the un-scaled province data for testing and plotting
+
+# load data with no cluster
+dat_prov <- read.csv("Data/commune/dat_prov.csv")
 
 # get the mean values across all years (i.e. one variable value per province)
 dat_prov <- dat_prov %>% group_by(Province) %>% summarise_all(mean) 
@@ -773,8 +789,25 @@ dat_prov <- dat_prov %>% group_by(Province) %>% summarise_all(mean)
 # remove PP
 dat_prov <- dat_prov %>% filter(Province != "Phnom Penh")
 
-# attach the cluster
-dat_prov$cluster <- k9.clus
+# extract province and cluster from shapefile
+t <- data.frame(Province = as.vector(prov.shp$KHETTRN),
+                cluster = as.vector(prov.shp$cluster))
+
+# add cluster to dat_prov
+dat_prov$cluster <- t$cluster[match(dat_prov$Province, t$Province)]
+
+# add ELC presence
+#elcprov <- c("Takeo","Prey Veng","Pailin","Kep","Kandal","Kampong Chhnang","Battambang")
+#dat_prov$elc <- ifelse(dat_prov$Province %in% elcprov, 0, 1)
+
+# add PA presence
+#paprov <- c("Kampong Cham","Kandal","Prey Veng","Svay Rieng")
+#dat_prov$PA <- ifelse(dat_prov$Province %in% paprov, 0,1)
+
+# save dat_prov with cluster, elc, and PA
+write.csv(dat_prov, file="Data/commune/dat_prov_clus.csv")
+
+
 
 # first test anova assumptions for the socioecon vars
   shapiro.test(resid(aov(dat_prov$tot_pop ~ as.factor(dat_prov$cluster)))) # fine
@@ -1009,6 +1042,27 @@ dist_border.lm <- lm(dist_border ~ cluster, data=dat_prov)
 dist_border.aov <- aov(dist_border.lm)
 aov.dist_border.Tuk <- HSD.test(dist_border.aov, "cluster", group = TRUE)
 aov.dist_border.Tuk
+
+# dist_provCap
+dist_provCap.lm <- lm(dist_provCap ~ cluster, data=dat_prov)
+dist_provCap.aov <- aov(dist_provCap.lm)
+aov.dist_provCap.Tuk <- HSD.test(dist_provCap.aov, "cluster", group = TRUE)
+aov.dist_provCap.Tuk
+
+# elc
+elc.lm <- lm(elc ~ cluster, data=dat_prov)
+elc.aov <- aov(elc.lm)
+aov.elc.Tuk <- HSD.test(elc.aov, "cluster", group = TRUE)
+aov.elc.Tuk
+## Doing this for ELC presence is not really meaningful. Either a province has ELCs or it does not, and so when averaging across clusters you end up with ELC presence values of 0.5, which are meaningless. The only way to do it would be to say that if any province in a cluster has an ELC then the value should be 1 for the whole cluster, but I am not sure that is appropriate seeing as some provinces are not spatially contiguous within a cluster.  It just doesn't feel right, so I will leave it out.
+
+# PA
+PA.lm <- lm(PA ~ cluster, data=dat_prov)
+PA.aov <- aov(PA.lm)
+aov.PA.Tuk <- HSD.test(PA.aov, "cluster", group = TRUE)
+aov.PA.Tuk
+# as above - doesn't really make sense
+
 
   ## plots ####
     # maps ####
@@ -1463,7 +1517,7 @@ dist_border_plot <- ggplot(dat_prov, aes(x=cluster, y=dist_border, group=cluster
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
-  ylab("Distance to border (km)")+
+  ylab("Distance to international border (km)")+
   xlab("Cluster (K-means)")+
   #ylim(0,1)+
   theme(legend.position = "none")+
@@ -1477,3 +1531,63 @@ dist_border_plot <- ggplot(dat_prov, aes(x=cluster, y=dist_border, group=cluster
   annotate("text", x=8, y=max(dat_prov$dist_border[dat_prov$cluster==8])+20, label="b")+
   annotate("text", x=9, y=max(dat_prov$dist_border[dat_prov$cluster==9])+20, label="b")
 
+# dist_provCap
+dist_provCap_plot <- ggplot(dat_prov, aes(x=cluster, y=dist_provCap, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("Distance to provincial capital (km)")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$dist_provCap[dat_prov$cluster==1])+5, label="a")+
+  annotate("text", x=2, y=max(dat_prov$dist_provCap[dat_prov$cluster==2])+5, label="ab")+
+  annotate("text", x=3, y=max(dat_prov$dist_provCap[dat_prov$cluster==3])+5, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$dist_provCap[dat_prov$cluster==4])+5, label="b")+
+  annotate("text", x=5, y=max(dat_prov$dist_provCap[dat_prov$cluster==5])+5, label="ab")+
+  annotate("text", x=6, y=max(dat_prov$dist_provCap[dat_prov$cluster==6])+5, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$dist_provCap[dat_prov$cluster==7])+5, label="b")+
+  annotate("text", x=8, y=max(dat_prov$dist_provCap[dat_prov$cluster==8])+5, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$dist_provCap[dat_prov$cluster==9])+5, label="ab")
+
+# elc
+elc_plot <- ggplot(dat_prov, aes(x=cluster, y=elc, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("ELC presence")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$elc[dat_prov$cluster==1])+0.1, label="a")+
+  annotate("text", x=2, y=max(dat_prov$elc[dat_prov$cluster==2])+0.1, label="a")+
+  annotate("text", x=3, y=max(dat_prov$elc[dat_prov$cluster==3])+0.1, label="a")+
+  annotate("text", x=4, y=max(dat_prov$elc[dat_prov$cluster==4])+0.1, label="a")+
+  annotate("text", x=5, y=max(dat_prov$elc[dat_prov$cluster==5])+0.1, label="a")+
+  annotate("text", x=6, y=max(dat_prov$elc[dat_prov$cluster==6])+0.1, label="a")+
+  annotate("text", x=7, y=max(dat_prov$elc[dat_prov$cluster==7])+0.1, label="a")+
+  annotate("text", x=8, y=max(dat_prov$elc[dat_prov$cluster==8])+0.1, label="a")+
+  annotate("text", x=9, y=max(dat_prov$elc[dat_prov$cluster==9])+0.1, label="a")
+
+# PA
+PA_plot <- ggplot(dat_prov, aes(x=cluster, y=PA, group=cluster, fill=cluster))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  ylab("PA presence")+
+  xlab("Cluster (K-means)")+
+  #ylim(0,1)+
+  theme(legend.position = "none")+
+  annotate("text", x=1, y=max(dat_prov$PA[dat_prov$cluster==1])+0.1, label="ab")+
+  annotate("text", x=2, y=max(dat_prov$PA[dat_prov$cluster==2])+0.1, label="a")+
+  annotate("text", x=3, y=max(dat_prov$PA[dat_prov$cluster==3])+0.1, label="ab")+
+  annotate("text", x=4, y=max(dat_prov$PA[dat_prov$cluster==4])+0.1, label="b")+
+  annotate("text", x=5, y=max(dat_prov$PA[dat_prov$cluster==5])+0.1, label="ab")+
+  annotate("text", x=6, y=max(dat_prov$PA[dat_prov$cluster==6])+0.1, label="ab")+
+  annotate("text", x=7, y=max(dat_prov$PA[dat_prov$cluster==7])+0.1, label="ab")+
+  annotate("text", x=8, y=max(dat_prov$PA[dat_prov$cluster==8])+0.1, label="ab")+
+  annotate("text", x=9, y=max(dat_prov$PA[dat_prov$cluster==9])+0.1, label="ab")
+
+# grouped plot - map and plots
+hum_plot <- kmean.map | dist_border_plot / dist_provCap_plot
+# The distance to border makes sense - cluster 6 s all the interior prvinces, and they are sig diff from all the rest. Distance to provCap is mostly about the size of the provinces in the clusters I think. cluster 1 is the largest provinces and is sig diff from custers 4 and 7 which are the smallest. all the others sit in the middle. 
