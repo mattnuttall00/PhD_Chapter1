@@ -1666,9 +1666,7 @@ write.csv(prov.Clus, file="Results/Cluster_analysis/k_means/provinces_clusters.c
 ### now I want to make a heatmap
 
 # remove "x" columns and year, province, tot_pop, diffPix
-dat_prov <- dat_prov %>% select(!c(X.1,X))
-dat_prov <- dat_prov %>% select(!c(year,Province))
-dat_prov <- dat_prov %>% select(!c(tot_pop, diffPix))
+dat_prov <- dat_prov %>% select(!c(X.1,X, year, Province, tot_pop, diffPix))
 
 # now I need to scale the vars
 dat_prov.s <- dat_prov %>% mutate_at(c("land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
@@ -1695,29 +1693,29 @@ dat_prov.m <- dat_prov.m %>% select(cluster,
 dat_prov.l <- melt(dat_prov.m)
 
 # add column that groups variables into sets
-physchar <- c("mean_elev","areaKM","dist_provCap","dist_border","ForPix")
-popdem <- c("pop_den","prop_ind")
-edu <- "M6_24_sch"
-emp <- c("propPrimSec","propSecSec")
-econ <- c("Les1_R_Land","pig_fam")
-acc <- c("dist_sch","garbage","KM_Comm")
-soc <- c("crim_case","land_confl")
-mig <- c("Pax_migt_in","Pax_migt_out")
+#physchar <- c("mean_elev","areaKM","dist_provCap","dist_border","ForPix")
+#popdem <- c("pop_den","prop_ind")
+#edu <- "M6_24_sch"
+#emp <- c("propPrimSec","propSecSec")
+#econ <- c("Les1_R_Land","pig_fam")
+#acc <- c("dist_sch","garbage","KM_Comm")
+#soc <- c("crim_case","land_confl")
+#mig <- c("Pax_migt_in","Pax_migt_out")
 
-dat_prov.l$set <- ifelse(dat_prov.l$variable %in% physchar,1,
-                    ifelse(dat_prov.l$variable %in% popdem,2,
-                      ifelse(dat_prov.l$variable %in% edu,3,
-                        ifelse(dat_prov.l$variable %in% emp,4,
-                          ifelse(dat_prov.l$variable %in% econ,5,
-                            ifelse(dat_prov.l$variable %in% acc,6,
-                              ifelse(dat_prov.l$variable %in% soc,7,
-                                ifelse(dat_prov.l$variable %in% mig,8,NA))))))))  
+#dat_prov.l$set <- ifelse(dat_prov.l$variable %in% physchar,1,
+ #                   ifelse(dat_prov.l$variable %in% popdem,2,
+  #                    ifelse(dat_prov.l$variable %in% edu,3,
+   #                     ifelse(dat_prov.l$variable %in% emp,4,
+    #                      ifelse(dat_prov.l$variable %in% econ,5,
+     #                       ifelse(dat_prov.l$variable %in% acc,6,
+      #                        ifelse(dat_prov.l$variable %in% soc,7,
+       #                         ifelse(dat_prov.l$variable %in% mig,8,NA))))))))  
 
 # re-order
 #dat_prov.l <- dat_prov.l %>% arrange(set)
 
 # heatmap
-ggplot(dat_prov.l, aes(x=cluster, y=variable, group=set))+
+ggplot(dat_prov.l, aes(x=cluster, y=variable))+
   geom_tile(aes(fill=value))+
   scale_fill_gradient(low="white", high="red")
 
@@ -1737,3 +1735,18 @@ ggplot(dat_prov.l, aes(x=cluster, y=variable, group=set))+
 # social justice - clusters 1, 2, 4, and 7 have higher values of criminal cases, with 4 being very high. clusters 3, 5, 6, 8 all ahve high values of land conflict. 
 
 # migration - clusters 3, 5, 6, 8 all have high levels of in and out migration. cluster 9 has a bit of in-migration. Interestingly, there is a clear pattern between migraiton and land conflict - all clusters that have high migration have high land conflict. 
+
+
+
+### I think to make the classification of the typologies less subjective I want to display the heatmap using quantiles. So put each value for each variable/cluster into either the bottom (<25%), middle-bottom (26-50%), middle-top (51-75%), or top (>50%)
+
+## calculate quantiles for each variable using the range for the entire variable
+# remove cluster
+dat_prov.q <- dat_prov.m[,-1]
+
+# get quantiles
+quants <- as.data.frame(apply(dat_prov.q, 2, function(x){quantile(x, probs = c(0.25,0.5,0.75))}))
+
+# change values
+dat_prov.quants <- dat_prov.m %>% 
+                    mutate(mean_elev = ifelse(mean_elev < quants[]))
