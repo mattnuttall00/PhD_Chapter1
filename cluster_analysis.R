@@ -1137,6 +1137,10 @@ ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20,
        dpi=300)
 
 
+
+###
+
+
     # variable plots ####
 
 ## plot the variable means for each cluster
@@ -1654,7 +1658,7 @@ for_plot <- kmean.map | ForPix_plot / diffPix_plot
 
 
   ## Describing clusters ####
-
+      # cluster table ####
 
 # I want to save a table that shows the clusters and the provinces
 provClus <- dat_prov[ ,c("Province","cluster")]
@@ -1662,8 +1666,8 @@ prov.Clus <- provClus %>% mutate(row=row_number()) %>%
               pivot_wider(names_from = cluster, values_from = Province) 
 write.csv(prov.Clus, file="Results/Cluster_analysis/k_means/provinces_clusters.csv")
 
+      # heatmap (k-means) - continuous ####
 
-### now I want to make a heatmap
 
 # remove "x" columns and year, province, tot_pop, diffPix
 dat_prov <- dat_prov %>% select(!c(X.1,X, year, Province, tot_pop, diffPix))
@@ -1747,7 +1751,8 @@ dat_prov.q <- dat_prov.m[,-1]
 # get quantiles
 quants <- as.data.frame(apply(dat_prov.q, 2, function(x){quantile(x, probs = c(0.25,0.5,0.75))}))
 
-        # change values ####
+      # change values to categorical ####
+
 dat_prov.quants <- dat_prov.m %>% 
                     mutate(mean_elev = ifelse(mean_elev < quants$mean_elev[1], "v.low",
                                           ifelse(mean_elev < quants$mean_elev[2], "low",
@@ -1828,7 +1833,7 @@ dat_prov.quants <- dat_prov.m %>%
 
 
 
-        #####
+      # heatmap (k-means) - categorical  ####
 
 # put dat_prov into long format
 dat_prov.ql <- melt(dat_prov.quants, id.vars = "cluster")
@@ -1844,3 +1849,58 @@ dat_prov.ql$value <- factor(dat_prov.ql$value, c("v.high","high","low","v.low"))
 ggplot(dat_prov.ql, aes(x=cluster, y=variable))+
   geom_tile(aes(fill=value))+
   scale_fill_manual(values = cols)
+
+      # heatmap (UPGMA) - continuous ####
+
+# check dat_prov and remove obsolete cols
+dat_prov <- dat_prov %>% select(-c(X.1, X))
+
+# make cluster vectors
+clus1 <- c("Mondul Kiri", "Ratanak Kiri")
+clus2 <- "Pailin"
+clus3 <- c("Kandal", "Takeo", "Kampong Cham", "Prey Veng")
+clus4 <- c("Banteay Meanchey", "Battambang")
+clus5 <- c("Koh Kong","Kracheh","Otdar Meanchey","Preah Vihear","Stung Treng","Preah Sihanouk",
+           "Kampong Chhnang","Pursat","Kampong Speu","Kampong Thom","Siem Reap","Kep","Kampot","Svay Rieng")
+
+# add UPGMA clusters
+dat_prov$agglo.clus <- ifelse(dat_prov$Province %in% clus1, "1",
+                        ifelse(dat_prov$Province %in% clus2, "2",
+                         ifelse(dat_prov$Province %in% clus3, "3",
+                          ifelse(dat_prov$Province %in% clus4, "4", 
+                            ifelse(dat_prov$Province %in% clus5, "5", NA)))))
+
+# now I need to scale the vars
+dat_prov.s <- dat_prov %>% mutate_at(c("land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
+                                       "pop_den", "M6_24_sch", "propPrimSec", "propSecSec","Les1_R_Land", 
+                                       "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case","ForPix",
+                                       "areaKM","dist_provCap","dist_border","mean_elev"),
+                                     ~(scale(.) %>% as.vector))
+
+# remove Province, year, and k-means cluster
+dat_prov.s <- dat_prov.s %>% select(-c(Province,year,cluster))
+
+# Mean the variables for clusters
+dat_prov.m <- dat_prov.s %>% group_by(agglo.clus) %>% summarise_all(mean)
+
+# re-order vars
+dat_prov.m <- dat_prov.m %>% select(agglo.clus,
+                                    mean_elev,areaKM,dist_provCap,dist_border,ForPix,
+                                    pop_den,prop_ind,
+                                    M6_24_sch,
+                                    propPrimSec,propSecSec,
+                                    Les1_R_Land,pig_fam,
+                                    dist_sch,garbage,KM_Comm,
+                                    crim_case,land_confl,
+                                    Pax_migt_in,Pax_migt_out)
+
+# make agglo.clus a factor
+dat_prov.m$agglo.clus <- as.factor(dat_prov.m$agglo.clus)
+
+# put dat_prov into long format
+dat_prov.l <- melt(dat_prov.m)
+
+# heatmap
+ggplot(dat_prov.l, aes(x=agglo.clus, y=variable))+
+  geom_tile(aes(fill=value))+
+  scale_fill_gradient(low="white", high="red")
