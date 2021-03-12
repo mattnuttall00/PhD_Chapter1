@@ -1087,6 +1087,7 @@ aov.diffPix.Tuk
 # load in updated Province shapefile
 prov.shp <- st_read('Spatial_data/province_cluster.shp')
 prov.shp$cluster <- as.factor(prov.shp$cluster)
+prov.shp$agglo_clus <- as.factor(prov.shp$agglo_clus)
 
 # plot using ggplot
 ggplot(prov.shp)+
@@ -1094,21 +1095,32 @@ ggplot(prov.shp)+
 
 # plot map based on k-means cluster
 kmean.map <- ggplot(prov.shp,aes(group=cluster, fill=cluster))+
-  geom_sf()+
-  scale_fill_brewer(palette = "Set1")+
-  theme(panel.background = element_blank())
+              geom_sf()+
+              scale_fill_brewer(palette = "Set1")+
+              theme(panel.background = element_blank(),
+                    legend.key.size = unit(1,'cm'),
+                    legend.title = element_text(size=15),
+                    legend.text = element_text(size = 15))+
+              labs(fill = "K-means Clusters")
 
-#ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20, width = 20, units = "cm",
-       #dpi=300)
+ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20, width = 20, units = "cm",
+       dpi=300)
 
 
 # plot map based on UPGMA cluster
-upgma.map <- ggplot(prov.shp,aes(group=agglo.clus, fill=agglo.clus))+
+cols <- c("darkolivegreen3","cyan3","deepskyblue4","firebrick3","goldenrod3")
+
+upgma.map <- ggplot(prov.shp,aes(group=agglo_clus, fill=agglo_clus))+
   geom_sf()+
-  scale_fill_brewer(palette = "Set1")+
-  theme(panel.background = element_blank())
+  scale_fill_manual(values = cols)+
+  theme(panel.background = element_blank(),
+        legend.key.size = unit(1,'cm'),
+        legend.title = element_text(size=15),
+        legend.text = element_text(size = 15))+
+  labs(fill = "UPGMA Clusters")
 
-
+ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_map.png", upgma.map, height = 20, width = 20, units = "cm",
+       dpi=300)
 
 
       # add k-means and UPGMA clusters to shapefile (don't repeat) ####
@@ -1171,6 +1183,8 @@ prov.shp$agglo.clus <- ifelse(prov.shp$KHETTRN %in% clus1, "1",
 
 prov.shp$agglo.clus <- as.factor(prov.shp$agglo.clus)
 
+st_write(prov.shp, "Spatial_data/province_cluster.shp", append = FALSE)
+
 
     # variable plots ####
 
@@ -1188,9 +1202,19 @@ prov.shp$agglo.clus <- as.factor(prov.shp$agglo.clus)
 
 dat_prov$cluster <- as.factor(dat_prov$cluster)
 
-## plot
+# plot map based on k-means cluster
+kmean.map <- ggplot(prov.shp,aes(group=cluster, fill=cluster))+
+  geom_sf()+
+  scale_fill_brewer(palette = "Set1")+
+  theme(panel.background = element_blank(),
+        legend.key.size = unit(0.5,'cm'),
+        legend.title = element_text(size=15),
+        legend.text = element_text(size = 15))+
+  labs(fill = "Clusters \n(k-means)")
 
-      # areaKM ####
+
+
+      # areaKM & ForPix ####
 
 ggplot(dat_prov, aes(x=cluster, y=areaKM, group=cluster, fill=cluster))+
   geom_boxplot()+
@@ -1269,6 +1293,9 @@ pop_den_plot <- ggplot(dat_prov, aes(x=cluster, y=pop_den, group=cluster, fill=c
 pop_demog_plot <- (kmean.map + tot_pop_plot)  / (prop_ind_plot + pop_den_plot)
 # the more rural provinces have lower total population, and thsoe surrounding PP and tonle sap are higher. ONly MDK and RTK have signficantly different prop_ind - much higher than anywhere else. the other "remote" cluster (Stung Treng, Preah Vihear etc) have some variation of prop_ind, but not sig different from the others. The cluster around PP has sig differnet pop_den compared to all other clusters which is expected. clusters 1 and 2 (MDK/RTK + ST/PVH etc) plus the Pailin cluster are in their own group of low pop_den. The rest of the clusters sit in the middle
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/pop_dem_plot.png",pop_demog_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
 
       # education ####
 
@@ -1294,6 +1321,9 @@ M6_24_sch_plot <- ggplot(dat_prov, aes(x=cluster, y=M6_24_sch, group=cluster, fi
 edu_plot <- kmean.map + M6_24_sch_plot
 # cluster 2 (MDK/RTK) is in it's own low group, and the clusters around PP plus kep and kampot are in a high group. clusters 6 (around TS), 4 (Pailin), 3 (western 2), and 1 (PVH/ST etc) are in the middle
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/edu_plot.png",edu_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
       # employment ####
 
 # propPrimSec
@@ -1301,7 +1331,7 @@ propPrimSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propPrimSec, group=cluster
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
-  ylab("Proportion employed in the primary sector")+
+  ylab("Primary sector")+
   xlab("Cluster (K-means)")+
   ylim(0.25,1.2)+
   theme(legend.position = "none")+
@@ -1320,7 +1350,7 @@ propSecSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propSecSec, group=cluster, 
   geom_boxplot()+
   scale_fill_brewer(palette = "Set1")+
   theme_classic()+
-  ylab("Proportion employed in the secondary sector")+
+  ylab("Secondary sector")+
   xlab("Cluster (K-means)")+
   #ylim(0,1)+
   theme(legend.position = "none")+
@@ -1337,6 +1367,10 @@ propSecSec_plot <- ggplot(dat_prov, aes(x=cluster, y=propSecSec, group=cluster, 
 # grouped plot - map and plots
 emp_plot <- kmean.map | propPrimSec_plot / propSecSec_plot
 # There is no sig difference between any of the clusters for propPrimSec. There are only two groups for prpoSecSec - cluster 5 (around PP) which is relatively high propSecSec, and then the rest are low. But all values of propSecSec are super low
+
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/emp_plot.png",emp_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
 
 
       # economic security ####
@@ -1383,6 +1417,8 @@ pig_fam_plot <- ggplot(dat_prov, aes(x=cluster, y=pig_fam, group=cluster, fill=c
 econ_plot <- kmean.map | Les1_R_Land_plot / pig_fam_plot
 # two distinct groups for rice land - very low Les1_R_Land for cluster 1 (PVH/ST etc), cluster 2 (MDK/RTK), cluster 3 (western 2), and pailin. This means that in these provinces, very few people have no farm land. This is expected as they are very rural and there is still lots of land. Cluster 5 (around PP) is in its own group and has high Les1_R_Land values (i.e. is very urbanised). Cluster 6-9 are also very high, but sit in a middle group. Interestingly, there is no sig difference in pig_fam. 
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/econ_plot.png",econ_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
 
       # access to services ####
 
@@ -1448,6 +1484,9 @@ acc_serv_plot <- (kmean.map + dist_sch_plot)  / (garbage_plot + KM_Comm_plot)
 # clusters 1 and 2 have sig different (larger) distances to school, and all the other clusters are the same. No sig difference between clusters for access to waste disposal. cluster 2 has sig difference (higher) distance to KM office. South east clusters have their own low group, and then all the others are in between. 
 
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/acc_serv_plot.png",acc_serv_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
       # social justice ####
 
 # crim_case
@@ -1490,7 +1529,10 @@ land_confl_plot <- ggplot(dat_prov, aes(x=cluster, y=land_confl, group=cluster, 
 
 # grouped plot - map and plots
 soc_jus_plot <- kmean.map | crim_case_plot / land_confl_plot
-# no sig diff between crim cases between any cluster excpet 4 (pailin) which has significantly higher crim cases than any other cluster. land confl is more complex - south east clusters have sig higher number of conflict cases, followed by central tonle sap cluster, then western cluster, south coast, and then all the rural clusters are together with very few.  
+# no sig diff between crim cases between any cluster excpet 4 (pailin) which has significantly higher crim cases than any other cluster. land confl is more complex - south east clusters have sig higher number of conflict cases, followed by central tonle sap cluster, then western cluster, south coast, and then all the rural clusters are together with very few. 
+
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/soc_jus_plot.png",soc_jus_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
 
       # Migration ####
 
@@ -1537,6 +1579,10 @@ Pax_migt_out_plot <- ggplot(dat_prov, aes(x=cluster, y=Pax_migt_out, group=clust
 mig_plot <- kmean.map | Pax_migt_in_plot / Pax_migt_out_plot
 # clusters around PP have lots of in-migs, whicih makes sense, but so does the western cluster which I don't have a reason for. Remote and coastal clusters have low in-mig.  The western cluster has massive out-mig, which I also don't have a reason for. All the rest have quite low out-mig, although clusters around PP and TS are a bit higher 
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/mig_plot.png",mig_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
+
       # Environmental ####
 
 # mean_elev
@@ -1561,6 +1607,9 @@ mean_elev_plot <- ggplot(dat_prov, aes(x=cluster, y=mean_elev, group=cluster, fi
 # grouped plot - map and plots
 env_plot <- kmean.map + mean_elev_plot
 # Cluster 2 (MDK/RTK) and Palin sig different (higher) than all the others. Koh kong obvioulsy being dragged down by all the other provs in the cluster
+
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/env_plot.png",env_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
 
       # Human additional ####
 
@@ -1643,6 +1692,11 @@ PA_plot <- ggplot(dat_prov, aes(x=cluster, y=PA, group=cluster, fill=cluster))+
 # grouped plot - map and plots
 hum_plot <- kmean.map | dist_border_plot / dist_provCap_plot
 # The distance to border makes sense - cluster 6 s all the interior prvinces, and they are sig diff from all the rest. Distance to provCap is mostly about the size of the provinces in the clusters I think. cluster 1 is the largest provinces and is sig diff from custers 4 and 7 which are the smallest. all the others sit in the middle. 
+
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/hum_plot.png",hum_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
+
       # Forest cover and loss ####
 
 # ForPix
@@ -1687,6 +1741,9 @@ diffPix_plot <- ggplot(dat_prov, aes(x=cluster, y=diffPix, group=cluster, fill=c
 # grouped plot - map and plots
 for_plot <- kmean.map | ForPix_plot / diffPix_plot
 
+ggsave("Results/Cluster_analysis/k_means/Variable_Tukey_Plots/for_plot.png",for_plot,
+       width = 20, height = 20, unit="cm", dpi=300)
+
 
   ## Describing clusters ####
       # cluster table ####
@@ -1701,7 +1758,10 @@ write.csv(prov.Clus, file="Results/Cluster_analysis/k_means/provinces_clusters.c
 
 
 # remove "x" columns and year, province, tot_pop, diffPix
-dat_prov <- dat_prov %>% select(!c(X.1,X, year, Province, tot_pop, diffPix))
+dat_prov <- dat_prov %>% select(!c(year, Province, tot_pop, diffPix))
+
+# remove agglo.clus
+dat_prov <- dat_prov[, -21] 
 
 # now I need to scale the vars
 dat_prov.s <- dat_prov %>% mutate_at(c("land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
@@ -1880,9 +1940,19 @@ dat_prov.ql$value <- as.factor(dat_prov.ql$value)
 dat_prov.ql$value <- factor(dat_prov.ql$value, c("v.high","high","low","v.low"))
 
 # heatmap with the categories
-ggplot(dat_prov.ql, aes(x=cluster, y=variable))+
-  geom_tile(aes(fill=value))+
-  scale_fill_manual(values = cols)
+kmean_heatmap_cat <- ggplot(dat_prov.ql, aes(x=cluster, y=variable))+
+                      geom_tile(aes(fill=value))+
+                      scale_fill_manual(values = cols)+
+                      xlab("Cluster (k-means)")+
+                      ylab("Variable")+
+                      theme(axis.text = element_text(size=15),
+                            axis.title = element_text(size=18),
+                            legend.text = element_text(size=18),
+                            legend.title = element_text(size=17),
+                            legend.key.size = unit(2,'cm'))
+
+ggsave("Results/Cluster_analysis/k_means/kmean_heatmap_cat.png",kmean_heatmap_cat,
+       width = 30, height = 30, unit="cm", dpi=300)
 
       # heatmap (UPGMA) - continuous ####
 
