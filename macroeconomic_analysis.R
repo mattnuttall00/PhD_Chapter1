@@ -21,6 +21,7 @@ library('car')
 library('boot')
 library('wesanderson')
 library('ggplot2')
+library('patchwork')
 
 #### Load & format data ####
 
@@ -43,7 +44,7 @@ library('ggplot2')
 # rice/rub/corn/sug_med = median annual market prices for rice, rubber, corn, sugar
 # for_prod = total production values from forestry
 # prod_rice/rub/cass/corn/sug = mean annual producer (farm gate) prices for rice, rubber, cassava, corn, sugar
-# for_rem = rmaining absolute forest cover
+# for_rem = remaining absolute forest cover
 
 dat <- read.csv("Data/national/macroeconomic_vars.csv")
 dat$year <- as.factor(dat$year)
@@ -440,11 +441,8 @@ write.csv(correlation, file="macrovars_corr_scale.csv")
 
 str(dat_change)
 
-# remove for_cov_perc
-dat_work <- dat_change[ ,-3]
-
-# remove gni
-dat_work <- dat_work[ ,-5]
+# remove for_cov_perc and gni
+dat_work <- dat_change %>% select(-c(for_cov_perc,gni)) 
 
 # In order to account for the effect of time in all of the models, I will fit a lm of for_cov ~ year, and use the residuals as a predictor in the subsequent models
 dat_change$year <- as.numeric(dat_change$year)
@@ -474,15 +472,15 @@ dat_work$time <- time_resid
 ## I will start by modelling sets of predictors at a time.  All sets will have the time variable, and amount of forest remaining. This is because time and for_rem will be in the final model and so they need to be in the subset models so that the effects of the subset variables are partial effects, accounting for time and remaining forest. The sets will be:
 
 # macroeconomic - gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
-dat_me <- dat_work[ ,c(1:10,24:25)]
+dat_me <- dat_work %>% select(for_cov, gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den, time)
 str(dat_me)
 
 # commodities - armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod
-dat_com <- dat_work[ ,c(1:2,11:18,24:25)]
+dat_com <- dat_work %>% select(for_cov, armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod, time)
 str(dat_com)
 
 # producer prices - prod_rice, prod_rub, prod_cass, prod_corn, prod_sug
-dat_prod <- dat_work[ ,c(1:2,19:25)]
+dat_prod <- dat_work %>% select(for_cov, prod_rice, prod_rub, prod_cass, prod_corn, prod_sug, time)
 str(dat_prod)
 
 #### Models of subsets ####
@@ -497,15 +495,17 @@ head(dat_me)
 
 # My rule for correlations are that if there is a correlation coefficient of 0.6 (or -0.6) or more, then one variable will be excluded from the set.
 
-# my model selection procedure will follow the following steps: 
+# my model selection procedure will follow these steps: 
 # 1) use dredge on the unlagged and lagged predictors using a gaussian and then a gamma glm. The distribution that provides the models with the lowest AICc will be selected
-# 2) Using the selected distribution, I will include all unlagged and lagged predictors separate dredges. I will select the top models (AICc<6) and use model averaging for the final predictions. Because I am using a information-theoretic approach with model averaging, I will include models with much higher dAICc that most people advocate.  This is based on Burnham & Anderson 2002.  The model weights for all of the top candiadate models from dredge() are very low, which suggests that none of the models have a high probability of being the "best" model, and this supports a IT and model averaging approach. 
+# 2) Using the selected distribution, I will include all unlagged and lagged predictors in separate dredges. I will select the top models (AICc<6) and use model averaging for the final predictions. Because I am using a information-theoretic approach with model averaging, I will include models with much higher dAICc that most people advocate.  This is based on Burnham & Anderson 2002.  The model weights for all of the top candiadate models from dredge() are very low, which suggests that none of the models have a high probability of being the "best" model, and this supports a IT and model averaging approach. 
 # 3) 2 * SE will be used as confidence intervals, following from Burnham & ANderson 2002 (p. 176)
 
 # For this set, ind_gdp and agr_gdp are correlated (-0.61) and so one must be removed. Conceptually, the agricultural sector is likely to have a more important relationship with deforesation, and so I will remove ind_gdp.
 
 # remove NA rows
 dat_me1 <- dat_me[c(3:22), ]
+
+
 
 
     # Unlagged #####
@@ -734,6 +734,12 @@ gdP_gr_plot <- ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
 ggsave(file="Results/Macroeconomics/Plots/gdP_gr_plot.png", gdP_gr_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+
+### plot grid
+pop_den_plot + gdp_plot + agr_gdp_plot + dev_agri_plot + fdi_plot + dev_env_plot + gdP_gr_plot
+
 
 
 
