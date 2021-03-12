@@ -1092,7 +1092,31 @@ prov.shp$cluster <- as.factor(prov.shp$cluster)
 ggplot(prov.shp)+
   geom_sf()
 
-## NO need to do the below each time (continue after "save shapefile")
+# plot map based on k-means cluster
+kmean.map <- ggplot(prov.shp,aes(group=cluster, fill=cluster))+
+  geom_sf()+
+  scale_fill_brewer(palette = "Set1")+
+  theme(panel.background = element_blank())
+
+#ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20, width = 20, units = "cm",
+       #dpi=300)
+
+
+# plot map based on UPGMA cluster
+upgma.map <- ggplot(prov.shp,aes(group=agglo.clus, fill=agglo.clus))+
+  geom_sf()+
+  scale_fill_brewer(palette = "Set1")+
+  theme(panel.background = element_blank())
+
+
+
+
+      # add k-means and UPGMA clusters to shapefile (don't repeat) ####
+
+## NO need to do the below each time 
+
+
+### add k-means clusters (using raw shapefile)
 
 # load in province shapefile
 khet <- st_read('Spatial_data/boundary_khet.shp')
@@ -1127,18 +1151,25 @@ test.df <- data.frame(prov_shp = khet$KHETTRN,
 st_write(khet, "Spatial_data/province_cluster.shp", append = FALSE)
 
 
-# plot map based on cluster
-kmean.map <- ggplot(prov.shp,aes(group=cluster, fill=cluster))+
-              geom_sf()+
-              scale_fill_brewer(palette = "Set1")+
-              theme(panel.background = element_blank())
 
-ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20, width = 20, units = "cm",
-       dpi=300)
+### add UPGMA cluster (using shapefile that already has the k-means clusters)
 
+# make cluster vectors
+clus1 <- c("Mondul Kiri", "Ratanak Kiri")
+clus2 <- "Pailin"
+clus3 <- c("Kandal", "Takeo", "Kampong Cham", "Prey Veng")
+clus4 <- c("Banteay Meanchey", "Battambang")
+clus5 <- c("Koh Kong","Kracheh","Otdar Meanchey","Preah Vihear","Stung Treng","Preah Sihanouk",
+           "Kampong Chhnang","Pursat","Kampong Speu","Kampong Thom","Siem Reap","Kep","Kampot","Svay Rieng")
 
+# add UPGMA clusters
+prov.shp$agglo.clus <- ifelse(prov.shp$KHETTRN %in% clus1, "1",
+                              ifelse(prov.shp$KHETTRN %in% clus2, "2",
+                                     ifelse(prov.shp$KHETTRN %in% clus3, "3",
+                                            ifelse(prov.shp$KHETTRN %in% clus4, "4", 
+                                                   ifelse(prov.shp$KHETTRN %in% clus5, "5", NA)))))
 
-###
+prov.shp$agglo.clus <- as.factor(prov.shp$agglo.clus)
 
 
     # variable plots ####
@@ -2011,6 +2042,16 @@ dat_prov.ql$value <- as.factor(dat_prov.ql$value)
 dat_prov.ql$value <- factor(dat_prov.ql$value, c("v.high","high","low","v.low"))
 
 # heatmap with the categories
-ggplot(dat_prov.ql, aes(x=agglo.clus, y=variable))+
-  geom_tile(aes(fill=value))+
-  scale_fill_manual(values = cols)
+upgma.heatmap.cat <- ggplot(dat_prov.ql, aes(x=agglo.clus, y=variable))+
+                      geom_tile(aes(fill=value))+
+                      scale_fill_manual(values = cols)+
+                      xlab("Cluster (UPGMA)")+
+                      ylab("Variable")+
+                      theme(axis.text = element_text(size=15),
+                            axis.title = element_text(size=18),
+                            legend.text = element_text(size=18),
+                            legend.title = element_text(size=17),
+                            legend.key.size = unit(2,'cm'))
+
+ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_heatmap_cat.png", upgma.heatmap.cat, 
+       width = 30, height = 30, units = "cm", dpi=300)
