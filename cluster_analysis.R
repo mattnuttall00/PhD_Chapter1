@@ -1744,6 +1744,10 @@ ggplot(dat_prov.l, aes(x=cluster, y=variable))+
 
 ### I think to make the classification of the typologies less subjective I want to display the heatmap using quantiles. So put each value for each variable/cluster into either the bottom (<25%), middle-bottom (26-50%), middle-top (51-75%), or top (>50%)
 
+
+
+      # change k-means values to categorical ####
+
 ## calculate quantiles for each variable using the range for the entire variable
 # remove cluster
 dat_prov.q <- dat_prov.m[,-1]
@@ -1751,7 +1755,6 @@ dat_prov.q <- dat_prov.m[,-1]
 # get quantiles
 quants <- as.data.frame(apply(dat_prov.q, 2, function(x){quantile(x, probs = c(0.25,0.5,0.75))}))
 
-      # change values to categorical ####
 
 dat_prov.quants <- dat_prov.m %>% 
                     mutate(mean_elev = ifelse(mean_elev < quants$mean_elev[1], "v.low",
@@ -1904,3 +1907,110 @@ dat_prov.l <- melt(dat_prov.m)
 ggplot(dat_prov.l, aes(x=agglo.clus, y=variable))+
   geom_tile(aes(fill=value))+
   scale_fill_gradient(low="white", high="red")
+
+      # change UPGMA values to categorical ####
+
+## calculate quantiles for each variable using the range for the entire variable
+# remove cluster
+dat_prov.q <- dat_prov.m[,-1]
+
+# get quantiles
+quants <- as.data.frame(apply(dat_prov.q, 2, function(x){quantile(x, probs = c(0.25,0.5,0.75))}))
+
+
+dat_prov.quants <- dat_prov.m %>% 
+  mutate(mean_elev = ifelse(mean_elev < quants$mean_elev[1], "v.low",
+                            ifelse(mean_elev < quants$mean_elev[2], "low",
+                                   ifelse(mean_elev < quants$mean_elev[3], "high",
+                                          ifelse(mean_elev >= quants$mean_elev[3], "v.high",NA))))) %>% 
+  mutate(areaKM = ifelse(areaKM < quants$areaKM[1], "v.low",
+                         ifelse(areaKM < quants$areaKM[2], "low",
+                                ifelse(areaKM < quants$areaKM[3], "high",
+                                       ifelse(areaKM >= quants$areaKM[3], "v.high",NA))))) %>% 
+  mutate(dist_provCap = ifelse(dist_provCap < quants$dist_provCap[1], "v.low",
+                               ifelse(dist_provCap < quants$dist_provCap[2], "low",
+                                      ifelse(dist_provCap < quants$dist_provCap[3], "high",
+                                             ifelse(dist_provCap >= quants$dist_provCap[3], "v.high",NA))))) %>%
+  mutate(dist_border = ifelse(dist_border < quants$dist_border[1], "v.low",
+                              ifelse(dist_border < quants$dist_border[2], "low",
+                                     ifelse(dist_border < quants$dist_border[3], "high",
+                                            ifelse(dist_border >= quants$dist_border[3], "v.high",NA))))) %>%
+  mutate(ForPix = ifelse(ForPix < quants$ForPix[1], "v.low",
+                         ifelse(ForPix < quants$ForPix[2], "low",
+                                ifelse(ForPix < quants$ForPix[3], "high",
+                                       ifelse(ForPix >= quants$ForPix[3], "v.high",NA))))) %>%
+  mutate(pop_den = ifelse(pop_den < quants$pop_den[1], "v.low",
+                          ifelse(pop_den < quants$pop_den[2], "low",
+                                 ifelse(pop_den < quants$pop_den[3], "high",
+                                        ifelse(pop_den >= quants$pop_den[3], "v.high",NA))))) %>%
+  mutate(prop_ind = ifelse(prop_ind < quants$prop_ind[1], "v.low",
+                           ifelse(prop_ind < quants$prop_ind[2], "low",
+                                  ifelse(prop_ind < quants$prop_ind[3], "high",
+                                         ifelse(prop_ind >= quants$prop_ind[3], "v.high",NA))))) %>%
+  mutate(M6_24_sch = ifelse(M6_24_sch < quants$M6_24_sch[1], "v.low",
+                            ifelse(M6_24_sch < quants$M6_24_sch[2], "low",
+                                   ifelse(M6_24_sch < quants$M6_24_sch[3], "high",
+                                          ifelse(M6_24_sch >= quants$M6_24_sch[3], "v.high",NA))))) %>%
+  mutate(propPrimSec = ifelse(propPrimSec < quants$propPrimSec[1], "v.low",
+                              ifelse(propPrimSec < quants$propPrimSec[2], "low",
+                                     ifelse(propPrimSec < quants$propPrimSec[3], "high",
+                                            ifelse(propPrimSec >= quants$propPrimSec[3], "v.high",NA))))) %>%
+  mutate(propSecSec = ifelse(propSecSec < quants$propSecSec[1], "v.low",
+                             ifelse(propSecSec < quants$propSecSec[2], "low",
+                                    ifelse(propSecSec < quants$propSecSec[3], "high",
+                                           ifelse(propSecSec >= quants$propSecSec[3], "v.high",NA))))) %>%
+  mutate(Les1_R_Land = ifelse(Les1_R_Land < quants$Les1_R_Land[1], "v.low",
+                              ifelse(Les1_R_Land < quants$Les1_R_Land[2], "low",
+                                     ifelse(Les1_R_Land < quants$Les1_R_Land[3], "high",
+                                            ifelse(Les1_R_Land >= quants$Les1_R_Land[3], "v.high",NA))))) %>%
+  mutate(pig_fam = ifelse(pig_fam < quants$pig_fam[1], "v.low",
+                          ifelse(pig_fam < quants$pig_fam[2], "low",
+                                 ifelse(pig_fam < quants$pig_fam[3], "high",
+                                        ifelse(pig_fam >= quants$pig_fam[3], "v.high",NA))))) %>%
+  mutate(dist_sch = ifelse(dist_sch < quants$dist_sch[1], "v.low",
+                           ifelse(dist_sch < quants$dist_sch[2], "low",
+                                  ifelse(dist_sch < quants$dist_sch[3], "high",
+                                         ifelse(dist_sch >= quants$dist_sch[3], "v.high",NA))))) %>%
+  mutate(garbage = ifelse(garbage < quants$garbage[1], "v.low",
+                          ifelse(garbage < quants$garbage[2], "low",
+                                 ifelse(garbage < quants$garbage[3], "high",
+                                        ifelse(garbage >= quants$garbage[3], "v.high",NA))))) %>%
+  mutate(KM_Comm = ifelse(KM_Comm < quants$KM_Comm[1], "v.low",
+                          ifelse(KM_Comm < quants$KM_Comm[2], "low",
+                                 ifelse(KM_Comm < quants$KM_Comm[3], "high",
+                                        ifelse(KM_Comm >= quants$KM_Comm[3], "v.high",NA))))) %>%
+  mutate(crim_case = ifelse(crim_case < quants$crim_case[1], "v.low",
+                            ifelse(crim_case < quants$crim_case[2], "low",
+                                   ifelse(crim_case < quants$crim_case[3], "high",
+                                          ifelse(crim_case >= quants$crim_case[3], "v.high",NA))))) %>%
+  mutate(land_confl = ifelse(land_confl < quants$land_confl[1], "v.low",
+                             ifelse(land_confl < quants$land_confl[2], "low",
+                                    ifelse(land_confl < quants$land_confl[3], "high",
+                                           ifelse(land_confl >= quants$land_confl[3], "v.high",NA))))) %>%
+  mutate(Pax_migt_in = ifelse(Pax_migt_in < quants$Pax_migt_in[1], "v.low",
+                              ifelse(Pax_migt_in < quants$Pax_migt_in[2], "low",
+                                     ifelse(Pax_migt_in < quants$Pax_migt_in[3], "high",
+                                            ifelse(Pax_migt_in >= quants$Pax_migt_in[3], "v.high",NA))))) %>%
+  mutate(Pax_migt_out = ifelse(Pax_migt_out < quants$Pax_migt_out[1], "v.low",
+                               ifelse(Pax_migt_out < quants$Pax_migt_out[2], "low",
+                                      ifelse(Pax_migt_out < quants$Pax_migt_out[3], "high",
+                                             ifelse(Pax_migt_out >= quants$Pax_migt_out[3], "v.high",NA))))) 
+
+
+      # heatmap (UPGMA) - categorical ####
+
+
+# put dat_prov into long format
+dat_prov.ql <- melt(dat_prov.quants, id.vars = "agglo.clus")
+
+# set colours
+cols <- c("v.low" = "darkblue", "low" = "blue", "high" = "orange", "v.high" = "red")
+
+# change value to factor and re-order
+dat_prov.ql$value <- as.factor(dat_prov.ql$value)
+dat_prov.ql$value <- factor(dat_prov.ql$value, c("v.high","high","low","v.low"))
+
+# heatmap with the categories
+ggplot(dat_prov.ql, aes(x=agglo.clus, y=variable))+
+  geom_tile(aes(fill=value))+
+  scale_fill_manual(values = cols)
