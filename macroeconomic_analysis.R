@@ -472,15 +472,18 @@ dat_work$time <- time_resid
 ## I will start by modelling sets of predictors at a time.  All sets will have the time variable, and amount of forest remaining. This is because time and for_rem will be in the final model and so they need to be in the subset models so that the effects of the subset variables are partial effects, accounting for time and remaining forest. The sets will be:
 
 # macroeconomic - gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
-dat_me <- dat_work %>% select(for_cov, gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den, time)
+dat_me <- dat_work %>% select(for_cov, gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den, 
+                              time, for_rem)
 str(dat_me)
 
 # commodities - armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod
-dat_com <- dat_work %>% select(for_cov, armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod, time)
+dat_com <- dat_work %>% select(for_cov, armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod, 
+                               time, for_rem)
 str(dat_com)
 
 # producer prices - prod_rice, prod_rub, prod_cass, prod_corn, prod_sug
-dat_prod <- dat_work %>% select(for_cov, prod_rice, prod_rub, prod_cass, prod_corn, prod_sug, time)
+dat_prod <- dat_work %>% select(for_cov, prod_rice, prod_rub, prod_cass, prod_corn, prod_sug, 
+                                time, for_rem)
 str(dat_prod)
 
 #### Models of subsets ####
@@ -505,20 +508,24 @@ head(dat_me)
 # remove NA rows
 dat_me1 <- dat_me[c(3:22), ]
 
-
+# save
+write.csv(dat_me1, file="Data/national/macroecon_set/dat_me1.csv")
 
 
     # Unlagged #####
 
+# load data
+dat_me1 <- read.csv("Data/national/macroecon_set/dat_me1.csv", header = T, stringsAsFactors = T)
+dat_me1 <- dat_me1[ ,-1]
 
 ## saturated model with a gaussian distribution for unlagged predictors
-me.mod.gaus.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+agr_gdp+dev_agri+dev_env+pop_den+time, 
+me.mod.gaus.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem, 
               na.action="na.fail", family=gaussian, data=dat_me1)
 summary(me.mod.gaus.1)
 
 # dredge
 me.dredge.gaus.1 <- dredge(me.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
+#write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
 
 
 ## saturated model with gamma distribution for unlagged predictors
@@ -528,7 +535,7 @@ summary(me.mod.gam.1)
 
 # dredge
 me.dredge.gam.1 <- dredge(me.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gam.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.1.csv")
+#write.csv(me.dredge.gam.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.1.csv")
 
 # gaussian distribution produces the best models for the unlagged predictors. Therefore the top candidate models from that dredge will be used for model averaging.
 
@@ -550,7 +557,8 @@ pop_den.newdata <- expand.grid(pop_den = seq(min(dat_me1$pop_den), max(dat_me1$p
                           dev_agri = mean(dat_me1$dev_agri),
                           dev_env = mean(dat_me1$dev_env),
                           fdi = mean(dat_me1$fdi),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 pop_den.predict <- predict(me.modAv.aicc6, newdata=pop_den.newdata, se.fit=TRUE)
 pop_den.predict <- data.frame(pop_den.predict)
 pop_den.predict$lwr <- pop_den.predict$fit-2*pop_den.predict$se.fit
@@ -567,7 +575,8 @@ pop_den_plot<- ggplot(data=pop_den.predict, aes(x=pop_den, y=fit))+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/pop_den_plot.png", pop_den_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/pop_den_plot.png", pop_den_plot, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 # gdp
 gdp.newdata <- expand.grid(gdp = seq(min(dat_me1$gdp), max(dat_me1$gdp), length=100),
@@ -577,7 +586,8 @@ gdp.newdata <- expand.grid(gdp = seq(min(dat_me1$gdp), max(dat_me1$gdp), length=
                           dev_agri = mean(dat_me1$dev_agri),
                           dev_env = mean(dat_me1$dev_env),
                           fdi = mean(dat_me1$fdi),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 gdp.predict <- predict(me.modAv.aicc6, newdata=gdp.newdata, se.fit=TRUE)
 gdp.predict <- data.frame(gdp.predict)
 gdp.predict$lwr <- gdp.predict$fit-2*gdp.predict$se.fit
@@ -594,7 +604,8 @@ gdp_plot <- ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/gdp_plot.png", gdp_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/gdp_plot.png", gdp_plot, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 # agr_gdp
 agr_gdp.newdata <- expand.grid(agr_gdp = seq(min(dat_me1$agr_gdp), max(dat_me1$agr_gdp), length=100),
@@ -604,7 +615,8 @@ agr_gdp.newdata <- expand.grid(agr_gdp = seq(min(dat_me1$agr_gdp), max(dat_me1$a
                           dev_agri = mean(dat_me1$dev_agri),
                           dev_env = mean(dat_me1$dev_env),
                           fdi = mean(dat_me1$fdi),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 agr_gdp.predict <- predict(me.modAv.aicc6, newdata=agr_gdp.newdata, se.fit=TRUE)
 agr_gdp.predict <- data.frame(agr_gdp.predict)
 agr_gdp.predict$lwr <- agr_gdp.predict$fit-2*agr_gdp.predict$se.fit
@@ -621,7 +633,8 @@ agr_gdp_plot <- ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/agr_gdp_plot.png", agr_gdp_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/agr_gdp_plot.png", agr_gdp_plot, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 # dev_agri
@@ -632,7 +645,8 @@ dev_agri.newdata <- expand.grid(dev_agri = seq(min(dat_me1$dev_agri), max(dat_me
                           agr_gdp = mean(dat_me1$agr_gdp),
                           dev_env = mean(dat_me1$dev_env),
                           fdi = mean(dat_me1$fdi),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 dev_agri.predict <- predict(me.modAv.aicc6, newdata=dev_agri.newdata, se.fit=TRUE)
 dev_agri.predict <- data.frame(dev_agri.predict)
 dev_agri.predict$lwr <- dev_agri.predict$fit-2*dev_agri.predict$se.fit
@@ -649,7 +663,8 @@ dev_agri_plot <- ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_agri_plot.png", dev_agri_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_agri_plot.png", dev_agri_plot, width = 30, height = 20,
+ #      units = "cm", dpi=300)
 
 
 # fdi
@@ -660,7 +675,8 @@ fdi.newdata <- expand.grid(fdi = seq(min(dat_me1$fdi), max(dat_me1$fdi), length=
                           agr_gdp = mean(dat_me1$agr_gdp),
                           dev_env = mean(dat_me1$dev_env),
                           dev_agri = mean(dat_me1$dev_agri),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 fdi.predict <- predict(me.modAv.aicc6, newdata=fdi.newdata, se.fit=TRUE)
 fdi.predict <- data.frame(fdi.predict)
 fdi.predict$lwr <- fdi.predict$fit-2*fdi.predict$se.fit
@@ -677,7 +693,8 @@ fdi_plot <- ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/fdi_plot.png", fdi_plot , width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/fdi_plot.png", fdi_plot , width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 # dev_env
@@ -688,7 +705,8 @@ dev_env.newdata <- expand.grid(dev_env = seq(min(dat_me1$dev_env), max(dat_me1$d
                           agr_gdp = mean(dat_me1$agr_gdp),
                           fdi = mean(dat_me1$fdi),
                           dev_agri = mean(dat_me1$dev_agri),
-                          gdp_gr = mean(dat_me1$gdp_gr))
+                          gdp_gr = mean(dat_me1$gdp_gr),
+                          for_rem = mean(dat_me1$for_rem))
 dev_env.predict <- predict(me.modAv.aicc6, newdata=dev_env.newdata, se.fit=TRUE)
 dev_env.predict <- data.frame(dev_env.predict)
 dev_env.predict$lwr <- dev_env.predict$fit-2*dev_env.predict$se.fit
@@ -705,7 +723,8 @@ dev_env_plot <- ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_env_plot.png", dev_env_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_env_plot.png", dev_env_plot, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 # gdp_gr
@@ -716,7 +735,8 @@ gdp_gr.newdata <- expand.grid(gdp_gr = seq(min(dat_me1$gdp_gr), max(dat_me1$gdp_
                           agr_gdp = mean(dat_me1$agr_gdp),
                           fdi = mean(dat_me1$fdi),
                           dev_agri = mean(dat_me1$dev_agri),
-                          dev_env = mean(dat_me1$dev_env))
+                          dev_env = mean(dat_me1$dev_env),
+                          for_rem = mean(dat_me1$for_rem))
 gdp_gr.predict <- predict(me.modAv.aicc6, newdata=gdp_gr.newdata, se.fit=TRUE)
 gdp_gr.predict <- data.frame(gdp_gr.predict)
 gdp_gr.predict$lwr <- gdp_gr.predict$fit-2*gdp_gr.predict$se.fit
@@ -733,7 +753,8 @@ gdP_gr_plot <- ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/gdP_gr_plot.png", gdP_gr_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/gdP_gr_plot.png", gdP_gr_plot, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 
@@ -748,8 +769,7 @@ pop_den_plot + gdp_plot + agr_gdp_plot + dev_agri_plot + fdi_plot + dev_env_plot
 ## Test lagged predictors 
 
 # create data
-dat_me_lag <- data.frame(year = dat_me$year,
-                         for_cov = dat_me$for_cov,
+dat_me_lag <- data.frame(for_cov = dat_me$for_cov,
                          time = dat_me$time,
                          gdp.lag1 = lag(dat_me$gdp),
                          gdp.lag2 = lag(dat_me$gdp, n=2L),
@@ -773,27 +793,35 @@ dat_me_lag <- data.frame(year = dat_me$year,
 # remove the rows that have NAs. gdp_gr.lag2 is the only variable with 4 rows of NAs once lagged. I don't want to lose another year of data for all of the other variables just because of that one variable. Therefore I will not include gdp_gr.lag2 in the models
 dat_me_lag_sub <- dat_me_lag[c(4:22), ]
 
+# save data
+#write.csv(dat_me_lag_sub, file="Data/national/macroecon_set/dat_me_lag_sub.csv")
+
+# load lagged data
+dat_me_lag_sub <- read.csv("Data/national/macroecon_set/dat_me_lag_sub.csv", header = T)
+dat_me_lag_sub <- dat_me_lag_sub[ ,-1]
+
+
 
 ## saturated model with gaussian distribution for 1-year lagged predictors
 me.mod.gaus.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+agr_gdp.lag1+
-                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+time, 
+                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+time+for_rem.lag1, 
                            na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
 summary(me.mod.gaus.lag.1)
 
 # dredge
 me.dredge.gaus.lag.1 <- dredge(me.mod.gaus.lag.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gaus.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.lag.1.csv")
+#write.csv(me.dredge.gaus.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.lag.1.csv")
 
   
 ## saturated model with gamma distribution for 1-year lagged predictors
-me.mod.gam.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+
-                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+time, 
-                           na.action="na.fail", family=Gamma, data=dat_me_lag_sub)
-summary(me.mod.gam.lag.1)
+#me.mod.gam.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+ind_gdp.lag1+agr_gdp.lag1+
+                           #dev_agr.lag1+dev_env.lag1+pop_den.lag1+time, 
+                           #na.action="na.fail", family=Gamma, data=dat_me_lag_sub)
+#summary(me.mod.gam.lag.1)
 
 # dredge
-me.dredge.gam.lag.1 <- dredge(me.mod.gam.lag.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gam.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.lag.1.csv")
+#me.dredge.gam.lag.1 <- dredge(me.mod.gam.lag.1, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(me.dredge.gam.lag.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.lag.1.csv")
 
 ## The gaussian distribution is better than the gamma distribution for lagged predictors too.
 
@@ -816,7 +844,8 @@ gdp.lag1.newdata <- expand.grid(gdp.lag1 = seq(min(dat_me_lag_sub$gdp.lag1),
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
-                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1))
+                          gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp.lag1.newdata, se.fit=TRUE)
 gdp.lag1.predict <- data.frame(gdp.lag1.predict)
 gdp.lag1.predict$lwr <- gdp.lag1.predict$fit-2*gdp.lag1.predict$se.fit
@@ -833,7 +862,7 @@ gdp.lag1_plot <- ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/gdp.lag1_plot.png", gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/gdp.lag1_plot.png", gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # gdp_gr.lag1
@@ -845,7 +874,8 @@ gdp_gr.lag1.newdata <- expand.grid(gdp_gr.lag1 = seq(min(dat_me_lag_sub$gdp_gr.l
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 gdp_gr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp_gr.lag1.newdata, se.fit=TRUE)
 gdp_gr.lag1.predict <- data.frame(gdp_gr.lag1.predict)
 gdp_gr.lag1.predict$lwr <- gdp_gr.lag1.predict$fit-2*gdp_gr.lag1.predict$se.fit
@@ -862,7 +892,7 @@ gdp_gr.lag1_plot <- ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/gdp_gr.lag1_plot.png", gdp_gr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/gdp_gr.lag1_plot.png", gdp_gr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # fdi.lag1
@@ -874,7 +904,8 @@ fdi.lag1.newdata <- expand.grid(fdi.lag1 = seq(min(dat_me_lag_sub$fdi.lag1),
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 fdi.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=fdi.lag1.newdata, se.fit=TRUE)
 fdi.lag1.predict <- data.frame(fdi.lag1.predict)
 fdi.lag1.predict$lwr <- fdi.lag1.predict$fit-2*fdi.lag1.predict$se.fit
@@ -891,7 +922,7 @@ fdi.lag1_plot <- ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/fdi.lag1_plot.png", fdi.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/fdi.lag1_plot.png", fdi.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # agr_gdp.lag1
@@ -903,7 +934,8 @@ agr_gdp.lag1.newdata <- expand.grid(agr_gdp.lag1 = seq(min(dat_me_lag_sub$agr_gd
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 agr_gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=agr_gdp.lag1.newdata, se.fit=TRUE)
 agr_gdp.lag1.predict <- data.frame(agr_gdp.lag1.predict)
 agr_gdp.lag1.predict$lwr <- agr_gdp.lag1.predict$fit-2*agr_gdp.lag1.predict$se.fit
@@ -920,7 +952,7 @@ agr_gdp.lag1_plot <- ggplot(data=agr_gdp.lag1.predict, aes(x=agr_gdp.lag1, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag1_plot.png", agr_gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag1_plot.png", agr_gdp.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_agr.lag1
@@ -932,7 +964,8 @@ dev_agr.lag1.newdata <- expand.grid(dev_agr.lag1 = seq(min(dat_me_lag_sub$dev_ag
                           agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 dev_agr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_agr.lag1.newdata, se.fit=TRUE)
 dev_agr.lag1.predict <- data.frame(dev_agr.lag1.predict)
 dev_agr.lag1.predict$lwr <- dev_agr.lag1.predict$fit-2*dev_agr.lag1.predict$se.fit
@@ -949,7 +982,7 @@ dev_agr.lag1_plot <- ggplot(data=dev_agr.lag1.predict, aes(x=dev_agr.lag1, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag1_plot.png", dev_agr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag1_plot.png", dev_agr.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_env.lag1
@@ -961,7 +994,8 @@ dev_env.lag1.newdata <- expand.grid(dev_env.lag1 = seq(min(dat_me_lag_sub$dev_en
                           agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 dev_env.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_env.lag1.newdata, se.fit=TRUE)
 dev_env.lag1.predict <- data.frame(dev_env.lag1.predict)
 dev_env.lag1.predict$lwr <- dev_env.lag1.predict$fit-2*dev_env.lag1.predict$se.fit
@@ -978,7 +1012,7 @@ dev_env.lag1_plot <- ggplot(data=dev_env.lag1.predict, aes(x=dev_env.lag1, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_env.lag1_plot.png", dev_env.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_env.lag1_plot.png", dev_env.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # pop_den.lag1
@@ -990,7 +1024,8 @@ pop_den.lag1.newdata <- expand.grid(pop_den.lag1 = seq(min(dat_me_lag_sub$pop_de
                           agr_gdp.lag1 = mean(dat_me_lag_sub$agr_gdp.lag1),
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1))
+                          gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
+                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
 pop_den.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=pop_den.lag1.newdata, se.fit=TRUE)
 pop_den.lag1.predict <- data.frame(pop_den.lag1.predict)
 pop_den.lag1.predict$lwr <- pop_den.lag1.predict$fit-2*pop_den.lag1.predict$se.fit
@@ -1007,21 +1042,23 @@ pop_den.lag1_plot <- ggplot(data=pop_den.lag1.predict, aes(x=pop_den.lag1, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/pop_den.lag1_plot.png", pop_den.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/pop_den.lag1_plot.png", pop_den.lag1_plot, width = 30, height = 20, units = "cm", dpi=300)
 
+pop_den.lag1_plot + gdp.lag1_plot + agr_gdp.lag1_plot + dev_agr.lag1_plot + fdi.lag1_plot + dev_env.lag1_plot+
+  gdp_gr.lag1_plot
 
 #
     # 2 year lag ####
 
 ## saturated model with gaussian distribution for 2-year lagged predictors
 me.mod.gaus.lag.2 <- glm(for_cov ~ gdp.lag2 + fdi.lag2 + agr_gdp.lag2 +
-                           dev_agr.lag2 + dev_env.lag2 + pop_den.lag2 + time, 
+                           dev_agr.lag2 + dev_env.lag2 + pop_den.lag2 + time + for_rem.lag2, 
                            na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
 summary(me.mod.gaus.lag.2)
 
 # dredge
 me.dredge.gaus.lag.2 <- dredge(me.mod.gaus.lag.2, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gaus.lag.2, file="Results/Macroeconomics/Dredge/me.dredge.gaus.lag.2.csv")
+#write.csv(me.dredge.gaus.lag.2, file="Results/Macroeconomics/Dredge/me.dredge.gaus.lag.2.csv")
 
 
 # AICc < 6
@@ -1039,7 +1076,8 @@ gdp.lag2.newdata <- expand.grid(gdp.lag2 = seq(min(dat_me_lag_sub$gdp.lag2),
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
-                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2))
+                          fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=gdp.lag2.newdata, se.fit=TRUE)
 gdp.lag2.predict <- data.frame(gdp.lag2.predict)
 gdp.lag2.predict$lwr <- gdp.lag2.predict$fit-2*gdp.lag2.predict$se.fit
@@ -1056,7 +1094,7 @@ gdp.lag2_plot <- ggplot(data=gdp.lag2.predict, aes(x=gdp.lag2, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/gdp.lag2_plot.png", gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/gdp.lag2_plot.png", gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # fdi.lag2
@@ -1067,7 +1105,8 @@ fdi.lag2.newdata <- expand.grid(fdi.lag2 = seq(min(dat_me_lag_sub$fdi.lag2),
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
-                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 fdi.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=fdi.lag2.newdata, se.fit=TRUE)
 fdi.lag2.predict <- data.frame(fdi.lag2.predict)
 fdi.lag2.predict$lwr <- fdi.lag2.predict$fit-2*fdi.lag2.predict$se.fit
@@ -1084,7 +1123,7 @@ fdi.lag2_plot <- ggplot(data=fdi.lag2.predict, aes(x=fdi.lag2, y=fit))+
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/fdi.lag2_plot.png", fdi.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/fdi.lag2_plot.png", fdi.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # agr_gdp.lag2
@@ -1095,7 +1134,8 @@ agr_gdp.lag2.newdata <- expand.grid(agr_gdp.lag2 = seq(min(dat_me_lag_sub$agr_gd
                           fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
-                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 agr_gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=agr_gdp.lag2.newdata, se.fit=TRUE)
 agr_gdp.lag2.predict <- data.frame(agr_gdp.lag2.predict)
 agr_gdp.lag2.predict$lwr <- agr_gdp.lag2.predict$fit-2*agr_gdp.lag2.predict$se.fit
@@ -1112,7 +1152,7 @@ agr_gdp.lag2_plot <- ggplot(data=agr_gdp.lag2.predict, aes(x=agr_gdp.lag2, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag2_plot.png", agr_gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/agr_gdp.lag2_plot.png", agr_gdp.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_agr.lag2
@@ -1123,7 +1163,8 @@ dev_agr.lag2.newdata <- expand.grid(dev_agr.lag2 = seq(min(dat_me_lag_sub$dev_ag
                           fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
-                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 dev_agr.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_agr.lag2.newdata, se.fit=TRUE)
 dev_agr.lag2.predict <- data.frame(dev_agr.lag2.predict)
 dev_agr.lag2.predict$lwr <- dev_agr.lag2.predict$fit-2*dev_agr.lag2.predict$se.fit
@@ -1140,7 +1181,7 @@ dev_agr.lag2_plot <- ggplot(data=dev_agr.lag2.predict, aes(x=dev_agr.lag2, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag2_plot.png", dev_agr.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_agr.lag2_plot.png", dev_agr.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # dev_env.lag2
@@ -1151,7 +1192,8 @@ dev_env.lag2.newdata <- expand.grid(dev_env.lag2 = seq(min(dat_me_lag_sub$dev_en
                           fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
-                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 dev_env.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_env.lag2.newdata, se.fit=TRUE)
 dev_env.lag2.predict <- data.frame(dev_env.lag2.predict)
 dev_env.lag2.predict$lwr <- dev_env.lag2.predict$fit-2*dev_env.lag2.predict$se.fit
@@ -1168,7 +1210,7 @@ dev_env.lag2_plot <- ggplot(data=dev_env.lag2.predict, aes(x=dev_env.lag2, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/dev_env.lag2_plot.png", dev_env.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/dev_env.lag2_plot.png", dev_env.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # pop_den.lag2
@@ -1179,7 +1221,8 @@ pop_den.lag2.newdata <- expand.grid(pop_den.lag2 = seq(min(dat_me_lag_sub$pop_de
                           fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
-                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2))
+                          gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
+                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
 pop_den.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=pop_den.lag2.newdata, se.fit=TRUE)
 pop_den.lag2.predict <- data.frame(pop_den.lag2.predict)
 pop_den.lag2.predict$lwr <- pop_den.lag2.predict$fit-2*pop_den.lag2.predict$se.fit
@@ -1196,9 +1239,56 @@ pop_den.lag2_plot <- ggplot(data=pop_den.lag2.predict, aes(x=pop_den.lag2, y=fit
   theme(text = element_text(size=15))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/pop_den.lag2_plot.png", pop_den.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/pop_den.lag2_plot.png", pop_den.lag2_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
+
+
+
+    # all plots ####
+
+pop_den_plot + gdp_plot + agr_gdp_plot + dev_agri_plot + fdi_plot + dev_env_plot + gdP_gr_plot
+
+
+pop_den.lag1_plot + gdp.lag1_plot + agr_gdp.lag1_plot + dev_agr.lag1_plot + fdi.lag1_plot + dev_env.lag1_plot+
+  gdp_gr.lag1_plot
+
+pop_den.lag2_plot + gdp.lag2_plot + agr_gdp.lag2_plot + dev_agr.lag2_plot + fdi.lag2_plot +  dev_env.lag2_plot
+
+
+# all plots together, with one row for each variable
+me_plot_all <- pop_den_plot+pop_den.lag1_plot+pop_den.lag2_plot+
+               gdp_plot+gdp.lag1_plot+gdp.lag2_plot+
+               agr_gdp_plot+agr_gdp.lag1_plot+agr_gdp.lag2_plot+
+               dev_agri_plot+dev_agr.lag1_plot+dev_agr.lag2_plot+
+               dev_env_plot+dev_env.lag1_plot+dev_env.lag2_plot+
+               fdi_plot+fdi.lag1_plot+fdi.lag2_plot+
+                plot_layout(ncol=3)
+
+# remove y-axis labels for all plots except plot 10
+me_plot_all[[1]] <- me_plot_all[[1]] + theme(axis.title.y = element_blank())
+me_plot_all[[2]] <- me_plot_all[[2]] + theme(axis.title.y = element_blank())
+me_plot_all[[3]] <- me_plot_all[[3]] + theme(axis.title.y = element_blank())
+me_plot_all[[4]] <- me_plot_all[[4]] + theme(axis.title.y = element_blank())
+me_plot_all[[5]] <- me_plot_all[[5]] + theme(axis.title.y = element_blank())
+me_plot_all[[6]] <- me_plot_all[[6]] + theme(axis.title.y = element_blank())
+me_plot_all[[7]] <- me_plot_all[[7]] + theme(axis.title.y = element_blank())
+me_plot_all[[8]] <- me_plot_all[[8]] + theme(axis.title.y = element_blank())
+me_plot_all[[9]] <- me_plot_all[[9]] + theme(axis.title.y = element_blank())
+me_plot_all[[11]] <- me_plot_all[[11]] + theme(axis.title.y = element_blank())
+me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.title.y = element_blank())
+me_plot_all[[13]] <- me_plot_all[[13]] + theme(axis.title.y = element_blank())
+me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.title.y = element_blank())
+me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.title.y = element_blank())
+me_plot_all[[16]] <- me_plot_all[[16]] + theme(axis.title.y = element_blank())
+me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.title.y = element_blank())
+me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.title.y = element_blank())
+
+
+
+
+
+#
   ## Commodity / production set ####
 
 str(dat_com)
