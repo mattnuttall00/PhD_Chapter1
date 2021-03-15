@@ -525,16 +525,16 @@ summary(me.mod.gaus.1)
 
 # dredge
 me.dredge.gaus.1 <- dredge(me.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
-#write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
+write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
 
 
 ## saturated model with gamma distribution for unlagged predictors
-me.mod.gam.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, 
-              na.action="na.fail", family=Gamma, data=dat_me1)
-summary(me.mod.gam.1)
+#me.mod.gam.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, 
+ #             na.action="na.fail", family=Gamma, data=dat_me1)
+#summary(me.mod.gam.1)
 
 # dredge
-me.dredge.gam.1 <- dredge(me.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
+#me.dredge.gam.1 <- dredge(me.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
 #write.csv(me.dredge.gam.1, file="Results/Macroeconomics/Dredge/me.dredge.gam.1.csv")
 
 # gaussian distribution produces the best models for the unlagged predictors. Therefore the top candidate models from that dredge will be used for model averaging.
@@ -1349,25 +1349,28 @@ head(dat_com)
 
 # REMINDER - armi and rub_med are highly correlated, and armi and the other commodity prices are slightly correlated (except rice_med), but by less than 0.6. I will first remove armi so that I can investigate the individual commodities, then re-run the model with armi and no individual commodities to see if there is a difference
 
+# UPDATe - there is not effect for the individual commodities or for ARMI, so t doesn't really matter. I will stick with the individual commodities
+
 
 ## saturated model with a gaussian distribution for unlagged predictors
-com.mod.gaus.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time, 
+com.mod.gaus.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + 
+                        time + for_rem, 
               na.action="na.fail", family=gaussian, data=dat_com)
 summary(com.mod.gaus.1)
 
 # dredge
 com.dredge.gaus.1 <- dredge(com.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(com.dredge.gaus.1, file="Results/Macroeconomics/Dredge/com.dredge.gaus.1.csv")
+#write.csv(com.dredge.gaus.1, file="Results/Macroeconomics/Dredge/com.dredge.gaus.1.csv")
 
 
 ## saturated model with gamma distribution for unlagged predictors
-com.mod.gam.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time, 
-              na.action="na.fail", family=Gamma, data=dat_com)
-summary(com.mod.gam.1)
+#com.mod.gam.1 <- glm(for_cov ~ cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time, 
+ #             na.action="na.fail", family=Gamma, data=dat_com)
+#summary(com.mod.gam.1)
 
 # dredge
-com.dredge.gam.1 <- dredge(com.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(com.dredge.gam.1, file="Results/Macroeconomics/Dredge/com.dredge.gam.1.csv")
+#com.dredge.gam.1 <- dredge(com.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(com.dredge.gam.1, file="Results/Macroeconomics/Dredge/com.dredge.gam.1.csv")
 
 
 ## The gaussian distribution produces the better models
@@ -1388,7 +1391,8 @@ cpi.newdata <- expand.grid(cpi = seq(min(dat_com$cpi), max(dat_com$cpi), length=
                           corn_med = mean(dat_com$corn_med),
                           sug_med = mean(dat_com$sug_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 cpi.predict <- predict(com.modAv.aicc6, newdata=cpi.newdata, se.fit=TRUE)
 cpi.predict <- data.frame(cpi.predict)
 cpi.predict$lwr <- cpi.predict$fit-2*cpi.predict$se.fit
@@ -1400,12 +1404,12 @@ cpi_plot <- ggplot(data=cpi.predict, aes(x=cpi, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Crop Production Index at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Crop Production Index at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/cpi_plot.png", cpi_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/cpi_plot.png", cpi_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # nfi
@@ -1416,7 +1420,8 @@ nfi.newdata <- expand.grid(nfi = seq(min(dat_com$nfi), max(dat_com$nfi), length=
                           corn_med = mean(dat_com$corn_med),
                           sug_med = mean(dat_com$sug_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 nfi.predict <- predict(com.modAv.aicc6, newdata=nfi.newdata, se.fit=TRUE)
 nfi.predict <- data.frame(nfi.predict)
 nfi.predict$lwr <- nfi.predict$fit-2*nfi.predict$se.fit
@@ -1428,12 +1433,12 @@ nfi_plot <- ggplot(data=nfi.predict, aes(x=nfi, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Non-food Production Index at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Non-food Production Index at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/nfi_plot.png", nfi_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/nfi_plot.png", nfi_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # rice_med
@@ -1444,7 +1449,8 @@ rice_med.newdata <- expand.grid(rice_med = seq(min(dat_com$rice_med), max(dat_co
                           corn_med = mean(dat_com$corn_med),
                           sug_med = mean(dat_com$sug_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 rice_med.predict <- predict(com.modAv.aicc6, newdata=rice_med.newdata, se.fit=TRUE)
 rice_med.predict <- data.frame(rice_med.predict)
 rice_med.predict$lwr <- rice_med.predict$fit-2*rice_med.predict$se.fit
@@ -1456,12 +1462,12 @@ rice_med_plot <- ggplot(data=rice_med.predict, aes(x=rice_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of rice at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median price of rice at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.png", rice_med_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.png", rice_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # rub_med
@@ -1472,7 +1478,8 @@ rub_med.newdata <- expand.grid(rub_med = seq(min(dat_com$rub_med), max(dat_com$r
                           corn_med = mean(dat_com$corn_med),
                           sug_med = mean(dat_com$sug_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 rub_med.predict <- predict(com.modAv.aicc6, newdata=rub_med.newdata, se.fit=TRUE)
 rub_med.predict <- data.frame(rub_med.predict)
 rub_med.predict$lwr <- rub_med.predict$fit-2*rub_med.predict$se.fit
@@ -1484,12 +1491,12 @@ rub_med_plot <- ggplot(data=rub_med.predict, aes(x=rub_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of rubber at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median price of rubber at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.png", rub_med_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.png", rub_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 
@@ -1501,7 +1508,8 @@ corn_med.newdata <- expand.grid(corn_med = seq(min(dat_com$corn_med), max(dat_co
                           rub_med = mean(dat_com$rub_med),
                           sug_med = mean(dat_com$sug_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 corn_med.predict <- predict(com.modAv.aicc6, newdata=corn_med.newdata, se.fit=TRUE)
 corn_med.predict <- data.frame(corn_med.predict)
 corn_med.predict$lwr <- corn_med.predict$fit-2*corn_med.predict$se.fit
@@ -1513,12 +1521,12 @@ corn_med_plot <- ggplot(data=corn_med.predict, aes(x=corn_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of corn at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median price of corn at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.png", corn_med_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.png", corn_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # sug_med
@@ -1529,7 +1537,8 @@ sug_med.newdata <- expand.grid(sug_med = seq(min(dat_com$sug_med), max(dat_com$s
                           rub_med = mean(dat_com$rub_med),
                           corn_med = mean(dat_com$corn_med),
                           for_prod = mean(dat_com$for_prod),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 sug_med.predict <- predict(com.modAv.aicc6, newdata=sug_med.newdata, se.fit=TRUE)
 sug_med.predict <- data.frame(sug_med.predict)
 sug_med.predict$lwr <- sug_med.predict$fit-2*sug_med.predict$se.fit
@@ -1541,12 +1550,12 @@ sug_med_plot <- ggplot(data=sug_med.predict, aes(x=sug_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of sugar at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median price of sugar at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.png", sug_med_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.png", sug_med_plot, width = 30, height = 20, units = "cm", dpi=300)
 
 
 # for_prod
@@ -1557,7 +1566,8 @@ for_prod.newdata <- expand.grid(for_prod = seq(min(dat_com$for_prod), max(dat_co
                           rub_med = mean(dat_com$rub_med),
                           corn_med = mean(dat_com$corn_med),
                           sug_med = mean(dat_com$sug_med),
-                          time = mean(dat_com$time))
+                          time = mean(dat_com$time),
+                          for_rem = mean(dat_com$for_rem))
 for_prod.predict <- predict(com.modAv.aicc6, newdata=for_prod.newdata, se.fit=TRUE)
 for_prod.predict <- data.frame(for_prod.predict)
 for_prod.predict$lwr <- for_prod.predict$fit-2*for_prod.predict$se.fit
@@ -1569,12 +1579,16 @@ for_prod_plot <- ggplot(data=for_prod.predict, aes(x=for_prod, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Total timber production (m3) at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Total timber production (m3) at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.png", for_prod_plot, width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.png", for_prod_plot, width = 30, height = 20, units = "cm", dpi=300)
+
+
+
+####
 
 
 # test model with armi instead of the individual commodities
@@ -1700,8 +1714,7 @@ ggsave(file="Results/Macroeconomics/Plots/for_prod_plot1a.png", for_prod_plot1a,
 
 
 # create data
-dat_com_lag <- data.frame(year = dat_com$year,
-                         for_cov = dat_com$for_cov,
+dat_com_lag <- data.frame(for_cov = dat_com$for_cov,
                          time = dat_com$time,
                          armi.lag1 = lag(dat_com$armi),
                          armi.lag2 = lag(dat_com$armi, n=2L),
@@ -1718,7 +1731,8 @@ dat_com_lag <- data.frame(year = dat_com$year,
                          sug_med.lag1 = lag(dat_com$sug_med),
                          sug_med.lag2 = lag(dat_com$sug_med, n=2L),
                          for_prod.lag1 = lag(dat_com$for_prod),
-                         for_prod.lag2 = lag(dat_com$for_prod, n=2L))
+                         for_prod.lag2 = lag(dat_com$for_prod, n=2L),
+                         for_rem = dat_com$for_rem)
 
 # remove first row for 1-year lag
 dat_com_lag1 <- dat_com_lag[2:22, ]
@@ -1729,24 +1743,24 @@ dat_com_lag2 <- dat_com_lag1[2:21, ]
 
 ## saturated model with a gaussian distribution for 1-year lag predictors
 com.mod.gaus.lag1 <- glm(for_cov ~ cpi.lag1 + nfi.lag1 + rice_med.lag1 + rub_med.lag1 + 
-                           corn_med.lag1 + sug_med.lag1 + for_prod.lag1 + time, 
+                           corn_med.lag1 + sug_med.lag1 + for_prod.lag1 + time + for_rem, 
               na.action="na.fail", family=gaussian, data=dat_com_lag1)
 summary(com.mod.gaus.lag1)
 
 # dredge
 com.dredge.gaus.lag1 <- dredge(com.mod.gaus.lag1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(com.dredge.gaus.lag1, file="Results/Macroeconomics/Dredge/com.dredge.gaus.lag1.csv")
+#write.csv(com.dredge.gaus.lag1, file="Results/Macroeconomics/Dredge/com.dredge.gaus.lag1.csv")
 
 
 ## saturated model with gamma distribution for 1 year lagged predictors
-com.mod.gam.lag1 <- glm(for_cov ~ cpi.lag1 + nfi.lag1 + rice_med.lag1 + rub_med.lag1 + 
-                          corn_med.lag1 + sug_med.lag1 + for_prod.lag1 + time, 
-              na.action="na.fail", family=Gamma, data=dat_com_lag1)
-summary(com.mod.gam.lag1)
+#com.mod.gam.lag1 <- glm(for_cov ~ cpi.lag1 + nfi.lag1 + rice_med.lag1 + rub_med.lag1 + 
+ #                         corn_med.lag1 + sug_med.lag1 + for_prod.lag1 + time, 
+  #            na.action="na.fail", family=Gamma, data=dat_com_lag1)
+#summary(com.mod.gam.lag1)
 
 # dredge
-com.dredge.gam.lag1 <- dredge(com.mod.gam.lag1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(com.dredge.gam.lag1, file="Results/Macroeconomics/Dredge/com.dredge.gam.lag1.csv")
+#com.dredge.gam.lag1 <- dredge(com.mod.gam.lag1, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(com.dredge.gam.lag1, file="Results/Macroeconomics/Dredge/com.dredge.gam.lag1.csv")
 
 
 # models with Gaussian distribution are the better models
@@ -1769,7 +1783,8 @@ cpi.newdata.lag1 <- expand.grid(cpi.lag1 = seq(min(dat_com_lag1$cpi.lag1), max(d
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 cpi.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=cpi.newdata.lag1, se.fit=TRUE)
 cpi.predict.lag1 <- data.frame(cpi.predict.lag1)
 cpi.predict.lag1$lwr <- cpi.predict.lag1$fit-2*cpi.predict.lag1$se.fit
@@ -1781,13 +1796,13 @@ cpi_plot.lag1 <- ggplot(data=cpi.predict.lag1, aes(x=cpi.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Crop Production Index at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Crop Production Index at time t-1")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/cpi_plot.lag1.png", cpi_plot.lag1, width = 30, height = 20, 
-       units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/cpi_plot.lag1.png", cpi_plot.lag1, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 # nfi.lag1
@@ -1799,7 +1814,8 @@ nfi.newdata.lag1 <- expand.grid(nfi.lag1 = seq(min(dat_com_lag1$nfi.lag1), max(d
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 nfi.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=nfi.newdata.lag1, se.fit=TRUE)
 nfi.predict.lag1 <- data.frame(nfi.predict.lag1)
 nfi.predict.lag1$lwr <- nfi.predict.lag1$fit-2*nfi.predict.lag1$se.fit
@@ -1811,13 +1827,13 @@ nfi_plot.lag1 <- ggplot(data=nfi.predict.lag1, aes(x=nfi.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Non-food Production Index at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Non-food Production Index at time t-1")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/nfi_plot.lag1.png", nfi_plot.lag1, width = 30, height = 20, 
-       units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/nfi_plot.lag1.png", nfi_plot.lag1, width = 30, height = 20, 
+   #    units = "cm", dpi=300)
 
 
 # rice_med.lag1
@@ -1830,7 +1846,8 @@ rice_med.newdata.lag1 <- expand.grid(rice_med.lag1 = seq(min(dat_com_lag1$rice_m
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 rice_med.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=rice_med.newdata.lag1, se.fit=TRUE)
 rice_med.predict.lag1 <- data.frame(rice_med.predict.lag1)
 rice_med.predict.lag1$lwr <- rice_med.predict.lag1$fit-2*rice_med.predict.lag1$se.fit
@@ -1842,13 +1859,13 @@ rice_med_plot.lag1 <- ggplot(data=rice_med.predict.lag1, aes(x=rice_med.lag1, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of rice at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Median price of rice at time t-1")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.lag1.png", rice_med_plot.lag1, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.lag1.png", rice_med_plot.lag1, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -1862,7 +1879,8 @@ rub_med.newdata.lag1 <- expand.grid(rub_med.lag1 = seq(min(dat_com_lag1$rub_med.
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 rub_med.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=rub_med.newdata.lag1, se.fit=TRUE)
 rub_med.predict.lag1 <- data.frame(rub_med.predict.lag1)
 rub_med.predict.lag1$lwr <- rub_med.predict.lag1$fit-2*rub_med.predict.lag1$se.fit
@@ -1874,13 +1892,13 @@ rub_med_plot.lag1 <- ggplot(data=rub_med.predict.lag1, aes(x=rub_med.lag1, y=fit
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of rubber at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median price of rubber at time t-1")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.lag1.png", rub_med_plot.lag1, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.lag1.png", rub_med_plot.lag1, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -1894,7 +1912,8 @@ corn_med.newdata.lag1 <- expand.grid(corn_med.lag1 = seq(min(dat_com_lag1$corn_m
                           rub_med.lag1 = mean(dat_com_lag1$rub_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 corn_med.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=corn_med.newdata.lag1, se.fit=TRUE)
 corn_med.predict.lag1 <- data.frame(corn_med.predict.lag1)
 corn_med.predict.lag1$lwr <- corn_med.predict.lag1$fit-2*corn_med.predict.lag1$se.fit
@@ -1906,13 +1925,13 @@ corn_med_plot.lag1 <- ggplot(data=corn_med.predict.lag1, aes(x=corn_med.lag1, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of corn at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Median price of corn at time t-1")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.lag1.png", corn_med_plot.lag1, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.lag1.png", corn_med_plot.lag1, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -1926,7 +1945,8 @@ sug_med.newdata.lag1 <- expand.grid(sug_med.lag1 = seq(min(dat_com_lag1$sug_med.
                           rub_med.lag1 = mean(dat_com_lag1$rub_med.lag1),
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           for_prod.lag1 = mean(dat_com_lag1$for_prod.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 sug_med.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=sug_med.newdata.lag1, se.fit=TRUE)
 sug_med.predict.lag1 <- data.frame(sug_med.predict.lag1)
 sug_med.predict.lag1$lwr <- sug_med.predict.lag1$fit-2*sug_med.predict.lag1$se.fit
@@ -1938,13 +1958,13 @@ sug_med_plot.lag1 <- ggplot(data=sug_med.predict.lag1, aes(x=sug_med.lag1, y=fit
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median price of sugar at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+           #   xlab("Median price of sugar at time t-1")+
+           #   ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.lag1.png", sug_med_plot.lag1, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.lag1.png", sug_med_plot.lag1, width = 30, 
+  #     height = 20, units = "cm", dpi=300)
 
 
 
@@ -1958,7 +1978,8 @@ for_prod.newdata.lag1 <- expand.grid(for_prod.lag1 = seq(min(dat_com_lag1$for_pr
                           rub_med.lag1 = mean(dat_com_lag1$rub_med.lag1),
                           corn_med.lag1 = mean(dat_com_lag1$corn_med.lag1),
                           sug_med.lag1 = mean(dat_com_lag1$sug_med.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_com_lag1$time),
+                          for_rem = mean(dat_com_lag1$for_rem))
 for_prod.predict.lag1 <- predict(com.modAv.aicc6.lag1, newdata=for_prod.newdata.lag1, se.fit=TRUE)
 for_prod.predict.lag1 <- data.frame(for_prod.predict.lag1)
 for_prod.predict.lag1$lwr <- for_prod.predict.lag1$fit-2*for_prod.predict.lag1$se.fit
@@ -1970,15 +1991,19 @@ for_prod_plot.lag1 <- ggplot(data=for_prod.predict.lag1, aes(x=for_prod.lag1, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Total timber production (m3) at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+            #  xlab("Total timber production (m3) at time t-1")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag1.png", for_prod_plot.lag1, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#gsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag1.png", for_prod_plot.lag1, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
+
+
+
+###
 
 
 # test model with armi instead of the individual commodities
@@ -2113,7 +2138,7 @@ ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag1a.png", for_prod_plo
 
 ## saturated model with a gaussian distribution for 2-year lag predictors
 com.mod.gaus.lag2 <- glm(for_cov ~ cpi.lag2 + nfi.lag2 + rice_med.lag2 + rub_med.lag2 + 
-                           corn_med.lag2 + sug_med.lag2 + for_prod.lag2 + time, 
+                           corn_med.lag2 + sug_med.lag2 + for_prod.lag2 + time + for_rem, 
               na.action="na.fail", family=gaussian, data=dat_com_lag2)
 summary(com.mod.gaus.lag2)
 
@@ -2123,14 +2148,14 @@ write.csv(com.dredge.gaus.lag2, file="Results/Macroeconomics/Dredge/com.dredge.g
 
 
 ## saturated model with gamma distribution for 2 year lagged predictors
-com.mod.gam.lag2 <- glm(for_cov ~ cpi.lag2 + nfi.lag2 + rice_med.lag2 + rub_med.lag2 + 
-                          corn_med.lag2 + sug_med.lag2 + for_prod.lag2 + time, 
-              na.action="na.fail", family=Gamma, data=dat_com_lag2)
-summary(com.mod.gam.lag2)
+#com.mod.gam.lag2 <- glm(for_cov ~ cpi.lag2 + nfi.lag2 + rice_med.lag2 + rub_med.lag2 + 
+ #                         corn_med.lag2 + sug_med.lag2 + for_prod.lag2 + time, 
+  #            na.action="na.fail", family=Gamma, data=dat_com_lag2)
+#summary(com.mod.gam.lag2)
 
 # dredge
-com.dredge.gam.lag2 <- dredge(com.mod.gam.lag2, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(com.dredge.gam.lag2, file="Results/Macroeconomics/Dredge/com.dredge.gam.lag2.csv")
+#com.dredge.gam.lag2 <- dredge(com.mod.gam.lag2, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(com.dredge.gam.lag2, file="Results/Macroeconomics/Dredge/com.dredge.gam.lag2.csv")
 
 
 # models with Gaussian distribution are the better models
@@ -2153,7 +2178,8 @@ cpi.newdata.lag2 <- expand.grid(cpi.lag2 = seq(min(dat_com_lag2$cpi.lag2), max(d
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 cpi.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=cpi.newdata.lag2, se.fit=TRUE)
 cpi.predict.lag2 <- data.frame(cpi.predict.lag2)
 cpi.predict.lag2$lwr <- cpi.predict.lag2$fit-2*cpi.predict.lag2$se.fit
@@ -2165,13 +2191,13 @@ cpi_plot.lag2 <- ggplot(data=cpi.predict.lag2, aes(x=cpi.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Crop Production Index at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Crop Production Index at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/cpi_plot.lag2.png", cpi_plot.lag2, width = 30, height = 20, 
-       units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/cpi_plot.lag2.png", cpi_plot.lag2, width = 30, height = 20, 
+ #      units = "cm", dpi=300)
 
 
 
@@ -2184,7 +2210,8 @@ nfi.newdata.lag2 <- expand.grid(nfi.lag2 = seq(min(dat_com_lag2$nfi.lag2), max(d
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 nfi.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=nfi.newdata.lag2, se.fit=TRUE)
 nfi.predict.lag2 <- data.frame(nfi.predict.lag2)
 nfi.predict.lag2$lwr <- nfi.predict.lag2$fit-2*nfi.predict.lag2$se.fit
@@ -2196,13 +2223,13 @@ nfi_plot.lag2 <- ggplot(data=nfi.predict.lag2, aes(x=nfi.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Non-food Production Index at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Non-food Production Index at time t-2")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/nfiplot.lag2.png", nfi_plot.lag2, width = 30, height = 20, 
-       units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/nfiplot.lag2.png", nfi_plot.lag2, width = 30, height = 20, 
+#       units = "cm", dpi=300)
 
 
 
@@ -2216,7 +2243,8 @@ rice_med.newdata.lag2 <- expand.grid(rice_med.lag2 = seq(min(dat_com_lag2$rice_m
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 rice_med.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=rice_med.newdata.lag2, se.fit=TRUE)
 rice_med.predict.lag2 <- data.frame(rice_med.predict.lag2)
 rice_med.predict.lag2$lwr <- rice_med.predict.lag2$fit-2*rice_med.predict.lag2$se.fit
@@ -2228,13 +2256,13 @@ rice_med_plot.lag2 <- ggplot(data=rice_med.predict.lag2, aes(x=rice_med.lag2, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median rice price at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median rice price at time t-2")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.lag2.png", rice_med_plot.lag2, 
-       width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rice_med_plot.lag2.png", rice_med_plot.lag2, 
+#       width = 30, height = 20, units = "cm", dpi=300)
 
 
 
@@ -2248,7 +2276,8 @@ rub_med.newdata.lag2 <- expand.grid(rub_med.lag2 = seq(min(dat_com_lag2$rub_med.
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 rub_med.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=rub_med.newdata.lag2, se.fit=TRUE)
 rub_med.predict.lag2 <- data.frame(rub_med.predict.lag2)
 rub_med.predict.lag2$lwr <- rub_med.predict.lag2$fit-2*rub_med.predict.lag2$se.fit
@@ -2260,13 +2289,13 @@ rub_med_plot.lag2 <- ggplot(data=rub_med.predict.lag2, aes(x=rub_med.lag2, y=fit
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median rubber price at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Median rubber price at time t-2")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.lag2.png", rub_med_plot.lag2, 
-       width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/rub_med_plot.lag2.png", rub_med_plot.lag2, 
+#       width = 30, height = 20, units = "cm", dpi=300)
 
 
 
@@ -2280,7 +2309,8 @@ corn_med.newdata.lag2 <- expand.grid(corn_med.lag2 = seq(min(dat_com_lag2$corn_m
                           rub_med.lag2 = mean(dat_com_lag2$rub_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 corn_med.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=corn_med.newdata.lag2, se.fit=TRUE)
 corn_med.predict.lag2 <- data.frame(corn_med.predict.lag2)
 corn_med.predict.lag2$lwr <- corn_med.predict.lag2$fit-2*corn_med.predict.lag2$se.fit
@@ -2292,13 +2322,13 @@ corn_med_plot.lag2 <- ggplot(data=corn_med.predict.lag2, aes(x=corn_med.lag2, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median corn price at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Median corn price at time t-2")+
+            #  ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.lag2.png", corn_med_plot.lag2, 
-       width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/corn_med_plot.lag2.png", corn_med_plot.lag2, 
+#       width = 30, height = 20, units = "cm", dpi=300)
 
 
 
@@ -2312,7 +2342,8 @@ sug_med.newdata.lag2 <- expand.grid(sug_med.lag2 = seq(min(dat_com_lag2$sug_med.
                           rub_med.lag2 = mean(dat_com_lag2$rub_med.lag2),
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           for_prod.lag2 = mean(dat_com_lag2$for_prod.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 sug_med.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=sug_med.newdata.lag2, se.fit=TRUE)
 sug_med.predict.lag2 <- data.frame(sug_med.predict.lag2)
 sug_med.predict.lag2$lwr <- sug_med.predict.lag2$fit-2*sug_med.predict.lag2$se.fit
@@ -2324,13 +2355,13 @@ sug_med_plot.lag2 <- ggplot(data=sug_med.predict.lag2, aes(x=sug_med.lag2, y=fit
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Median sugar price at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Median sugar price at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.lag2.png", sug_med_plot.lag2, 
-       width = 30, height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/sug_med_plot.lag2.png", sug_med_plot.lag2, 
+#       width = 30, height = 20, units = "cm", dpi=300)
 
 
 
@@ -2344,7 +2375,8 @@ for_prod.newdata.lag2 <- expand.grid(for_prod.lag2 = seq(min(dat_com_lag2$for_pr
                           rub_med.lag2 = mean(dat_com_lag2$rub_med.lag2),
                           corn_med.lag2 = mean(dat_com_lag2$corn_med.lag2),
                           sug_med.lag2 = mean(dat_com_lag2$sug_med.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_com_lag2$time),
+                          for_rem = mean(dat_com_lag2$for_rem))
 for_prod.predict.lag2 <- predict(com.modAv.aicc6.lag2, newdata=for_prod.newdata.lag2, se.fit=TRUE)
 for_prod.predict.lag2 <- data.frame(for_prod.predict.lag2)
 for_prod.predict.lag2$lwr <- for_prod.predict.lag2$fit-2*for_prod.predict.lag2$se.fit
@@ -2356,18 +2388,116 @@ for_prod_plot.lag2 <- ggplot(data=for_prod.predict.lag2, aes(x=for_prod.lag2, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Forest production (m3) at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Forest production (m3) at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/for_prod_plot.lag2.png", for_prod_plot.lag2, 
-       width = 30, height = 20, units = "cm", dpi=300)
+#(file="Results/Macroeconomics/Plots/for_prod_plot.lag2.png", for_prod_plot.lag2, 
+  #     width = 30, height = 20, units = "cm", dpi=300)
 
 ## Based on the results of the above, I am not going to bother with replacing the individual commodidie with armi - it will make no difference
 
 
 
+
+
+    # all plots ####
+
+
+# all plots together, with one row for each variable
+com_plot_all <- cpi_plot + cpi_plot.lag1 + cpi_plot.lag2 +
+                nfi_plot + nfi_plot.lag1 + nfi_plot.lag2 +
+                rice_med_plot + rice_med_plot.lag1 + rice_med_plot.lag2 +
+                rub_med_plot + rub_med_plot.lag1 + rub_med_plot.lag2 +
+                corn_med_plot + corn_med_plot.lag1 + corn_med_plot.lag2 +
+                sug_med_plot + sug_med_plot.lag1 + sug_med_plot.lag2 +
+                for_prod_plot + for_prod_plot.lag1 + for_prod_plot.lag2 +
+            plot_layout(ncol=3)
+
+# remove y-axis labels for all plots except plots 1, 4, 7, 10, 13, 16, 19 and change those to letters
+com_plot_all[[1]] <- com_plot_all[[1]] + ylab("a") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[2]] <- com_plot_all[[2]] + theme(axis.title.y = element_blank())
+com_plot_all[[3]] <- com_plot_all[[3]] + theme(axis.title.y = element_blank())
+com_plot_all[[4]] <- com_plot_all[[4]] + ylab("b") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[5]] <- com_plot_all[[5]] + theme(axis.title.y = element_blank())
+com_plot_all[[6]] <- com_plot_all[[6]] + theme(axis.title.y = element_blank())
+com_plot_all[[7]] <- com_plot_all[[7]] + ylab("c") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[8]] <- com_plot_all[[8]] + theme(axis.title.y = element_blank())
+com_plot_all[[9]] <- com_plot_all[[9]] + theme(axis.title.y = element_blank())
+com_plot_all[[10]] <- com_plot_all[[10]] + ylab("d") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[11]] <- com_plot_all[[11]] + theme(axis.title.y = element_blank())
+com_plot_all[[12]] <- com_plot_all[[12]] + theme(axis.title.y = element_blank())
+com_plot_all[[13]] <- com_plot_all[[13]] + ylab("e") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[14]] <- com_plot_all[[14]] + theme(axis.title.y = element_blank())
+com_plot_all[[15]] <- com_plot_all[[15]] + theme(axis.title.y = element_blank())
+com_plot_all[[16]] <- com_plot_all[[16]] + ylab("f") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[17]] <- com_plot_all[[17]] + theme(axis.title.y = element_blank())
+com_plot_all[[18]] <- com_plot_all[[18]] + theme(axis.title.y = element_blank())
+com_plot_all[[19]] <- com_plot_all[[19]] + ylab("g") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+com_plot_all[[20]] <- com_plot_all[[20]] + theme(axis.title.y = element_blank())
+com_plot_all[[21]] <- com_plot_all[[21]] + theme(axis.title.y = element_blank())
+
+# remove x axis labels for all plots
+com_plot_all[[1]] <- com_plot_all[[1]] + theme(axis.title.x = element_blank())
+com_plot_all[[2]] <- com_plot_all[[2]] + theme(axis.title.x = element_blank())
+com_plot_all[[3]] <- com_plot_all[[3]] + theme(axis.title.x = element_blank())
+com_plot_all[[4]] <- com_plot_all[[4]] + theme(axis.title.x = element_blank())
+com_plot_all[[5]] <- com_plot_all[[5]] + theme(axis.title.x = element_blank())
+com_plot_all[[6]] <- com_plot_all[[6]] + theme(axis.title.x = element_blank())
+com_plot_all[[7]] <- com_plot_all[[7]] + theme(axis.title.x = element_blank())
+com_plot_all[[8]] <- com_plot_all[[8]] + theme(axis.title.x = element_blank())
+com_plot_all[[9]] <- com_plot_all[[9]] + theme(axis.title.x = element_blank())
+com_plot_all[[10]] <- com_plot_all[[10]] + theme(axis.title.x = element_blank())
+com_plot_all[[11]] <- com_plot_all[[11]] + theme(axis.title.x = element_blank())
+com_plot_all[[12]] <- com_plot_all[[12]] + theme(axis.title.x = element_blank())
+com_plot_all[[13]] <- com_plot_all[[13]] + theme(axis.title.x = element_blank())
+com_plot_all[[14]] <- com_plot_all[[14]] + theme(axis.title.x = element_blank())
+com_plot_all[[15]] <- com_plot_all[[15]] + theme(axis.title.x = element_blank())
+com_plot_all[[16]] <- com_plot_all[[16]] + theme(axis.title.x = element_blank())
+com_plot_all[[17]] <- com_plot_all[[17]] + theme(axis.title.x = element_blank())
+com_plot_all[[18]] <- com_plot_all[[18]] + theme(axis.title.x = element_blank())
+com_plot_all[[19]] <- com_plot_all[[19]] + theme(axis.title.x = element_blank())
+com_plot_all[[20]] <- com_plot_all[[20]] + theme(axis.title.x = element_blank())
+com_plot_all[[21]] <- com_plot_all[[21]] + theme(axis.title.x = element_blank())
+
+# remove y-axis ticks from all plots except 1, 4, 7, 10, 13, 16, 19
+com_plot_all[[2]] <- com_plot_all[[2]] + theme(axis.text.y = element_blank())
+com_plot_all[[3]] <- com_plot_all[[3]] + theme(axis.text.y = element_blank())
+com_plot_all[[5]] <- com_plot_all[[5]] + theme(axis.text.y = element_blank())
+com_plot_all[[6]] <- com_plot_all[[6]] + theme(axis.text.y = element_blank())
+com_plot_all[[8]] <- com_plot_all[[8]] + theme(axis.text.y = element_blank())
+com_plot_all[[9]] <- com_plot_all[[9]] + theme(axis.text.y = element_blank())
+com_plot_all[[11]] <- com_plot_all[[11]] + theme(axis.text.y = element_blank())
+com_plot_all[[12]] <- com_plot_all[[12]] + theme(axis.text.y = element_blank())
+com_plot_all[[14]] <- com_plot_all[[14]] + theme(axis.text.y = element_blank())
+com_plot_all[[15]] <- com_plot_all[[15]] + theme(axis.text.y = element_blank())
+com_plot_all[[17]] <- com_plot_all[[17]] + theme(axis.text.y = element_blank())
+com_plot_all[[18]] <- com_plot_all[[18]] + theme(axis.text.y = element_blank())
+com_plot_all[[20]] <- com_plot_all[[20]] + theme(axis.text.y = element_blank())
+com_plot_all[[21]] <- com_plot_all[[21]] + theme(axis.text.y = element_blank())
+
+# add titles for plots 1, 2, 3 to show the lags
+com_plot_all[[1]] <- com_plot_all[[1]] + ggtitle ("Time t") + theme(plot.title = element_text(hjust=0.5))
+com_plot_all[[2]] <- com_plot_all[[2]] + ggtitle ("Time t+1")+ theme(plot.title = element_text(hjust=0.5))
+com_plot_all[[3]] <- com_plot_all[[3]] + ggtitle ("Time t+2")+ theme(plot.title = element_text(hjust=0.5))
+
+ggsave("Results/Macroeconomics/Plots/COM_plot_grid.png", com_plot_all, 
+       width = 30, height = 30, unit="cm", dpi=300)
 
 
   ##Producer price set ####
