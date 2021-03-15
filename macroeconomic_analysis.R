@@ -787,8 +787,7 @@ dat_me_lag <- data.frame(for_cov = dat_me$for_cov,
                          dev_env.lag2 = lag(dat_me$dev_env, n=2L),
                          pop_den.lag1 = lag(dat_me$pop_den),
                          pop_den.lag2 = lag(dat_me$pop_den, n=2L),
-                         for_rem.lag1 = lag(dat_me$for_rem),
-                         for_rem.lag2 = lag(dat_me$for_rem, n=2L))
+                         for_rem = dat_me$for_rem)
 
 # remove the rows that have NAs. gdp_gr.lag2 is the only variable with 4 rows of NAs once lagged. I don't want to lose another year of data for all of the other variables just because of that one variable. Therefore I will not include gdp_gr.lag2 in the models
 dat_me_lag_sub <- dat_me_lag[c(4:22), ]
@@ -804,7 +803,7 @@ dat_me_lag_sub <- dat_me_lag_sub[ ,-1]
 
 ## saturated model with gaussian distribution for 1-year lagged predictors
 me.mod.gaus.lag.1 <- glm(for_cov ~ gdp.lag1+ gdp_gr.lag1+fdi.lag1+agr_gdp.lag1+
-                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+time+for_rem.lag1, 
+                           dev_agr.lag1+dev_env.lag1+pop_den.lag1+time+for_rem, 
                            na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
 summary(me.mod.gaus.lag.1)
 
@@ -845,7 +844,7 @@ gdp.lag1.newdata <- expand.grid(gdp.lag1 = seq(min(dat_me_lag_sub$gdp.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp.lag1.newdata, se.fit=TRUE)
 gdp.lag1.predict <- data.frame(gdp.lag1.predict)
 gdp.lag1.predict$lwr <- gdp.lag1.predict$fit-2*gdp.lag1.predict$se.fit
@@ -875,7 +874,7 @@ gdp_gr.lag1.newdata <- expand.grid(gdp_gr.lag1 = seq(min(dat_me_lag_sub$gdp_gr.l
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           fdi.lag1 = mean(dat_me_lag_sub$fdi.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 gdp_gr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=gdp_gr.lag1.newdata, se.fit=TRUE)
 gdp_gr.lag1.predict <- data.frame(gdp_gr.lag1.predict)
 gdp_gr.lag1.predict$lwr <- gdp_gr.lag1.predict$fit-2*gdp_gr.lag1.predict$se.fit
@@ -905,7 +904,7 @@ fdi.lag1.newdata <- expand.grid(fdi.lag1 = seq(min(dat_me_lag_sub$fdi.lag1),
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 fdi.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=fdi.lag1.newdata, se.fit=TRUE)
 fdi.lag1.predict <- data.frame(fdi.lag1.predict)
 fdi.lag1.predict$lwr <- fdi.lag1.predict$fit-2*fdi.lag1.predict$se.fit
@@ -935,7 +934,7 @@ agr_gdp.lag1.newdata <- expand.grid(agr_gdp.lag1 = seq(min(dat_me_lag_sub$agr_gd
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 agr_gdp.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=agr_gdp.lag1.newdata, se.fit=TRUE)
 agr_gdp.lag1.predict <- data.frame(agr_gdp.lag1.predict)
 agr_gdp.lag1.predict$lwr <- agr_gdp.lag1.predict$fit-2*agr_gdp.lag1.predict$se.fit
@@ -965,7 +964,7 @@ dev_agr.lag1.newdata <- expand.grid(dev_agr.lag1 = seq(min(dat_me_lag_sub$dev_ag
                           dev_env.lag1 = mean(dat_me_lag_sub$dev_env.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 dev_agr.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_agr.lag1.newdata, se.fit=TRUE)
 dev_agr.lag1.predict <- data.frame(dev_agr.lag1.predict)
 dev_agr.lag1.predict$lwr <- dev_agr.lag1.predict$fit-2*dev_agr.lag1.predict$se.fit
@@ -995,7 +994,7 @@ dev_env.lag1.newdata <- expand.grid(dev_env.lag1 = seq(min(dat_me_lag_sub$dev_en
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 dev_env.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=dev_env.lag1.newdata, se.fit=TRUE)
 dev_env.lag1.predict <- data.frame(dev_env.lag1.predict)
 dev_env.lag1.predict$lwr <- dev_env.lag1.predict$fit-2*dev_env.lag1.predict$se.fit
@@ -1025,7 +1024,7 @@ pop_den.lag1.newdata <- expand.grid(pop_den.lag1 = seq(min(dat_me_lag_sub$pop_de
                           dev_agr.lag1 = mean(dat_me_lag_sub$dev_agr.lag1),
                           gdp_gr.lag1 = mean(dat_me_lag_sub$gdp_gr.lag1),
                           gdp.lag1 = mean(dat_me_lag_sub$gdp.lag1),
-                          for_rem.lag1 = mean(dat_me_lag_sub$for_rem.lag1))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 pop_den.lag1.predict <- predict(me.modAv.aicc6.lag1, newdata=pop_den.lag1.newdata, se.fit=TRUE)
 pop_den.lag1.predict <- data.frame(pop_den.lag1.predict)
 pop_den.lag1.predict$lwr <- pop_den.lag1.predict$fit-2*pop_den.lag1.predict$se.fit
@@ -1052,7 +1051,7 @@ pop_den.lag1_plot + gdp.lag1_plot + agr_gdp.lag1_plot + dev_agr.lag1_plot + fdi.
 
 ## saturated model with gaussian distribution for 2-year lagged predictors
 me.mod.gaus.lag.2 <- glm(for_cov ~ gdp.lag2 + fdi.lag2 + agr_gdp.lag2 +
-                           dev_agr.lag2 + dev_env.lag2 + pop_den.lag2 + time + for_rem.lag2, 
+                           dev_agr.lag2 + dev_env.lag2 + pop_den.lag2 + time + for_rem, 
                            na.action="na.fail", family=gaussian, data=dat_me_lag_sub)
 summary(me.mod.gaus.lag.2)
 
@@ -1077,7 +1076,7 @@ gdp.lag2.newdata <- expand.grid(gdp.lag2 = seq(min(dat_me_lag_sub$gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
                           fdi.lag2 = mean(dat_me_lag_sub$fdi.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=gdp.lag2.newdata, se.fit=TRUE)
 gdp.lag2.predict <- data.frame(gdp.lag2.predict)
 gdp.lag2.predict$lwr <- gdp.lag2.predict$fit-2*gdp.lag2.predict$se.fit
@@ -1106,7 +1105,7 @@ fdi.lag2.newdata <- expand.grid(fdi.lag2 = seq(min(dat_me_lag_sub$fdi.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
                           gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 fdi.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=fdi.lag2.newdata, se.fit=TRUE)
 fdi.lag2.predict <- data.frame(fdi.lag2.predict)
 fdi.lag2.predict$lwr <- fdi.lag2.predict$fit-2*fdi.lag2.predict$se.fit
@@ -1135,7 +1134,7 @@ agr_gdp.lag2.newdata <- expand.grid(agr_gdp.lag2 = seq(min(dat_me_lag_sub$agr_gd
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
                           gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 agr_gdp.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=agr_gdp.lag2.newdata, se.fit=TRUE)
 agr_gdp.lag2.predict <- data.frame(agr_gdp.lag2.predict)
 agr_gdp.lag2.predict$lwr <- agr_gdp.lag2.predict$fit-2*agr_gdp.lag2.predict$se.fit
@@ -1164,7 +1163,7 @@ dev_agr.lag2.newdata <- expand.grid(dev_agr.lag2 = seq(min(dat_me_lag_sub$dev_ag
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_env.lag2 = mean(dat_me_lag_sub$dev_env.lag2),
                           gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 dev_agr.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_agr.lag2.newdata, se.fit=TRUE)
 dev_agr.lag2.predict <- data.frame(dev_agr.lag2.predict)
 dev_agr.lag2.predict$lwr <- dev_agr.lag2.predict$fit-2*dev_agr.lag2.predict$se.fit
@@ -1193,7 +1192,7 @@ dev_env.lag2.newdata <- expand.grid(dev_env.lag2 = seq(min(dat_me_lag_sub$dev_en
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 dev_env.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=dev_env.lag2.newdata, se.fit=TRUE)
 dev_env.lag2.predict <- data.frame(dev_env.lag2.predict)
 dev_env.lag2.predict$lwr <- dev_env.lag2.predict$fit-2*dev_env.lag2.predict$se.fit
@@ -1222,7 +1221,7 @@ pop_den.lag2.newdata <- expand.grid(pop_den.lag2 = seq(min(dat_me_lag_sub$pop_de
                           agr_gdp.lag2 = mean(dat_me_lag_sub$agr_gdp.lag2),
                           dev_agr.lag2 = mean(dat_me_lag_sub$dev_agr.lag2),
                           gdp.lag2 = mean(dat_me_lag_sub$gdp.lag2),
-                          for_rem.lag2 = mean(dat_me_lag_sub$for_rem.lag2))
+                          for_rem = mean(dat_me_lag_sub$for_rem))
 pop_den.lag2.predict <- predict(me.modAv.aicc6.lag2, newdata=pop_den.lag2.newdata, se.fit=TRUE)
 pop_den.lag2.predict <- data.frame(pop_den.lag2.predict)
 pop_den.lag2.predict$lwr <- pop_den.lag2.predict$fit-2*pop_den.lag2.predict$se.fit
@@ -1265,28 +1264,79 @@ me_plot_all <- pop_den_plot+pop_den.lag1_plot+pop_den.lag2_plot+
                fdi_plot+fdi.lag1_plot+fdi.lag2_plot+
                 plot_layout(ncol=3)
 
-# remove y-axis labels for all plots except plot 10
-me_plot_all[[1]] <- me_plot_all[[1]] + theme(axis.title.y = element_blank())
+# remove y-axis labels for all plots except plots 1, 4, 7, 10, 13, 16, and change those to letters
+me_plot_all[[1]] <- me_plot_all[[1]] + ylab("a") + 
+                    theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                      size=20))
 me_plot_all[[2]] <- me_plot_all[[2]] + theme(axis.title.y = element_blank())
 me_plot_all[[3]] <- me_plot_all[[3]] + theme(axis.title.y = element_blank())
-me_plot_all[[4]] <- me_plot_all[[4]] + theme(axis.title.y = element_blank())
+me_plot_all[[4]] <- me_plot_all[[4]] + ylab("b") + 
+                    theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                      size=20))
 me_plot_all[[5]] <- me_plot_all[[5]] + theme(axis.title.y = element_blank())
 me_plot_all[[6]] <- me_plot_all[[6]] + theme(axis.title.y = element_blank())
-me_plot_all[[7]] <- me_plot_all[[7]] + theme(axis.title.y = element_blank())
+me_plot_all[[7]] <- me_plot_all[[7]] + ylab("c") + 
+                    theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                      size=20))
 me_plot_all[[8]] <- me_plot_all[[8]] + theme(axis.title.y = element_blank())
 me_plot_all[[9]] <- me_plot_all[[9]] + theme(axis.title.y = element_blank())
+me_plot_all[[10]] <- me_plot_all[[10]] + ylab("d") + 
+                     theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                       size=20))
 me_plot_all[[11]] <- me_plot_all[[11]] + theme(axis.title.y = element_blank())
 me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.title.y = element_blank())
-me_plot_all[[13]] <- me_plot_all[[13]] + theme(axis.title.y = element_blank())
+me_plot_all[[13]] <- me_plot_all[[13]] + ylab("e") + 
+                     theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                       size=20))
 me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.title.y = element_blank())
 me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.title.y = element_blank())
-me_plot_all[[16]] <- me_plot_all[[16]] + theme(axis.title.y = element_blank())
+me_plot_all[[16]] <- me_plot_all[[16]] + ylab("f") + 
+                     theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                                       size=20))
 me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.title.y = element_blank())
 me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.title.y = element_blank())
 
+# remove x axis labels for all plots
+me_plot_all[[1]] <- me_plot_all[[1]] + theme(axis.title.x = element_blank())
+me_plot_all[[2]] <- me_plot_all[[2]] + theme(axis.title.x = element_blank())
+me_plot_all[[3]] <- me_plot_all[[3]] + theme(axis.title.x = element_blank())
+me_plot_all[[4]] <- me_plot_all[[4]] + theme(axis.title.x = element_blank())
+me_plot_all[[5]] <- me_plot_all[[5]] + theme(axis.title.x = element_blank())
+me_plot_all[[6]] <- me_plot_all[[6]] + theme(axis.title.x = element_blank())
+me_plot_all[[7]] <- me_plot_all[[7]] + theme(axis.title.x = element_blank())
+me_plot_all[[8]] <- me_plot_all[[8]] + theme(axis.title.x = element_blank())
+me_plot_all[[9]] <- me_plot_all[[9]] + theme(axis.title.x = element_blank())
+me_plot_all[[10]] <- me_plot_all[[10]] + theme(axis.title.x = element_blank())
+me_plot_all[[11]] <- me_plot_all[[11]] + theme(axis.title.x = element_blank())
+me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.title.x = element_blank())
+me_plot_all[[13]] <- me_plot_all[[13]] + theme(axis.title.x = element_blank())
+me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.title.x = element_blank())
+me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.title.x = element_blank())
+me_plot_all[[16]] <- me_plot_all[[16]] + theme(axis.title.x = element_blank())
+me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.title.x = element_blank())
+me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.title.x = element_blank())
 
+# remove y-axis ticks from all plots except 1, 4, 7, 10, 13, 16
+me_plot_all[[2]] <- me_plot_all[[2]] + theme(axis.text.y = element_blank())
+me_plot_all[[3]] <- me_plot_all[[3]] + theme(axis.text.y = element_blank())
+me_plot_all[[5]] <- me_plot_all[[5]] + theme(axis.text.y = element_blank())
+me_plot_all[[6]] <- me_plot_all[[6]] + theme(axis.text.y = element_blank())
+me_plot_all[[8]] <- me_plot_all[[8]] + theme(axis.text.y = element_blank())
+me_plot_all[[9]] <- me_plot_all[[9]] + theme(axis.text.y = element_blank())
+me_plot_all[[11]] <- me_plot_all[[11]] + theme(axis.text.y = element_blank())
+me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.text.y = element_blank())
+me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.text.y = element_blank())
+me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.text.y = element_blank())
+me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.text.y = element_blank())
+me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.text.y = element_blank())
 
+# add titles for plots 1, 2, 3 to show the lags
+me_plot_all[[1]] <- me_plot_all[[1]] + ggtitle ("Time t") + theme(plot.title = element_text(hjust=0.5))
+me_plot_all[[2]] <- me_plot_all[[2]] + ggtitle ("Time t+1")+ theme(plot.title = element_text(hjust=0.5))
+me_plot_all[[3]] <- me_plot_all[[3]] + ggtitle ("Time t+2")+ theme(plot.title = element_text(hjust=0.5))
 
+ggsave("Results/Macroeconomics/Plots/ME_plot_grid.png", me_plot_all, 
+       width = 30, height = 30, unit="cm", dpi=300)
 
 #
   ## Commodity / production set ####
