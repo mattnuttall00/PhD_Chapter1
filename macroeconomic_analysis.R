@@ -439,6 +439,8 @@ write.csv(correlation, file="macrovars_corr_scale.csv")
 # https://bit.ly/34otX2J
 # https://bit.ly/2OpFZn7
 
+
+
 str(dat_change)
 
 # remove for_cov_perc and gni
@@ -480,11 +482,15 @@ str(dat_me)
 dat_com <- dat_work %>% select(for_cov, armi, cpi, nfi, rice_med, rub_med, corn_med, sug_med, for_prod, 
                                time, for_rem)
 str(dat_com)
+#write.csv(dat_com, file="Data/national/commodity_set/dat_com.csv")
 
 # producer prices - prod_rice, prod_rub, prod_cass, prod_corn, prod_sug
 dat_prod <- dat_work %>% select(for_cov, prod_rice, prod_rub, prod_cass, prod_corn, prod_sug, 
                                 time, for_rem)
 str(dat_prod)
+#write.csv(dat_prod, file="Data/national/producer_set/dat_prod.csv")
+
+
 
 #### Models of subsets ####
   ## Macroeconomic set ####
@@ -2518,7 +2524,7 @@ summary(rub)
 
 
 ## saturated model with a gaussian distribution for unlagged predictors
-prod.mod.gaus.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time, 
+prod.mod.gaus.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time +for_rem, 
               na.action="na.fail", family=gaussian, data=dat_prod)
 summary(prod.mod.gaus.1)
 
@@ -2528,13 +2534,13 @@ write.csv(prod.dredge.gaus.1, file="Results/Macroeconomics/Dredge/prod.dredge.ga
 
 
 ## saturated model with gamma distribution for unlagged predictors
-prod.mod.gam.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time, 
-              na.action="na.fail", family=Gamma, data=dat_prod)
-summary(prod.mod.gam.1)
+#prod.mod.gam.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time, 
+ #             na.action="na.fail", family=Gamma, data=dat_prod)
+#summary(prod.mod.gam.1)
 
 # dredge
-prod.dredge.gam.1 <- dredge(prod.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gam.1, file="Results/Macroeconomics/Dredge/prod.dredge.gam.1.csv")
+#prod.dredge.gam.1 <- dredge(prod.mod.gam.1, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(prod.dredge.gam.1, file="Results/Macroeconomics/Dredge/prod.dredge.gam.1.csv")
 
 
 ## The gaussian distribution produces the better models
@@ -2553,7 +2559,8 @@ prod_rub.newdata <- expand.grid(prod_rub = seq(min(dat_prod$prod_rub), max(dat_p
                           prod_cass = mean(dat_prod$prod_cass),
                           prod_corn = mean(dat_prod$prod_corn),
                           prod_sug = mean(dat_prod$prod_sug),
-                          time = mean(dat_prod$time))
+                          time = mean(dat_prod$time),
+                          for_rem = mean(dat_prod$for_rem))
 prod_rub.predict <- predict(prod.modAv.aicc6, newdata=prod_rub.newdata, se.fit=TRUE)
 prod_rub.predict <- data.frame(prod_rub.predict)
 prod_rub.predict$lwr <- prod_rub.predict$fit-2*prod_rub.predict$se.fit
@@ -2566,13 +2573,13 @@ prod_rub_plot <- ggplot(data=prod_rub.predict, aes(x=prod_rub, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Rubber producer price at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Rubber producer price at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.png", prod_rub_plot, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.png", prod_rub_plot, width = 30, 
+ #      height = 20, units = "cm", dpi=300)
 
 
 # prod_cass
@@ -2581,7 +2588,8 @@ prod_cass.newdata <- expand.grid(prod_cass = seq(min(dat_prod$prod_cass), max(da
                           prod_rub = mean(dat_prod$prod_rub),
                           prod_corn = mean(dat_prod$prod_corn),
                           prod_sug = mean(dat_prod$prod_sug),
-                          time = mean(dat_prod$time))
+                          time = mean(dat_prod$time),
+                          for_rem = mean(dat_prod$for_rem))
 prod_cass.predict <- predict(prod.modAv.aicc6, newdata=prod_cass.newdata, se.fit=TRUE)
 prod_cass.predict <- data.frame(prod_cass.predict)
 prod_cass.predict$lwr <- prod_cass.predict$fit-2*prod_cass.predict$se.fit
@@ -2594,13 +2602,13 @@ prod_cass_plot <- ggplot(data=prod_cass.predict, aes(x=prod_cass, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Cassava producer price at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Cassava producer price at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.png", prod_cass_plot, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.png", prod_cass_plot, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 # prod_corn
@@ -2609,7 +2617,8 @@ prod_corn.newdata <- expand.grid(prod_corn = seq(min(dat_prod$prod_corn), max(da
                           prod_rub = mean(dat_prod$prod_rub),
                           prod_cass = mean(dat_prod$prod_cass),
                           prod_sug = mean(dat_prod$prod_sug),
-                          time = mean(dat_prod$time))
+                          time = mean(dat_prod$time),
+                          for_rem = mean(dat_prod$for_rem))
 prod_corn.predict <- predict(prod.modAv.aicc6, newdata=prod_corn.newdata, se.fit=TRUE)
 prod_corn.predict <- data.frame(prod_corn.predict)
 prod_corn.predict$lwr <- prod_corn.predict$fit-2*prod_corn.predict$se.fit
@@ -2622,13 +2631,13 @@ prod_corn_plot <- ggplot(data=prod_corn.predict, aes(x=prod_corn, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Corn producer price at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Corn producer price at time t")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.png", prod_corn_plot, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.png", prod_corn_plot, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -2638,7 +2647,8 @@ prod_sug.newdata <- expand.grid(prod_sug = seq(min(dat_prod$prod_sug), max(dat_p
                           prod_rub = mean(dat_prod$prod_rub),
                           prod_cass = mean(dat_prod$prod_cass),
                           prod_corn = mean(dat_prod$prod_corn),
-                          time = mean(dat_prod$time))
+                          time = mean(dat_prod$time),
+                          for_rem = mean(dat_prod$for_rem))
 prod_sug.predict <- predict(prod.modAv.aicc6, newdata=prod_sug.newdata, se.fit=TRUE)
 prod_sug.predict <- data.frame(prod_sug.predict)
 prod_sug.predict$lwr <- prod_sug.predict$fit-2*prod_sug.predict$se.fit
@@ -2651,22 +2661,22 @@ prod_sug_plot <- ggplot(data=prod_sug.predict, aes(x=prod_sug, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Sugar producer price at time t")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Sugar producer price at time t")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.png", prod_sug_plot, width = 30, 
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.png", prod_sug_plot, width = 30, 
+#       height = 20, units = "cm", dpi=300)
 
 
 
     # 1 year lag ####
 
 # create data
-dat_prod_lag <- data.frame(year = dat_com$year,
-                         for_cov = dat_com$for_cov,
-                         time = dat_com$time,
+dat_prod_lag <- data.frame(for_cov = dat_prod$for_cov,
+                         for_rem = dat_prod$for_rem,
+                         time = dat_prod$time,
                          prod_rub.lag1 = lag(dat_prod$prod_rub),
                          prod_rub.lag2 = lag(dat_prod$prod_rub, n=2L),
                          prod_corn.lag1 = lag(dat_prod$prod_corn),
@@ -2686,7 +2696,7 @@ dat_prod_lag2 <- dat_prod_lag[3:22, ]
 
 ## saturated model with a gaussian distribution for 1-year lag predictors
 prod.mod.gaus.lag1 <- glm(for_cov ~ prod_rub.lag1 + prod_cass.lag1 + prod_corn.lag1 + prod_sug.lag1 + 
-                          time, na.action="na.fail", family=gaussian, data=dat_prod_lag1)
+                          time + for_rem, na.action="na.fail", family=gaussian, data=dat_prod_lag1)
 summary(prod.mod.gaus.lag1)
 
 # dredge
@@ -2695,13 +2705,13 @@ write.csv(prod.dredge.gaus.lag1, file="Results/Macroeconomics/Dredge/prod.dredge
 
 
 ## saturated model with gamma distribution for 1 year lagged predictors
-prod.mod.gam.lag1 <- glm(for_cov ~ prod_rub.lag1 + prod_cass.lag1 + prod_corn.lag1 + prod_sug.lag1 + 
-                          time, na.action="na.fail", family=Gamma, data=dat_prod_lag1)
-summary(prod.mod.gam.lag1)
+#prod.mod.gam.lag1 <- glm(for_cov ~ prod_rub.lag1 + prod_cass.lag1 + prod_corn.lag1 + prod_sug.lag1 + 
+ #                         time, na.action="na.fail", family=Gamma, data=dat_prod_lag1)
+#summary(prod.mod.gam.lag1)
 
 # dredge
-prod.dredge.gam.lag1 <- dredge(prod.mod.gam.lag1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gam.lag1, file="Results/Macroeconomics/Dredge/prod.dredge.gam.lag1.csv")
+#prod.dredge.gam.lag1 <- dredge(prod.mod.gam.lag1, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(prod.dredge.gam.lag1, file="Results/Macroeconomics/Dredge/prod.dredge.gam.lag1.csv")
 
 
 # models with Gaussian distribution are the better models
@@ -2722,7 +2732,8 @@ prod_rub.newdata.lag1 <- expand.grid(prod_rub.lag1 = seq(min(dat_prod_lag1$prod_
                           prod_cass.lag1 = mean(dat_prod_lag1$prod_cass.lag1),
                           prod_corn.lag1 = mean(dat_prod_lag1$prod_corn.lag1),
                           prod_sug.lag1 = mean(dat_prod_lag1$prod_sug.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_prod_lag1$time),
+                          for_rem = mean(dat_prod_lag1$for_rem))
 prod_rub.predict.lag1 <- predict(prod.modAv.aicc6.lag1, newdata=prod_rub.newdata.lag1, se.fit=TRUE)
 prod_rub.predict.lag1 <- data.frame(prod_rub.predict.lag1)
 prod_rub.predict.lag1$lwr <- prod_rub.predict.lag1$fit-2*prod_rub.predict.lag1$se.fit
@@ -2734,13 +2745,13 @@ prod_rub_plot.lag1 <- ggplot(data=prod_rub.predict.lag1, aes(x=prod_rub.lag1, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of rubber at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of rubber at time t-1")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.lag1.png", prod_rub_plot.lag1, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.lag1.png", prod_rub_plot.lag1, width = 30,
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -2751,7 +2762,8 @@ prod_cass.newdata.lag1 <- expand.grid(prod_cass.lag1 = seq(min(dat_prod_lag1$pro
                           prod_rub.lag1 = mean(dat_prod_lag1$prod_rub.lag1),
                           prod_corn.lag1 = mean(dat_prod_lag1$prod_corn.lag1),
                           prod_sug.lag1 = mean(dat_prod_lag1$prod_sug.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_prod_lag1$time),
+                          for_rem = mean(dat_prod_lag1$for_rem))
 prod_cass.predict.lag1 <- predict(prod.modAv.aicc6.lag1, newdata=prod_cass.newdata.lag1, se.fit=TRUE)
 prod_cass.predict.lag1 <- data.frame(prod_cass.predict.lag1)
 prod_cass.predict.lag1$lwr <- prod_cass.predict.lag1$fit-2*prod_cass.predict.lag1$se.fit
@@ -2763,13 +2775,13 @@ prod_cass_plot.lag1 <- ggplot(data=prod_cass.predict.lag1, aes(x=prod_cass.lag1,
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of cassava at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of cassava at time t-1")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.lag1.png", prod_cass_plot.lag1, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.lag1.png", prod_cass_plot.lag1, width = 30,
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -2780,7 +2792,8 @@ prod_corn.newdata.lag1 <- expand.grid(prod_corn.lag1 = seq(min(dat_prod_lag1$pro
                           prod_rub.lag1 = mean(dat_prod_lag1$prod_rub.lag1),
                           prod_cass.lag1 = mean(dat_prod_lag1$prod_cass.lag1),
                           prod_sug.lag1 = mean(dat_prod_lag1$prod_sug.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_prod_lag1$time),
+                          for_rem = mean(dat_prod_lag1$for_rem))
 prod_corn.predict.lag1 <- predict(prod.modAv.aicc6.lag1, newdata=prod_corn.newdata.lag1, se.fit=TRUE)
 prod_corn.predict.lag1 <- data.frame(prod_corn.predict.lag1)
 prod_corn.predict.lag1$lwr <- prod_corn.predict.lag1$fit-2*prod_corn.predict.lag1$se.fit
@@ -2792,13 +2805,13 @@ prod_corn_plot.lag1 <- ggplot(data=prod_corn.predict.lag1, aes(x=prod_corn.lag1,
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of corn at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of corn at time t-1")+
+             # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.lag1.png", prod_corn_plot.lag1, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.lag1.png", prod_corn_plot.lag1, width = 30,
+   #    height = 20, units = "cm", dpi=300)
 
 
 
@@ -2810,7 +2823,8 @@ prod_sug.newdata.lag1 <- expand.grid(prod_sug.lag1 = seq(min(dat_prod_lag1$prod_
                           prod_rub.lag1 = mean(dat_prod_lag1$prod_rub.lag1),
                           prod_cass.lag1 = mean(dat_prod_lag1$prod_cass.lag1),
                           prod_corn.lag1 = mean(dat_prod_lag1$prod_corn.lag1),
-                          time = mean(dat_com_lag1$time))
+                          time = mean(dat_prod_lag1$time),
+                          for_rem = mean(dat_prod_lag1$for_rem))
 prod_sug.predict.lag1 <- predict(prod.modAv.aicc6.lag1, newdata=prod_sug.newdata.lag1, se.fit=TRUE)
 prod_sug.predict.lag1 <- data.frame(prod_sug.predict.lag1)
 prod_sug.predict.lag1$lwr <- prod_sug.predict.lag1$fit-2*prod_sug.predict.lag1$se.fit
@@ -2822,13 +2836,13 @@ prod_sug_plot.lag1 <- ggplot(data=prod_sug.predict.lag1, aes(x=prod_sug.lag1, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of sugar at time t-1")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of sugar at time t-1")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.lag1.png", prod_sug_plot.lag1, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.lag1.png", prod_sug_plot.lag1, width = 30,
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -2837,7 +2851,7 @@ ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.lag1.png", prod_sug_plot
 
 ## saturated model with a gaussian distribution for 2-year lag predictors
 prod.mod.gaus.lag2 <- glm(for_cov ~ prod_rub.lag2 + prod_cass.lag2 + prod_corn.lag2 + prod_sug.lag2 + 
-                          time, na.action="na.fail", family=gaussian, data=dat_prod_lag2)
+                          time + for_rem, na.action="na.fail", family=gaussian, data=dat_prod_lag2)
 summary(prod.mod.gaus.lag2)
 
 # dredge
@@ -2846,13 +2860,13 @@ write.csv(prod.dredge.gaus.lag2, file="Results/Macroeconomics/Dredge/prod.dredge
 
 
 ## saturated model with gamma distribution for 1 year lagged predictors
-prod.mod.gam.lag2 <- glm(for_cov ~ prod_rub.lag2 + prod_cass.lag2 + prod_corn.lag2 + prod_sug.lag2 + 
-                          time, na.action="na.fail", family=Gamma, data=dat_prod_lag2)
-summary(prod.mod.gam.lag2)
+#prod.mod.gam.lag2 <- glm(for_cov ~ prod_rub.lag2 + prod_cass.lag2 + prod_corn.lag2 + prod_sug.lag2 + 
+ #                         time, na.action="na.fail", family=Gamma, data=dat_prod_lag2)
+#summary(prod.mod.gam.lag2)
 
 # dredge
-prod.dredge.gam.lag2 <- dredge(prod.mod.gam.lag2, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gam.lag2, file="Results/Macroeconomics/Dredge/prod.dredge.gam.lag2.csv")
+#prod.dredge.gam.lag2 <- dredge(prod.mod.gam.lag2, beta = "none", evaluate = TRUE, rank = AICc)
+#write.csv(prod.dredge.gam.lag2, file="Results/Macroeconomics/Dredge/prod.dredge.gam.lag2.csv")
 
 
 # models with Gaussian distribution are the better models
@@ -2873,7 +2887,8 @@ prod_rub.newdata.lag2 <- expand.grid(prod_rub.lag2 = seq(min(dat_prod_lag2$prod_
                           prod_cass.lag2 = mean(dat_prod_lag2$prod_cass.lag2),
                           prod_corn.lag2 = mean(dat_prod_lag2$prod_corn.lag2),
                           prod_sug.lag2 = mean(dat_prod_lag2$prod_sug.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_prod_lag2$time),
+                          for_rem = mean(dat_prod_lag2$for_rem))
 prod_rub.predict.lag2 <- predict(prod.modAv.aicc6.lag2, newdata=prod_rub.newdata.lag2, se.fit=TRUE)
 prod_rub.predict.lag2 <- data.frame(prod_rub.predict.lag2)
 prod_rub.predict.lag2$lwr <- prod_rub.predict.lag2$fit-2*prod_rub.predict.lag2$se.fit
@@ -2885,13 +2900,13 @@ prod_rub_plot.lag2 <- ggplot(data=prod_rub.predict.lag2, aes(x=prod_rub.lag2, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of rubber at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+             # xlab("Producer price of rubber at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.lag2.png", prod_rub_plot.lag2, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_rub_plot.lag2.png", prod_rub_plot.lag2, width = 30,
+ #      height = 20, units = "cm", dpi=300)
 
 
 # prod_cass.lag2
@@ -2901,7 +2916,8 @@ prod_cass.newdata.lag2 <- expand.grid(prod_cass.lag2 = seq(min(dat_prod_lag2$pro
                           prod_rub.lag2 = mean(dat_prod_lag2$prod_rub.lag2),
                           prod_corn.lag2 = mean(dat_prod_lag2$prod_corn.lag2),
                           prod_sug.lag2 = mean(dat_prod_lag2$prod_sug.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_prod_lag2$time),
+                          for_rem = mean(dat_prod_lag2$for_rem))
 prod_cass.predict.lag2 <- predict(prod.modAv.aicc6.lag2, newdata=prod_cass.newdata.lag2, se.fit=TRUE)
 prod_cass.predict.lag2 <- data.frame(prod_cass.predict.lag2)
 prod_cass.predict.lag2$lwr <- prod_cass.predict.lag2$fit-2*prod_cass.predict.lag2$se.fit
@@ -2913,13 +2929,13 @@ prod_cass_plot.lag2 <- ggplot(data=prod_cass.predict.lag2, aes(x=prod_cass.lag2,
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of cassava at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of cassava at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.lag2.png", prod_cass_plot.lag2, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_cass_plot.lag2.png", prod_cass_plot.lag2, width = 30,
+#       height = 20, units = "cm", dpi=300)
 
 
 # prod_corn.lag2
@@ -2929,7 +2945,8 @@ prod_corn.newdata.lag2 <- expand.grid(prod_corn.lag2 = seq(min(dat_prod_lag2$pro
                           prod_rub.lag2 = mean(dat_prod_lag2$prod_rub.lag2),
                           prod_cass.lag2 = mean(dat_prod_lag2$prod_cass.lag2),
                           prod_sug.lag2 = mean(dat_prod_lag2$prod_sug.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_prod_lag2$time),
+                          for_rem = mean(dat_prod_lag2$for_rem))
 prod_corn.predict.lag2 <- predict(prod.modAv.aicc6.lag2, newdata=prod_corn.newdata.lag2, se.fit=TRUE)
 prod_corn.predict.lag2 <- data.frame(prod_corn.predict.lag2)
 prod_corn.predict.lag2$lwr <- prod_corn.predict.lag2$fit-2*prod_corn.predict.lag2$se.fit
@@ -2941,13 +2958,13 @@ prod_corn_plot.lag2 <- ggplot(data=prod_corn.predict.lag2, aes(x=prod_corn.lag2,
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of corn at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of corn at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.lag2.png", prod_corn_plot.lag2, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_corn_plot.lag2.png", prod_corn_plot.lag2, width = 30,
+#       height = 20, units = "cm", dpi=300)
 
 
 
@@ -2958,7 +2975,8 @@ prod_sug.newdata.lag2 <- expand.grid(prod_sug.lag2 = seq(min(dat_prod_lag2$prod_
                           prod_rub.lag2 = mean(dat_prod_lag2$prod_rub.lag2),
                           prod_cass.lag2 = mean(dat_prod_lag2$prod_cass.lag2),
                           prod_corn.lag2 = mean(dat_prod_lag2$prod_corn.lag2),
-                          time = mean(dat_com_lag2$time))
+                          time = mean(dat_prod_lag2$time),
+                          for_rem = mean(dat_prod_lag2$for_rem))
 prod_sug.predict.lag2 <- predict(prod.modAv.aicc6.lag2, newdata=prod_sug.newdata.lag2, se.fit=TRUE)
 prod_sug.predict.lag2 <- data.frame(prod_sug.predict.lag2)
 prod_sug.predict.lag2$lwr <- prod_sug.predict.lag2$fit-2*prod_sug.predict.lag2$se.fit
@@ -2970,10 +2988,76 @@ prod_sug_plot.lag2 <- ggplot(data=prod_sug.predict.lag2, aes(x=prod_sug.lag2, y=
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
               ylim(0,1500)+
-              xlab("Producer price of sugar at time t-2")+
-              ylab("Amount of forest lost (ha) at time t")+
+              #xlab("Producer price of sugar at time t-2")+
+              #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(),axis.line = element_line(colour = "black"))
-ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.lag2.png", prod_sug_plot.lag2, width = 30,
-       height = 20, units = "cm", dpi=300)
+#ggsave(file="Results/Macroeconomics/Plots/prod_sug_plot.lag2.png", prod_sug_plot.lag2, width = 30,
+   #    height = 20, units = "cm", dpi=300)
+
+    # all plots ####
+
+# all plots together, with one row for each variable
+prod_plot_all <- prod_rub_plot + prod_rub_plot.lag1 + prod_rub_plot.lag2 +
+                 prod_cass_plot + prod_cass_plot.lag1 + prod_cass_plot.lag2 +
+                 prod_corn_plot + prod_corn_plot.lag1 + prod_corn_plot.lag2 +
+                 prod_sug_plot + prod_sug_plot.lag1 + prod_sug_plot.lag2 +
+  plot_layout(ncol=3)
+
+# remove y-axis labels for all plots except plots 1, 4, 7, 10, and change those to letters
+prod_plot_all[[1]] <- prod_plot_all[[1]] + ylab("a") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+prod_plot_all[[2]] <- prod_plot_all[[2]] + theme(axis.title.y = element_blank())
+prod_plot_all[[3]] <- prod_plot_all[[3]] + theme(axis.title.y = element_blank())
+prod_plot_all[[4]] <- prod_plot_all[[4]] + ylab("b") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+prod_plot_all[[5]] <- prod_plot_all[[5]] + theme(axis.title.y = element_blank())
+prod_plot_all[[6]] <- prod_plot_all[[6]] + theme(axis.title.y = element_blank())
+prod_plot_all[[7]] <- prod_plot_all[[7]] + ylab("c") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+prod_plot_all[[8]] <- prod_plot_all[[8]] + theme(axis.title.y = element_blank())
+prod_plot_all[[9]] <- prod_plot_all[[9]] + theme(axis.title.y = element_blank())
+prod_plot_all[[10]] <- prod_plot_all[[10]] + ylab("d") + 
+  theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
+                                    size=20))
+prod_plot_all[[11]] <- prod_plot_all[[11]] + theme(axis.title.y = element_blank())
+prod_plot_all[[12]] <- prod_plot_all[[12]] + theme(axis.title.y = element_blank())
+
+
+# remove x axis labels for all plots
+prod_plot_all[[1]] <- prod_plot_all[[1]] + theme(axis.title.x = element_blank())
+prod_plot_all[[2]] <- prod_plot_all[[2]] + theme(axis.title.x = element_blank())
+prod_plot_all[[3]] <- prod_plot_all[[3]] + theme(axis.title.x = element_blank())
+prod_plot_all[[4]] <- prod_plot_all[[4]] + theme(axis.title.x = element_blank())
+prod_plot_all[[5]] <- prod_plot_all[[5]] + theme(axis.title.x = element_blank())
+prod_plot_all[[6]] <- prod_plot_all[[6]] + theme(axis.title.x = element_blank())
+prod_plot_all[[7]] <- prod_plot_all[[7]] + theme(axis.title.x = element_blank())
+prod_plot_all[[8]] <- prod_plot_all[[8]] + theme(axis.title.x = element_blank())
+prod_plot_all[[9]] <- prod_plot_all[[9]] + theme(axis.title.x = element_blank())
+prod_plot_all[[10]] <- prod_plot_all[[10]] + theme(axis.title.x = element_blank())
+prod_plot_all[[11]] <- prod_plot_all[[11]] + theme(axis.title.x = element_blank())
+prod_plot_all[[12]] <- prod_plot_all[[12]] + theme(axis.title.x = element_blank())
+
+
+# remove y-axis ticks from all plots except 1, 4, 7, 10, 
+prod_plot_all[[2]] <- prod_plot_all[[2]] + theme(axis.text.y = element_blank())
+prod_plot_all[[3]] <- prod_plot_all[[3]] + theme(axis.text.y = element_blank())
+prod_plot_all[[5]] <- prod_plot_all[[5]] + theme(axis.text.y = element_blank())
+prod_plot_all[[6]] <- prod_plot_all[[6]] + theme(axis.text.y = element_blank())
+prod_plot_all[[8]] <- prod_plot_all[[8]] + theme(axis.text.y = element_blank())
+prod_plot_all[[9]] <- prod_plot_all[[9]] + theme(axis.text.y = element_blank())
+prod_plot_all[[11]] <- prod_plot_all[[11]] + theme(axis.text.y = element_blank())
+prod_plot_all[[12]] <- prod_plot_all[[12]] + theme(axis.text.y = element_blank())
+
+
+# add titles for plots 1, 2, 3 to show the lags
+prod_plot_all[[1]] <- prod_plot_all[[1]] + ggtitle ("Time t") + theme(plot.title = element_text(hjust=0.5))
+prod_plot_all[[2]] <- prod_plot_all[[2]] + ggtitle ("Time t+1")+ theme(plot.title = element_text(hjust=0.5))
+prod_plot_all[[3]] <- prod_plot_all[[3]] + ggtitle ("Time t+2")+ theme(plot.title = element_text(hjust=0.5))
+
+ggsave("Results/Macroeconomics/Plots/PROD_plot_grid.png", prod_plot_all, 
+       width = 30, height = 30, unit="cm", dpi=300)
