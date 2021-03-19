@@ -4007,6 +4007,22 @@ summary(edu.m1)
 plot_model(edu.m1, type="pred", terms="M6_24_sch")
 # flat as you like
 
+
+# predict and plot global effect
+m2.edu.newdat <- data.frame(M6_24_sch = seq(min(dat1$M6_24_sch),max(dat1$M6_24_sch), length.out = 100),
+                               areaKM = mean(dat1$areaKM))
+m2.edu.newdat$pred <- as.vector(predict(edu.m1, newdata=m2.edu.newdat, type="response", re.form=NA))
+
+# plot 
+edu.m1.glob <- ggplot(m2.edu.newdat, aes(x=M6_24_sch, y=pred))+
+              geom_line(size=1)+
+              ylim(0,20000)+
+              theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+              ylab("Predicted number of forest pixels")+
+              xlab("Proportion of males (aged 6-24) in school)")+
+              theme(axis.title = element_text(size=20))+
+              theme(axis.text = element_text(size=17))
+
         # variance component analysis ####
 
 
@@ -4379,6 +4395,22 @@ plot_model(emp.m2, type="pred")
 anova(emp.m1, emp.m2)
 # Simpler model better. I will take propPrimSec forward, even though it is unlikely to have an effect
 
+
+# predict and plot global effect
+m2.emp.newdat <- data.frame(propPrimSec = seq(min(dat1$propPrimSec),max(dat1$propPrimSec), length.out = 100),
+                            areaKM = mean(dat1$areaKM))
+m2.emp.newdat$pred <- as.vector(predict(emp.m2, newdata=m2.emp.newdat, type="response", re.form=NA))
+
+# plot 
+emp.m1.glob <- ggplot(m2.emp.newdat, aes(x=propPrimSec, y=pred))+
+              geom_line(size=1)+
+              ylim(0,20000)+
+              theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+              ylab("Predicted number of forest pixels")+
+              xlab("Proportion of adults employed in the primary sector")+
+              theme(axis.title = element_text(size=20))+
+              theme(axis.text = element_text(size=17))
+
       # propPrimSec effects between provinces ####
 
 
@@ -4746,6 +4778,22 @@ anova(econ.m1, econ.m2)
 
 AIC(econ.m1)
 AIC(econ.m2)
+
+
+# predict and plot global effect
+m2.econ.newdat <- data.frame(pig_fam = seq(min(dat1$pig_fam),max(dat1$pig_fam), length.out = 100),
+                            areaKM = mean(dat1$areaKM))
+m2.econ.newdat$pred <- as.vector(predict(econ.m2, newdata=m2.econ.newdat, type="response", re.form=NA))
+
+# plot 
+econ.m1.glob <- ggplot(m2.econ.newdat, aes(x=pig_fam, y=pred))+
+              geom_line(size=1)+
+              ylim(0,20000)+
+              theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+              ylab("Predicted number of forest pixels")+
+              xlab("Proportion of families with pigs")+
+              theme(axis.title = element_text(size=20))+
+              theme(axis.text = element_text(size=17))
 
 
       # Les1_R_Land & pig_fam effects between provinces ####
@@ -5442,6 +5490,42 @@ anova(acc.m2,acc.m3)
 # I will take two strongest effects forward for the global model - dist_sch and garbage
 
 
+# predict and plot global effect
+# dist_sch
+m2.dist_sch.newdat <- data.frame(dist_sch = seq(min(dat1$dist_sch),max(dat1$dist_sch), length.out = 100),
+                            garbage = mean(dat1$garbage),
+                             areaKM = mean(dat1$areaKM))
+m2.dist_sch.newdat$pred <- as.vector(predict(acc.m2, newdata=m2.dist_sch.newdat, type="response", re.form=NA))
+
+# plot 
+dist_sch.m1.glob <- ggplot(m2.dist_sch.newdat, aes(x=dist_sch, y=pred))+
+                  geom_line(size=1)+
+                  ylim(0,20000)+
+                  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                  ylab("Predicted number of forest pixels")+
+                  xlab("Median distance to school (km)")+
+                  theme(axis.title = element_text(size=20))+
+                  theme(axis.text = element_text(size=17))
+
+# garbage
+m2.garbage.newdat <- data.frame(garbage = seq(min(dat1$garbage),max(dat1$garbage), length.out = 100),
+                                 dist_sch = mean(dat1$dist_sch),
+                                 areaKM = mean(dat1$areaKM))
+m2.garbage.newdat$pred <- as.vector(predict(acc.m2, newdata=m2.garbage.newdat, type="response", re.form=NA))
+m2.garbage.newdat$ucl <- m2.garbage.newdat$pred+(2*)
+
+# plot 
+garbage.m1.glob <- ggplot(m2.garbage.newdat, aes(x=garbage, y=pred))+
+                  geom_line(size=1)+
+                  ylim(0,20000)+
+                  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                  ylab("Predicted number of forest pixels")+
+                  xlab("Proportion of households with access to waste collection")+
+                  theme(axis.title = element_text(size=20))+
+                  theme(axis.text = element_text(size=17))
+
+
+
       # garbage effects between provinces ####
 
 # in order to get a provincial "mean" I am going to do the following: predict for each commune within a given province, and then take the mean of those predictions to form the provincial mean. I can then use the commune predictions to show CIs or the "variation" around the mean 
@@ -5796,6 +5880,22 @@ anova(jus.m1,jus.m2)
 # simpler model is better
 
 # I will tkae crim_case forward
+
+
+# predict and plot global effect
+m2.crim_case.newdat <- data.frame(crim_case = seq(min(dat1$crim_case),max(dat1$crim_case), length.out = 100),
+                                 areaKM = mean(dat1$areaKM))
+m2.crim_case.newdat$pred <- as.vector(predict(jus.m2, newdata=m2.crim_case.newdat, type="response", re.form=NA))
+
+# plot 
+crim_case.m1.glob <- ggplot(m2.crim_case.newdat, aes(x=crim_case, y=pred))+
+                  geom_line(size=1)+
+                  ylim(0,20000)+
+                  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+                  ylab("Predicted number of forest pixels")+
+                  xlab("Criminal cases per capita")+
+                  theme(axis.title = element_text(size=20))+
+                  theme(axis.text = element_text(size=17))
 
 
       # crim_case effects between provinces ####
@@ -6171,6 +6271,23 @@ AICc(mig.m4)
 # mig.m3 will be used for the province/PA no-PA analysis below
 
 # pax_migt_out will be taken forward
+
+
+# predict and plot global effect
+m2.migt_out.newdat <- data.frame(Pax_migt_out = seq(min(dat1$Pax_migt_out),max(dat1$Pax_migt_out), 
+                                                    length.out = 100),
+                                  areaKM = mean(dat1$areaKM))
+m2.migt_out.newdat$pred <- as.vector(predict(mig.m3, newdata=m2.migt_out.newdat, type="response", re.form=NA))
+
+# plot 
+migt_out.m1.glob <- ggplot(m2.migt_out.newdat, aes(x=Pax_migt_out, y=pred))+
+  geom_line(size=1)+
+  ylim(0,20000)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  ylab("Predicted number of forest pixels")+
+  xlab("Number of out-migrants")+
+  theme(axis.title = element_text(size=20))+
+  theme(axis.text = element_text(size=17))
 
       # Pax_migt_out effects between provinces ####
 
@@ -7036,6 +7153,22 @@ summary(env.m1)
 
 # variable taken forward
 
+
+# predict and plot global effect
+m2.elev.newdat <- data.frame(mean_elev = seq(min(dat1$mean_elev),max(dat1$mean_elev), 
+                                                    length.out = 100),
+                                 areaKM = mean(dat1$areaKM))
+m2.elev.newdat$pred <- as.vector(predict(env.m1, newdata=m2.elev.newdat, type="response", re.form=NA))
+
+# plot 
+elev.m1.glob <- ggplot(m2.elev.newdat, aes(x=mean_elev, y=pred))+
+  geom_line(size=1)+
+  ylim(0,20000)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  ylab("Predicted number of forest pixels")+
+  xlab("Mean elevation (scaled)")+
+  theme(axis.title = element_text(size=20))+
+  theme(axis.text = element_text(size=17))
 
 
       # diagnostics env.m1 ####
@@ -8289,6 +8422,27 @@ summary(hum.m2)
 # Although elc doesn't appear to hav a strong effect, I want to take it forward because theoretically it is important to control for this in the models. I will be criticised by lots of people if I don't!
 
 # will take dist_provCap, dist_border, PA, and elc forward.
+
+
+
+# predict and plot global effect
+# dist_provCap
+m2.provCap.newdat <- data.frame(dist_provCap = seq(min(dat1$dist_provCap),max(dat1$dist_provCap), 
+                                             length.out = 100),
+                                dist_border = mean(dat1$dist_border),
+                                
+                             areaKM = mean(dat1$areaKM))
+m2.elev.newdat$pred <- as.vector(predict(env.m1, newdata=m2.elev.newdat, type="response", re.form=NA))
+
+# plot 
+elev.m1.glob <- ggplot(m2.elev.newdat, aes(x=mean_elev, y=pred))+
+  geom_line(size=1)+
+  ylim(0,20000)+
+  theme(panel.background = element_blank(),axis.line = element_line(colour = "grey20"))+
+  ylab("Predicted number of forest pixels")+
+  xlab("Mean elevation (scaled)")+
+  theme(axis.title = element_text(size=20))+
+  theme(axis.text = element_text(size=17))
 
 
       # dist_border effects between provinces ####
@@ -9869,6 +10023,53 @@ hum.m2.PA.quants <- ggplot(PA_allprovs, aes(x=PA, y=pred, group=PA))+
 
 
 
+
+  ## Plotting all vars not in final model ####
+
+# these vars were the ones that were not in the final model
+
+nonsgVars_plot <- edu.m1.glob + emp.m1.glob +
+                  econ.m1.glob + dist_sch.m1.glob +
+                  garbage.m1.glob + crim_case.m1.glob +
+                  migt_out.m1.glob
+
+# remove x axes labels 
+nonsgVars_plot[[1]] <- nonsgVars_plot[[1]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[2]] <- nonsgVars_plot[[2]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[3]] <- nonsgVars_plot[[3]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[4]] <- nonsgVars_plot[[4]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[5]] <- nonsgVars_plot[[5]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[6]] <- nonsgVars_plot[[6]] + theme(axis.title.x = element_blank())
+nonsgVars_plot[[7]] <- nonsgVars_plot[[7]] + theme(axis.title.x = element_blank())
+
+# remove y axis labels for all except 4 and change margin for 4
+nonsgVars_plot[[1]] <- nonsgVars_plot[[1]] + theme(axis.title.y = element_blank())
+nonsgVars_plot[[2]] <- nonsgVars_plot[[2]] + theme(axis.title.y = element_blank())
+nonsgVars_plot[[3]] <- nonsgVars_plot[[3]] + theme(axis.title.y = element_blank())
+nonsgVars_plot[[5]] <- nonsgVars_plot[[5]] + theme(axis.title.y = element_blank())
+nonsgVars_plot[[6]] <- nonsgVars_plot[[6]] + theme(axis.title.y = element_blank())
+nonsgVars_plot[[7]] <- nonsgVars_plot[[7]] + theme(axis.title.y = element_blank())
+
+nonsgVars_plot[[4]] <- nonsgVars_plot[[4]] + theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), 
+                                                                               size=20, vjust = 0.1))
+
+# remove y axis ticks for 2, 3, 5, 6
+nonsgVars_plot[[2]] <- nonsgVars_plot[[2]] + theme(axis.text.y = element_blank())
+nonsgVars_plot[[3]] <- nonsgVars_plot[[3]] + theme(axis.text.y = element_blank())
+nonsgVars_plot[[5]] <- nonsgVars_plot[[5]] + theme(axis.text.y = element_blank())
+nonsgVars_plot[[6]] <- nonsgVars_plot[[6]] + theme(axis.text.y = element_blank())
+
+# add titles
+nonsgVars_plot[[1]] <- nonsgVars_plot[[1]] + ggtitle("a") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[2]] <- nonsgVars_plot[[2]] + ggtitle("b") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[3]] <- nonsgVars_plot[[3]] + ggtitle("c") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[4]] <- nonsgVars_plot[[4]] + ggtitle("d") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[5]] <- nonsgVars_plot[[5]] + ggtitle("e") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[6]] <- nonsgVars_plot[[6]] + ggtitle("f") + theme(plot.title = element_text(hjust=0.1, size=20))
+nonsgVars_plot[[7]] <- nonsgVars_plot[[7]] + ggtitle("g") + theme(plot.title = element_text(hjust=0.1, size=20))
+
+ggsave("Results/socioeconomics/Plots/non_sig_vars/nonsigVars_plotgrid.png", nonsgVars_plot,
+       width = 30, height = 30, unit="cm", dpi=300)
 
 ## Models with multiple sets ####
 
