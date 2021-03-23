@@ -10467,16 +10467,26 @@ pop_den_newdat <- data.frame(pop_den = seq(min(dat1$pop_den), max(dat1$pop_den),
                              dist_provCap = mean(dat1$dist_provCap),
                              elc = "0",
                              PA = "0",
-                             areaKM = mean(dat1$areaKM))
+                             areaKM = median(dat1$areaKM))
 pop_den_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=pop_den_newdat, re.form=NA))
+popden_SE <- 1.127
+pop_den_newdat$U_SE <- pop_den_newdat$pred + (2*popden_SE)
+pop_den_newdat$L_SE <- pop_den_newdat$pred - (2*popden_SE)
 
 # plot
-ggplot(pop_den_newdat, aes(x=pop_den, y=pred))+
-  geom_line(size=1)+
-  xlim(-0.18,5)+
-  #ylim(0,26000)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"))
+pop_den_plot <- ggplot()+
+                geom_point(data=dat1, aes(x=pop_den, y=ForPix))+
+                geom_line(data=pop_den_newdat, aes(x=pop_den, y=pred), size=2, color="red")+
+                geom_ribbon(data=pop_den_newdat, aes(x=pop_den, y=pred,ymin=L_SE, ymax=U_SE),
+                            alpha=0.4, fill="red")+
+                xlim(-0.17,1)+
+                ylim(0,100)+
+                theme(panel.background = element_blank(),
+                      axis.line = element_line(colour = "grey20"),
+                      axis.title = element_text(size=17),
+                      axis.text = element_text(size=15))+
+                ylab("Predicted forest pixels per unit area (km2)")+
+                ggtitle("Population density")
 
 
 #
@@ -10492,17 +10502,20 @@ mean_elev_newdat <- data.frame(mean_elev = seq(min(dat1$mean_elev), max(dat1$mea
                              areaKM = mean(dat1$areaKM))
 mean_elev_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=mean_elev_newdat, re.form=NA))
 
+
 # plot
-ggplot(mean_elev_newdat, aes(x=mean_elev, y=pred))+
-  geom_line(size=1)+
-  #xlim(-0.18,5)+
-  ylim(0,26000)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Elevation (scaled)")
+ggplot()+
+    geom_point(data=dat1, aes(x=mean_elev, y=ForPix))+
+    geom_line(data=mean_elev_newdat, aes(x=mean_elev, y=pred), size=2, color="red")+
+    #xlim(-0.18,5)+
+    ylim(0,26000)+
+    theme(panel.background = element_blank(),
+          axis.line = element_line(colour = "grey20"),
+          axis.title = element_text(size=17),
+          axis.text = element_text(size=15))+
+    ylab("Predicted forest pixels per unit area (km2)")+
+    xlab("Elevation (scaled)")+
+    ggtitle("Mean elevation")
 
 ## Need to check with Jeroen about what the pred actually is.  Is it predicted forest pixels per unit area?  Becuase if so, these estimates don't make sense - you can't have 10K pixels per km2. In theory you can only have 11.11 pixels per km2 becuase each pixel is 0.09km2
 # After chatting with Jeroen - yes the predictions should be per unit area
@@ -10520,70 +10533,84 @@ mean_elev_newdat2 <- data.frame(mean_elev = seq(min(dat1$mean_elev), max(dat1$me
                              PA = "0",
                              areaKM = median(dat1$areaKM))
 mean_elev_newdat2$pred <- as.vector(predict(sat9c, type="response", newdata=mean_elev_newdat2, re.form=NA))
+meanelev_SE <- 0.122
+mean_elev_newdat2$U_SE <- mean_elev_newdat2$pred + (2*meanelev_SE)
+mean_elev_newdat2$L_SE <- mean_elev_newdat2$pred - (2*meanelev_SE)
+
 
 # plot
-ggplot(mean_elev_newdat2, aes(x=mean_elev, y=pred))+
-  geom_line(size=1)+
-  #xlim(-0.18,5)+
-  ylim(0,26000)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Elevation (scaled)")
+mean_elev_plot <- ggplot()+
+                  geom_point(data=dat1, aes(x=mean_elev, y=ForPix))+
+                  geom_line(data=mean_elev_newdat2, aes(x=mean_elev, y=pred), size=2, color="red")+
+                  geom_ribbon(data=mean_elev_newdat2, aes(x=mean_elev, y=pred, ymin=L_SE, ymax=U_SE),
+                              alpha=0.4, fill="red")+
+                  #xlim(-0.18,5)+
+                  ylim(0,26000)+
+                  theme(panel.background = element_blank(),
+                        axis.line = element_line(colour = "grey20"),
+                        axis.title = element_text(size=17),
+                        axis.text = element_text(size=15))+
+                  ylab("Predicted forest pixels per unit area (km2)")+
+                  xlab("Elevation (scaled)")+
+                  ggtitle("Mean elevation")
 
 
         # dist_border ####
 
 
 # create new data. I will set pop_den, mean_elev, dist_provCap at their national means, and I will set elc and PA to 0.
-dist_border_newdat <- data.frame(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), length.out = 200),
+dist_border_newdat <- data.frame(dist_border = seq(min(dat1$dist_border), max(dat1$dist_border), 
+                                                   length.out = 200),
                              pop_den = mean(dat1$pop_den),
                              mean_elev = mean(dat1$mean_elev),
                              dist_provCap = mean(dat1$dist_provCap),
                              elc = "0",
                              PA = "0",
-                             areaKM = mean(dat1$areaKM))
+                             areaKM = median(dat1$areaKM))
 dist_border_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=dist_border_newdat, re.form=NA))
 
 # plot
-ggplot(dist_border_newdat, aes(x=dist_border, y=pred))+
-  geom_line(size=1)+
-  #xlim(-0.18,5)+
-  #ylim(0,26000)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Distance to international border (scaled)")
+dist_border_plot <- ggplot()+
+                    geom_point(data=dat1, aes(x=dist_border, y=ForPix))+
+                    geom_line(data=dist_border_newdat, aes(x=dist_border, y=pred), size=2, color="red")+
+                    #xlim(-0.18,5)+
+                    #ylim(0,26000)+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=15))+
+                    ylab("Predicted forest pixels per unit area (km2)")+
+                    xlab("Distance to international border (scaled)")+
+                    ggtitle("Distance to international border")
 
 
 
         # dist_provCap ####
 
 # create new data. I will set pop_den, mean_elev, dist_border at their national means, and I will set elc and PA to 0.
-dist_provCap_newdat <- data.frame(dist_provCap = seq(min(dat1$dist_provCap), max(dat1$dist_provCap), length.out = 200),
+dist_provCap_newdat <- data.frame(dist_provCap = seq(min(dat1$dist_provCap), max(dat1$dist_provCap), 
+                                                     length.out = 200),
                              pop_den = mean(dat1$pop_den),
                              mean_elev = mean(dat1$mean_elev),
                              dist_border = mean(dat1$dist_border),
                              elc = "0",
                              PA = "0",
-                             areaKM = mean(dat1$areaKM))
+                             areaKM = median(dat1$areaKM))
 dist_provCap_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=dist_provCap_newdat, re.form=NA))
 
 # plot
-ggplot(dist_provCap_newdat, aes(x=dist_provCap, y=pred))+
-  geom_line(size=1)+
-  #xlim(-0.18,5)+
-  #ylim(0,26000)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Distance to provincial capital (scaled)")
+dist_provCap_plot <- ggplot()+
+                    geom_point(data=dat1, aes(x=dist_provCap, y=ForPix))+
+                    geom_line(data=dist_provCap_newdat, aes(x=dist_provCap, y=pred),size=2, color="red")+
+                    #xlim(-0.18,5)+
+                    #ylim(0,26000)+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=15))+
+                    ylab("Predicted forest pixels per unit area (km2)")+
+                    xlab("Distance to provincial capital (scaled)")+
+                    ggtitle("Distance to Provicial capital (km)")
 
 
 
@@ -10600,16 +10627,17 @@ elc_newdat <- data.frame(elc = c("1","0"),
 elc_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=elc_newdat, re.form=NA))
 
 # plot
-ggplot(elc_newdat, aes(x=elc, y=pred))+
-  geom_point(size=3)+
-  #xlim(-0.18,5)+
-  ylim(0,15)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Presence of economic land concessions")
+elc_plot <- ggplot(elc_newdat, aes(x=elc, y=pred))+
+            geom_point(size=3)+
+            #xlim(-0.18,5)+
+            ylim(0,15)+
+            theme(panel.background = element_blank(),
+                  axis.line = element_line(colour = "grey20"),
+                  axis.title = element_text(size=17),
+                  axis.text = element_text(size=15))+
+            ylab("Predicted forest pixels per unit area (km2)")+
+            xlab("Presence of economic land concessions")+
+            ggtitle("Presence of economic concessions")
 
 
         # PA ####
@@ -10625,16 +10653,43 @@ PA_newdat <- data.frame(PA = c("1","0"),
 PA_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=PA_newdat, re.form=NA))
 
 # plot
-ggplot(PA_newdat, aes(x=PA, y=pred))+
-  geom_point(size=3)+
-  #xlim(-0.18,5)+
-  ylim(0,15)+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted forest pixels per unit area (km2)")+
-  xlab("Presence of protected areas")
+pa_plot <- ggplot(PA_newdat, aes(x=PA, y=pred))+
+            geom_point(size=3)+
+            #xlim(-0.18,5)+
+            ylim(0,15)+
+            theme(panel.background = element_blank(),
+                  axis.line = element_line(colour = "grey20"),
+                  axis.title = element_text(size=17),
+                  axis.text = element_text(size=15))+
+            ylab("Predicted forest pixels per unit area (km2)")+
+            xlab("Presence of protected areas")+
+            ggtitle("Presence of PAs")
+
+        # All global prediction plots ####
+
+all_plot <- pop_den_plot + mean_elev_plot + dist_border_plot + dist_provCap_plot + elc_plot + pa_plot
+
+# remove y axis titles except for 1 and 4
+all_plot[[2]] <- all_plot[[2]] + theme(axis.title.y = element_blank()) 
+all_plot[[3]] <- all_plot[[3]] + theme(axis.title.y = element_blank())
+all_plot[[5]] <- all_plot[[5]] + theme(axis.title.y = element_blank())
+all_plot[[6]] <- all_plot[[6]] + theme(axis.title.y = element_blank())
+
+# change size of y axis titles
+all_plot[[1]] <- all_plot[[1]] + theme(axis.title.y = element_text(size=15)) 
+all_plot[[4]] <- all_plot[[4]] + theme(axis.title.y = element_text(size=15)) 
+
+# remove x axis titles
+all_plot[[1]] <- all_plot[[1]] + theme(axis.title.x = element_blank()) 
+all_plot[[2]] <- all_plot[[2]] + theme(axis.title.x = element_blank()) 
+all_plot[[3]] <- all_plot[[3]] + theme(axis.title.x = element_blank())
+all_plot[[4]] <- all_plot[[4]] + theme(axis.title.x = element_blank()) 
+all_plot[[5]] <- all_plot[[5]] + theme(axis.title.x = element_blank())
+all_plot[[6]] <- all_plot[[6]] + theme(axis.title.x = element_blank())
+
+ggsave("Results/Socioeconomics/Plots/global_model_global_predictions/glob_mod_plots.png",all_plot,
+       width = 30, height = 30, unit="cm", dpi=300)
+
 
       # Province-level predictions ####
         # Functions ####
