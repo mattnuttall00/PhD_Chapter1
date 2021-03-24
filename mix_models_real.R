@@ -11417,6 +11417,9 @@ PA_quants$PA        <- as.factor(PA_quants$PA)
 ### Mean and quantile plots 
 pop_den_quants_p      <- plotFunQuants(pop_den_quants, pop_den_quants$pop_den, "Province", "free",
                                   "Population density (scaled)")
+ggsave("Results/Socioeconomics/Plots/population_density/m1_popdenProv_free.png", pop_den_quants_p,
+       width = 30, height = 30, unit="cm", dpi=300)
+
 mean_elev_quants_p    <- plotFunQuants(mean_elev_quants, mean_elev_quants$mean_elev, "Province", "free",
                                     "Mean elevation (scaled)")
 dist_border_quants_p  <- plotFunQuants(dist_border_quants,dist_border_quants$dist_border,"Province","free",
@@ -11440,6 +11443,9 @@ pop_den_lines_p <- ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
                     #ylim(0,26000)+
                     xlab("Population density (Centerd and scaled)")+
                     ylab("Predicted number of forest pixels")
+
+ggsave("Results/Socioeconomics/Plots/population_density/m1.popdenProv_lines_free.png",pop_den_lines_p,
+       width = 30, height = 30, unit="cm", dpi=300)
 
 mean_elev_lines_p <- ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
                       geom_line(data=mean_elev_lines[mean_elev_lines$commune!="mean",],col="grey", size=0.5)+
@@ -11632,6 +11638,16 @@ ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
 #
 ### Analysis at Provincial level ####
   ## Prepare data ####
+
+
+# load dat2 - aggregated to the province level and scaled
+dat2 <- read.csv("Data/commune/dat2.csv", header=T, stringsAsFactors = T)
+str(dat2)
+dat2 <- dat2[ ,-1]
+
+
+# no need to do the below, just load dat2 above
+
 
 # load raw data (dat rather than dat1)
 dat <- read.csv("Data/commune/dat_use.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -12004,8 +12020,8 @@ elev.plot <- ggplot(elev.pred, aes(x=mean_elev, y=pred))+
 # dist_border
 bord.pred <- data.frame(dist_border = seq(min(dat2$dist_border), max(dat2$dist_border), length.out=100),
                         dist_provCap = mean(dat2$dist_provCap),
-                        elc = "0",
-                        PA = "0",
+                        elc = 0,
+                        PA = 0,
                         areaKM = mean(dat2$areaKM))
 bord.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=bord.pred, re.form=NA))
 
@@ -12018,8 +12034,8 @@ bord.plot <- ggplot(bord.pred, aes(x=dist_border, y=pred))+
 # dist_provCap
 provCap.pred <- data.frame(dist_provCap = seq(min(dat2$dist_provCap), max(dat2$dist_provCap), length.out=100),
                         dist_border = mean(dat2$dist_border),
-                        elc = "0",
-                        PA = "0",
+                        elc = 0,
+                        PA = 0,
                         areaKM = mean(dat2$areaKM))
 provCap.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=provCap.pred, re.form=NA))
 
@@ -12030,10 +12046,10 @@ provCap.plot <- ggplot(provCap.pred, aes(x=dist_provCap, y=pred))+
 
 
 # elc
-elc.pred <- data.frame(elc = c("1","0"),
+elc.pred <- data.frame(elc = c(1,0),
                         dist_border = mean(dat2$dist_border),
                         dist_provCap = mean(dat2$dist_provCap),
-                        PA = "0",
+                        PA = 0,
                         areaKM = mean(dat2$areaKM))
 elc.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=elc.pred, re.form=NA))
 
@@ -12044,10 +12060,10 @@ elc.plot <- ggplot(elc.pred, aes(x=elc, y=pred))+
 
 
 # PA
-PA.pred <- data.frame(PA = c("1","0"),
+PA.pred <- data.frame(PA = c(1,0),
                         dist_border = mean(dat2$dist_border),
                         dist_provCap = mean(dat2$dist_provCap),
-                        elc = "0",
+                        elc = 0,
                         areaKM = mean(dat2$areaKM))
 PA.pred$pred <- as.vector(predict(hum.m1, type="response", newdata=PA.pred, re.form=NA))
 
@@ -12055,6 +12071,20 @@ PA.plot <- ggplot(PA.pred, aes(x=PA, y=pred))+
                 geom_point()+
                 geom_point(data=dat2, aes(x=PA, y=ForPix))+
                 theme_classic()
+
+
+
+
+#
+      # plots continous ####
+
+prov_plot_cont <- pop_den.plot + prop_ind.plot + edu.plot + primSec.plot + secSec.plot + rice.plot +
+                  pig.plot + distSch.plot + KMcomm.plot + garbage.plot + crim.plot + confl.plot +
+                  migtIn.plot + migtOut.plot + elev.plot + bord.plot + provCap.plot + elc.plot + PA.plot
+
+# change y axis titles for plots 1, 6
+
+
 
 
 
