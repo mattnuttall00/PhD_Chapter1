@@ -12557,10 +12557,10 @@ popden_pred <- data.frame(pop_den.cat = c("low", "high"),
                           areaKM = mean(dat_cat$areaKM))
 popden_pred$pred <- as.vector(predict(popden.mcat, type="response", newdata=popden_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=pop_den.cat, y=ForPix), shape=1)+
-  geom_point(data=popden_pred, aes(x=pop_den.cat, y=pred), shape=19, size=5, col="red")+
-  theme_classic()
+popden_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=pop_den.cat, y=ForPix), shape=1)+
+                  geom_point(data=popden_pred, aes(x=pop_den.cat, y=pred), shape=19, size=5, col="red")+
+                  theme_classic()
 # no effect
 
 
@@ -12575,18 +12575,18 @@ landconfl_pred <- expand.grid(land_confl.cat = c("low", "high"),
                              areaKM = mean(dat_cat$areaKM))
 landconfl_pred$pred <- as.vector(predict(socjus.mcat, type="response", newdata=landconfl_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=land_confl.cat, y=ForPix), shape=1)+
-  geom_point(data=landconfl_pred, aes(x=land_confl.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~crim_case.cat)+
-  theme_classic()
+landconfl_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=land_confl.cat, y=ForPix), shape=1)+
+                  geom_point(data=landconfl_pred, aes(x=land_confl.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~crim_case.cat)+
+                  theme_classic()
 # no effect
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=crim_case.cat, y=ForPix), shape=1)+
-  geom_point(data=landconfl_pred, aes(x=crim_case.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~land_confl.cat)+
-  theme_classic()
+crim_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=crim_case.cat, y=ForPix), shape=1)+
+                  geom_point(data=landconfl_pred, aes(x=crim_case.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~land_confl.cat)+
+                  theme_classic()
 # no effect
 
 
@@ -12602,18 +12602,18 @@ mig_pred <- expand.grid(Pax_migt_in.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 mig_pred$pred <- as.vector(predict(mig.mcat, type="response", newdata=mig_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=Pax_migt_in.cat, y=ForPix), shape=1)+
-  geom_point(data=mig_pred, aes(x=Pax_migt_in.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~Pax_migt_out.cat)+
-  theme_classic()
+migtin_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=Pax_migt_in.cat, y=ForPix), shape=1)+
+                geom_point(data=mig_pred, aes(x=Pax_migt_in.cat, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~Pax_migt_out.cat)+
+                theme_classic()
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=Pax_migt_out.cat, y=ForPix), shape=1)+
-  geom_point(data=mig_pred, aes(x=Pax_migt_out.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~Pax_migt_in.cat)+
-  theme_classic()
-# no effect
+migtout_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=Pax_migt_out.cat, y=ForPix), shape=1)+
+                  geom_point(data=mig_pred, aes(x=Pax_migt_out.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Pax_migt_in.cat)+
+                  theme_classic()
+  # no effect
 
 
 
@@ -12627,10 +12627,10 @@ edu_pred <- expand.grid(M6_24_sch.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 edu_pred$pred <- as.vector(predict(edu.mcat, type="response", newdata=edu_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=M6_24_sch.cat, y=ForPix), shape=1)+
-  geom_point(data=edu_pred, aes(x=M6_24_sch.cat, y=pred), shape=19, size=5, col="red")+
-  theme_classic()
+edu_cat_plot <- ggplot()+
+              geom_point(data=dat_cat, aes(x=M6_24_sch.cat, y=ForPix), shape=1)+
+              geom_point(data=edu_pred, aes(x=M6_24_sch.cat, y=pred), shape=19, size=5, col="red")+
+              theme_classic()
 # no effect
 
 
@@ -12646,17 +12646,17 @@ emp_pred <- expand.grid(propPrimSec.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 emp_pred$pred <- as.vector(predict(emp.mcat, type="response", newdata=emp_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=propPrimSec.cat, y=ForPix), shape=1)+
-  geom_point(data=emp_pred, aes(x=propPrimSec.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~propSecSec.cat)+
-  theme_classic()
+primsec_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=propPrimSec.cat, y=ForPix), shape=1)+
+                  geom_point(data=emp_pred, aes(x=propPrimSec.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~propSecSec.cat)+
+                  theme_classic()
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=propSecSec.cat, y=ForPix), shape=1)+
-  geom_point(data=emp_pred, aes(x=propSecSec.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~propPrimSec.cat)+
-  theme_classic()
+secsec_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=propSecSec.cat, y=ForPix), shape=1)+
+                  geom_point(data=emp_pred, aes(x=propSecSec.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~propPrimSec.cat)+
+                  theme_classic()
 # no effect
 
 
@@ -12671,17 +12671,17 @@ econ_pred <- expand.grid(Les1_R_Land.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 econ_pred$pred <- as.vector(predict(econ.mcat, type="response", newdata=econ_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=Les1_R_Land.cat, y=ForPix), shape=1)+
-  geom_point(data=econ_pred, aes(x=Les1_R_Land.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~pig_fam.cat)+
-  theme_classic()
+rice_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=Les1_R_Land.cat, y=ForPix), shape=1)+
+                geom_point(data=econ_pred, aes(x=Les1_R_Land.cat, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~pig_fam.cat)+
+                theme_classic()
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=pig_fam.cat, y=ForPix), shape=1)+
-  geom_point(data=econ_pred, aes(x=pig_fam.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~Les1_R_Land.cat)+
-  theme_classic()
+pig_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=pig_fam.cat, y=ForPix), shape=1)+
+                geom_point(data=econ_pred, aes(x=pig_fam.cat, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~Les1_R_Land.cat)+
+                theme_classic()
 # no effect
 
 
@@ -12695,10 +12695,10 @@ acc_pred <- expand.grid(dist_sch.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 acc_pred$pred <- as.vector(predict(acc.mcat, type="response", newdata=acc_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=dist_sch.cat, y=ForPix), shape=1)+
-  geom_point(data=acc_pred, aes(x=dist_sch.cat, y=pred), shape=19, size=5, col="red")+
-  theme_classic()
+sch_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=dist_sch.cat, y=ForPix), shape=1)+
+                geom_point(data=acc_pred, aes(x=dist_sch.cat, y=pred), shape=19, size=5, col="red")+
+                theme_classic()
 # no effect
 
 
@@ -12713,10 +12713,10 @@ elev_pred <- expand.grid(mean_elev.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 elev_pred$pred <- as.vector(predict(elev.mcat, type="response", newdata=elev_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=mean_elev.cat, y=ForPix), shape=1)+
-  geom_point(data=elev_pred, aes(x=mean_elev.cat, y=pred), shape=19, size=5, col="red")+
-  theme_classic()
+elev_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=mean_elev.cat, y=ForPix), shape=1)+
+                geom_point(data=elev_pred, aes(x=mean_elev.cat, y=pred), shape=19, size=5, col="red")+
+                theme_classic()
 # no effect
 
 
@@ -12732,17 +12732,17 @@ hum_pred <- expand.grid(dist_border.cat = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 hum_pred$pred <- as.vector(predict(hum.mcat, type="response", newdata=hum_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=dist_border.cat, y=ForPix), shape=1)+
-  geom_point(data=hum_pred, aes(x=dist_border.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~dist_provCap.cat)+
-  theme_classic()
+border_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=dist_border.cat, y=ForPix), shape=1)+
+                geom_point(data=hum_pred, aes(x=dist_border.cat, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~dist_provCap.cat)+
+                theme_classic()
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=dist_provCap.cat, y=ForPix), shape=1)+
-  geom_point(data=hum_pred, aes(x=dist_provCap.cat, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~dist_border.cat)+
-  theme_classic()
+provCap_cat_plot <- ggplot()+
+                  geom_point(data=dat_cat, aes(x=dist_provCap.cat, y=ForPix), shape=1)+
+                  geom_point(data=hum_pred, aes(x=dist_provCap.cat, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~dist_border.cat)+
+                  theme_classic()
 
 
 
@@ -12757,17 +12757,72 @@ areas_pred <- expand.grid(elc = c("0", "1"),
                         areaKM = mean(dat_cat$areaKM))
 areas_pred$pred <- as.vector(predict(areas.mcat, type="response", newdata=areas_pred, re.form=NA))
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=elc, y=ForPix), shape=1)+
-  geom_point(data=areas_pred, aes(x=elc, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~PA)+
-  theme_classic()
+dat_cat$elc <- as.factor(dat_cat$elc)
+dat_cat$PA <- as.factor(dat_cat$PA)
 
-ggplot()+
-  geom_point(data=dat_cat, aes(x=PA, y=ForPix), shape=1)+
-  geom_point(data=areas_pred, aes(x=PA, y=pred), shape=19, size=5, col="red")+
-  facet_wrap(~elc)+
-  theme_classic()
+
+elc_cat_plot <- ggplot()+
+                geom_point(data=dat_cat, aes(x=elc, y=ForPix), shape=1)+
+                geom_point(data=areas_pred, aes(x=elc, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~PA)+
+                theme_classic()
+
+PA_cat_plot <- ggplot()+
+              geom_point(data=dat_cat, aes(x=PA, y=ForPix), shape=1)+
+              geom_point(data=areas_pred, aes(x=PA, y=pred), shape=19, size=5, col="red")+
+              facet_wrap(~elc)+
+              theme_classic()
+
+
+#
+      # plot categorical ####
+
+prov_cat_plot <- popden_cat_plot + landconfl_cat_plot + crim_cat_plot + migtin_cat_plot + 
+                 migtout_cat_plot + edu_cat_plot + primsec_cat_plot + secsec_cat_plot + 
+                 rice_cat_plot + pig_cat_plot + sch_cat_plot + elev_cat_plot + 
+                 border_cat_plot + provCap_cat_plot + elc_cat_plot + PA_cat_plot
+
+# remove y axis labels for 2:4, 6:8, 10:12, 14:16
+ry <- c(2:4, 6:8, 10:12, 14:16)
+for(i in ry){
+  prov_cat_plot[[i]] <- prov_cat_plot[[i]] + theme(axis.title.y = element_blank())
+}
+
+
+# add y axis labels for 1, 5, 9, 13
+yy <- c(1, 5, 9, 13)
+for(i in yy){
+  prov_cat_plot[[i]] <- prov_cat_plot[[i]] + ylab("Forest cover (pixels)")
+}
+
+
+# remove y axis text for 2:4, 6:8, 10:12, 14:16
+ry <- c(2:4, 6:8, 10:12, 14:16)
+for(i in ry){
+  prov_cat_plot[[i]] <- prov_cat_plot[[i]] + theme(axis.text.y = element_blank())
+}
+
+
+# re-name x axes
+prov_cat_plot[[1]] <- prov_cat_plot[[1]] + xlab("Population density")
+prov_cat_plot[[2]] <- prov_cat_plot[[2]] + xlab("Land conflict cases")
+prov_cat_plot[[3]] <- prov_cat_plot[[3]] + xlab("Crime per capita")
+prov_cat_plot[[4]] <- prov_cat_plot[[4]] + xlab("Number of in-migrants")
+prov_cat_plot[[5]] <- prov_cat_plot[[5]] + xlab("Number of out-migrants")
+prov_cat_plot[[6]] <- prov_cat_plot[[6]] + xlab("Proportion (16-24) in school")
+prov_cat_plot[[7]] <- prov_cat_plot[[7]] + xlab("Proportion employed in primary sector")
+prov_cat_plot[[8]] <- prov_cat_plot[[8]] + xlab("Proportion employed in secondary sector")
+prov_cat_plot[[9]] <- prov_cat_plot[[9]] + xlab("Proportion with no farmland")
+prov_cat_plot[[10]] <- prov_cat_plot[[10]] + xlab("Proportion with pigs")
+prov_cat_plot[[11]] <- prov_cat_plot[[11]] + xlab("Distance to school (km)")
+prov_cat_plot[[12]] <- prov_cat_plot[[12]] + xlab("Mean elevation (m)")
+prov_cat_plot[[13]] <- prov_cat_plot[[13]] + xlab("Distance to Intl border (km)")
+prov_cat_plot[[14]] <- prov_cat_plot[[14]] + xlab("Distance to Provincial capital (km)")
+prov_cat_plot[[15]] <- prov_cat_plot[[15]] + xlab("Presence of ELCs")
+prov_cat_plot[[16]] <- prov_cat_plot[[16]] + xlab("Presence of PAs")
+
+
+
 
 
 #
