@@ -12080,16 +12080,84 @@ PA.plot <- ggplot(PA.pred, aes(x=PA, y=pred))+
 
 prov_plot_cont <- pop_den.plot + prop_ind.plot + edu.plot + primSec.plot + secSec.plot + rice.plot +
                   pig.plot + distSch.plot + KMcomm.plot + garbage.plot + crim.plot + confl.plot +
-                  migtIn.plot + migtOut.plot + elev.plot + bord.plot + provCap.plot + elc.plot + PA.plot
-
-# change y axis titles for plots 1, 6
+                  migtIn.plot + migtOut.plot + elev.plot + bord.plot + provCap.plot 
 
 
+## change y axis titles for plots 1, 6, 11, and 16 and remove all others
+
+# plots to have y axis titles 
+y <- c(1,6,11,16)
+
+# plots to remove y axis titles
+yn <- c(2:5,7:10,12:15,17)
+
+for(i in y){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + ylab("Forest cover (pixels)")
+}
+
+for(i in yn){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + theme(axis.title.y = element_blank())
+}
 
 
 
+# remove y axis text except for 1, 6, 11, 16
 
-#
+# plots to remove ticks
+yn <- c(2:5,7:10,12:15,17)
+
+for(i in yn){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + theme(axis.text.y = element_blank())
+}
+
+
+# change line color to red and increase size
+n <- 1:17
+for(i in n){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + geom_line(size=2, color="red")
+}
+
+
+# add x axis labels instead of plot titles
+prov_plot_cont[[1]] <- prov_plot_cont[[1]] + xlab("Population density")
+prov_plot_cont[[2]] <- prov_plot_cont[[2]] + xlab("Proportion indigenous")
+prov_plot_cont[[3]] <- prov_plot_cont[[3]] + xlab("Proportion (16-24) in school")
+prov_plot_cont[[4]] <- prov_plot_cont[[4]] + xlab("Proportion employed in primary sector")
+prov_plot_cont[[5]] <- prov_plot_cont[[5]] + xlab("Proportion employed in secondary sector")
+prov_plot_cont[[6]] <- prov_plot_cont[[6]] + xlab("Proportion with no farmland")
+prov_plot_cont[[7]] <- prov_plot_cont[[7]] + xlab("Proportion with pigs")
+prov_plot_cont[[8]] <- prov_plot_cont[[8]] + xlab("Distance to school (km)")
+prov_plot_cont[[9]] <- prov_plot_cont[[9]] + xlab("Distance to Commune office (km)")
+prov_plot_cont[[10]] <- prov_plot_cont[[10]] + xlab("Proportion with waste collection")
+prov_plot_cont[[11]] <- prov_plot_cont[[11]] + xlab("Crime per capita")
+prov_plot_cont[[12]] <- prov_plot_cont[[12]] + xlab("Land conflict cases")
+prov_plot_cont[[13]] <- prov_plot_cont[[13]] + xlab("Number of in-migrants")
+prov_plot_cont[[14]] <- prov_plot_cont[[14]] + xlab("Number of out-migrants")
+prov_plot_cont[[15]] <- prov_plot_cont[[15]] + xlab("Mean elevation (m)")
+prov_plot_cont[[16]] <- prov_plot_cont[[16]] + xlab("Distance to Intl border (km)")
+prov_plot_cont[[17]] <- prov_plot_cont[[17]] + xlab("Distance to Provincial capital (km)")
+
+
+
+# change font size of titles
+n <- 1:17
+for(i in n){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + theme(plot.title = element_text(size=10))
+}
+
+
+# change font size of x axis labels
+n <- 1:17
+for(i in n){
+  prov_plot_cont[[i]] <- prov_plot_cont[[i]] + theme(axis.title.x = element_text(size=10))
+}
+
+
+ggsave("Results/Socioeconomics/Plots/Province_level/prov_level_cont.png", prov_plot_cont,
+       width = 30, height = 30, units = "cm", dpi=300)
+
+
+  
     # Categorical ####
 
 # None of the above models showed any effect at all. But based on the histograms from the above exploratory section, many of the variables have two "peaks". In other words, there are two distinct "types" of province when it comes to certain variables, and certain provinces are clumped together based on those variables. Therefore it may be interesting to turn some of the variables into categorical variables. 
@@ -12470,6 +12538,14 @@ write.csv(dat_cat, file="Data/commune/dat_cat.csv")
 
 #
       # models ####
+
+
+## load dat_cat
+dat_cat <- read.csv("Data/commune/dat_cat.csv")
+dat_cat <- dat_cat[ ,-1]
+str(dat_cat)
+
+
 
 # pop_den
 popden.mcat <- glmer(ForPix ~ pop_den.cat + offset(log(areaKM)) + (year|Province),
