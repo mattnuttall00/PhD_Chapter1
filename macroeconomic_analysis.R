@@ -575,6 +575,7 @@ pop_den.predict <- cbind(pop_den.predict, pop_den.newdata)
 pop_den_plot<- ggplot(data=pop_den.predict, aes(x=pop_den, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+              geom_point(data=dat_me1, aes(x=pop_den, y=for_cov))+
               ylim(0,1500)+
               xlab("Changes in population density (pax/km^2) at time t")+
               ylab("Amount of forest lost (ha) at time t")+
@@ -604,6 +605,7 @@ gdp.predict <- cbind(gdp.predict, gdp.newdata)
 gdp_plot <- ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=gdp, y=for_cov))+
   ylim(0,1500)+
   xlab("Changes in GDP per capita (USD Billion) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
@@ -633,6 +635,7 @@ agr_gdp.predict <- cbind(agr_gdp.predict, agr_gdp.newdata)
 agr_gdp_plot <- ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=agr_gdp, y=for_cov))+
   ylim(0,1500)+
   xlab("Changes in Agricultural sector proprtion of GDP (%) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
@@ -663,6 +666,7 @@ dev_agri.predict <- cbind(dev_agri.predict, dev_agri.newdata)
 dev_agri_plot <- ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=dev_agri, y=for_cov))+
   ylim(0,1500)+
   xlab("Development flows to Agricultural sector (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
@@ -693,6 +697,7 @@ fdi.predict <- cbind(fdi.predict, fdi.newdata)
 fdi_plot <- ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=fdi, y=for_cov))+
   ylim(0,1500)+
   xlab("Foreign Direct Investment (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
@@ -723,6 +728,7 @@ dev_env.predict <- cbind(dev_env.predict, dev_env.newdata)
 dev_env_plot <- ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=dev_env, y=for_cov))+
   ylim(0,1500)+
   xlab("Development flows to the Environment sector (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
@@ -753,6 +759,7 @@ gdp_gr.predict <- cbind(gdp_gr.predict, gdp_gr.newdata)
 gdP_gr_plot <- ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
+  geom_point(data=dat_me1, aes(x=gdp_gr, y=for_cov))+
   ylim(0,1500)+
   xlab("% growth of GDP per capita at time t")+
   ylab("Amount of forest lost (ha) at time t")+
