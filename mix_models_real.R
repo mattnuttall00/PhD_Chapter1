@@ -12545,6 +12545,16 @@ dat_cat <- read.csv("Data/commune/dat_cat.csv")
 dat_cat <- dat_cat[ ,-1]
 str(dat_cat)
 
+# re-name vars (to make the facet titles further down look better)
+dat_cat <- dat_cat %>% 
+            rename(Land_conflict = land_confl.cat,Crime = crim_case.cat, 
+                   In_migration = Pax_migt_in.cat,
+                   Out_migration = Pax_migt_out.cat, Primary_sec = propPrimSec.cat,
+                   Secondary_sec = propSecSec.cat, no_farmland = Les1_R_Land.cat,
+                   Owns_pigs = pig_fam.cat, Distance_border = dist_border.cat,
+                   distance_capital = dist_provCap.cat, Economic_concession = elc,
+                   PAs = PA) 
+        
 
 
 # pop_den
@@ -12565,53 +12575,53 @@ popden_cat_plot <- ggplot()+
 
 
 # social justice (land_confl, crim_case)
-socjus.mcat <- glmer(ForPix ~ land_confl.cat + crim_case.cat + offset(log(areaKM)) + (year|Province),
+socjus.mcat <- glmer(ForPix ~ Land_conflict + Crime + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(socjus.mcat)
 
-landconfl_pred <- expand.grid(land_confl.cat = c("low", "high"),
-                             crim_case.cat = c("low", "high"),
+landconfl_pred <- expand.grid(Land_conflict = c("low", "high"),
+                              Crime = c("low", "high"),
                              areaKM = mean(dat_cat$areaKM))
 landconfl_pred$pred <- as.vector(predict(socjus.mcat, type="response", newdata=landconfl_pred, re.form=NA))
 
 landconfl_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=land_confl.cat, y=ForPix), shape=1)+
-                  geom_point(data=landconfl_pred, aes(x=land_confl.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~crim_case.cat)+
+                  geom_point(data=dat_cat, aes(x=Land_conflict, y=ForPix), shape=1)+
+                  geom_point(data=landconfl_pred, aes(x=Land_conflict, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Crime, labeller = label_both)+
                   theme_classic()
 # no effect
 
 crim_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=crim_case.cat, y=ForPix), shape=1)+
-                  geom_point(data=landconfl_pred, aes(x=crim_case.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~land_confl.cat)+
+                  geom_point(data=dat_cat, aes(x=Crime, y=ForPix), shape=1)+
+                  geom_point(data=landconfl_pred, aes(x=Crime, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Land_conflict, labeller = label_both)+
                   theme_classic()
 # no effect
 
 
 
 # migration
-mig.mcat <- glmer(ForPix ~ Pax_migt_in.cat + Pax_migt_out.cat + offset(log(areaKM)) + (year|Province),
+mig.mcat <- glmer(ForPix ~ In_migration + Out_migration + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(mig.mcat)
 
-mig_pred <- expand.grid(Pax_migt_in.cat = c("low", "high"),
-                        Pax_migt_out.cat = c("low", "high"),
+mig_pred <- expand.grid(In_migration = c("low", "high"),
+                        Out_migration = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 mig_pred$pred <- as.vector(predict(mig.mcat, type="response", newdata=mig_pred, re.form=NA))
 
 migtin_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=Pax_migt_in.cat, y=ForPix), shape=1)+
-                geom_point(data=mig_pred, aes(x=Pax_migt_in.cat, y=pred), shape=19, size=5, col="red")+
-                facet_wrap(~Pax_migt_out.cat)+
+                geom_point(data=dat_cat, aes(x=In_migration, y=ForPix), shape=1)+
+                geom_point(data=mig_pred, aes(x=In_migration, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~Out_migration, labeller = label_both)+
                 theme_classic()
 
 migtout_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=Pax_migt_out.cat, y=ForPix), shape=1)+
-                  geom_point(data=mig_pred, aes(x=Pax_migt_out.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~Pax_migt_in.cat)+
+                  geom_point(data=dat_cat, aes(x=Out_migration, y=ForPix), shape=1)+
+                  geom_point(data=mig_pred, aes(x=Out_migration, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~In_migration, labeller = label_both)+
                   theme_classic()
   # no effect
 
@@ -12636,51 +12646,51 @@ edu_cat_plot <- ggplot()+
 
 
 # employment
-emp.mcat <- glmer(ForPix ~ propPrimSec.cat + propSecSec.cat + offset(log(areaKM)) + (year|Province),
+emp.mcat <- glmer(ForPix ~ Primary_sec + Secondary_sec + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(emp.mcat)
 
-emp_pred <- expand.grid(propPrimSec.cat = c("low", "high"),
-                        propSecSec.cat = c("low", "high"),
+emp_pred <- expand.grid(Primary_sec = c("low", "high"),
+                        Secondary_sec = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 emp_pred$pred <- as.vector(predict(emp.mcat, type="response", newdata=emp_pred, re.form=NA))
 
 primsec_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=propPrimSec.cat, y=ForPix), shape=1)+
-                  geom_point(data=emp_pred, aes(x=propPrimSec.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~propSecSec.cat)+
+                  geom_point(data=dat_cat, aes(x=Primary_sec, y=ForPix), shape=1)+
+                  geom_point(data=emp_pred, aes(x=Primary_sec, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Secondary_sec, labeller = label_both)+
                   theme_classic()
 
 secsec_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=propSecSec.cat, y=ForPix), shape=1)+
-                  geom_point(data=emp_pred, aes(x=propSecSec.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~propPrimSec.cat)+
+                  geom_point(data=dat_cat, aes(x=Secondary_sec, y=ForPix), shape=1)+
+                  geom_point(data=emp_pred, aes(x=Secondary_sec, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Primary_sec, labeller = label_both)+
                   theme_classic()
 # no effect
 
 
 # economic security
-econ.mcat <- glmer(ForPix ~ Les1_R_Land.cat + pig_fam.cat + offset(log(areaKM)) + (year|Province),
+econ.mcat <- glmer(ForPix ~ no_farmland + Owns_pigs + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(econ.mcat)
 
-econ_pred <- expand.grid(Les1_R_Land.cat = c("low", "high"),
-                        pig_fam.cat = c("low", "high"),
+econ_pred <- expand.grid(no_farmland = c("low", "high"),
+                         Owns_pigs = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 econ_pred$pred <- as.vector(predict(econ.mcat, type="response", newdata=econ_pred, re.form=NA))
 
 rice_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=Les1_R_Land.cat, y=ForPix), shape=1)+
-                geom_point(data=econ_pred, aes(x=Les1_R_Land.cat, y=pred), shape=19, size=5, col="red")+
-                facet_wrap(~pig_fam.cat)+
+                geom_point(data=dat_cat, aes(x=no_farmland, y=ForPix), shape=1)+
+                geom_point(data=econ_pred, aes(x=no_farmland, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~Owns_pigs, labeller = label_both)+
                 theme_classic()
 
 pig_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=pig_fam.cat, y=ForPix), shape=1)+
-                geom_point(data=econ_pred, aes(x=pig_fam.cat, y=pred), shape=19, size=5, col="red")+
-                facet_wrap(~Les1_R_Land.cat)+
+                geom_point(data=dat_cat, aes(x=Owns_pigs, y=ForPix), shape=1)+
+                geom_point(data=econ_pred, aes(x=Owns_pigs, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~no_farmland, labeller = label_both)+
                 theme_classic()
 # no effect
 
@@ -12722,55 +12732,55 @@ elev_cat_plot <- ggplot()+
 
 
 # other human vars
-hum.mcat <- glmer(ForPix ~ dist_border.cat + dist_provCap.cat + offset(log(areaKM)) + (year|Province),
+hum.mcat <- glmer(ForPix ~ Distance_border + distance_capital + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(hum.mcat)
 
-hum_pred <- expand.grid(dist_border.cat = c("low", "high"),
-                        dist_provCap.cat = c("low", "high"),
+hum_pred <- expand.grid(Distance_border = c("low", "high"),
+                        distance_capital = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 hum_pred$pred <- as.vector(predict(hum.mcat, type="response", newdata=hum_pred, re.form=NA))
 
 border_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=dist_border.cat, y=ForPix), shape=1)+
-                geom_point(data=hum_pred, aes(x=dist_border.cat, y=pred), shape=19, size=5, col="red")+
-                facet_wrap(~dist_provCap.cat)+
+                geom_point(data=dat_cat, aes(x=Distance_border, y=ForPix), shape=1)+
+                geom_point(data=hum_pred, aes(x=Distance_border, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~distance_capital, labeller = label_both)+
                 theme_classic()
 
 provCap_cat_plot <- ggplot()+
-                  geom_point(data=dat_cat, aes(x=dist_provCap.cat, y=ForPix), shape=1)+
-                  geom_point(data=hum_pred, aes(x=dist_provCap.cat, y=pred), shape=19, size=5, col="red")+
-                  facet_wrap(~dist_border.cat)+
+                  geom_point(data=dat_cat, aes(x=distance_capital, y=ForPix), shape=1)+
+                  geom_point(data=hum_pred, aes(x=distance_capital, y=pred), shape=19, size=5, col="red")+
+                  facet_wrap(~Distance_border, labeller = label_both)+
                   theme_classic()
 
 
 
 # elcs and PAs
-areas.mcat <- glmer(ForPix ~ elc + PA + offset(log(areaKM)) + (year|Province),
+areas.mcat <- glmer(ForPix ~ Economic_concession + PAs + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(areas.mcat)
 
-areas_pred <- expand.grid(elc = c("0", "1"),
-                        PA = c("0", "1"),
+areas_pred <- expand.grid(Economic_concession = c("0", "1"),
+                        PAs = c("0", "1"),
                         areaKM = mean(dat_cat$areaKM))
 areas_pred$pred <- as.vector(predict(areas.mcat, type="response", newdata=areas_pred, re.form=NA))
 
-dat_cat$elc <- as.factor(dat_cat$elc)
-dat_cat$PA <- as.factor(dat_cat$PA)
+dat_cat$Economic_concession <- as.factor(dat_cat$Economic_concession)
+dat_cat$PAs <- as.factor(dat_cat$PAs)
 
 
 elc_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=elc, y=ForPix), shape=1)+
-                geom_point(data=areas_pred, aes(x=elc, y=pred), shape=19, size=5, col="red")+
-                facet_wrap(~PA)+
+                geom_point(data=dat_cat, aes(x=Economic_concession, y=ForPix), shape=1)+
+                geom_point(data=areas_pred, aes(x=Economic_concession, y=pred), shape=19, size=5, col="red")+
+                facet_wrap(~PAs, labeller = label_both)+
                 theme_classic()
 
 PA_cat_plot <- ggplot()+
-              geom_point(data=dat_cat, aes(x=PA, y=ForPix), shape=1)+
-              geom_point(data=areas_pred, aes(x=PA, y=pred), shape=19, size=5, col="red")+
-              facet_wrap(~elc)+
+              geom_point(data=dat_cat, aes(x=PAs, y=ForPix), shape=1)+
+              geom_point(data=areas_pred, aes(x=PAs, y=pred), shape=19, size=5, col="red")+
+              facet_wrap(~Economic_concession, labeller = label_both)+
               theme_classic()
 
 
@@ -12822,7 +12832,8 @@ prov_cat_plot[[15]] <- prov_cat_plot[[15]] + xlab("Presence of ELCs")
 prov_cat_plot[[16]] <- prov_cat_plot[[16]] + xlab("Presence of PAs")
 
 
-
+ggsave("Results/Socioeconomics/Plots/Province_level/prov_level_cat.png",prov_cat_plot,
+       width = 30, height = 30, unit="cm", dpi=300)
 
 
 #
