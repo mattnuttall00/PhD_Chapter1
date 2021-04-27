@@ -1360,6 +1360,11 @@ head(dat_com)
 
     # Unlagged ####
 
+# load data
+dat_com <- read.csv("Data/national/commodity_set/dat_com.csv", header = T, stringsAsFactors = T)
+dat_com <- dat_com[ ,-1]
+
+
 # REMINDER - armi and rub_med are highly correlated, and armi and the other commodity prices are slightly correlated (except rice_med), but by less than 0.6. I will first remove armi so that I can investigate the individual commodities, then re-run the model with armi and no individual commodities to see if there is a difference
 
 # UPDATe - there is not effect for the individual commodities or for ARMI, so t doesn't really matter. I will stick with the individual commodities
@@ -2529,6 +2534,10 @@ summary(rub)
 
     # Unlagged ####
 
+# load data
+dat_prod <- read.csv("Data/national/producer_set/dat_prod.csv", header = T, stringsAsFactors = T)
+dat_prod <- dat_prod[ ,-1]
+
 
 ## saturated model with a gaussian distribution for unlagged predictors
 prod.mod.gaus.1 <- glm(for_cov ~ prod_rub + prod_cass + prod_corn + prod_sug + time +for_rem, 
@@ -3068,3 +3077,45 @@ prod_plot_all[[3]] <- prod_plot_all[[3]] + ggtitle ("Time t+2")+ theme(plot.titl
 
 ggsave("Results/Macroeconomics/Plots/PROD_plot_grid.png", prod_plot_all, 
        width = 30, height = 30, unit="cm", dpi=300)
+
+#### Testing ELCs as response ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+head(elc)
+head(dat)
+
+years <- c(1995:2015)
+
+# subset dat
+dat <- dat %>% filter(year %in% years)
+
+# subset elc
+elc <- elc %>% filter(year %in% years) %>% select(count)
+
+# attach elc to dat
+dat$elc <- elc$count
+
+str(dat)
+
+
+### macroecon set
+
+# gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
+
+# model no time lag (exclude gdp_gr as missing data)
+m.econ <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
+            na.action = "na.fail", family = poisson, data=dat)
+
+
+m.econ.d <- dredge(m.econ, beta = "none", evaluate = TRUE, rank = AICc)
+
+
+
+## Model averaging
+
+# AICc < 6
+m.econ.modAv.aicc6 <- model.avg(m.econ.d, subset = delta < 6, fit = TRUE)
+summary(m.econ.modAv.aicc6)
