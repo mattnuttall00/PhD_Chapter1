@@ -4,7 +4,6 @@
 
 library('nlme')
 library('cowplot')
-library('tidyverse')
 library('mgcv')
 library('voxel')
 library('nlstools')
@@ -22,6 +21,7 @@ library('boot')
 library('wesanderson')
 library('ggplot2')
 library('patchwork')
+library('tidyverse')
 
 #### Load & format data ####
 
@@ -3087,6 +3087,9 @@ dat <- read.csv("dat_work.csv", header = T)
 head(elc)
 head(dat)
 
+
+ ## no lag ####
+
 years <- c(1995:2015)
 
 # subset dat
@@ -3112,10 +3115,254 @@ m.econ <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
 
 m.econ.d <- dredge(m.econ, beta = "none", evaluate = TRUE, rank = AICc)
 
+# The only models that are dAIC < 6 from the top model are models that have 1 extra parameter compared with the top model (i.e. slightly ore complex versions). Therefore the extra parameters are likely redundant. Therefore I will just select the top model for inference.
+
+m.econ.top <- glm(elc ~ agr_gdp + dev_env + for_rem + pop_den + time, family=poisson, data=dat)
+summary(m.econ.top)
+plot(m.econ.top)
+
+# plot predicted (fully conditional) versus observed
+m.econ.d <- dat
+m.econ.d$pred <- predict(m.econ.top, type="response")
+plot(m.econ.d$elc, m.econ.d$pred)
+
+# plot residuals versus predicted
+m.econ.d$resid <- residuals(m.econ.top)
+plot(m.econ.d$pred, m.econ.d$resid)
+
+### predict
+
+## new data
+m.econ.agrgdp <- data.frame(agr_gdp = seq(min(dat$agr_gdp), max(dat$agr_gdp), length.out=100),
+                            dev_env = mean(dat$dev_env),
+                            for_rem = mean(dat$for_rem),
+                            pop_den = mean(dat$pop_den),
+                            time = mean(dat$time))
+
+m.econ.devenv <- data.frame(dev_env = seq(min(dat$dev_env), max(dat$dev_env), length.out=100),
+                            agr_gdp = mean(dat$agr_gdp),
+                            for_rem = mean(dat$for_rem),
+                            pop_den = mean(dat$pop_den),
+                            time = mean(dat$time))
+
+m.econ.popden <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), length.out=100),
+                            agr_gdp = mean(dat$agr_gdp),
+                            for_rem = mean(dat$for_rem),
+                            dev_env = mean(dat$dev_env),
+                            time = mean(dat$time))
+
+# predict
+m.econ.agrgdp$pred <- predict(m.econ.top, newdata = m.econ.agrgdp, type="response")
+m.econ.devenv$pred <- predict(m.econ.top, newdata = m.econ.devenv, type="response")
+m.econ.popden$pred <- predict(m.econ.top, newdata = m.econ.popden, type="response")
+
+# plots
+agrgdp.plot <- ggplot()+
+                geom_line(data=m.econ.agrgdp, aes(x=agr_gdp, y=pred))+
+                geom_point(data=dat, aes(x=agr_gdp, y=elc))+
+                xlab("Agricultural proportion of GDP")+
+                ylab("Number of ELC allocations")+
+                ggtitle("No time lag")+
+                theme_classic()
+
+devenv.plot <- ggplot()+
+                geom_line(data=m.econ.devenv, aes(x=dev_env, y=pred))+
+                geom_point(data=dat, aes(x=dev_env, y=elc))+
+                xlab("Development flows to environment sector")+
+                ylab("")+
+                ggtitle("No time lag")+
+                theme_classic()
+
+popden.plot <- ggplot()+
+                geom_line(data=m.econ.popden, aes(x=pop_den, y=pred))+
+                geom_point(data=dat, aes(x=pop_den, y=elc))+
+                xlab("Population density")+
+                ylab("")+
+                ggtitle("No time lag")+
+                theme_classic()
+
+agrgdp.plot + devenv.plot + popden.plot + plot_layout(ncol=2)
 
 
-## Model averaging
+  ## 1 year lag ####
 
-# AICc < 6
-m.econ.modAv.aicc6 <- model.avg(m.econ.d, subset = delta < 6, fit = TRUE)
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+# 1994 data missing from main data so subset to start at 1995
+years <- c(1995:2015)
+dat <- dat %>% filter(year %in% years)
+
+# subset elc data to cut it off at 2016. So now the elc data is one year ahead (i.e. data from 1995 is aligned with elc data from 1996)
+elcyears <- c(1996:2016)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model with 1 year time lag
+m.econ.lag1 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
+                na.action = "na.fail", family = poisson, data=dat)
+
+
+m.econ.lag1.d <- dredge(m.econ.lag1, beta = "none", evaluate = TRUE, rank = AICc)
+
+# I will use just the top model as the other models within 6 dAIC are just adding one more variable, so they are reduntant. However, I will add for_rem as a control. So actually I am using the second model from the top which includes for_rem
+
+m.econ.lag1.top <- glm(elc ~ agr_gdp + fdi + gdp + pop_den + time + for_rem, family=poisson, data=dat)
+summary(m.econ.lag1.top)
+
+# plot predicted (fully conditional) versus observed
+m.econ.lag.d <- dat
+m.econ.lag.d$pred <- predict(m.econ.lag1.top, type="response")
+plot(m.econ.lag.d$elc, m.econ.lag.d$pred)
+
+# plot residuals versus predicted
+m.econ.lag.d$resid <- residuals(m.econ.lag1.top)
+plot(m.econ.lag.d$pred, m.econ.lag.d$resid)
+
+### predict
+
+## new data
+m.econ.lag1.agrgdp <- data.frame(agr_gdp = seq(min(dat$agr_gdp), max(dat$agr_gdp), length.out=100),
+                                 fdi = mean(dat$fdi),
+                                 gdp = mean(dat$gdp),
+                                 pop_den = mean(dat$pop_den),
+                                 time = mean(dat$time),
+                                 for_rem = mean(dat$for_rem))
+
+m.econ.lag1.fdi <- data.frame(fdi = seq(min(dat$fdi), max(dat$fdi), length.out=100),
+                              agr_gdp = mean(dat$agr_gdp),
+                              gdp = mean(dat$gdp),
+                              pop_den = mean(dat$pop_den),
+                              time = mean(dat$time),
+                              for_rem = mean(dat$for_rem))
+
+m.econ.lag1.gdp <- data.frame(gdp = seq(min(dat$gdp), max(dat$gdp), length.out=100),
+                              agr_gdp = mean(dat$agr_gdp),
+                              fdi = mean(dat$fdi),
+                              pop_den = mean(dat$pop_den),
+                              time = mean(dat$time),
+                              for_rem = mean(dat$for_rem))
+
+m.econ.lag1.pop_den <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), length.out=100),
+                                  agr_gdp = mean(dat$agr_gdp),
+                                  fdi = mean(dat$fdi),
+                                  gdp = mean(dat$gdp),
+                                  time = mean(dat$time),
+                                  for_rem = mean(dat$for_rem))
+
+# predict
+agrgdp.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.agrgdp, type="response", se.fit = T)
+m.econ.lag1.agrgdp$pred <- agrgdp.pred$fit
+m.econ.lag1.agrgdp$pred.se <- agrgdp.pred$se.fit
+
+fdi.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.fdi, type="response", se.fit = T)
+m.econ.lag1.fdi$pred <- fdi.pred$fit
+m.econ.lag1.fdi$pred.se <- fdi.pred$se.fit
+
+gdp.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.gdp, type="response", se.fit = T)
+m.econ.lag1.gdp$pred <- gdp.pred$fit
+m.econ.lag1.gdp$pred.se <- gdp.pred$fit
+
+popden.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.pop_den, type="response", se.fit = T)
+m.econ.lag1.pop_den$pred <- popden.pred$fit
+m.econ.lag1.pop_den$pred.se <- popden.pred$se.fit
+
+# plots
+
+agrgdp.L1.plot <- ggplot()+
+                    geom_line(data=m.econ.lag1.agrgdp, aes(x=agr_gdp, y=pred))+
+                    geom_ribbon(data=m.econ.lag1.agrgdp, aes(x= agr_gdp,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                    geom_point(data=dat, aes(x=agr_gdp, y=elc))+
+                    ylab("Number of ELC allocations")+
+                    xlab("Agricultural proportion of GDP")+
+                    ggtitle("1 year lag")+
+                    theme_classic()
+
+fdi.L1.plot <- ggplot()+
+                geom_line(data=m.econ.lag1.fdi, aes(x=fdi, y=pred))+
+                geom_ribbon(data=m.econ.lag1.fdi, aes(x= fdi,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                geom_point(data=dat, aes(x=fdi, y=elc))+
+                ylab("")+
+                xlab("Foreign direct investment (USD Millions)")+
+                ggtitle("1 year lag")+
+                theme_classic()
+
+gdp.L1.plot <- ggplot()+
+                geom_line(data=m.econ.lag1.gdp, aes(x=gdp, y=pred))+
+                geom_ribbon(data=m.econ.lag1.gdp, aes(x= gdp,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                geom_point(data=dat, aes(x=gdp, y=elc))+
+                ylab("")+
+                xlab("Per capita GDP")+
+                ggtitle("1 year lag")+
+                theme_classic()
+
+popden.L1.plot <- ggplot()+
+                geom_line(data=m.econ.lag1.pop_den, aes(x=pop_den, y=pred))+
+                geom_ribbon(data=m.econ.lag1.pop_den, aes(x= pop_den,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                geom_point(data=dat, aes(x=pop_den, y=elc))+
+                ylab("")+
+                xlab("Population density")+
+                ggtitle("1 year lag")+
+                theme_classic()
+
+(agrgdp.plot + devenv.plot) / (agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot )
+
+
+  ## 2 year lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+# 1994 data missing from main data so subset to start at 1995
+years <- c(1995:2015)
+dat <- dat %>% filter(year %in% years)
+
+# subset elc data to cut it off at 2017. So now the elc data is two years ahead (i.e. data from 1995 is aligned with elc data from 1997)
+elcyears <- c(1997:2017)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model with 2 year time lag
+m.econ.lag2 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
+                   na.action = "na.fail", family = poisson, data=dat)
+
+
+m.econ.lag2.d <- dredge(m.econ.lag2, beta = "none", evaluate = TRUE, rank = AICc)
+# there are a lot of models now within dAIC of 6. So I will model average
+
+m.econ.modAv.aicc6 <- model.avg(m.econ.lag2.d, subset = delta < 6, fit = TRUE)
 summary(m.econ.modAv.aicc6)
+# only really gdp and pop_den, and pop_den is more of a control and doesn't really make sense to plot I don't think. I can't rally get my head around why changes in population density would affect ELC allocation
+
+### predict
+
+# new data
+m.econ.lag2.gdp <- data.frame(gdp = seq(min(dat$gdp), max(dat$gdp), length.out=100),
+                              pop_den = mean(dat$pop_den),
+                              agr_gdp = mean(dat$agr_gdp),
+                              dev_env = mean(dat$dev_env),
+                              fdi = mean(dat$fdi),
+                              dev_agri = mean(dat$dev_agri),
+                              for_rem = mean(dat$for_rem),
+                              time = mean(dat$time))
+
+# predict
+m.econ.lag2.gdp$pred <- predict(m.econ.modAv.aicc6, newdata = m.econ.lag2.gdp, type="response")
+
+# plot 
+gdp.L2.plot <- ggplot()+
+                geom_line(data=m.econ.lag2.gdp, aes(x=gdp, y=pred))+
+                geom_point(data=dat, aes(x=gdp, y=elc))+
+                ylab("Number of ELC allocations")+
+                xlab("Per capita GDP")+
+                ggtitle("2 year lag")+
+                theme_classic()
+
+(agrgdp.plot | devenv.plot) / (agrgdp.L1.plot | fdi.L1.plot | gdp.L1.plot) / (gdp.L2.plot | grid::textGrob(""))
+
