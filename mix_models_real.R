@@ -10434,7 +10434,8 @@ sat9c.diag.dat$resid <- resid(sat9c)
 plot(sat9c.diag.dat$pred, sat9c.diag.dat$resid)
 # lots of heterogeneity at lower predicted values of ForPix
 
-
+## QQ plot of random effects (using sjPlot)
+plot_model(sat9c,type="diag")
 
 
 print(VarCorr(sat9c),comp="Variance") 
