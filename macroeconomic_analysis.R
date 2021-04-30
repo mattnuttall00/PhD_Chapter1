@@ -531,7 +531,7 @@ summary(me.mod.gaus.1)
 
 # dredge
 me.dredge.gaus.1 <- dredge(me.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
+#write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
 
 
 ## saturated model with gamma distribution for unlagged predictors
@@ -551,7 +551,7 @@ write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1
 # AICc < 6
 me.modAv.aicc6 <- model.avg(me.dredge.gaus.1, subset = delta < 6, fit = TRUE)
 summary(me.modAv.aicc6)
-
+plot(me.modAv.aicc6)
 
 # Predict with the AICc<6 set
 
