@@ -1956,8 +1956,8 @@ ggsave("Results/Cluster_analysis/k_means/kmean_heatmap_cat.png",kmean_heatmap_ca
 
       # heatmap (UPGMA) - continuous ####
 
-# check dat_prov and remove obsolete cols
-dat_prov <- dat_prov %>% select(-c(X.1, X))
+## I used mean.dat for the clustering and so I need to use the same data for the heatmap. Originally, and in the k-means section above I use the raw province data, but I don't think this is correct. Firstly because the raw data has ForPix and pixDiff, which I want to exclude from the heatmap as they were excluded from the clustering. Secondly, the data displayed in the heatmap needs to match the data used for the clustering. 
+
 
 # make cluster vectors
 clus1 <- c("Mondul Kiri", "Ratanak Kiri")
@@ -1967,29 +1967,25 @@ clus4 <- c("Banteay Meanchey", "Battambang")
 clus5 <- c("Koh Kong","Kracheh","Otdar Meanchey","Preah Vihear","Stung Treng","Preah Sihanouk",
            "Kampong Chhnang","Pursat","Kampong Speu","Kampong Thom","Siem Reap","Kep","Kampot","Svay Rieng")
 
-# add UPGMA clusters
-dat_prov$agglo.clus <- ifelse(dat_prov$Province %in% clus1, "1",
-                        ifelse(dat_prov$Province %in% clus2, "2",
-                         ifelse(dat_prov$Province %in% clus3, "3",
-                          ifelse(dat_prov$Province %in% clus4, "4", 
-                            ifelse(dat_prov$Province %in% clus5, "5", NA)))))
+# create Province column using row labels
+mean.dat$Province <- row.names(mean.dat)
 
-# now I need to scale the vars
-dat_prov.s <- dat_prov %>% mutate_at(c("land_confl", "Pax_migt_in","Pax_migt_out","prop_ind", 
-                                       "pop_den", "M6_24_sch", "propPrimSec", "propSecSec","Les1_R_Land", 
-                                       "pig_fam", "dist_sch", "garbage", "KM_Comm", "crim_case","ForPix",
-                                       "areaKM","dist_provCap","dist_border","mean_elev"),
-                                     ~(scale(.) %>% as.vector))
+# add UPGMA clusters to mean.dat
+mean.dat$agglo.clus <- ifelse(mean.dat$Province %in% clus1, "1",
+                        ifelse(mean.dat$Province %in% clus2, "2",
+                         ifelse(mean.dat$Province %in% clus3, "3",
+                          ifelse(mean.dat$Province %in% clus4, "4", 
+                            ifelse(mean.dat$Province %in% clus5, "5", NA)))))
 
-# remove Province, year, and k-means cluster
-dat_prov.s <- dat_prov.s %>% select(-c(Province,year,cluster))
+
+# remove Province
+dat_prov.s <- mean.dat %>% select(-Province)
 
 # Mean the variables for clusters
 dat_prov.m <- dat_prov.s %>% group_by(agglo.clus) %>% summarise_all(mean)
 
 # re-order vars
 dat_prov.m <- dat_prov.m %>% select(agglo.clus,
-                                    mean_elev,areaKM,dist_provCap,dist_border,ForPix,
                                     pop_den,prop_ind,
                                     M6_24_sch,
                                     propPrimSec,propSecSec,
@@ -2012,6 +2008,7 @@ ggplot(dat_prov.l, aes(x=agglo.clus, y=variable))+
       # change UPGMA values to categorical ####
 
 ## calculate quantiles for each variable using the range for the entire variable
+
 # remove cluster
 dat_prov.q <- dat_prov.m[,-1]
 
@@ -2020,26 +2017,6 @@ quants <- as.data.frame(apply(dat_prov.q, 2, function(x){quantile(x, probs = c(0
 
 
 dat_prov.quants <- dat_prov.m %>% 
-  mutate(mean_elev = ifelse(mean_elev < quants$mean_elev[1], "v.low",
-                            ifelse(mean_elev < quants$mean_elev[2], "low",
-                                   ifelse(mean_elev < quants$mean_elev[3], "high",
-                                          ifelse(mean_elev >= quants$mean_elev[3], "v.high",NA))))) %>% 
-  mutate(areaKM = ifelse(areaKM < quants$areaKM[1], "v.low",
-                         ifelse(areaKM < quants$areaKM[2], "low",
-                                ifelse(areaKM < quants$areaKM[3], "high",
-                                       ifelse(areaKM >= quants$areaKM[3], "v.high",NA))))) %>% 
-  mutate(dist_provCap = ifelse(dist_provCap < quants$dist_provCap[1], "v.low",
-                               ifelse(dist_provCap < quants$dist_provCap[2], "low",
-                                      ifelse(dist_provCap < quants$dist_provCap[3], "high",
-                                             ifelse(dist_provCap >= quants$dist_provCap[3], "v.high",NA))))) %>%
-  mutate(dist_border = ifelse(dist_border < quants$dist_border[1], "v.low",
-                              ifelse(dist_border < quants$dist_border[2], "low",
-                                     ifelse(dist_border < quants$dist_border[3], "high",
-                                            ifelse(dist_border >= quants$dist_border[3], "v.high",NA))))) %>%
-  mutate(ForPix = ifelse(ForPix < quants$ForPix[1], "v.low",
-                         ifelse(ForPix < quants$ForPix[2], "low",
-                                ifelse(ForPix < quants$ForPix[3], "high",
-                                       ifelse(ForPix >= quants$ForPix[3], "v.high",NA))))) %>%
   mutate(pop_den = ifelse(pop_den < quants$pop_den[1], "v.low",
                           ifelse(pop_den < quants$pop_den[2], "low",
                                  ifelse(pop_den < quants$pop_den[3], "high",
@@ -2123,5 +2100,27 @@ upgma.heatmap.cat <- ggplot(dat_prov.ql, aes(x=agglo.clus, y=variable))+
                             legend.title = element_text(size=17),
                             legend.key.size = unit(2,'cm'))
 
-ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_heatmap_cat.png", upgma.heatmap.cat, 
+ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_heatmap_cat_NEW.png", upgma.heatmap.cat, 
        width = 30, height = 30, units = "cm", dpi=300)
+
+      # Plots of clusters versus environmental vars ####
+
+# Now I want to plot clusters against the environmental vars
+
+# I will need to treat the environ vars the same way as the vars used for clustering. i.e. mean across provinces and years
+
+# summarise variables for all years - take the mean for each variable for each province across all years. 
+env.dat <- dat_prov %>% group_by(Province) %>% summarise_all(mean) 
+
+# pull uot envrion vars
+env.dat <- env.dat %>% select(Province,areaKM,ForPix,diffPix,mean_elev,dist_border,dist_provCap)
+
+# add clusters
+env.dat$agglo.clus <- ifelse(env.dat$Province %in% clus1, "1",
+                              ifelse(env.dat$Province %in% clus2, "2",
+                                     ifelse(env.dat$Province %in% clus3, "3",
+                                            ifelse(env.dat$Province %in% clus4, "4", 
+                                                   ifelse(env.dat$Province %in% clus5, "5", NA)))))
+
+
+# plot
