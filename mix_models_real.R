@@ -10431,11 +10431,14 @@ plot(sat9c.diag.dat$ForPix, sat9c.diag.dat$pred, ylab = "Predicted ForPix", xlab
 sat9c.diag.dat$resid <- resid(sat9c)
 
 ### Plot residuals against fitted values:
-plot(sat9c.diag.dat$pred, sat9c.diag.dat$resid)
+plot(sat9c.diag.dat$pred, sat9c.diag.dat$resid, xlab="Predicted values", ylab="Model residuals")
 # lots of heterogeneity at lower predicted values of ForPix
 
 ## QQ plot of random effects (using sjPlot)
 plot_model(sat9c,type="diag")
+
+# plot residuals of model
+hist(resid(sat9c))
 
 
 print(VarCorr(sat9c),comp="Variance") 
