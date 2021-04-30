@@ -1108,7 +1108,7 @@ ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20,
 
 
 # plot map based on UPGMA cluster
-cols <- c("darkolivegreen3","cyan3","deepskyblue4","firebrick3","goldenrod3")
+cols <- c("tomato3","skyblue2","deepskyblue4","goldenrod","darkolivegreen3")
 
 upgma.map <- ggplot(prov.shp,aes(group=agglo_clus, fill=agglo_clus))+
   geom_sf()+
@@ -1119,7 +1119,7 @@ upgma.map <- ggplot(prov.shp,aes(group=agglo_clus, fill=agglo_clus))+
         legend.text = element_text(size = 15))+
   labs(fill = "UPGMA Clusters")
 
-ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_map.png", upgma.map, height = 20, width = 20, units = "cm",
+ggsave("Results/Cluster_analysis/final_UPGMA_plots/UPGMA_map.png", upgma.map, height = 20, width = 20, units = "cm",
        dpi=300)
 
 
@@ -2122,5 +2122,62 @@ env.dat$agglo.clus <- ifelse(env.dat$Province %in% clus1, "1",
                                             ifelse(env.dat$Province %in% clus4, "4", 
                                                    ifelse(env.dat$Province %in% clus5, "5", NA)))))
 
+# remove Phnom Penh
+env.dat <- env.dat %>% filter(Province != "Phnom Penh")
 
-# plot
+# convert ForPix to km2
+env.dat$For.area <- env.dat$ForPix * 0.09
+
+# colors to match the map
+cols <- c("tomato3","skyblue2","deepskyblue4","goldenrod","darkolivegreen3")
+
+# plots
+forpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=For.area, color=agglo.clus))+
+            scale_color_manual(values=cols)+
+            geom_boxplot(size=1)+
+            xlab("")+
+            ylab("Mean forested area (km2)")+
+            theme_classic()+
+            theme(legend.position = "none")
+
+area.p <- ggplot(env.dat, aes(x=agglo.clus, y=areaKM, color=agglo.clus))+
+          scale_color_manual(values=cols)+
+          geom_boxplot(size=1)+
+          xlab("")+
+          ylab("Mean size of province (km2)")+
+          theme_classic()+
+          theme(legend.position = "none")
+
+difpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=diffPix, color=agglo.clus))+
+            scale_color_manual(values=cols)+
+            geom_boxplot(size=1)+
+            xlab("")+
+            ylab("Change in forest cover between 2007 - 2012")+
+            theme_classic()+
+            theme(legend.position = "none")
+
+elev.p <- ggplot(env.dat, aes(x=agglo.clus, y=mean_elev, color=agglo.clus))+
+          scale_color_manual(values=cols)+
+          geom_boxplot(size=1)+
+          xlab("Cluster")+
+          ylab("Mean elevation (masl)")+
+          theme_classic()+
+          theme(legend.position = "none")
+
+distBord.p <- ggplot(env.dat, aes(x=agglo.clus, y=dist_border, color=agglo.clus))+
+              scale_color_manual(values=cols)+
+              geom_boxplot(size=1)+
+              xlab("Cluster")+
+              ylab("Mean distance to international border (KM)")+
+              theme_classic()+
+              theme(legend.position = "none")
+
+distCap.p <- ggplot(env.dat, aes(x=agglo.clus, y=dist_provCap, color=agglo.clus))+
+              scale_color_manual(values=cols)+
+              geom_boxplot(size=1)+
+              xlab("Cluster")+
+              ylab("Mean distance to provincial capital (KM)")+
+              theme_classic()+
+              theme(legend.position = "none")
+
+forpix.p + area.p + difpix.p + elev.p + distBord.p + distCap.p + plot_layout(ncol=3)
