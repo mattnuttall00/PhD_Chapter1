@@ -3078,7 +3078,7 @@ prod_plot_all[[3]] <- prod_plot_all[[3]] + ggtitle ("Time t+2")+ theme(plot.titl
 ggsave("Results/Macroeconomics/Plots/PROD_plot_grid.png", prod_plot_all, 
        width = 30, height = 30, unit="cm", dpi=300)
 
-#### Testing ELCs as response ####
+#### ELCs as response ####
 
 # load data
 elc <- read.csv("elc_years.csv", header = T)
@@ -3087,8 +3087,8 @@ dat <- read.csv("dat_work.csv", header = T)
 head(elc)
 head(dat)
 
-
- ## no lag ####
+  ## macroecon set ####
+    # no lag ####
 
 years <- c(1995:2015)
 
@@ -3103,8 +3103,6 @@ dat$elc <- elc$count
 
 str(dat)
 
-
-### macroecon set
 
 # gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
 
@@ -3130,7 +3128,10 @@ plot(m.econ.d$elc, m.econ.d$pred)
 m.econ.d$resid <- residuals(m.econ.top)
 plot(m.econ.d$pred, m.econ.d$resid)
 
-### predict
+# histogram of residuals
+hist(resid(m.econ.top))
+
+  ### predict
 
 ## new data
 m.econ.agrgdp <- data.frame(agr_gdp = seq(min(dat$agr_gdp), max(dat$agr_gdp), length.out=100),
@@ -3184,7 +3185,7 @@ popden.plot <- ggplot()+
 agrgdp.plot + devenv.plot + popden.plot + plot_layout(ncol=2)
 
 
-  ## 1 year lag ####
+    # 1 year lag ####
 
 # load data
 elc <- read.csv("elc_years.csv", header = T)
@@ -3311,7 +3312,7 @@ popden.L1.plot <- ggplot()+
 (agrgdp.plot + devenv.plot) / (agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot )
 
 
-  ## 2 year lag ####
+    # 2 year lag ####
 
 # load data
 elc <- read.csv("elc_years.csv", header = T)
@@ -3366,3 +3367,153 @@ gdp.L2.plot <- ggplot()+
 
 (agrgdp.plot | devenv.plot) / (agrgdp.L1.plot | fdi.L1.plot | gdp.L1.plot) / (gdp.L2.plot | grid::textGrob(""))
 
+
+  ## Commodity / production set ####
+    # no lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+years <- c(1995:2015)
+
+# subset dat
+dat <- dat %>% filter(year %in% years)
+
+# subset elc
+elc <- elc %>% filter(year %in% years) %>% select(count)
+
+# attach elc to dat
+dat$elc <- elc$count
+
+str(dat)
+
+
+# cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem
+
+# model no time lag 
+m.comm <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem,
+              na.action = "na.fail", family = poisson, data=dat)
+
+
+m.comm.d <- dredge(m.comm, beta = "none", evaluate = TRUE, rank = AICc)
+
+# Only 3 models within dAIC of 6. The second model from the top only differs from the top in the lack of time, which has to be included and so the second model is not useable. The 3rd model differs from the top only by one additional variable. Therefore this additional variable is likely to be redundant. I will use the top model for inference
+
+m.comm.top <- glm(elc ~ corn_med + nfi + rice_med + rub_med + sug_med + for_rem + time,
+                  family=poisson, data=dat)
+summary(m.comm.top)
+plot(m.comm.top)
+
+
+# plot predicted (fully conditional) versus observed
+m.comm.d <- dat
+m.comm.d$pred <- predict(m.comm.top, type="response")
+plot(m.comm.d$elc, m.comm.d$pred)
+
+# plot residuals versus predicted
+m.comm.d$resid <- residuals(m.comm.top)
+plot(m.comm.d$pred, m.comm.d$resid)
+
+# histogram of residuals
+hist(resid(m.comm.top))
+
+### predict
+
+## new data
+m.comm.corn <- data.frame(corn_med = seq(min(dat$corn_med), max(dat$corn_med), length.out=100),
+                            rice_med = mean(dat$rice_med),
+                            rub_med = mean(dat$rub_med),
+                            sug_med = mean(dat$sug_med),
+                            nfi = mean(dat$nfi),
+                            for_rem = mean(dat$for_rem),
+                            time = mean(dat$time))
+
+m.comm.rice <- data.frame(rice_med = seq(min(dat$rice_med), max(dat$rice_med), length.out=100),
+                          corn_med = mean(dat$corn_med),
+                          rub_med = mean(dat$rub_med),
+                          sug_med = mean(dat$sug_med),
+                          nfi = mean(dat$nfi),
+                          for_rem = mean(dat$for_rem),
+                          time = mean(dat$time))
+
+m.comm.rub <- data.frame(rub_med = seq(min(dat$rub_med), max(dat$rub_med), length.out=100),
+                          corn_med = mean(dat$corn_med),
+                          rice_med = mean(dat$rice_med),
+                          sug_med = mean(dat$sug_med),
+                          nfi = mean(dat$nfi),
+                          for_rem = mean(dat$for_rem),
+                          time = mean(dat$time))
+
+m.comm.sug <- data.frame(sug_med = seq(min(dat$sug_med), max(dat$sug_med), length.out=100),
+                         corn_med = mean(dat$corn_med),
+                         rice_med = mean(dat$rice_med),
+                         rub_med = mean(dat$rub_med),
+                         nfi = mean(dat$nfi),
+                         for_rem = mean(dat$for_rem),
+                         time = mean(dat$time))
+
+m.comm.nfi <- data.frame(nfi = seq(min(dat$nfi), max(dat$nfi), length.out=100),
+                         corn_med = mean(dat$corn_med),
+                         rice_med = mean(dat$rice_med),
+                         rub_med = mean(dat$rub_med),
+                         sug_med = mean(dat$sug_med),
+                         for_rem = mean(dat$for_rem),
+                         time = mean(dat$time))
+
+
+# predict with SE's (in link units)
+corn_pred <- as.data.frame(predict(m.comm.top, newdata = m.comm.corn, type="link", se=TRUE))
+rice_pred <- as.data.frame(predict(m.comm.top, newdata = m.comm.rice, type="link", se=TRUE))
+rub_pred  <- as.data.frame(predict(m.comm.top, newdata = m.comm.rub, type="link", se=TRUE))
+sug_pred  <- as.data.frame(predict(m.comm.top, newdata = m.comm.sug, type="link", se=TRUE))
+nfi_pred  <- as.data.frame(predict(m.comm.top, newdata = m.comm.nfi, type="link", se=TRUE))
+
+# exponentiate the fit onto the dataframes
+m.comm.corn$pred <- exp(corn_pred$fit)
+m.comm.rice$pred <- exp(rice_pred$fit)
+m.comm.rub$pred <- exp(rub_pred$fit)
+m.comm.sug$pred <- exp(sug_pred$fit)
+m.comm.nfi$pred <- exp(nfi_pred$fit)
+
+# add confidence intervals onto dataframes
+m.comm.corn$lcl <- exp(corn_pred$fit-1.96*corn_pred$se.fit)
+m.comm.corn$ucl <- exp(corn_pred$fit+1.96*corn_pred$se.fit)
+m.comm.rice$lcl <- exp(rice_pred$fit-1.96*rice_pred$se.fit)
+m.comm.rice$ucl <- exp(rice_pred$fit+1.96*rice_pred$se.fit)
+m.comm.rub$lcl  <- exp(rub_pred$fit-1.96*rub_pred$se.fit)
+m.comm.rub$ucl  <- exp(rub_pred$fit+1.96*rub_pred$se.fit)
+m.comm.sug$lcl  <- exp(sug_pred$fit-1.96*sug_pred$se.fit)
+m.comm.sug$ucl  <- exp(sug_pred$fit+1.96*sug_pred$se.fit)
+m.comm.nfi$lcl  <- exp(nfi_pred$fit-1.96*nfi_pred$se.fit)
+m.comm.nfi$ucl  <- exp(nfi_pred$fit+1.96*nfi_pred$se.fit)
+
+
+
+# plots
+corn.plot <- ggplot()+
+             geom_line(data=m.comm.corn, aes(x=corn_med, y=pred))+
+             geom_point(data=dat, aes(x=corn_med, y=elc))+
+             geom_ribbon(data=m.comm.corn, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3)+
+             xlab("Median price of corn (USD/ton)")+
+             ylab("Number of ELC allocations")+
+             ggtitle("No time lag")+
+             theme_classic()
+
+devenv.plot <- ggplot()+
+  geom_line(data=m.econ.devenv, aes(x=dev_env, y=pred))+
+  geom_point(data=dat, aes(x=dev_env, y=elc))+
+  xlab("Development flows to environment sector")+
+  ylab("")+
+  ggtitle("No time lag")+
+  theme_classic()
+
+popden.plot <- ggplot()+
+  geom_line(data=m.econ.popden, aes(x=pop_den, y=pred))+
+  geom_point(data=dat, aes(x=pop_den, y=elc))+
+  xlab("Population density")+
+  ylab("")+
+  ggtitle("No time lag")+
+  theme_classic()
+
+agrgdp.plot + devenv.plot + popden.plot + plot_layout(ncol=2)
