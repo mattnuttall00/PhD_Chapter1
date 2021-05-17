@@ -3390,7 +3390,6 @@ str(dat)
 
 
 # cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem
-
 # model no time lag 
 m.comm <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem,
               na.action = "na.fail", family = poisson, data=dat)
@@ -3491,7 +3490,7 @@ m.comm.nfi$ucl  <- exp(nfi_pred$fit+1.96*nfi_pred$se.fit)
 
 
 # plots
-corn.plot <- ggplot()+
+p.corn <- ggplot()+
              geom_line(data=m.comm.corn, aes(x=corn_med, y=pred))+
              geom_point(data=dat, aes(x=corn_med, y=elc))+
              geom_ribbon(data=m.comm.corn, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3)+
@@ -3500,20 +3499,182 @@ corn.plot <- ggplot()+
              ggtitle("No time lag")+
              theme_classic()
 
-devenv.plot <- ggplot()+
-  geom_line(data=m.econ.devenv, aes(x=dev_env, y=pred))+
-  geom_point(data=dat, aes(x=dev_env, y=elc))+
-  xlab("Development flows to environment sector")+
-  ylab("")+
-  ggtitle("No time lag")+
-  theme_classic()
+# rice
+p.rice <- ggplot()+
+              geom_line(data=m.comm.rice, aes(x=rice_med, y=pred))+
+              geom_point(data=dat, aes(x=rice_med, y=elc))+
+              geom_ribbon(data=m.comm.rice, aes(ymin=lcl, ymax=ucl, x=rice_med), alpha=0.3)+
+              xlab("Change in median price of rice (USD/ton)")+
+              ylab("Number of ELC allocations")+
+              ggtitle("No time lag")+
+              theme_classic()
 
-popden.plot <- ggplot()+
-  geom_line(data=m.econ.popden, aes(x=pop_den, y=pred))+
-  geom_point(data=dat, aes(x=pop_den, y=elc))+
-  xlab("Population density")+
-  ylab("")+
-  ggtitle("No time lag")+
-  theme_classic()
+# rubber
+p.rubber <- ggplot()+
+              geom_line(data=m.comm.rub, aes(x=rub_med, y=pred))+
+              geom_point(data=dat, aes(x=rub_med, y=elc))+
+              geom_ribbon(data=m.comm.rub, aes(ymin=lcl, ymax=ucl, x=rub_med), alpha=0.3)+
+              xlab("Change in median price of rubber (USD/ton)")+
+              ylab("Number of ELC allocations")+
+              ggtitle("No time lag")+
+              theme_classic()
 
-agrgdp.plot + devenv.plot + popden.plot + plot_layout(ncol=2)
+# sugar
+p.sug <- ggplot()+
+                geom_line(data=m.comm.sug, aes(x=sug_med, y=pred))+
+                geom_point(data=dat, aes(x=sug_med, y=elc))+
+                geom_ribbon(data=m.comm.sug, aes(ymin=lcl, ymax=ucl, x=sug_med), alpha=0.3)+
+                xlab("Change in median price of sugar (USD/ton)")+
+                ylab("Number of ELC allocations")+
+                ggtitle("No time lag")+
+                theme_classic()
+
+# nfi
+p.nfi <- ggplot()+
+            geom_line(data=m.comm.nfi, aes(x=nfi, y=pred))+
+            geom_point(data=dat, aes(x=nfi, y=elc))+
+            geom_ribbon(data=m.comm.nfi, aes(ymin=lcl, ymax=ucl, x=nfi), alpha=0.3)+
+            xlab("Change in non-food production index")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+      # remove outliers ####
+
+# according to the model diagnostics there are some points that are having disproportionate influence. I am very reluctant to remove data, as I only have 21 data points. But I will see
+
+
+# seems to massivley overpredict at higher values of corn_med. I want to try and remove rows 16 and 18 (based on the diagnostic plots from the model). If I had more data I would also remove 17
+
+# new model with rows 16,18 removed
+m.comm.topa <- glm(elc ~ corn_med + nfi + rice_med + rub_med + sug_med + for_rem + time,
+                   family=poisson, data=dat[-c(16,18),])
+
+summary(m.comm.topa)
+plot(m.comm.topa)
+
+# new newdata
+dat_sub <- dat[-c(16,18),]
+
+m.comm.corn.a <- data.frame(corn_med = seq(min(dat_sub$corn_med), max(dat_sub$corn_med), length.out=100),
+                            rice_med = mean(dat_sub$rice_med),
+                            rub_med = mean(dat_sub$rub_med),
+                            sug_med = mean(dat_sub$sug_med),
+                            nfi = mean(dat_sub$nfi),
+                            for_rem = mean(dat_sub$for_rem),
+                            time = mean(dat_sub$time))
+
+m.comm.rice.a <- data.frame(rice_med = seq(min(dat_sub$rice_med), max(dat_sub$rice_med), length.out=100),
+                          corn_med = mean(dat_sub$corn_med),
+                          rub_med = mean(dat_sub$rub_med),
+                          sug_med = mean(dat_sub$sug_med),
+                          nfi = mean(dat_sub$nfi),
+                          for_rem = mean(dat_sub$for_rem),
+                          time = mean(dat_sub$time))
+
+m.comm.rub.a <- data.frame(rub_med = seq(min(dat_sub$rub_med), max(dat_sub$rub_med), length.out=100),
+                         corn_med = mean(dat_sub$corn_med),
+                         rice_med = mean(dat_sub$rice_med),
+                         sug_med = mean(dat_sub$sug_med),
+                         nfi = mean(dat_sub$nfi),
+                         for_rem = mean(dat_sub$for_rem),
+                         time = mean(dat_sub$time))
+
+m.comm.sug.a <- data.frame(sug_med = seq(min(dat_sub$sug_med), max(dat_sub$sug_med), length.out=100),
+                         corn_med = mean(dat_sub$corn_med),
+                         rice_med = mean(dat_sub$rice_med),
+                         rub_med = mean(dat_sub$rub_med),
+                         nfi = mean(dat_sub$nfi),
+                         for_rem = mean(dat_sub$for_rem),
+                         time = mean(dat_sub$time))
+
+m.comm.nfi.a <- data.frame(nfi = seq(min(dat_sub$nfi), max(dat_sub$nfi), length.out=100),
+                         corn_med = mean(dat_sub$corn_med),
+                         rice_med = mean(dat_sub$rice_med),
+                         rub_med = mean(dat_sub$rub_med),
+                         sug_med = mean(dat_sub$sug_med),
+                         for_rem = mean(dat_sub$for_rem),
+                         time = mean(dat_sub$time))
+
+
+# predict with SE's (in link units)
+corn_pred.a   <- as.data.frame(predict(m.comm.topa, newdata = m.comm.corn.a, type="link", se=TRUE))
+rice_pred.a   <- as.data.frame(predict(m.comm.topa, newdata = m.comm.rice.a, type="link", se=TRUE))
+rub_pred.a <- as.data.frame(predict(m.comm.topa, newdata = m.comm.rub.a, type="link", se=TRUE))
+sug_pred.a  <- as.data.frame(predict(m.comm.topa, newdata = m.comm.sug.a, type="link", se=TRUE))
+nfi_pred.a    <- as.data.frame(predict(m.comm.topa, newdata = m.comm.nfi.a, type="link", se=TRUE))
+
+# exponentiate the fit onto the dataframes
+m.comm.corn.a$pred <- exp(corn_pred.a$fit)
+m.comm.rice.a$pred <- exp(rice_pred.a$fit)
+m.comm.rub.a$pred <- exp(rub_pred.a$fit)
+m.comm.sug.a$pred <- exp(sug_pred.a$fit)
+m.comm.nfi.a$pred <- exp(nfi_pred.a$fit)
+
+# add confidence intervals onto dataframes
+m.comm.corn.a$lcl <- exp(corn_pred.a$fit-1.96*corn_pred.a$se.fit)
+m.comm.corn.a$ucl <- exp(corn_pred.a$fit+1.96*corn_pred.a$se.fit)
+m.comm.rice.a$lcl <- exp(rice_pred.a$fit-1.96*rice_pred.a$se.fit)
+m.comm.rice.a$ucl <- exp(rice_pred.a$fit+1.96*rice_pred.a$se.fit)
+m.comm.rub.a$lcl  <- exp(rub_pred.a$fit-1.96*rub_pred.a$se.fit)
+m.comm.rub.a$ucl  <- exp(rub_pred.a$fit+1.96*rub_pred.a$se.fit)
+m.comm.sug.a$lcl  <- exp(sug_pred.a$fit-1.96*sug_pred.a$se.fit)
+m.comm.sug.a$ucl  <- exp(sug_pred.a$fit+1.96*sug_pred.a$se.fit)
+m.comm.nfi.a$lcl  <- exp(nfi_pred.a$fit-1.96*nfi_pred.a$se.fit)
+m.comm.nfi.a$ucl  <- exp(nfi_pred.a$fit+1.96*nfi_pred.a$se.fit)
+
+# plot
+p.corn.a <- ggplot()+
+            geom_line(data=m.comm.corn.a, aes(x=corn_med, y=pred))+
+            geom_point(data=dat[-c(16,18),], aes(x=corn_med, y=elc))+
+            geom_ribbon(data=m.comm.corn.a, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3)+
+            xlab("Change in median price of corn (USD/ton)")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+p.rice.a <- ggplot()+
+            geom_line(data=m.comm.rice.a, aes(x=rice_med, y=pred))+
+            geom_point(data=dat[-c(16,18),], aes(x=rice_med, y=elc))+
+            geom_ribbon(data=m.comm.rice.a, aes(ymin=lcl, ymax=ucl, x=rice_med), alpha=0.3)+
+            xlab("Change in median price of rice (USD/ton)")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+p.rub.a <- ggplot()+
+            geom_line(data=m.comm.rub.a, aes(x=rub_med, y=pred))+
+            geom_point(data=dat[-c(16,18),], aes(x=rub_med, y=elc))+
+            geom_ribbon(data=m.comm.rub.a, aes(ymin=lcl, ymax=ucl, x=rub_med), alpha=0.3)+
+            xlab("Change in median price of rubber (USD/ton)")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+p.sug.a <- ggplot()+
+            geom_line(data=m.comm.sug.a, aes(x=sug_med, y=pred))+
+            geom_point(data=dat[-c(16,18),], aes(x=sug_med, y=elc))+
+            geom_ribbon(data=m.comm.sug.a, aes(ymin=lcl, ymax=ucl, x=sug_med), alpha=0.3)+
+            xlab("Change in median price of sugar (USD/ton)")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+p.nfi.a <- ggplot()+
+            geom_line(data=m.comm.nfi.a, aes(x=nfi, y=pred))+
+            geom_point(data=dat[-c(16,18),], aes(x=nfi, y=elc))+
+            geom_ribbon(data=m.comm.nfi.a, aes(ymin=lcl, ymax=ucl, x=nfi), alpha=0.3)+
+            xlab("Non-food production index")+
+            ylab("Number of ELC allocations")+
+            ggtitle("No time lag")+
+            theme_classic()
+
+
+
+## compare original model with reduced data model
+(p.corn + p.corn.a)/
+(p.rice + p.rice.a)/
+(p.rubber + p.rub.a)/
+(p.sug + p.sug.a)/
+(p.nfi + p.nfi.a)
+# I mean, they all look pretty rubbish, I would not say that any of these models are particulalry good at predicting. I guess sugar and corn are not too bad. Overall, I think the models with the outliers removed are slightly better, so I will go with them. 
