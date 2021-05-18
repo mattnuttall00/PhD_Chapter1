@@ -3377,7 +3377,7 @@ dat <- read.csv("dat_work.csv", header = T)
 
 years <- c(1995:2015)
 
-# subset dat
+# subset dat (because ELC data starts in 1995)
 dat <- dat %>% filter(year %in% years)
 
 # subset elc
@@ -3941,3 +3941,93 @@ p.nfi.lag1 + p.sug.lag1
 p.sug_l2a
   
   
+  ## Producer price set ####
+    # no lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+years <- c(1995:2015)
+
+# subset dat (because elc data starts from 1995)
+dat <- dat %>% filter(year %in% years)
+
+# subset elc
+elc <- elc %>% filter(year %in% years) %>% select(count)
+
+# attach elc to dat
+dat$elc <- elc$count
+
+str(dat)
+
+# model no time lag 
+m.prod <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug + time + for_rem,
+              na.action = "na.fail", family = poisson, data=dat)
+
+# dredge
+m.prod.d <- dredge(m.prod, beta = "none", evaluate = TRUE, rank = AICc)
+
+# model average
+m.prod.modAv <- model.avg(m.prod.d, subset = delta < 6, fit = TRUE)
+summary(m.prod.modAv)
+
+# plot predicted (fully conditional) versus observed
+m.prod.d <- dat
+m.prod.d$pred <- predict(m.prod.modAv, type="response")
+plot(m.prod.d$elc, m.prod.d$pred)
+
+
+### predict
+
+# new dataframes
+
+prod_rice_nd <- data.frame(prod_rice = seq(min(dat$prod_rice), max(dat$prod_rice), length.out=100),
+                           prod_corn = mean(dat$prod_corn),
+                           prod_rub = mean(dat$prod_rub),
+                           prod_sug = mean(dat$prod_sug),
+                           prod_cass = mean(dat$prod_cass),
+                           time = mean(dat$time),
+                           for_rem = mean(dat$for_rem))
+
+prod_rub_nd <- data.frame(prod_rub = seq(min(dat$prod_rub), max(dat$prod_rub), length.out=100),
+                           prod_corn = mean(dat$prod_corn),
+                           prod_rice = mean(dat$prod_rice),
+                           prod_sug = mean(dat$prod_sug),
+                           prod_cass = mean(dat$prod_cass),
+                           time = mean(dat$time),
+                           for_rem = mean(dat$for_rem))
+
+# predict
+prod_rice_pred <- as.data.frame(predict(m.prod.modAv, newdata = prod_rice_nd, type = "link", se=TRUE))
+prod_rub_pred  <- as.data.frame(predict(m.prod.modAv, newdata = prod_rub_nd, type = "link", se=TRUE))
+
+# attach fit to dataframes
+prod_rice_nd$pred <- exp(prod_rice_pred$fit)
+prod_rub_nd$pred  <- exp(prod_rub_pred$fit)
+
+# attach CIs
+prod_rice_nd$lcl <- exp(prod_rice_pred$fit - 1.96*prod_rice_pred$se.fit)
+prod_rice_nd$ucl <- exp(prod_rice_pred$fit + 1.96*prod_rice_pred$se.fit)
+prod_rub_nd$lcl  <- exp(prod_rub_pred$fit - 1.96*prod_rub_pred$se.fit)
+prod_rub_nd$ucl  <- exp(prod_rub_pred$fit + 1.96*prod_rub_pred$se.fit)
+
+# plots
+
+p.rice.prod <- ggplot()+
+               geom_line(data=prod_rice_nd, aes(x=prod_rice, y=pred))+
+               geom_ribbon(data=prod_rice_nd, aes(x=prod_rice, ymin=lcl, ymax=ucl), alpha=0.3)+
+               geom_point(data=dat, aes(x=prod_rice, y=elc))+
+               theme_classic()+
+               ylab("Number of ELC allocations")+
+               xlab("Mean producer price of rice (USD/ton)")+
+               ggtitle("No time lag")
+
+p.rub.prod <- ggplot()+
+              geom_line(data=prod_rub_nd, aes(x=prod_rub, y=pred))+
+              geom_ribbon(data=prod_rub_nd, aes(x=prod_rub, ymin=lcl, ymax=ucl), alpha=0.3)+
+              geom_point(data=dat, aes(x=prod_rub, y=elc))+
+              theme_classic()+
+              ylab("Number of ELC allocations")+
+              xlab("Mean producer price of rubber (USD/ton)")+
+              ggtitle("No time lag")
