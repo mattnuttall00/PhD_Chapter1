@@ -3627,7 +3627,7 @@ m.comm.nfi.a$ucl  <- exp(nfi_pred.a$fit+1.96*nfi_pred.a$se.fit)
 p.corn.a <- ggplot()+
             geom_line(data=m.comm.corn.a, aes(x=corn_med, y=pred))+
             geom_point(data=dat_sub, aes(x=corn_med, y=elc))+
-            geom_ribbon(data=m.comm.corn.a, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3)+
+            geom_ribbon(data=m.comm.corn.a, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3, fill="#339900")+
             xlab("Change in median price of corn (USD/ton)")+
             ylab("Number of ELC allocations")+
             ggtitle("No time lag")+
@@ -3636,7 +3636,7 @@ p.corn.a <- ggplot()+
 p.rice.a <- ggplot()+
             geom_line(data=m.comm.rice.a, aes(x=rice_med, y=pred))+
             geom_point(data=dat_sub, aes(x=rice_med, y=elc))+
-            geom_ribbon(data=m.comm.rice.a, aes(ymin=lcl, ymax=ucl, x=rice_med), alpha=0.3)+
+            geom_ribbon(data=m.comm.rice.a, aes(ymin=lcl, ymax=ucl, x=rice_med), alpha=0.3, fill="#339900")+
             xlab("Change in median price of rice (USD/ton)")+
             ylab("Number of ELC allocations")+
             ggtitle("No time lag")+
@@ -3645,7 +3645,7 @@ p.rice.a <- ggplot()+
 p.rub.a <- ggplot()+
             geom_line(data=m.comm.rub.a, aes(x=rub_med, y=pred))+
             geom_point(data=dat_sub, aes(x=rub_med, y=elc))+
-            geom_ribbon(data=m.comm.rub.a, aes(ymin=lcl, ymax=ucl, x=rub_med), alpha=0.3)+
+            geom_ribbon(data=m.comm.rub.a, aes(ymin=lcl, ymax=ucl, x=rub_med), alpha=0.3, fill="#339900")+
             xlab("Change in median price of rubber (USD/ton)")+
             ylab("Number of ELC allocations")+
             ggtitle("No time lag")+
@@ -3654,7 +3654,7 @@ p.rub.a <- ggplot()+
 p.sug.a <- ggplot()+
             geom_line(data=m.comm.sug.a, aes(x=sug_med, y=pred))+
             geom_point(data=dat_sub, aes(x=sug_med, y=elc))+
-            geom_ribbon(data=m.comm.sug.a, aes(ymin=lcl, ymax=ucl, x=sug_med), alpha=0.3)+
+            geom_ribbon(data=m.comm.sug.a, aes(ymin=lcl, ymax=ucl, x=sug_med), alpha=0.3, fill="#339900")+
             xlab("Change in median price of sugar (USD/ton)")+
             ylab("Number of ELC allocations")+
             ggtitle("No time lag")+
@@ -3663,8 +3663,8 @@ p.sug.a <- ggplot()+
 p.nfi.a <- ggplot()+
             geom_line(data=m.comm.nfi.a, aes(x=nfi, y=pred))+
             geom_point(data=dat_sub, aes(x=nfi, y=elc))+
-            geom_ribbon(data=m.comm.nfi.a, aes(ymin=lcl, ymax=ucl, x=nfi), alpha=0.3)+
-            xlab("Non-food production index")+
+            geom_ribbon(data=m.comm.nfi.a, aes(ymin=lcl, ymax=ucl, x=nfi), alpha=0.3, fill="#339900")+
+            xlab(" Change in non-food production index")+
             ylab("Number of ELC allocations")+
             ggtitle("No time lag")+
             theme_classic()
@@ -3756,16 +3756,16 @@ sug_med_nd$ucl <- exp(sug_med_pred$fit+1.96*sug_med_pred$se.fit)
 
 p.nfi.lag1 <- ggplot()+
               geom_line(data=nfi_nd, aes(x=nfi, y=pred))+
-              geom_ribbon(data=nfi_nd, aes(x=nfi, ymin=lcl, ymax=ucl), alpha=0.3)+
+              geom_ribbon(data=nfi_nd, aes(x=nfi, ymin=lcl, ymax=ucl), alpha=0.3, fill="#339900")+
               geom_point(data=dat, aes(x=nfi, y=elc))+
               theme_classic()+
-              xlab("Non-food production index")+
+              xlab("Change in non-food production index")+
               ylab("Number of ELC allocations")+
               ggtitle("1 year lag")
 
 p.sug.lag1 <- ggplot()+
               geom_line(data=sug_med_nd, aes(x=sug_med, y=pred))+
-              geom_ribbon(data=sug_med_nd, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+              geom_ribbon(data=sug_med_nd, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3, fill="#339900")+
               geom_point(data=dat, aes(x=sug_med, y=elc))+
               theme_classic()+
               xlab("Change in median sugar price (USD/ton)")+
@@ -3922,7 +3922,7 @@ sug_med_nda$ucl  <- exp(sug_med_preda$fit+1.96*sug_med_preda$se.fit)
 # plot
 p.sug_l2a <- ggplot()+
             geom_line(data=sug_med_nda, aes(x=sug_med, y=pred))+
-            geom_ribbon(data=sug_med_nda, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+            geom_ribbon(data=sug_med_nda, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3, fill="#339900")+
             geom_point(data=dat_sub, aes(x=sug_med, y=elc))+
             theme_classic()+
             ylab("Number of elc allocations")+
@@ -3934,13 +3934,70 @@ p.sug_l2a <- ggplot()+
 # no lag
 p.corn.a + p.rice.a + p.rub.a + p.sug.a + p.nfi.a 
 
+# remove points
+p.corn.a$layers[[2]] <- NULL
+p.rice.a$layers[[2]] <- NULL
+p.rub.a$layers[[2]] <- NULL
+p.sug.a$layers[[2]] <- NULL
+p.nfi.a$layers[[2]] <- NULL
+
+p.comm.nolag <- p.corn.a + p.rice.a + p.rub.a + p.sug.a + p.nfi.a 
+
+# increase axis title size
+p.comm.nolag[[1]] <- p.comm.nolag[[1]] + theme(axis.title = element_text(size=12))
+p.comm.nolag[[2]] <- p.comm.nolag[[2]] + theme(axis.title = element_text(size=12))
+p.comm.nolag[[3]] <- p.comm.nolag[[3]] + theme(axis.title = element_text(size=12))
+p.comm.nolag[[4]] <- p.comm.nolag[[4]] + theme(axis.title = element_text(size=12))
+p.comm.nolag[[5]] <- p.comm.nolag[[5]] + theme(axis.title = element_text(size=12))
+
+# Increase axis text size
+p.comm.nolag[[1]] <- p.comm.nolag[[1]] + theme(axis.text = element_text(size=12))
+p.comm.nolag[[2]] <- p.comm.nolag[[2]] + theme(axis.text = element_text(size=12))
+p.comm.nolag[[3]] <- p.comm.nolag[[3]] + theme(axis.text = element_text(size=12))
+p.comm.nolag[[4]] <- p.comm.nolag[[4]] + theme(axis.text = element_text(size=12))
+p.comm.nolag[[5]] <- p.comm.nolag[[5]] + theme(axis.text = element_text(size=12))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_nolag_noPts.png", p.comm.nolag,
+       width = 30, height = 20, units="cm", dpi=300)
+
 # 1 year lag
 p.nfi.lag1 + p.sug.lag1
 
+# remove points
+p.nfi.lag1$layers[[3]] <- NULL
+p.sug.lag1$layers[[3]] <- NULL
+
+p.comm.lag1 <- p.nfi.lag1 + p.sug.lag1
+
+# increase axis title size
+p.comm.lag1[[1]] <- p.comm.lag1[[1]] + theme(axis.title = element_text(size=12))
+p.comm.lag1[[2]] <- p.comm.lag1[[2]] + theme(axis.title = element_text(size=12))
+
+# increase axis text size
+p.comm.lag1[[1]] <- p.comm.lag1[[1]] + theme(axis.text = element_text(size=12))
+p.comm.lag1[[2]] <- p.comm.lag1[[2]] + theme(axis.text = element_text(size=12))
+
+
+ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_lag1_noPts.png", p.comm.lag1,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
 # 2 year lag
 p.sug_l2a
+
+# remove points
+p.sug_l2a$layers[[3]] <- NULL
   
-  
+# increase axis title
+p.sug_l2a <- p.sug_l2a + theme(axis.title = element_text(size=12))
+
+# increase axis text
+p.sug_l2a <- p.sug_l2a + theme(axis.text = element_text(size=12))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_lag2_noPts.png", p.sug_l2a,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
   ## Producer price set ####
     # no lag ####
 
@@ -4031,3 +4088,148 @@ p.rub.prod <- ggplot()+
               ylab("Number of ELC allocations")+
               xlab("Mean producer price of rubber (USD/ton)")+
               ggtitle("No time lag")
+
+    # 1 year lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+
+# subset elc data to cut it off at 2016. So now the elc data is one year ahead (i.e. variable data from 1994 is aligned with elc data from 1995)
+elcyears <- c(1995:2016)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model 1 year lag 
+m.prod.L1 <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug + time + for_rem,
+              na.action = "na.fail", family = poisson, data=dat)
+
+# dredge
+m.prod.dL1 <- dredge(m.prod.L1, beta = "none", evaluate = TRUE, rank = AICc)
+
+# model average
+m.prod.modAv.L1 <- model.avg(m.prod.dL1, subset = delta < 6, fit = TRUE)
+summary(m.prod.modAv.L1)
+
+# plot predicted (fully conditional) versus observed
+m.prod.d <- dat
+m.prod.d$pred <- predict(m.prod.modAv.L1, type="response")
+plot(m.prod.d$elc, m.prod.d$pred)
+
+# new data
+prod_corn_nd_L1 <- data.frame(prod_corn = seq(min(dat$prod_corn), max(dat$prod_corn), length.out=100),
+                          prod_rub = mean(dat$prod_rub),
+                          prod_rice = mean(dat$prod_rice),
+                          prod_sug = mean(dat$prod_sug),
+                          prod_cass = mean(dat$prod_cass),
+                          time = mean(dat$time),
+                          for_rem = mean(dat$for_rem))
+
+# predict
+prod_corn_pred_L1 <- as.data.frame(predict(m.prod.modAv.L1, newdata = prod_corn_nd_L1, type = "link", se=TRUE))
+
+# attach fit to dataframes
+prod_corn_nd_L1$pred <- exp(prod_corn_pred_L1$fit)
+
+# attach CIs
+prod_corn_nd_L1$lcl <- exp(prod_corn_pred_L1$fit - 1.96*prod_corn_pred_L1$se.fit)
+prod_corn_nd_L1$ucl <- exp(prod_corn_pred_L1$fit + 1.96*prod_corn_pred_L1$se.fit)
+
+# plots
+p.corn_prod.L1 <- ggplot()+
+                  geom_line(data=prod_corn_nd_L1, aes(x=prod_corn, y=pred))+
+                  geom_ribbon(data=prod_corn_nd_L1, aes(x=prod_corn, ymin=lcl, ymax=ucl), alpha=0.3)+
+                  geom_point(data=dat, aes(x=prod_corn, y=elc))+
+                  theme_classic()+
+                  ylab("Number of ELC allocations")+
+                  xlab("Mean producer price of corn (USD/ton)")+
+                  ggtitle("1 year lag")
+
+    # 2 year lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+
+# subset elc data to cut it off at 2017. So now the elc data is one year ahead (i.e. variable data from 1994 is aligned with elc data from 1995)
+elcyears <- c(1996:2017)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model 2 year lag 
+m.prod.L2 <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug + time + for_rem,
+                 na.action = "na.fail", family = poisson, data=dat)
+
+# dredge
+m.prod.dL2 <- dredge(m.prod.L2, beta = "none", evaluate = TRUE, rank = AICc)
+
+# model average
+m.prod.modAv.L2 <- model.avg(m.prod.dL2, subset = delta < 6, fit = TRUE)
+summary(m.prod.modAv.L2)
+
+# plot predicted (fully conditional) versus observed
+m.prod.d <- dat
+m.prod.d$pred <- predict(m.prod.modAv.L2, type="response")
+plot(m.prod.d$elc, m.prod.d$pred)
+
+# new data
+prod_cass_nd_L2 <- data.frame(prod_cass = seq(min(dat$prod_cass), max(dat$prod_cass), length.out=100),
+                              prod_rub = mean(dat$prod_rub),
+                              prod_rice = mean(dat$prod_rice),
+                              prod_sug = mean(dat$prod_sug),
+                              prod_corn = mean(dat$prod_corn),
+                              time = mean(dat$time),
+                              for_rem = mean(dat$for_rem))
+
+prod_rice_nd_L2 <- data.frame(prod_rice = seq(min(dat$prod_rice), max(dat$prod_rice), length.out=100),
+                              prod_rub = mean(dat$prod_rub),
+                              prod_corn = mean(dat$prod_corn),
+                              prod_sug = mean(dat$prod_sug),
+                              prod_cass = mean(dat$prod_cass),
+                              time = mean(dat$time),
+                              for_rem = mean(dat$for_rem))
+
+# predict
+prod_cass_pred_L2 <- as.data.frame(predict(m.prod.modAv.L2, newdata = prod_cass_nd_L2, type = "link", se=TRUE))
+prod_rice_pred_L2 <- as.data.frame(predict(m.prod.modAv.L2, newdata = prod_rice_nd_L2, type = "link", se=TRUE))
+
+# attach fit to dataframes
+prod_cass_nd_L2$pred <- exp(prod_cass_pred_L2$fit)
+prod_rice_nd_L2$pred <- exp(prod_rice_pred_L2$fit)
+
+# attach CIs
+prod_cass_nd_L2$lcl <- exp(prod_cass_pred_L2$fit - 1.96*prod_cass_pred_L2$se.fit)
+prod_cass_nd_L2$ucl <- exp(prod_cass_pred_L2$fit + 1.96*prod_cass_pred_L2$se.fit)
+prod_rice_nd_L2$lcl <- exp(prod_rice_pred_L2$fit - 1.96*prod_rice_pred_L2$se.fit)
+prod_rice_nd_L2$ucl <- exp(prod_rice_pred_L2$fit + 1.96*prod_rice_pred_L2$se.fit)
+
+# plots
+p.cass_prod.L2 <- ggplot()+
+                  geom_line(data=prod_cass_nd_L2, aes(x=prod_cass, y=pred))+
+                  geom_ribbon(data=prod_cass_nd_L2, aes(x=prod_cass, ymin=lcl, ymax=ucl), alpha=0.3)+
+                  geom_point(data=dat, aes(x=prod_cass, y=elc))+
+                  theme_classic()+
+                  ylab("Number of ELC allocations")+
+                  xlab("Mean producer price of cassava (USD/ton)")+
+                  ggtitle("2 year lag")
+
+p.rice_prod.L2 <- ggplot()+
+                  geom_line(data=prod_rice_nd_L2, aes(x=prod_rice, y=pred))+
+                  geom_ribbon(data=prod_rice_nd_L2, aes(x=prod_rice, ymin=lcl, ymax=ucl), alpha=0.3)+
+                  geom_point(data=dat, aes(x=prod_rice, y=elc))+
+                  theme_classic()+
+                  ylab("Number of ELC allocations")+
+                  xlab("Mean producer price of rice (USD/ton)")+
+                  ggtitle("2 year lag")
+
+    # plot all producer ####
+
+p.rice.prod + p.rub.prod
+p.corn_prod.L1
+p.cass_prod.L2 + p.rice_prod.L2
