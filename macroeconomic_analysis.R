@@ -3626,7 +3626,7 @@ m.comm.nfi.a$ucl  <- exp(nfi_pred.a$fit+1.96*nfi_pred.a$se.fit)
 # plot
 p.corn.a <- ggplot()+
             geom_line(data=m.comm.corn.a, aes(x=corn_med, y=pred))+
-            geom_point(data=dat[-c(16,18),], aes(x=corn_med, y=elc))+
+            geom_point(data=dat_sub, aes(x=corn_med, y=elc))+
             geom_ribbon(data=m.comm.corn.a, aes(ymin=lcl, ymax=ucl, x=corn_med), alpha=0.3)+
             xlab("Change in median price of corn (USD/ton)")+
             ylab("Number of ELC allocations")+
@@ -3635,7 +3635,7 @@ p.corn.a <- ggplot()+
 
 p.rice.a <- ggplot()+
             geom_line(data=m.comm.rice.a, aes(x=rice_med, y=pred))+
-            geom_point(data=dat[-c(16,18),], aes(x=rice_med, y=elc))+
+            geom_point(data=dat_sub, aes(x=rice_med, y=elc))+
             geom_ribbon(data=m.comm.rice.a, aes(ymin=lcl, ymax=ucl, x=rice_med), alpha=0.3)+
             xlab("Change in median price of rice (USD/ton)")+
             ylab("Number of ELC allocations")+
@@ -3644,7 +3644,7 @@ p.rice.a <- ggplot()+
 
 p.rub.a <- ggplot()+
             geom_line(data=m.comm.rub.a, aes(x=rub_med, y=pred))+
-            geom_point(data=dat[-c(16,18),], aes(x=rub_med, y=elc))+
+            geom_point(data=dat_sub, aes(x=rub_med, y=elc))+
             geom_ribbon(data=m.comm.rub.a, aes(ymin=lcl, ymax=ucl, x=rub_med), alpha=0.3)+
             xlab("Change in median price of rubber (USD/ton)")+
             ylab("Number of ELC allocations")+
@@ -3653,7 +3653,7 @@ p.rub.a <- ggplot()+
 
 p.sug.a <- ggplot()+
             geom_line(data=m.comm.sug.a, aes(x=sug_med, y=pred))+
-            geom_point(data=dat[-c(16,18),], aes(x=sug_med, y=elc))+
+            geom_point(data=dat_sub, aes(x=sug_med, y=elc))+
             geom_ribbon(data=m.comm.sug.a, aes(ymin=lcl, ymax=ucl, x=sug_med), alpha=0.3)+
             xlab("Change in median price of sugar (USD/ton)")+
             ylab("Number of ELC allocations")+
@@ -3662,7 +3662,7 @@ p.sug.a <- ggplot()+
 
 p.nfi.a <- ggplot()+
             geom_line(data=m.comm.nfi.a, aes(x=nfi, y=pred))+
-            geom_point(data=dat[-c(16,18),], aes(x=nfi, y=elc))+
+            geom_point(data=dat_sub, aes(x=nfi, y=elc))+
             geom_ribbon(data=m.comm.nfi.a, aes(ymin=lcl, ymax=ucl, x=nfi), alpha=0.3)+
             xlab("Non-food production index")+
             ylab("Number of ELC allocations")+
@@ -3678,3 +3678,266 @@ p.nfi.a <- ggplot()+
 (p.sug + p.sug.a)/
 (p.nfi + p.nfi.a)
 # I mean, they all look pretty rubbish, I would not say that any of these models are particulalry good at predicting. I guess sugar and corn are not too bad. Overall, I think the models with the outliers removed are slightly better, so I will go with them. 
+
+
+    # 1 year lag ####
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+
+# subset elc data to cut it off at 2016. So now the elc data is one year ahead (i.e. variable data from 1994 is aligned with elc data from 1995)
+elcyears <- c(1995:2016)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model with 1 year time lag
+m.comm.lag1 <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem,
+                   na.action = "na.fail", family = poisson, data=dat)
+
+
+m.comm.lag1.d <- dredge(m.comm.lag1, beta = "none", evaluate = TRUE, rank = AICc)
+# quite a few models within 6 AIC so I will model average
+
+m.comm.modAv <- model.avg(m.comm.lag1.d, subset = delta < 6, fit = TRUE)
+summary(m.comm.modAv)
+
+# plot predicted (fully conditional) versus observed
+m.comm.d.lag <- dat
+m.comm.d.lag$pred <- predict(m.comm.modAv, type="response")
+plot(m.comm.d.lag$elc, m.comm.d.lag$pred)
+
+
+
+### predictions
+
+# using full averages only - nfi, sug_med
+
+# newdata 
+nfi_nd <- data.frame(nfi = seq(min(dat$nfi), max(dat$nfi), length.out=100),
+                     corn_med = mean(dat$corn_med),
+                     for_rem = mean(dat$for_rem),
+                     rice_med = mean(dat$rice_med),
+                     sug_med = mean(dat$sug_med),
+                     rub_med = mean(dat$rub_med),
+                     for_prod = mean(dat$for_prod),
+                     time = mean(dat$time),
+                     cpi = mean(dat$cpi))
+
+sug_med_nd <- data.frame(sug_med = seq(min(dat$sug_med), max(dat$sug_med), length.out=100),
+                         corn_med = mean(dat$corn_med),
+                         for_rem = mean(dat$for_rem),
+                         rice_med = mean(dat$rice_med),
+                         nfi = mean(dat$nfi),
+                         rub_med = mean(dat$rub_med),
+                         for_prod = mean(dat$for_prod),
+                         time = mean(dat$time),
+                         cpi = mean(dat$cpi))
+
+# predict
+nfi_pred     <- as.data.frame(predict(m.comm.modAv, newdata = nfi_nd, type = "link", se=TRUE))
+sug_med_pred <- as.data.frame(predict(m.comm.modAv, newdata = sug_med_nd, type = "link", se=TRUE))
+
+# attach predicted fit
+nfi_nd$pred <- exp(nfi_pred$fit)
+sug_med_nd$pred <- exp(sug_med_pred$fit)
+
+# attach CIs
+nfi_nd$lcl <- exp(nfi_pred$fit-1.96*nfi_pred$se.fit)
+nfi_nd$ucl <- exp(nfi_pred$fit+1.96*nfi_pred$se.fit)
+sug_med_nd$lcl <- exp(sug_med_pred$fit-1.96*sug_med_pred$se.fit)
+sug_med_nd$ucl <- exp(sug_med_pred$fit+1.96*sug_med_pred$se.fit)
+
+
+# plots
+
+p.nfi.lag1 <- ggplot()+
+              geom_line(data=nfi_nd, aes(x=nfi, y=pred))+
+              geom_ribbon(data=nfi_nd, aes(x=nfi, ymin=lcl, ymax=ucl), alpha=0.3)+
+              geom_point(data=dat, aes(x=nfi, y=elc))+
+              theme_classic()+
+              xlab("Non-food production index")+
+              ylab("Number of ELC allocations")+
+              ggtitle("1 year lag")
+
+p.sug.lag1 <- ggplot()+
+              geom_line(data=sug_med_nd, aes(x=sug_med, y=pred))+
+              geom_ribbon(data=sug_med_nd, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+              geom_point(data=dat, aes(x=sug_med, y=elc))+
+              theme_classic()+
+              xlab("Change in median sugar price (USD/ton)")+
+              ylab("Number of ELC allocations")+
+              ggtitle("1 year lag")
+
+    # 2 year lag ####
+
+
+## Note I will use the model and plot from "remove outliers" section below
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+
+# subset elc data to cut it off at 2017. So now the elc data is one year ahead (i.e. variable data from 1994 is aligned with elc data from 1996)
+elcyears <- c(1996:2017)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model with 2 year time lag
+m.comm.lag2 <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem,
+                   na.action = "na.fail", family = poisson, data=dat)
+
+
+m.comm.lag2.d <- dredge(m.comm.lag2, beta = "none", evaluate = TRUE, rank = AICc)
+# quite a few models within 6 AIC so I will model average
+
+m.comm.modAv.l2 <- model.avg(m.comm.lag2.d, subset = delta < 6, fit = TRUE)
+summary(m.comm.modAv.l2)
+
+# plot predicted (fully conditional) versus observed
+m.comm.d.lag2 <- dat
+m.comm.d.lag2$pred <- predict(m.comm.modAv.l2, type="response")
+plot(m.comm.d.lag2$elc, m.comm.d.lag2$pred)
+
+
+
+### predictions
+
+# using full averages only - rice_med, sug_med
+
+# newdata 
+rice_med_nd <- data.frame(rice_med = seq(min(dat$rice_med), max(dat$rice_med), length.out=100),
+                     corn_med = mean(dat$corn_med),
+                     for_rem = mean(dat$for_rem),
+                     nfi = mean(dat$nfi),
+                     sug_med = mean(dat$sug_med),
+                     rub_med = mean(dat$rub_med),
+                     for_prod = mean(dat$for_prod),
+                     time = mean(dat$time),
+                     cpi = mean(dat$cpi))
+
+sug_med_nd <- data.frame(sug_med = seq(min(dat$sug_med), max(dat$sug_med), length.out=100),
+                         corn_med = mean(dat$corn_med),
+                         for_rem = mean(dat$for_rem),
+                         rice_med = mean(dat$rice_med),
+                         nfi = mean(dat$nfi),
+                         rub_med = mean(dat$rub_med),
+                         for_prod = mean(dat$for_prod),
+                         time = mean(dat$time),
+                         cpi = mean(dat$cpi))
+
+# predict
+rice_med_pred <- as.data.frame(predict(m.comm.modAv.l2, newdata = rice_med_nd, type = "link", se=TRUE))
+sug_med_pred  <- as.data.frame(predict(m.comm.modAv.l2, newdata = sug_med_nd, type = "link", se=TRUE))
+
+# attach predicted fit
+rice_med_nd$pred <- exp(rice_med_pred$fit)
+sug_med_nd$pred  <- exp(sug_med_pred$fit)
+
+# attach CIs
+rice_med_nd$lcl <- exp(rice_med_pred$fit-1.96*rice_med_pred$se.fit)
+rice_med_nd$ucl <- exp(rice_med_pred$fit+1.96*rice_med_pred$se.fit)
+sug_med_nd$lcl  <- exp(sug_med_pred$fit-1.96*sug_med_pred$se.fit)
+sug_med_nd$ucl  <- exp(sug_med_pred$fit+1.96*sug_med_pred$se.fit)
+
+
+# plots
+
+p.rice_l2 <- ggplot()+
+             geom_line(data=rice_med_nd, aes(x=rice_med, y=pred))+
+             geom_ribbon(data=rice_med_nd, aes(x=rice_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+             geom_point(data=dat, aes(x=rice_med, y=elc))+
+             theme_classic()+
+             ylab("Number of elc allocations")+
+             xlab("Change in median rice price (USD/ton)")+
+             ggtitle("2 year lag")
+
+p.sug_l2 <- ggplot()+
+            geom_line(data=sug_med_nd, aes(x=sug_med, y=pred))+
+            geom_ribbon(data=sug_med_nd, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+            geom_point(data=dat, aes(x=sug_med, y=elc))+
+            theme_classic()+
+            ylab("Number of elc allocations")+
+            xlab("Change in median sugar price (USD/ton)")+
+            ggtitle("2 year lag")
+
+
+      # remove outliers ####
+
+# in the rice plot above, there is a single point that appears to be creating the positive trend. I want to see what happens when I remove it. The point is the elc value of 37, which is row 15
+
+
+# load data
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
+
+
+# subset elc data to cut it off at 2017. So now the elc data is one year ahead (i.e. variable data from 1994 is aligned with elc data from 1996)
+elcyears <- c(1996:2017)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+dat_sub <- dat[-15,]
+
+# model with 2 year time lag - excluding row 15
+m.comm.lag2a <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem,
+                   na.action = "na.fail", family = poisson, data=dat_sub)
+
+m.comm.lag2a.d <- dredge(m.comm.lag2a, beta = "none", evaluate = TRUE, rank = AICc)
+# quite a few models within 6 AIC so I will model average
+
+m.comm.modAv.l2a <- model.avg(m.comm.lag2a.d, subset = delta < 6, fit = TRUE)
+summary(m.comm.modAv.l2a)
+
+## so when that point is removed, rice no longer has a significant effect.
+
+sug_med_nda <- data.frame(sug_med = seq(min(dat_sub$sug_med), max(dat_sub$sug_med), length.out=100),
+                         corn_med = mean(dat_sub$corn_med),
+                         for_rem = mean(dat_sub$for_rem),
+                         rice_med = mean(dat_sub$rice_med),
+                         nfi = mean(dat_sub$nfi),
+                         rub_med = mean(dat_sub$rub_med),
+                         for_prod = mean(dat_sub$for_prod),
+                         time = mean(dat_sub$time),
+                         cpi = mean(dat_sub$cpi))
+
+# predict
+sug_med_preda  <- as.data.frame(predict(m.comm.modAv.l2a, newdata = sug_med_nda, type = "link", se=TRUE))
+
+# attach predicted fit
+sug_med_nda$pred  <- exp(sug_med_preda$fit)
+
+# attach CIs
+sug_med_nda$lcl  <- exp(sug_med_preda$fit-1.96*sug_med_preda$se.fit)
+sug_med_nda$ucl  <- exp(sug_med_preda$fit+1.96*sug_med_preda$se.fit)
+
+# plot
+p.sug_l2a <- ggplot()+
+            geom_line(data=sug_med_nda, aes(x=sug_med, y=pred))+
+            geom_ribbon(data=sug_med_nda, aes(x=sug_med, ymin=lcl, ymax=ucl), alpha=0.3)+
+            geom_point(data=dat_sub, aes(x=sug_med, y=elc))+
+            theme_classic()+
+            ylab("Number of elc allocations")+
+            xlab("Change in median sugar price (USD/ton)")+
+            ggtitle("2 year lag")
+
+    # Plot all commodity ####
+
+# no lag
+p.corn.a + p.rice.a + p.rub.a + p.sug.a + p.nfi.a 
+
+# 1 year lag
+p.nfi.lag1 + p.sug.lag1
+
+# 2 year lag
+p.sug_l2a
+  
+  
