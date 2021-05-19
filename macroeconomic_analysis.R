@@ -22,6 +22,7 @@ library('wesanderson')
 library('ggplot2')
 library('patchwork')
 library('tidyverse')
+library('equatiomatic')
 
 #### Load & format data ####
 
@@ -3262,67 +3263,73 @@ m.econ.lag1.gdp <- data.frame(gdp = seq(min(dat$gdp), max(dat$gdp), length.out=1
                               time = mean(dat$time),
                               for_rem = mean(dat$for_rem))
 
-m.econ.lag1.pop_den <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), length.out=100),
-                                  agr_gdp = mean(dat$agr_gdp),
-                                  fdi = mean(dat$fdi),
-                                  gdp = mean(dat$gdp),
-                                  time = mean(dat$time),
-                                  for_rem = mean(dat$for_rem))
+#m.econ.lag1.pop_den <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), length.out=100),
+ #                                 agr_gdp = mean(dat$agr_gdp),
+  #                                fdi = mean(dat$fdi),
+   #                               gdp = mean(dat$gdp),
+    #                              time = mean(dat$time),
+     #                             for_rem = mean(dat$for_rem))
 
 # predict
-agrgdp.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.agrgdp, type="response", se.fit = T)
-m.econ.lag1.agrgdp$pred <- agrgdp.pred$fit
-m.econ.lag1.agrgdp$pred.se <- agrgdp.pred$se.fit
+agr_gdp_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.agrgdp, type="link", se=TRUE))
+fdi_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.fdi, type="link", se=TRUE))
+gdp_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.gdp, type="link", se=TRUE))
 
-fdi.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.fdi, type="response", se.fit = T)
-m.econ.lag1.fdi$pred <- fdi.pred$fit
-m.econ.lag1.fdi$pred.se <- fdi.pred$se.fit
+# add fit to dataframes
+m.econ.lag1.agrgdp$pred <- exp(agr_gdp_pred$fit)
+m.econ.lag1.fdi$pred <- exp(fdi_pred$fit)
+m.econ.lag1.gdp$pred <- exp(gdp_pred$fit)
 
-gdp.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.gdp, type="response", se.fit = T)
-m.econ.lag1.gdp$pred <- gdp.pred$fit
-m.econ.lag1.gdp$pred.se <- gdp.pred$fit
+# add CIs to dataframes
+m.econ.lag1.agrgdp$lcl <- exp(agr_gdp_pred$fit - 1.96*agr_gdp_pred$se.fit)
+m.econ.lag1.agrgdp$ucl <- exp(agr_gdp_pred$fit + 1.96*agr_gdp_pred$se.fit)
+m.econ.lag1.fdi$lcl <- exp(fdi_pred$fit - 1.96*fdi_pred$se.fit)
+m.econ.lag1.fdi$ucl <- exp(fdi_pred$fit + 1.96*fdi_pred$se.fit)
+m.econ.lag1.gdp$lcl <- exp(gdp_pred$fit - 1.96*gdp_pred$se.fit)
+m.econ.lag1.gdp$ucl <- exp(gdp_pred$fit + 1.96*gdp_pred$se.fit)
 
-popden.pred <- predict(m.econ.lag1.top, newdata=m.econ.lag1.pop_den, type="response", se.fit = T)
-m.econ.lag1.pop_den$pred <- popden.pred$fit
-m.econ.lag1.pop_den$pred.se <- popden.pred$se.fit
+
 
 # plots
 
 agrgdp.L1.plot <- ggplot()+
-                    geom_line(data=m.econ.lag1.agrgdp, aes(x=agr_gdp, y=pred))+
-                    geom_ribbon(data=m.econ.lag1.agrgdp, aes(x= agr_gdp,ymin=pred.se,ymax=pred.se),alpha=0.3)+
-                    geom_point(data=dat, aes(x=agr_gdp, y=elc))+
-                    ylab("Number of ELC allocations")+
-                    xlab("Agricultural proportion of GDP")+
-                    ggtitle("1 year lag")+
-                    theme_classic()
+                  geom_line(data=m.econ.lag1.agrgdp, aes(x=agr_gdp, y=pred))+
+                  geom_ribbon(data=m.econ.lag1.agrgdp, aes(x=agr_gdp,ymin=lcl,ymax=ucl),
+                              alpha=0.3, fill="tomato4")+
+                  geom_point(data=dat, aes(x=agr_gdp, y=elc))+
+                  ylab("Number of ELC allocations")+
+                  xlab("Change in agricultural proportion of GDP")+
+                  ggtitle("1 year lag")+
+                  theme_classic()
 
 fdi.L1.plot <- ggplot()+
                 geom_line(data=m.econ.lag1.fdi, aes(x=fdi, y=pred))+
-                geom_ribbon(data=m.econ.lag1.fdi, aes(x= fdi,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                geom_ribbon(data=m.econ.lag1.fdi, aes(x= fdi,ymin=lcl,ymax=ucl),
+                            alpha=0.3, fill="tomato4")+
                 geom_point(data=dat, aes(x=fdi, y=elc))+
                 ylab("")+
-                xlab("Foreign direct investment (USD Millions)")+
+                xlab("Change in foreign direct investment (USD Millions)")+
                 ggtitle("1 year lag")+
                 theme_classic()
 
 gdp.L1.plot <- ggplot()+
                 geom_line(data=m.econ.lag1.gdp, aes(x=gdp, y=pred))+
-                geom_ribbon(data=m.econ.lag1.gdp, aes(x= gdp,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+                geom_ribbon(data=m.econ.lag1.gdp, aes(x= gdp,ymin=lcl,ymax=ucl),
+                            alpha=0.3, fill="tomato4")+
                 geom_point(data=dat, aes(x=gdp, y=elc))+
                 ylab("")+
-                xlab("Per capita GDP")+
+                xlab("Change in per capita GDP")+
                 ggtitle("1 year lag")+
                 theme_classic()
 
-popden.L1.plot <- ggplot()+
-                geom_line(data=m.econ.lag1.pop_den, aes(x=pop_den, y=pred))+
-                geom_ribbon(data=m.econ.lag1.pop_den, aes(x= pop_den,ymin=pred.se,ymax=pred.se),alpha=0.3)+
-                geom_point(data=dat, aes(x=pop_den, y=elc))+
-                ylab("")+
-                xlab("Population density")+
-                ggtitle("1 year lag")+
-                theme_classic()
+#popden.L1.plot <- ggplot()+
+ #               geom_line(data=m.econ.lag1.pop_den, aes(x=pop_den, y=pred))+
+  #              geom_ribbon(data=m.econ.lag1.pop_den, aes(x= pop_den,ymin=pred.se,ymax=pred.se),alpha=0.3)+
+   #             geom_point(data=dat, aes(x=pop_den, y=elc))+
+    #            ylab("")+
+     #           xlab("Population density")+
+      #          ggtitle("1 year lag")+
+       #         theme_classic()
 
 (agrgdp.plot + devenv.plot) / (agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot )
 
@@ -3369,20 +3376,86 @@ m.econ.lag2.gdp <- data.frame(gdp = seq(min(dat$gdp), max(dat$gdp), length.out=1
                               time = mean(dat$time))
 
 # predict
-m.econ.lag2.gdp$pred <- predict(m.econ.modAv.aicc6, newdata = m.econ.lag2.gdp, type="response")
+m.lag2.gdp_pred <- as.data.frame(predict(m.econ.modAv.aicc6, newdata = m.econ.lag2.gdp, type="link",se=T))
+
+# attach fit
+m.econ.lag2.gdp$pred <- exp(m.lag2.gdp_pred$fit)
+
+# attach CIs
+m.econ.lag2.gdp$lcl <- exp(m.lag2.gdp_pred$fit - 1.96* m.lag2.gdp_pred$se.fit)
+m.econ.lag2.gdp$ucl <- exp(m.lag2.gdp_pred$fit + 1.96* m.lag2.gdp_pred$se.fit)
 
 # plot 
 gdp.L2.plot <- ggplot()+
                 geom_line(data=m.econ.lag2.gdp, aes(x=gdp, y=pred))+
+                geom_ribbon(data=m.econ.lag2.gdp, aes(x=gdp, ymin=lcl, ymax=ucl),alpha=0.3,fill="tomato4")+
                 geom_point(data=dat, aes(x=gdp, y=elc))+
                 ylab("Number of ELC allocations")+
-                xlab("Per capita GDP")+
+                xlab("Change in per capita GDP")+
                 ggtitle("2 year lag")+
                 theme_classic()
 
 (agrgdp.plot | devenv.plot) / (agrgdp.L1.plot | fdi.L1.plot | gdp.L1.plot) / (gdp.L2.plot | grid::textGrob(""))
 
 
+    # plot all econ ####
+
+# no lag
+
+# remove points
+agrgdp.plot$layers[[3]] <- NULL
+devenv.plot$layers[[3]] <- NULL
+
+p.econ.nolag <- agrgdp.plot + devenv.plot
+
+# axis titles
+p.econ.nolag[[1]] <- p.econ.nolag[[1]] + theme(axis.title = element_text(size=12))
+p.econ.nolag[[2]] <- p.econ.nolag[[2]] + theme(axis.title = element_text(size=12))
+
+# axis text
+p.econ.nolag[[1]] <- p.econ.nolag[[1]] + theme(axis.text = element_text(size=12))
+p.econ.nolag[[2]] <- p.econ.nolag[[2]] + theme(axis.text = element_text(size=12))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_nolag_noPts.png",p.econ.nolag,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+# 1 year lag
+
+# remove points
+agrgdp.L1.plot$layers[[3]] <- NULL
+fdi.L1.plot$layers[[3]]    <- NULL
+gdp.L1.plot$layers[[3]]    <- NULL
+
+p.econ.L1 <- agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot
+
+# axis titles
+p.econ.L1[[1]] <- p.econ.L1[[1]] + theme(axis.title = element_text(size=12))
+p.econ.L1[[2]] <- p.econ.L1[[2]] + theme(axis.title = element_text(size=12))
+p.econ.L1[[3]] <- p.econ.L1[[3]] + theme(axis.title = element_text(size=12))
+
+# axis text
+p.econ.L1[[1]] <- p.econ.L1[[1]] + theme(axis.text = element_text(size=12))
+p.econ.L1[[2]] <- p.econ.L1[[2]] + theme(axis.text = element_text(size=12))
+p.econ.L1[[3]] <- p.econ.L1[[3]] + theme(axis.text = element_text(size=12))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag1_noPts.png",p.econ.L1,
+       width = 40, height = 20, units="cm", dpi=300)
+
+# 2 year lag
+
+# remove points
+gdp.L2.plot$layers[[3]] <- NULL
+
+# axis title
+gdp.L2.plot <- gdp.L2.plot + theme(axis.title = element_text(size=12),
+                                   axis.text = element_text(size=12))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag2_noPts.png",gdp.L2.plot,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+#
   ## Commodity / production set ####
     # no lag ####
 
