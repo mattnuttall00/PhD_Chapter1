@@ -3176,7 +3176,7 @@ agrgdp.plot <- ggplot()+
                 geom_line(data=m.econ.agrgdp, aes(x=agr_gdp, y=pred))+
                 geom_ribbon(data=m.econ.agrgdp, aes(agr_gdp, ymin=lcl, ymax=ucl), alpha=0.3, fill="tomato4")+
                 geom_point(data=dat, aes(x=agr_gdp, y=elc))+
-                xlab("Agricultural proportion of GDP")+
+                xlab("Change in agricultural proportion of GDP")+
                 ylab("Number of ELC allocations")+
                 ggtitle("No time lag")+
                 theme_classic()
@@ -3185,7 +3185,7 @@ devenv.plot <- ggplot()+
                 geom_line(data=m.econ.devenv, aes(x=dev_env, y=pred))+
                 geom_ribbon(data=m.econ.devenv, aes(dev_env, ymin=lcl, ymax=ucl), alpha=0.3, fill="tomato4")+
                 geom_point(data=dat, aes(x=dev_env, y=elc))+
-                xlab("Development flows to environment sector")+
+                xlab("Change in development flows to environment sector")+
                 ylab("")+
                 ggtitle("No time lag")+
                 theme_classic()
@@ -3454,6 +3454,13 @@ gdp.L2.plot <- gdp.L2.plot + theme(axis.title = element_text(size=12),
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag2_noPts.png",gdp.L2.plot,
        width = 30, height = 20, units="cm", dpi=300)
 
+
+
+# plot all together
+p.econ.all <- p.econ.nolag / p.econ.L1 / (gdp.L2.plot + textGrob(""))
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_noPts.png",p.econ.all,
+       width = 30, height = 20, units="cm", dpi=300)
 
 #
   ## Commodity / production set ####
@@ -4065,6 +4072,9 @@ p.comm.lag1[[2]] <- p.comm.lag1[[2]] + theme(axis.title = element_text(size=12))
 p.comm.lag1[[1]] <- p.comm.lag1[[1]] + theme(axis.text = element_text(size=12))
 p.comm.lag1[[2]] <- p.comm.lag1[[2]] + theme(axis.text = element_text(size=12))
 
+# remove y axis label
+p.comm.lag1[[2]] <- p.comm.lag1[[2]] + theme(axis.title.y = element_blank())
+
 
 ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_lag1_noPts.png", p.comm.lag1,
        width = 30, height = 20, units="cm", dpi=300)
@@ -4084,6 +4094,34 @@ p.sug_l2a <- p.sug_l2a + theme(axis.text = element_text(size=12))
 
 ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_lag2_noPts.png", p.sug_l2a,
        width = 30, height = 20, units="cm", dpi=300)
+
+
+# plot all
+p.corn.a <- p.corn.a + theme(axis.title = element_text(size=12),
+                             axis.text = element_text(size=12))
+p.rice.a <- p.rice.a +theme(axis.title = element_text(size=12),
+                            axis.text = element_text(size=12),
+                            axis.title.y = element_blank())
+p.rub.a <- p.rub.a +  theme(axis.title = element_text(size=12),
+                            axis.text = element_text(size=12),
+                            axis.title.y = element_blank())
+p.sug.a <- p.sug.a +  theme(axis.title = element_text(size=12),
+                            axis.text = element_text(size=12))
+p.nfi.a <- p.nfi.a +  theme(axis.title = element_text(size=12),
+                            axis.text = element_text(size=12),
+                            axis.title.y = element_blank())
+
+
+
+p.comm.all <- (p.corn.a + p.rice.a + p.rub.a)/
+              (p.sug.a + p.nfi.a)/
+              (p.comm.lag1)/
+              (p.sug_l2a + textGrob("")) 
+
+ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_all_noPts.png", p.comm.all,
+       width = 30, height = 30, units="cm", dpi=300)
+
+
 
 
   ## Producer price set ####
@@ -4327,12 +4365,15 @@ p.rub.prod$layers[[3]]  <- NULL
 p.prod.nolag <- p.rice.prod + p.rub.prod
 
 # change legend title size
-p.prod.nolag[[1]] <- p.prod.nolag[[1]] + theme(legend.title = element_text(size=12))
-p.prod.nolag[[2]] <- p.prod.nolag[[2]] + theme(legend.title = element_text(size=12))
+p.prod.nolag[[1]] <- p.prod.nolag[[1]] + theme(axis.title = element_text(size=12))
+p.prod.nolag[[2]] <- p.prod.nolag[[2]] + theme(axis.title = element_text(size=12))
 
 # change legend text size
-p.prod.nolag[[1]] <- p.prod.nolag[[1]] + theme(legend.text = element_text(size=12))
-p.prod.nolag[[2]] <- p.prod.nolag[[2]] + theme(legend.text = element_text(size=12))
+p.prod.nolag[[1]] <- p.prod.nolag[[1]] + theme(axis.text = element_text(size=12))
+p.prod.nolag[[2]] <- p.prod.nolag[[2]] + theme(axis.text = element_text(size=12))
+
+# remove y axis label from plot 2
+p.prod.nolag[[2]] <- p.prod.nolag[[2]] + theme(axis.title.y = element_blank())
 
 ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_nolag_noPts.png", p.prod.nolag,
        width = 30, height = 20, units="cm", dpi=300)
@@ -4366,6 +4407,22 @@ p.prod.lag2[[2]] <- p.prod.lag2[[2]] + theme(axis.title = element_text(size=12))
 p.prod.lag2[[1]] <- p.prod.lag2[[1]] + theme(axis.text = element_text(size=12))
 p.prod.lag2[[2]] <- p.prod.lag2[[2]] + theme(axis.text = element_text(size=12))
 
+# remove y axis label from plot 2
+p.prod.lag2[[2]] <- p.prod.lag2[[2]] + theme(axis.title.y = element_blank())
+
 
 ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_lag2_noPts.png", p.prod.lag2,
        width = 30, height = 20, units="cm", dpi=300)
+
+
+## plot all
+p.prod.all <- p.prod.nolag/
+              (p.corn_prod.L1 + textGrob(""))/
+              p.prod.lag2
+
+ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_noPts.png", p.prod.all,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+  ## Global set ####
+
