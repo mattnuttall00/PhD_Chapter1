@@ -1,0 +1,39 @@
+---
+title: "equations"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library('nlme')
+library('equatiomatic')
+library('tidyverse')
+
+# load data
+elc <- read.csv("PhD_chapter1/elc_years.csv", header = T)
+dat <- read.csv("PhD_chapter1/dat_work.csv", header = T)
+```
+
+```{r, include=FALSE}
+# 1994 data missing from main data so subset to start at 1995
+years <- c(1995:2015)
+dat <- dat %>% dplyr::filter(year %in% years)
+
+# subset elc data to cut it off at 2016. So now the elc data is one year ahead (i.e. data from 1995 is aligned with elc data from 1996)
+elcyears <- c(1996:2016)
+elc <- elc %>% filter(year %in% elcyears) %>% select(count)
+
+# add elc data to main dat
+dat$elc <- elc$count
+
+# model with 1 year time lag
+m.econ.lag1 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
+                na.action = "na.fail", family = poisson, data=dat)
+```
+
+```{r }
+extract_eq(m.econ.lag1)
+```
