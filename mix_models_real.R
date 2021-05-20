@@ -10231,7 +10231,7 @@ plot_model(multi.mod.5, type="int")
 
 #
   ## ALL COMMUNES ####
-    # Global model ####
+    # Global model - Null hyp testing ####
 
 # first try saturated model and see if it runs
 sat1 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
@@ -10414,6 +10414,53 @@ summary(sat9c)
 
 
 #
+    # Global model - Information Theoretic approcah ####
+
+sat1 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
+                Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+                offset(log(areaKM)) + (year|Province/Provcomm),
+              data=dat1, family="poisson")
+
+# Instead of the null hypothesis testing appraoch used above (i.e. step-wise removal of terms) I will build a candidate set of models and model average
+
+m1 <- glmer(ForPix ~ pop_den + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m2 <-  glmer(ForPix ~ M6_24_sch + mean_elev + dist_border+dist_provCap+elc+PA + 
+               offset(log(areaKM)) + (year|Province/Provcomm),
+             data=dat1, family="poisson",
+             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m3 <- glmer(ForPix ~ propPrimSec + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m4 <- glmer(ForPix ~ pig_fam + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m5 <- glmer(ForPix ~ dist_sch + garbage + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m6 <- glmer(ForPix ~ crim_case + garbage + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m7 <- glmer(ForPix ~ Pax_migt_out + garbage + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+model.sel(m1,m2,m3,m4,m5,m6,m7)
+
+
     # Diagnostics sat9c ####
 
 # copy data
@@ -12173,6 +12220,9 @@ ggsave("Results/Socioeconomics/Plots/Province_level/prov_level_cont.png", prov_p
 
       # data preparation ####
 
+# no need to do the below. Just load dat_cat in model section below
+
+
 ### The way I will do this for now is to just split the vars by their means
 
 # function that pulls out the variable and assigns it into either the low category or the high category depending on which side of the mean it sits
@@ -12559,6 +12609,16 @@ dat_cat <- dat_cat %>%
                    distance_capital = dist_provCap.cat, Economic_concession = elc,
                    PAs = PA) 
         
+
+
+# global model with all vars
+model.all.cat <- glmer(ForPix ~ pop_den.cat + Land_conflict + Crime + In_migration + Out_migration +
+                         M6_24_sch.cat + Primary_sec + Secondary_sec + no_farmland + Owns_pigs +
+                         dist_sch.cat + mean_elev.cat +Distance_border + distance_capital + 
+                         Economic_concession + PAs + offset(log(areaKM)) + (year|Province),
+                       data=dat_cat, family = "poisson")
+summary(model.all.cat)
+
 
 
 # pop_den
