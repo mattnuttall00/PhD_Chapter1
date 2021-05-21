@@ -23,6 +23,7 @@ library('ggplot2')
 library('patchwork')
 library('tidyverse')
 library('equatiomatic')
+library('sjPlot')
 
 #### Load & format data ####
 
@@ -4426,7 +4427,9 @@ ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_noPts.png", p.prod.all,
 
   ## Global set ####
 
-# here I am going to try and put all variables from each set, including all lags, into a single model set. I can't put all vars from all sets together because when you include all lagged vars as well there are way more variables than there are data points. 
+# update - I am not continuing with the models below, because I am not convinced that shoving all of the different time lagged vars into the same model is really appropriate. The purpose was to see which lags were most important, but the way multiple regression works, you are saying "what is the effect of X at time t, when the effect of X at time t+1 is held constant". I am not sure that makes sense. I am struggling to get it staright in my head anyway. I think the simplest way forward is to stick with the model sets and the lagged sets, and just put all the results into a table and then you can directly compare effect sizes. 
+
+# here I am going to try and put all the important variables identified from each set above, but include all lags, into a single model. I can't put all vars from all sets together because when you include all lagged vars as well there are way more variables than there are data points. 
 
 # load data (pre-made in Excel)
 dat <- read.csv("dat_work_glob.csv", header = TRUE)
@@ -4449,19 +4452,48 @@ dat <- dat %>% drop_na()
     # Macroecon ####
 
 # full model - gdp, gdp_gr, fdi, ind_gdp, agr_gdp, dev_agri, dev_env, pop_den
-m.macroecon.glob <- glm(elc ~ gdp+gdp.L1+gdp.L2+fdi+fdi.L1+fdi.L2+
-                          ind_gdp+ind_gdp.L1+ind_gdp.L2+agr_gdp+agr_gdp.L1+agr_gdp.L2+
-                          dev_agri+dev_agri.L1+dev_agri.L2+dev_env+dev_env.L1+dev_env.L2+
-                          pop_den+pop_den.L1+pop_den.L2+for_rem+for_rem.L1+for_rem.L2+time,
+m.macroecon.glob <- glm(elc ~ gdp.L1+gdp.L2+fdi.L1+
+                              agr_gdp+agr_gdp.L1+
+                              dev_env+
+                              pop_den+pop_den.L1+pop_den.L2+for_rem+for_rem.L1+for_rem.L2+time,
                         na.action = "na.fail", family=poisson, data=dat)
 
 # dredge
 m.econ.glob.d <- dredge(m.macroecon.glob, beta = "none", evaluate = TRUE, rank = AICc)
 
+# model average
+m.econ.glob.modAv <- model.avg(m.econ.glob.d, subset = delta < 6, fit = TRUE)
+summary(m.econ.glob.modAv)
 
 
+plot_model(m.econ.glob.modAv, type="pred")
+
+agr_gdp.df <- data.frame(agr_gdp = seq(min(dat$agr_gdp), max(dat$agr_gdp), length.out=100),
+                         gdp.L1 = mean(dat$gdp.L1),
+                         gdp.L2 = mean(dat$gdp.L2),
+                         fdi.L1 = mean(dat$fdi.L1),
+                         agr_gdp.L1 = mean(dat$agr_gdp.L1),
+                         dev_env = mean(dat$dev_env),
+                         pop_den = mean(dat$pop_den),
+                         pop_den.L1 = mean(dat$pop_den.L1),
+                         pop_den.L2 = mean(dat$pop_den.L2),
+                         for_rem = mean(dat$for_rem),
+                         for_rem.L1 = mean(dat$for_rem.L1),
+                         for_rem.L2 = mean(dat$for_rem.L2),
+                         time = mean(dat$time)) 
+
+agr_gdp_pred <- as.data.frame(predict(m.econ.glob.modAv, newdata=agr_gdp.df, type="link",se=TRUE))
+agr_gdp.df$pred <- exp(agr_gdp_pred$fit)
+agr_gdp.df$lcl <- exp(agr_gdp_pred$fit - 1.96 * agr_gdp_pred$se.fit)
+agr_gdp.df$ucl <- exp(agr_gdp_pred$fit + 1.96 * agr_gdp_pred$se.fit)
+
+ggplot(agr_gdp.df, aes(x=agr_gdp, y=pred))+
+  geom_line()+
+  geom_ribbon(aes(ymin=lcl, ymax=ucl), alpha=0.3)+
+  ylim(0,70)
 
 
+#
     # Commodity ####
 
 # full model - cpi + nfi + rice_med + rub_med + corn_med + sug_med + for_prod + time + for_rem
