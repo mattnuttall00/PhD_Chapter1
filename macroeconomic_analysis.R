@@ -3119,6 +3119,7 @@ m.econ.d <- dredge(m.econ, beta = "none", evaluate = TRUE, rank = AICc)
 
 m.econ.top <- glm(elc ~ agr_gdp + dev_env + for_rem + pop_den + time, family=poisson, data=dat)
 summary(m.econ.top)
+
 plot(m.econ.top)
 
 # plot predicted (fully conditional) versus observed
@@ -4425,6 +4426,45 @@ ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_noPts.png", p.prod.all,
        width = 30, height = 20, units="cm", dpi=300)
 
 
+  ## Collecting all results ####
+
+# macroecon no lag
+m.econ.top$coefficients
+
+# macroecon lag1 
+m.econ.lag1.top
+
+# macroecon lag 2
+m.econ.modAv.aicc6
+
+# commodity no lag
+m.comm.topa
+
+# commodity lag 1
+m.comm.modAv
+
+# commodity lag 2
+m.comm.modAv.l2a
+
+# producer no lag 
+m.prod.modAv
+
+# producer lag 1
+m.prod.modAv.L1
+
+# producer lag 2
+m.prod.modAv.L2
+
+
+# create results dataframes
+econ_results <- data.frame(Variable = c("agr_gdp","dev_env","for_rem","pop_den","time"),
+                           coef = exp(coef(m.econ.top)[2:6]),
+                           se = exp(summary(m.econ.top)$coefficients[2:6,2]),
+                           z = exp(summary(m.econ.top)$coefficients[2:6,3]))
+
+
+
+#
   ## Global set ####
 
 # update - I am not continuing with the models below, because I am not convinced that shoving all of the different time lagged vars into the same model is really appropriate. The purpose was to see which lags were most important, but the way multiple regression works, you are saying "what is the effect of X at time t, when the effect of X at time t+1 is held constant". I am not sure that makes sense. I am struggling to get it staright in my head anyway. I think the simplest way forward is to stick with the model sets and the lagged sets, and just put all the results into a table and then you can directly compare effect sizes. 
