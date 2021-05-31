@@ -3156,10 +3156,12 @@ m.econ.popden <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), le
                             time = mean(dat$time))
 
 # predict
+m.econ.agrgdp.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.agrgdp, type="response", se=TRUE))
 m.econ.agrgdp.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.agrgdp, type="link", se=TRUE))
 m.econ.devenv.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.devenv, type="link", se=TRUE))
 
 # attach predictions to dataframe
+m.econ.agrgdp$pred <- m.econ.agrgdp.pred$fit
 m.econ.agrgdp$pred <- exp(m.econ.agrgdp.pred$fit)
 m.econ.devenv$pred <- exp(m.econ.devenv.pred$fit)
 
@@ -3360,6 +3362,11 @@ m.econ.lag2 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
 
 m.econ.lag2.d <- dredge(m.econ.lag2, beta = "none", evaluate = TRUE, rank = AICc)
 # there are a lot of models now within dAIC of 6. So I will model average
+
+# subset to show only the models with dAIC < 6
+m.econ.lag2.d.subset <- m.econ.lag2.d[m.econ.lag2.d$delta<6]
+#write.csv(m.econ.lag2.d.subset, file="Results/Macroeconomics/Dredge/elc_response/econ.lag2.csv")
+
 
 m.econ.modAv.aicc6 <- model.avg(m.econ.lag2.d, subset = delta < 6, fit = TRUE)
 summary(m.econ.modAv.aicc6)
@@ -3799,6 +3806,11 @@ m.comm.lag1 <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med + 
 m.comm.lag1.d <- dredge(m.comm.lag1, beta = "none", evaluate = TRUE, rank = AICc)
 # quite a few models within 6 AIC so I will model average
 
+# subset to only dAIC<6
+m.comm.lag1.d.sub <- m.comm.lag1.d[m.comm.lag1.d$delta<6]
+#write.csv(m.comm.lag1.d.sub, file="Results/Macroeconomics/Dredge/elc_response/comm.lag1.csv")
+
+
 m.comm.modAv <- model.avg(m.comm.lag1.d, subset = delta < 6, fit = TRUE)
 summary(m.comm.modAv)
 
@@ -3991,6 +4003,11 @@ m.comm.lag2a <- glm(elc ~  cpi + nfi + rice_med + rub_med + corn_med + sug_med +
 m.comm.lag2a.d <- dredge(m.comm.lag2a, beta = "none", evaluate = TRUE, rank = AICc)
 # quite a few models within 6 AIC so I will model average
 
+# subset to dAIC < 6
+m.comm.lag2.d.sub <- m.comm.lag2a.d[m.comm.lag2a.d$delta<6]
+#write.csv(m.comm.lag2.d.sub, file="Results/Macroeconomics/Dredge/elc_response/comm.lag2.csv")
+
+
 m.comm.modAv.l2a <- model.avg(m.comm.lag2a.d, subset = delta < 6, fit = TRUE)
 summary(m.comm.modAv.l2a)
 
@@ -4153,6 +4170,11 @@ m.prod <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug + t
 # dredge
 m.prod.d <- dredge(m.prod, beta = "none", evaluate = TRUE, rank = AICc)
 
+# subset dAIC <6
+m.prod.d.sub <- m.prod.d[m.prod.d$delta<6]
+#write.csv(m.prod.d.sub, file="Results/Macroeconomics/Dredge/elc_response/prod.nolag.csv")
+
+
 # model average
 m.prod.modAv <- model.avg(m.prod.d, subset = delta < 6, fit = TRUE)
 summary(m.prod.modAv)
@@ -4238,6 +4260,11 @@ m.prod.L1 <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug 
 # dredge
 m.prod.dL1 <- dredge(m.prod.L1, beta = "none", evaluate = TRUE, rank = AICc)
 
+# subset dAIC <6
+m.prod.dL1.sub <- m.prod.dL1[m.prod.dL1$delta<6]
+#write.csv(m.prod.dL1.sub, file="Results/Macroeconomics/Dredge/elc_response/prod.lag1.csv")
+
+
 # model average
 m.prod.modAv.L1 <- model.avg(m.prod.dL1, subset = delta < 6, fit = TRUE)
 summary(m.prod.modAv.L1)
@@ -4296,6 +4323,11 @@ m.prod.L2 <- glm(elc ~  prod_rice + prod_rub + prod_cass + prod_corn + prod_sug 
 
 # dredge
 m.prod.dL2 <- dredge(m.prod.L2, beta = "none", evaluate = TRUE, rank = AICc)
+
+# subset dAIC < 6
+m.prod.dL2.sub <- m.prod.dL2[m.prod.dL2$delta<6]
+#write.csv(m.prod.dL2.sub, file="Results/Macroeconomics/Dredge/elc_response/prod.lag2.csv")
+
 
 # model average
 m.prod.modAv.L2 <- model.avg(m.prod.dL2, subset = delta < 6, fit = TRUE)
