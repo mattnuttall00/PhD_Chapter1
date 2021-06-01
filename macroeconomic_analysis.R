@@ -535,6 +535,11 @@ summary(me.mod.gaus.1)
 me.dredge.gaus.1 <- dredge(me.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
 #write.csv(me.dredge.gaus.1, file="Results/Macroeconomics/Dredge/me.dredge.gaus.1.csv")
 
+# subset dAIC <6
+
+
+
+### testing gamma dist
 
 ## saturated model with gamma distribution for unlagged predictors
 #me.mod.gam.1 <- glm(for_cov ~ gdp+gdp_gr+fdi+ind_gdp+agr_gdp+dev_agri+dev_env+pop_den+time, 
@@ -844,7 +849,7 @@ me.dredge.gaus.lag.1 <- dredge(me.mod.gaus.lag.1, beta = "none", evaluate = TRUE
 
 # AICc < 6
 me.modAv.aicc6.lag1 <- model.avg(me.dredge.gaus.lag.1, subset = delta < 6, fit = TRUE)
-summary(me.dredge.gaus.lag.1)
+summary(me.modAv.aicc6.lag1)
 
 
 # Predict with the AICc<6 set
@@ -1077,7 +1082,7 @@ me.dredge.gaus.lag.2 <- dredge(me.mod.gaus.lag.2, beta = "none", evaluate = TRUE
 
 # AICc < 6
 me.modAv.aicc6.lag2 <- model.avg(me.dredge.gaus.lag.2, subset = delta < 6, fit = TRUE)
-summary(me.dredge.gaus.lag.2)
+summary(me.modAv.aicc6.lag2)
 
 
 # Predict with the AICc<6 set
