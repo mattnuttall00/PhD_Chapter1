@@ -10736,7 +10736,7 @@ all_plot[[5]] <- all_plot[[5]] + theme(axis.title.x = element_blank())
 all_plot[[6]] <- all_plot[[6]] + theme(axis.title.x = element_blank())
 
 ggsave("Results/Socioeconomics/Plots/global_model_global_predictions/glob_mod_plots.png",all_plot,
-       width = 30, height = 30, unit="cm", dpi=300)
+       width = 45, height = 35, unit="cm", dpi=300)
 
 
       # Province-level predictions ####
@@ -11472,8 +11472,8 @@ mean_elev_quants_p    <- plotFunQuants(mean_elev_quants, mean_elev_quants$mean_e
                                     "Mean elevation (scaled)")
 dist_border_quants_p  <- plotFunQuants(dist_border_quants,dist_border_quants$dist_border,"Province","free",
                                       "Distance to international border (scaled)")
-dist_provCap_quants_p <- plotFunQuants(dist_provCap_quants, dist_provCap_quants$dist_provCap, "Province", "free",
-                                      "Distance to international border (scaled)")
+dist_provCap_quants_p <- plotFunQuants(dist_provCap_quants, dist_provCap_quants$dist_provCap, "Province",
+                                       "free","Distance to international border (scaled)")
 elc_quants_p          <- plotFunQuants2(elc_quants, elc_quants$elc, "Province", "free",
                                       "Presence of economic land concessions")
 PA_quants_p           <- plotFunQuants2(PA_quants, PA_quants$PA, "Province", "free",
