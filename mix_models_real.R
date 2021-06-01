@@ -10416,10 +10416,6 @@ summary(sat9c)
 #
     # Global model - Information Theoretic approcah ####
 
-sat1 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
-                Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
-                offset(log(areaKM)) + (year|Province/Provcomm),
-              data=dat1, family="poisson")
 
 # Instead of the null hypothesis testing appraoch used above (i.e. step-wise removal of terms) I will build a candidate set of models and model average
 
@@ -10459,7 +10455,9 @@ m7 <- glmer(ForPix ~ Pax_migt_out + garbage + mean_elev + dist_border+dist_provC
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
 model.sel(m1,m2,m3,m4,m5,m6,m7)
+# m1 is the top model by a long way
 
+summary(m1)
 
     # Diagnostics sat9c ####
 
@@ -10537,7 +10535,7 @@ pop_den_plot <- ggplot()+
                       axis.title = element_text(size=17),
                       axis.text = element_text(size=15))+
                 ylab("Predicted forest pixels per unit area (km2)")+
-                ggtitle("Population density")
+                xlab("Population density (scaled)")
 
 
 #
@@ -10565,8 +10563,8 @@ ggplot()+
           axis.title = element_text(size=17),
           axis.text = element_text(size=15))+
     ylab("Predicted forest pixels per unit area (km2)")+
-    xlab("Elevation (scaled)")+
-    ggtitle("Mean elevation")
+    xlab("Elevation (scaled)")
+   
 
 ## Need to check with Jeroen about what the pred actually is.  Is it predicted forest pixels per unit area?  Becuase if so, these estimates don't make sense - you can't have 10K pixels per km2. In theory you can only have 11.11 pixels per km2 becuase each pixel is 0.09km2
 # After chatting with Jeroen - yes the predictions should be per unit area
@@ -10602,8 +10600,8 @@ mean_elev_plot <- ggplot()+
                         axis.title = element_text(size=17),
                         axis.text = element_text(size=15))+
                   ylab("Predicted forest pixels per unit area (km2)")+
-                  xlab("Elevation (scaled)")+
-                  ggtitle("Mean elevation")
+                  xlab("Mean elevation (masl, scaled)")
+            
 
 
         # dist_border ####
@@ -10631,8 +10629,8 @@ dist_border_plot <- ggplot()+
                           axis.title = element_text(size=17),
                           axis.text = element_text(size=15))+
                     ylab("Predicted forest pixels per unit area (km2)")+
-                    xlab("Distance to international border (scaled)")+
-                    ggtitle("Distance to international border")
+                    xlab("Distance to international border (KM, scaled)")
+                    
 
 
 
@@ -10660,8 +10658,8 @@ dist_provCap_plot <- ggplot()+
                           axis.title = element_text(size=17),
                           axis.text = element_text(size=15))+
                     ylab("Predicted forest pixels per unit area (km2)")+
-                    xlab("Distance to provincial capital (scaled)")+
-                    ggtitle("Distance to Provicial capital (km)")
+                    xlab("Distance to provincial capital (KM, scaled)")
+                   
 
 
 
@@ -10681,14 +10679,14 @@ elc_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=elc_newdat,
 elc_plot <- ggplot(elc_newdat, aes(x=elc, y=pred))+
             geom_point(size=3)+
             #xlim(-0.18,5)+
-            ylim(0,15)+
+            ylim(0,5)+
             theme(panel.background = element_blank(),
                   axis.line = element_line(colour = "grey20"),
                   axis.title = element_text(size=17),
                   axis.text = element_text(size=15))+
             ylab("Predicted forest pixels per unit area (km2)")+
-            xlab("Presence of economic land concessions")+
-            ggtitle("Presence of economic concessions")
+            xlab("Presence of economic land concessions")
+           
 
 
         # PA ####
@@ -10707,14 +10705,13 @@ PA_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=PA_newdat, r
 pa_plot <- ggplot(PA_newdat, aes(x=PA, y=pred))+
             geom_point(size=3)+
             #xlim(-0.18,5)+
-            ylim(0,15)+
+            ylim(0,5)+
             theme(panel.background = element_blank(),
                   axis.line = element_line(colour = "grey20"),
                   axis.title = element_text(size=17),
                   axis.text = element_text(size=15))+
             ylab("Predicted forest pixels per unit area (km2)")+
-            xlab("Presence of protected areas")+
-            ggtitle("Presence of PAs")
+            xlab("Presence of protected areas")
 
         # All global prediction plots ####
 
@@ -12599,6 +12596,10 @@ dat_cat <- read.csv("Data/commune/dat_cat.csv")
 dat_cat <- dat_cat[ ,-1]
 str(dat_cat)
 
+
+## scroll down to the bottom for the information theory model selection
+
+
 # re-name vars (to make the facet titles further down look better)
 dat_cat <- dat_cat %>% 
             rename(Land_conflict = land_confl.cat,Crime = crim_case.cat, 
@@ -12846,6 +12847,23 @@ PA_cat_plot <- ggplot()+
               geom_point(data=areas_pred, aes(x=PAs, y=pred), shape=19, size=5, col="red")+
               facet_wrap(~Economic_concession, labeller = label_both)+
               theme_classic()
+
+
+
+# compare models
+model.sel(popden.mcat,socjus.mcat,mig.mcat,edu.mcat,emp.mcat,econ.mcat,acc.mcat,
+        elev.mcat,hum.mcat,areas.mcat)
+
+
+
+
+
+
+
+
+
+
+
 
 
 #
