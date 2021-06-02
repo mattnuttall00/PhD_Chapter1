@@ -10417,7 +10417,7 @@ summary(sat9c)
     # Global model - Information Theoretic approcah ####
 
 
-# Instead of the null hypothesis testing appraoch used above (i.e. step-wise removal of terms) I will build a candidate set of models and model average
+# Instead of the null hypothesis testing appraoch used above (i.e. step-wise removal of terms) I will build a candidate set of models and model select/average
 
 m1 <- glmer(ForPix ~ pop_den + mean_elev + dist_border+dist_provCap+elc+PA + 
               offset(log(areaKM)) + (year|Province/Provcomm),
@@ -10454,7 +10454,23 @@ m7 <- glmer(ForPix ~ Pax_migt_out + garbage + mean_elev + dist_border+dist_provC
             data=dat1, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-model.sel(m1,m2,m3,m4,m5,m6,m7)
+m8 <- glmer(ForPix ~ M6_24_sch + dist_sch + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m9 <- glmer(ForPix ~ propPrimSec + Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m10 <- glmer(ForPix ~ pop_den + M6_24_sch + propPrimSec + pig_fam + dist_sch + garbage + crim_case + 
+               Pax_migt_out + mean_elev + dist_border+dist_provCap+elc+PA + 
+              offset(log(areaKM)) + (year|Province/Provcomm),
+            data=dat1, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+model.sel(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10)
 # m1 is the top model by a long way
 
 summary(m1)
@@ -12599,6 +12615,8 @@ str(dat_cat)
 
 ## scroll down to the bottom for the information theory model selection
 
+## first I will run all of the same models as I ran above in the commune-level section. I will also run a few more models that are simpler
+
 
 # re-name vars (to make the facet titles further down look better)
 dat_cat <- dat_cat %>% 
@@ -12607,7 +12625,7 @@ dat_cat <- dat_cat %>%
                    Out_migration = Pax_migt_out.cat, Primary_sec = propPrimSec.cat,
                    Secondary_sec = propSecSec.cat, no_farmland = Les1_R_Land.cat,
                    Owns_pigs = pig_fam.cat, Distance_border = dist_border.cat,
-                   distance_capital = dist_provCap.cat, Economic_concession = elc,
+                   Distance_capital = dist_provCap.cat, Economic_concession = elc,
                    PAs = PA) 
         
 
@@ -12615,12 +12633,61 @@ dat_cat <- dat_cat %>%
 # global model with all vars
 model.all.cat <- glmer(ForPix ~ pop_den.cat + Land_conflict + Crime + In_migration + Out_migration +
                          M6_24_sch.cat + Primary_sec + Secondary_sec + no_farmland + Owns_pigs +
-                         dist_sch.cat + mean_elev.cat +Distance_border + distance_capital + 
+                         dist_sch.cat + mean_elev.cat +Distance_border + Distance_capital + 
                          Economic_concession + PAs + offset(log(areaKM)) + (year|Province),
                        data=dat_cat, family = "poisson")
 summary(model.all.cat)
 
+## Models run above in commune-level section
+m1 <- glmer(ForPix ~ pop_den.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
+m2 <-  glmer(ForPix ~ M6_24_sch.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+               offset(log(areaKM)) + (year|Province),
+             data=dat_cat, family="poisson",
+             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m3 <- glmer(ForPix ~ Primary_sec + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m4 <- glmer(ForPix ~ Owns_pigs + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m5 <- glmer(ForPix ~ dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m6 <- glmer(ForPix ~ Crime + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m7 <- glmer(ForPix ~ Out_migration + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m8 <- glmer(ForPix ~ M6_24_sch.cat + dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital
+            +Economic_concession + PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+m9 <- glmer(ForPix ~ Primary_sec + Out_migration + mean_elev.cat + Distance_border+Distance_capital+
+              Economic_concession+PAs + 
+              offset(log(areaKM)) + (year|Province),
+            data=dat_cat, family="poisson",
+            control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
+
+
+## simpler models
 
 # pop_den
 popden.mcat <- glmer(ForPix ~ pop_den.cat + offset(log(areaKM)) + (year|Province),
@@ -12852,8 +12919,11 @@ PA_cat_plot <- ggplot()+
 
 # compare models
 model.sel(popden.mcat,socjus.mcat,mig.mcat,edu.mcat,emp.mcat,econ.mcat,acc.mcat,
-        elev.mcat,hum.mcat,areas.mcat)
+        elev.mcat,hum.mcat,areas.mcat,m1,m2,m3,m4,m5,m6,m7,m8,m9)
 
+# m8 has the most support. m5 has some support (dAIC = 5), but is a simpler model of m8 and so inference can come from m8
+
+summary(m8)
 
 
 
@@ -12868,6 +12938,16 @@ model.sel(popden.mcat,socjus.mcat,mig.mcat,edu.mcat,emp.mcat,econ.mcat,acc.mcat,
 
 #
       # plot categorical ####
+
+# Based on IT model selection, m8 is the top model. Below is some old code that plots the predictions from all of the indiviudal models above. can ignore
+
+M6_24_sch.cat + dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital
++Economic_concession + PAs
+
+
+
+
+### Old code for plotting predictions from individual models 
 
 prov_cat_plot <- popden_cat_plot + landconfl_cat_plot + crim_cat_plot + migtin_cat_plot + 
                  migtout_cat_plot + edu_cat_plot + primsec_cat_plot + secsec_cat_plot + 
