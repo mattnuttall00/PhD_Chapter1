@@ -12955,16 +12955,74 @@ m8_newdat <- expand.grid(School_attendance=c("high","low"),
                          Distance_capital=c("high","low"),
                          Economic_concession=c("1","0"),
                          PAs=c("1","0"),
+                         Province=levels(dat_cat$Province),
                          areaKM=mean(dat_cat$areaKM),
                          year=mean(dat_cat$year))
-str(m8.newdat)
+str(m8_newdat)
 
 # predict for the two socioeconomic variables - School attendance and distance to school
-m8_pred <- as.vector(predict(m8, newdata=m8_newdat, type="link", re.form=NA))
+m8_pred <- as.vector(predict(m8, newdata=m8_newdat, type="response", re.form=~(year|Province)))
+                     
 
 m8_newdat$pred <- m8_pred
 
-# plot
+### plots
+
+# M6_24_sch (all others set to reference - low, and ELC/PA set to 1)
+p1.dat <- m8_newdat %>% filter(Distance_school=="low",
+                               Elevation=="low",
+                               Distance_border=="low",
+                               Distance_capital=="low",
+                               Economic_concession=="1",
+                               PAs=="1")
+# attach SEs
+
+
+# convert predictions to KM
+p1.dat$Forest_cover_km <- p1.dat$pred*0.09
+
+p1 <- ggplot(p1.dat, aes(x=School_attendance, y=Forest_cover_km))+
+        geom_point(size=5)+
+        #geom_point(data=dat_cat, aes(x=School_attendance, y=ForPix))+
+        facet_wrap(~Province,labeller = label_both)+
+        theme_classic()+
+        #ylim(3250,3800)+
+        xlab("School attendance (males aged 6-24)")+
+        ylab("Predicted forest cover (km2)")+
+        theme(axis.title = element_text(size=15),
+              axis.text = element_text(size=15),
+              strip.text.x = element_text(size=12))
+
+ggsave("Results/Socioeconomics/Plots/Province_level/School_atten_facet_prov.png", p1,
+       height=30, width=30, unit="cm", dpi=300)
+
+# dist_sch (all others set to reference - low, and ELC/PA set to 1)
+p2.dat <- m8_newdat %>% filter(School_attendance=="low",
+                               Elevation=="low",
+                               Distance_border=="low",
+                               Distance_capital=="low",
+                               Economic_concession=="1",
+                               PAs=="1")
+# attach SEs
+
+
+# convert predictions to KM
+p2.dat$Forest_cover_km <- p2.dat$pred*0.09
+
+p2 <- ggplot(p2.dat, aes(x=Distance_school, y=Forest_cover_km))+
+      geom_point(size=5)+
+      facet_wrap(~Province,labeller = label_both)+
+      theme_classic()+
+      #ylim(3250,3800)+
+      xlab("Distance to nearest school (km)")+
+      ylab("Predicted forest cover (km2)")+
+      theme(axis.title = element_text(size=15),
+            axis.text = element_text(size=15),
+            strip.text.x = element_text(size=12))
+
+ggsave("Results/Socioeconomics/Plots/Province_level/dist_sch_facet_prov.png", p2,
+       height=30, width=30, unit="cm", dpi=300)
+
 
 
 
