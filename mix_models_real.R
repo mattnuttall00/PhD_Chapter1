@@ -12608,7 +12608,7 @@ write.csv(dat_cat, file="Data/commune/dat_cat.csv")
 
 
 ## load dat_cat
-dat_cat <- read.csv("Data/commune/dat_cat.csv")
+dat_cat <- read.csv("Data/commune/dat_cat.csv", stringsAsFactors = TRUE)
 dat_cat <- dat_cat[ ,-1]
 str(dat_cat)
 
@@ -12626,61 +12626,64 @@ dat_cat <- dat_cat %>%
                    Secondary_sec = propSecSec.cat, no_farmland = Les1_R_Land.cat,
                    Owns_pigs = pig_fam.cat, Distance_border = dist_border.cat,
                    Distance_capital = dist_provCap.cat, Economic_concession = elc,
-                   PAs = PA) 
-        
+                   PAs = PA, School_attendance=M6_24_sch.cat, Distance_school=dist_sch.cat,
+                   Elevation=mean_elev.cat) 
+
+dat_cat$Economic_concession <- as.factor(dat_cat$Economic_concession)
+dat_cat$PAs <- as.factor(dat_cat$PAs) 
 
 
 # global model with all vars
 model.all.cat <- glmer(ForPix ~ pop_den.cat + Land_conflict + Crime + In_migration + Out_migration +
-                         M6_24_sch.cat + Primary_sec + Secondary_sec + no_farmland + Owns_pigs +
-                         dist_sch.cat + mean_elev.cat +Distance_border + Distance_capital + 
+                         School_attendance + Primary_sec + Secondary_sec + no_farmland + Owns_pigs +
+                         Distance_school + Elevation +Distance_border + Distance_capital + 
                          Economic_concession + PAs + offset(log(areaKM)) + (year|Province),
                        data=dat_cat, family = "poisson")
 summary(model.all.cat)
 
 ## Models run above in commune-level section
-m1 <- glmer(ForPix ~ pop_den.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m1 <- glmer(ForPix ~ pop_den.cat + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m2 <-  glmer(ForPix ~ M6_24_sch.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m2 <-  glmer(ForPix ~ School_attendance + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
                offset(log(areaKM)) + (year|Province),
              data=dat_cat, family="poisson",
              control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m3 <- glmer(ForPix ~ Primary_sec + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m3 <- glmer(ForPix ~ Primary_sec + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m4 <- glmer(ForPix ~ Owns_pigs + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m4 <- glmer(ForPix ~ Owns_pigs + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m5 <- glmer(ForPix ~ dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m5 <- glmer(ForPix ~ Distance_school + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m6 <- glmer(ForPix ~ Crime + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m6 <- glmer(ForPix ~ Crime + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m7 <- glmer(ForPix ~ Out_migration + mean_elev.cat + Distance_border+Distance_capital+Economic_concession+PAs + 
+m7 <- glmer(ForPix ~ Out_migration + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m8 <- glmer(ForPix ~ M6_24_sch.cat + dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital
+m8 <- glmer(ForPix ~ School_attendance + Distance_school + Elevation + Distance_border+Distance_capital
             +Economic_concession + PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
             control=glmerControl(optimizer="nlminbwrap",  optCtrl=list(maxfun=100000)))
 
-m9 <- glmer(ForPix ~ Primary_sec + Out_migration + mean_elev.cat + Distance_border+Distance_capital+
+m9 <- glmer(ForPix ~ Primary_sec + Out_migration + Elevation + Distance_border+Distance_capital+
               Economic_concession+PAs + 
               offset(log(areaKM)) + (year|Province),
             data=dat_cat, family="poisson",
@@ -12760,18 +12763,18 @@ migtout_cat_plot <- ggplot()+
 
 
 # education
-edu.mcat <- glmer(ForPix ~ M6_24_sch.cat + offset(log(areaKM)) + (year|Province),
+edu.mcat <- glmer(ForPix ~ School_attendance + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(edu.mcat)
 
-edu_pred <- expand.grid(M6_24_sch.cat = c("low", "high"),
+edu_pred <- expand.grid(School_attendance = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 edu_pred$pred <- as.vector(predict(edu.mcat, type="response", newdata=edu_pred, re.form=NA))
 
 edu_cat_plot <- ggplot()+
-              geom_point(data=dat_cat, aes(x=M6_24_sch.cat, y=ForPix), shape=1)+
-              geom_point(data=edu_pred, aes(x=M6_24_sch.cat, y=pred), shape=19, size=5, col="red")+
+              geom_point(data=dat_cat, aes(x=School_attendance, y=ForPix), shape=1)+
+              geom_point(data=edu_pred, aes(x=School_attendance, y=pred), shape=19, size=5, col="red")+
               theme_classic()
 # no effect
 
@@ -12828,43 +12831,43 @@ pig_cat_plot <- ggplot()+
 
 
 # access to services
-acc.mcat <- glmer(ForPix ~ dist_sch.cat + offset(log(areaKM)) + (year|Province),
+acc.mcat <- glmer(ForPix ~ Distance_school + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(acc.mcat)
 
-acc_pred <- expand.grid(dist_sch.cat = c("low", "high"),
+acc_pred <- expand.grid(Distance_school = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 acc_pred$pred <- as.vector(predict(acc.mcat, type="response", newdata=acc_pred, re.form=NA))
 
 sch_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=dist_sch.cat, y=ForPix), shape=1)+
-                geom_point(data=acc_pred, aes(x=dist_sch.cat, y=pred), shape=19, size=5, col="red")+
+                geom_point(data=dat_cat, aes(x=Distance_school, y=ForPix), shape=1)+
+                geom_point(data=acc_pred, aes(x=Distance_school, y=pred), shape=19, size=5, col="red")+
                 theme_classic()
 # no effect
 
 
 
 # environmental 
-elev.mcat <- glmer(ForPix ~ mean_elev.cat + offset(log(areaKM)) + (year|Province),
+elev.mcat <- glmer(ForPix ~ Elevation + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(elev.mcat)
 
-elev_pred <- expand.grid(mean_elev.cat = c("low", "high"),
+elev_pred <- expand.grid(Elevation = c("low", "high"),
                         areaKM = mean(dat_cat$areaKM))
 elev_pred$pred <- as.vector(predict(elev.mcat, type="response", newdata=elev_pred, re.form=NA))
 
 elev_cat_plot <- ggplot()+
-                geom_point(data=dat_cat, aes(x=mean_elev.cat, y=ForPix), shape=1)+
-                geom_point(data=elev_pred, aes(x=mean_elev.cat, y=pred), shape=19, size=5, col="red")+
+                geom_point(data=dat_cat, aes(x=Elevation, y=ForPix), shape=1)+
+                geom_point(data=elev_pred, aes(x=Elevation, y=pred), shape=19, size=5, col="red")+
                 theme_classic()
 # no effect
 
 
 
 # other human vars
-hum.mcat <- glmer(ForPix ~ Distance_border + distance_capital + offset(log(areaKM)) + (year|Province),
+hum.mcat <- glmer(ForPix ~ Distance_border + Distance_capital + offset(log(areaKM)) + (year|Province),
                      data=dat_cat, family="poisson")
 
 summary(hum.mcat)
@@ -12941,9 +12944,27 @@ summary(m8)
 
 # Based on IT model selection, m8 is the top model. Below is some old code that plots the predictions from all of the indiviudal models above. can ignore
 
-M6_24_sch.cat + dist_sch.cat + mean_elev.cat + Distance_border+Distance_capital
+M6_24_sch.cat + dist_sch.cat + Elevation + Distance_border+Distance_capital
 +Economic_concession + PAs
 
+# create new data
+m8_newdat <- expand.grid(School_attendance=c("high","low"),
+                         Distance_school=c("high","low"),
+                         Elevation=c("high","low"),
+                         Distance_border=c("high","low"),
+                         Distance_capital=c("high","low"),
+                         Economic_concession=c("1","0"),
+                         PAs=c("1","0"),
+                         areaKM=mean(dat_cat$areaKM),
+                         year=mean(dat_cat$year))
+str(m8.newdat)
+
+# predict for the two socioeconomic variables - School attendance and distance to school
+m8_pred <- as.vector(predict(m8, newdata=m8_newdat, type="link", re.form=NA))
+
+m8_newdat$pred <- m8_pred
+
+# plot
 
 
 
