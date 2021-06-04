@@ -11484,16 +11484,29 @@ pop_den_quants_p      <- plotFunQuants(pop_den_quants, pop_den_quants$pop_den, "
 ggsave("Results/Socioeconomics/Plots/population_density/m1_popdenProv_free.png", pop_den_quants_p,
        width = 30, height = 30, unit="cm", dpi=300)
 
+
 mean_elev_quants_p    <- plotFunQuants(mean_elev_quants, mean_elev_quants$mean_elev, "Province", "free",
                                     "Mean elevation (scaled)")
+
 dist_border_quants_p  <- plotFunQuants(dist_border_quants,dist_border_quants$dist_border,"Province","free",
                                       "Distance to international border (scaled)")
+
 dist_provCap_quants_p <- plotFunQuants(dist_provCap_quants, dist_provCap_quants$dist_provCap, "Province",
                                        "free","Distance to international border (scaled)")
+
 elc_quants_p          <- plotFunQuants2(elc_quants, elc_quants$elc, "Province", "free",
                                       "Presence of economic land concessions")
+
+ggsave("Results/Socioeconomics/Plots/elc/sat9c_elc_quants_free.png",elc_quants_p,
+       width = 25, height=25, units="cm", dpi=300)
+
+
 PA_quants_p           <- plotFunQuants2(PA_quants, PA_quants$PA, "Province", "free",
                                       "Presence of protected areas")
+
+ggsave("Results/Socioeconomics/Plots/PA/sat9c_PA_quants_free.png",PA_quants_p,
+       width = 25, height=25, units="cm", dpi=300)
+
 
 ### mean and commune line plots
 pop_den_lines_p <- ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
@@ -11601,7 +11614,8 @@ ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
 ### Here I am following an idea from Jeroen - to add the observed data onto the plots of provincial predictions
 
 # extract ForPix and elevation data to be added to the plot
-elev_pts <- dat1 %>% select(Province,Commune,ForPix,mean_elev) %>% rename(commune=Commune,pred=ForPix,province=Province)
+elev_pts <- dat1 %>% select(Province,Commune,ForPix,mean_elev) %>% 
+              rename(commune=Commune,pred=ForPix,province=Province)
 
 # plot
 ggplot(data=NULL,aes(x=mean_elev, y=pred, group=commune))+
