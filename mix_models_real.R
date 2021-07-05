@@ -10875,8 +10875,43 @@ glob_elev <- data.frame(mean_elev = c(min(dat3$mean_elev), max(dat3$mean_elev)),
                         PA = "0",
                         areaKM = mean(dat3$areaKM))
 
-glob_elev$pred <- as.vector(predict(m1,newdata=pt_est_elev, type="response",re.form=NA))
+glob_elev$pred <- as.vector(predict(m1,newdata=glob_elev, type="response",re.form=NA))
 
+
+
+## dist_border (RE)
+
+# find the province, commune, and area for the min and max values of dist_border
+border_details <- dat3 %>% select(Province,Commune,areaKM,dist_border,Provcomm,elc,PA) %>% 
+  filter(dist_border == min(dist_border) | dist_border == max(dist_border))
+
+# dataframe where only dist_border (and commune/province) vary
+RE_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_border)),
+                           pop_den = mean(dat3$pop_den),
+                           mean_elev = mean(dat3$mean_elev),
+                           dist_provCap = mean(dat3$dist_provCap),
+                           elc = "0",
+                           PA = "0",
+                           areaKM = c(border_details[1,3], border_details[6,3]),
+                           Province = as.factor(c("Kampong Cham","Kampong Thom")),
+                           Provcomm = as.factor(c("Kampong Cham_Rung","Kampong Thom_Phat Sanday")),
+                           year = mean(dat3$year))
+
+RE_border$pred <- as.vector(predict(m1,newdata=RE_border, type="response",re.form=~year|Province/Provcomm))
+
+
+## dist_border (global)
+
+# dataframe for global model predictions on varying mean_elev
+glob_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_border)),
+                        pop_den = mean(dat3$pop_den),
+                        mean_elev = mean(dat3$mean_elev),
+                        dist_provCap = mean(dat3$dist_provCap),
+                        elc = "0",
+                        PA = "0",
+                        areaKM = mean(dat3$areaKM))
+
+glob_border$pred <- as.vector(predict(m1,newdata=glob_border, type="response",re.form=NA))
 
 
 
