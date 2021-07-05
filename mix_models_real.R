@@ -10759,6 +10759,128 @@ pa_plot <- ggplot(PA_newdat, aes(x=PA, y=pred))+
             ylab("Predicted forest pixels per unit area (km2)")+
             xlab("Presence of protected areas")
 
+        # Point estimate predictions (for results section) ####
+
+# following from Nils' advice, for describing the effects of the predictors, I am going to predict for a couple of point estimates for each predictor. Then I can compare them in the text of the results section. This is because the coefficients are on the log scale, and so it is challenging to simply talk about effect sies as you would with a normal lm. 
+
+# First identiy the two point estimates for each variable. Nils suggested points that are of interest. So I'll need to explore the range of predictors a bit.
+
+# load data that is already aggregated to the Province level
+dat2 <- read.csv("Data/commune/dat2.csv", header=T, stringsAsFactors = T)
+
+# copy data
+pt_est_dat <- dat2
+
+plot(pt_est_dat$pop_den, pt_est_dat$Province)
+
+# get mean for each province for vars of interest
+pt_est_dat_mean <- pt_est_dat %>% 
+                    select(Province,pop_den,mean_elev,dist_border,dist_provCap,elc,PA,areaKM) %>% 
+                    group_by(Province) %>% 
+                    summarise_at(vars(pop_den,mean_elev,dist_border,dist_provCap,areaKM), mean)
+
+plot(pt_est_dat_mean$pop_den, pt_est_dat_mean$Province)
+summary(pt_est_dat_mean$pop_den)
+
+# all of the predictions are basically identical so I think I should use the most extreme values (max, min)
+
+## I think I want to do two sets of point estimate predictions for each variable. 1) the minimum and maximum values for that variable using the global model (re.form=NA), and then 2) the min and max of that variable but using the random effects, so taking into account the province and the commune. This will hopefully show that the global model is shite, but that when you take the random effects into account there are bigger differences in the predictions. 
+
+# remove Phnom Penh from data
+dat3 <- dat1[dat1$Province != "Phnom Penh", ]
+
+
+## create dataframes for predicting point estimates  
+
+## pop_den (RE)
+
+# find the province, commune, and area for the min and max values of pop_den
+pop_den_details <- dat3 %>% select(Province,Commune,areaKM,pop_den) %>% 
+                            filter(pop_den == min(pop_den) | pop_den == max(pop_den))
+
+# Dataframe using all of the commune-specific values. I don't think this is what I want, as this is not reflecting anything about pop_den. I need all of the other variables to be at their mean, with only pop_den varying. See dataframe below this
+#RE_pop_den <- data.frame(pop_den = c(min(dat3$pop_den), max(dat3$pop_den)),
+ #                        mean_elev = c(dat3$mean_elev[dat3$Commune=="Ta Tey Leu"][1],dat3$mean_elev[dat3$Commune=="Preaek Ruessei"][1]),
+  #                       dist_border = c(dat3$dist_border[dat3$Commune=="Ta Tey Leu"][1],dat3$dist_border[dat3$Commune=="Preaek Ruessei"][1]),
+   #                      dist_provCap = c(dat3$dist_provCap[dat3$Commune=="Ta Tey Leu"][1],dat3$dist_provCap[dat3$Commune=="Preaek Ruessei"][1]),
+    #                     elc = factor(c(as.character(dat3$elc[dat3$Commune=="Ta Tey Leu"][1]),
+     #                                 as.character(dat3$elc[dat3$Commune=="Preaek Ruessei"][1]))),
+      #                   PA =  factor(c(as.character(dat3$PA[dat3$Commune=="Ta Tey Leu"][1]),
+       #                                 as.character(dat3$PA[dat3$Commune=="Preaek Ruessei"][1]))),
+        #                 areaKM = mean(dat3$areaKM),
+         #                Province = as.factor(c("Koh Kong","Kandal")),
+          #               Provcomm = as.factor(c("Koh Kong_Ta Tey Leu","Kandal_Preaek Ruessei")),
+           #              year = mean(dat3$year))
+
+#RE_pop_den$pred <- as.vector(predict(m1,newdata=RE_pop_den, type="response",re.form=~year|Province/Provcomm))
+
+# dataframe where only pop_den (and commune/province) vary
+RE_pop_den <- data.frame(pop_den = c(min(dat3$pop_den), max(dat3$pop_den)),
+                         mean_elev = mean(dat3$mean_elev),
+                         dist_border = mean(dat3$dist_border),
+                         dist_provCap = mean(dat3$dist_provCap),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = c(pop_den_details[2,3], pop_den_details[1,3]),
+                         Province = as.factor(c("Koh Kong","Kandal")),
+                         Provcomm = as.factor(c("Koh Kong_Ta Tey Leu","Kandal_Preaek Ruessei")),
+                         year = mean(dat3$year))
+
+RE_pop_den$pred <- as.vector(predict(m1,newdata=RE_pop_den, type="response",re.form=~year|Province/Provcomm))
+
+
+## pop_den (global)
+
+# dataframe for global model predictions on varying pop_den
+Glob_pop_den <- data.frame(pop_den = c(min(dat3$pop_den), max(dat3$pop_den)),
+                         mean_elev = mean(dat3$mean_elev),
+                         dist_border = mean(dat3$dist_border),
+                         dist_provCap = mean(dat3$dist_provCap),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = mean(dat3$areaKM))
+
+Glob_pop_den$pred <- as.vector(predict(m1,newdata=Glob_pop_den, type="response",re.form=NA))
+
+
+## mean_elev (RE)
+
+# find the province, commune, and area for the min and max values of mean_elev
+elev_details <- dat3 %>% select(Province,Commune,areaKM,mean_elev) %>% 
+  filter(mean_elev == min(mean_elev) | mean_elev == max(mean_elev))
+
+# dataframe where only mean_elev (and commune/province) vary
+RE_mean_elev <- data.frame(mean_elev = c(min(dat3$mean_elev), max(dat3$mean_elev)),
+                         pop_den = mean(dat3$pop_den),
+                         dist_border = mean(dat3$dist_border),
+                         dist_provCap = mean(dat3$dist_provCap),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = c(elev_details[1,3], elev_details[5,3]),
+                         Province = as.factor(c("Svay Rieng","Mondul Kiri")),
+                         Provcomm = as.factor(c("Svay Rieng_Thmei","Mondul Kiri_Dak Dam")),
+                         year = mean(dat3$year))
+
+RE_mean_elev$pred <- as.vector(predict(m1,newdata=RE_mean_elev, type="response",re.form=~year|Province/Provcomm))
+
+
+## mean_elev (global)
+
+# dataframe for global model predictions on varying mean_elev
+glob_elev <- data.frame(mean_elev = c(min(dat3$mean_elev), max(dat3$mean_elev)),
+                        pop_den = mean(dat3$pop_den),
+                        dist_border = mean(dat3$dist_border),
+                        dist_provCap = mean(dat3$dist_provCap),
+                        elc = "0",
+                        PA = "0",
+                        areaKM = mean(dat3$areaKM))
+
+glob_elev$pred <- as.vector(predict(m1,newdata=pt_est_elev, type="response",re.form=NA))
+
+
+
+
+#
         # All global prediction plots ####
 
 all_plot <- pop_den_plot + mean_elev_plot + dist_border_plot + dist_provCap_plot + elc_plot + pa_plot
