@@ -10524,6 +10524,7 @@ plot(sat9c)
 
         # pop_den ####
 
+## plotting on the response scale
 
 # create new data. I will set mean_elev, dist_border, dist_provCap at their national means, and I will set elc and PA to 0.
 pop_den_newdat <- data.frame(pop_den = seq(min(dat1$pop_den), max(dat1$pop_den), length.out = 200),
@@ -10552,6 +10553,35 @@ pop_den_plot <- ggplot()+
                       axis.text = element_text(size=15))+
                 ylab("Predicted forest pixels per unit area (km2)")+
                 xlab("Population density (scaled)")
+
+
+
+### plotting on the log scale
+
+# create new data. I will set mean_elev, dist_border, dist_provCap at their national means, and I will set elc and PA to 0.
+pop_den_newdat_ln <- data.frame(pop_den = seq(min(dat1$pop_den), max(dat1$pop_den), length.out = 200),
+                             mean_elev = mean(dat1$mean_elev),
+                             dist_border = mean(dat1$dist_border),
+                             dist_provCap = mean(dat1$dist_provCap),
+                             elc = "0",
+                             PA = "0",
+                             areaKM = median(dat1$areaKM))
+pop_den_newdat_ln$pred <- as.vector(predict(m1, type="link", newdata=pop_den_newdat_ln, re.form=NA))
+pop_den_newdat_ln$pop_den2 <- pop_den_newdat_ln$pop_den + 0.17
+pop_den_newdat_ln$pop_den_log <- log(pop_den_newdat_ln$pop_den2)
+
+# Take raw values and log them
+pop_den_raw <- data.frame(pop_den = dat1$pop_den,
+                          ForPix = dat1$ForPix)
+
+pop_den_raw$pop_den2 <- pop_den_raw$pop_den + 0.17
+pop_den_raw$pop_den_log <- log(pop_den_raw$pop_den2)
+pop_den_raw$ForPix_log <- log(pop_den_raw$ForPix)
+
+ggplot()+
+  geom_point(data=pop_den_raw, aes(x=pop_den_log, y=ForPix_log))+
+  geom_line(data=pop_den_newdat_ln, aes(x=pop_den_log, y=pred))
+  
 
 
 #
