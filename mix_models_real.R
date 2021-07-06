@@ -10883,7 +10883,7 @@ glob_elev$pred <- as.vector(predict(m1,newdata=glob_elev, type="response",re.for
 
 # find the province, commune, and area for the min and max values of dist_border
 border_details <- dat3 %>% select(Province,Commune,areaKM,dist_border,Provcomm,elc,PA) %>% 
-  filter(dist_border == min(dist_border) | dist_border == max(dist_border))
+                  filter(dist_border == min(dist_border) | dist_border == max(dist_border))
 
 # dataframe where only dist_border (and commune/province) vary
 RE_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_border)),
@@ -10914,6 +10914,138 @@ glob_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_b
 glob_border$pred <- as.vector(predict(m1,newdata=glob_border, type="response",re.form=NA))
 
 
+
+
+
+## dist_provCap (RE)
+
+# find the province, commune, and area for the min and max values of dist_provCap
+capital_details <- dat3 %>% select(Province,Commune,areaKM,dist_provCap,Provcomm,elc,PA) %>% 
+                  filter(dist_provCap == min(dist_provCap) | dist_provCap == max(dist_provCap))
+
+# dataframe where only dist_provCap (and commune/province) vary
+RE_capital <- data.frame(dist_provCap = c(min(dat3$dist_provCap), max(dat3$dist_provCap)),
+                        pop_den = mean(dat3$pop_den),
+                        mean_elev = mean(dat3$mean_elev),
+                        dist_border = mean(dat3$dist_border),
+                        elc = "0",
+                        PA = "0",
+                        areaKM = c(capital_details[1,3], capital_details[2,3]),
+                        Province = as.factor(c("Battambang","Stung Treng")),
+                        Provcomm = as.factor(c("Battambang_Svay Pao","Stung Treng_Thma Kaev")),
+                        year = mean(dat3$year))
+
+RE_capital$pred <- as.vector(predict(m1,newdata=RE_capital, type="response",re.form=~year|Province/Provcomm))
+
+
+## dist_provCap (global)
+
+# dataframe for global model predictions on varying dist_provCap
+glob_capital <- data.frame(dist_provCap = c(min(dat3$dist_provCap), max(dat3$dist_provCap)),
+                          pop_den = mean(dat3$pop_den),
+                          mean_elev = mean(dat3$mean_elev),
+                          dist_border = mean(dat3$dist_border),
+                          elc = "0",
+                          PA = "0",
+                          areaKM = mean(dat3$areaKM))
+
+glob_capital$pred <- as.vector(predict(m1,newdata=glob_capital, type="response",re.form=NA))
+
+
+
+### elc
+
+# because there is no min or max value for elc, I can't do what I have done above. I think to account for the RE, I will try the following: Find the commune with the highest forest cover and no elc, and then see what the prediction is for elc=1. Then find the commune with the lowest forest cover and elc=1, and see what the prediction woudl be if elc=0.
+
+# find commune with highest forest cover and no elc
+elc_details1 <- dat3 %>% filter(ForPix == max(ForPix) & elc==0) %>% select(Province,Provcomm,areaKM,elc,ForPix)
+
+# find commune with lowest forest cover and elc=1
+elc_details2 <- dat3 %>% filter(ForPix == min(ForPix) & elc==1) %>% select(Province,Provcomm,areaKM,elc,ForPix)
+
+# merge
+elc_details <- rbind(elc_details1,elc_details2)
+# There are 3 communes with no forest cover and elc=1. I will select the largest (not really sure why, but why not?)
+
+elc_details <- elc_details[c(1,6), ]
+
+# create dataframe with highest ForPix and no elc, highest ForPix and elc, lowest ForPix and elc, and lowest ForPix and no elc
+RE_elc <- data.frame(elc = c("0","1","1","0"),
+                         pop_den = mean(dat3$pop_den),
+                         mean_elev = mean(dat3$mean_elev),
+                         dist_border = mean(dat3$dist_border),
+                         dist_provCap = mean(dat3$dist_provCap),
+                         PA = "0",
+                         areaKM = c(elc_details[1,3],elc_details[1,3], elc_details[2,3],elc_details[2,3]),
+                         Province = as.factor(c("Mondul Kiri","Mondul Kiri","Kampong Cham","Kampong Cham")),
+                         Provcomm = as.factor(c("Mondul Kiri_Bu Chri","Mondul Kiri_Bu Chri","Kampong Cham_Tramung","Kampong Cham_Tramung")),
+                         year = mean(dat3$year))
+
+RE_elc$pred <- as.vector(predict(m1,newdata=RE_elc, type="response",re.form=~year|Province/Provcomm))
+# Tiny changes
+
+
+## global elc
+
+glob_elc <- data.frame(elc = c("0","1"),
+                       pop_den = mean(dat3$pop_den),
+                       mean_elev = mean(dat3$mean_elev),
+                       dist_border = mean(dat3$dist_border),
+                       dist_provCap = mean(dat3$dist_provCap),
+                       PA = "0",
+                       areaKM = mean(dat3$areaKM))
+
+glob_elc$pred <- as.vector(predict(m1,newdata=glob_elc, type="response",re.form=NA))
+
+
+### PA
+
+# because there is no min or max value for PA, I can't do what I have done above. I think to account for the RE, I will try the following: find the commune with the highest forest cover and no PA, and then see what would happen to the prediction if PA=1. I could then find the commune with quite a low level of forest cover (the lowest non-zero?) and no PA, and see what the prediction would be if PA=1. 
+
+# find commune with highest forest cover and no PA
+PA_details1 <- dat3 %>% filter(ForPix == max(ForPix) & PA==0) %>% select(Province,Provcomm,areaKM,PA,ForPix)
+# that commune doesn't exist
+
+# find the communes with no PA and then arrange by forest cover
+PA_details1 <- dat3 %>% filter(PA==0) %>% select(Province, Provcomm, areaKM, ForPix,PA) %>% arrange(desc(ForPix))
+PA_details1 <- PA_details1[1, ]
+
+# find commune with lowest forest cover and no PA
+PA_details2 <- dat3 %>% filter(ForPix == min(ForPix) & PA==0) %>% select(Province,Provcomm,areaKM,PA,ForPix)
+# there are millions. I'll just pick one randomly
+PA_details2 <- PA_details2[3, ]
+
+# merge
+PA_details <- rbind(PA_details1,PA_details2)
+# There are 3 communes with no forest cover and elc=1. I will select the largest (not really sure why, but why not?)
+
+# create dataframe with highest ForPix and no PA, highest ForPix and PA, lowest ForPix and no PA, and lowest ForPix and PA
+RE_PA <- data.frame(PA = c("0","1","0","1"),
+                     pop_den = mean(dat3$pop_den),
+                     mean_elev = mean(dat3$mean_elev),
+                     dist_border = mean(dat3$dist_border),
+                     dist_provCap = mean(dat3$dist_provCap),
+                     elc = "0",
+                     areaKM = c(PA_details[1,3],PA_details[1,3], PA_details[2,3],PA_details[2,3]),
+                     Province = as.factor(c("Kracheh","Kracheh","Banteay Meanchey","Banteay Meanchey")),
+                     Provcomm = as.factor(c("Kracheh_Boeng Char","Kracheh_Boeng Char","Banteay Meanchey_Chamnaom","Banteay Meanchey_Chamnaom")),
+                     year = mean(dat3$year))
+
+RE_PA$pred <- as.vector(predict(m1,newdata=RE_PA, type="response",re.form=~year|Province/Provcomm))
+
+
+
+## global PA
+
+glob_PA <- data.frame(PA = c("0","1"),
+                       pop_den = mean(dat3$pop_den),
+                       mean_elev = mean(dat3$mean_elev),
+                       dist_border = mean(dat3$dist_border),
+                       dist_provCap = mean(dat3$dist_provCap),
+                       elc = "0",
+                       areaKM = mean(dat3$areaKM))
+
+glob_PA$pred <- as.vector(predict(m1,newdata=glob_PA, type="response",re.form=NA))
 
 #
         # All global prediction plots ####
