@@ -10828,6 +10828,7 @@ RE_pop_den <- data.frame(pop_den = c(min(dat3$pop_den), max(dat3$pop_den)),
 
 RE_pop_den$pred <- as.vector(predict(m1,newdata=RE_pop_den, type="response",re.form=~year|Province/Provcomm))
 
+write.csv(RE_pop_den, file="Results/Socioeconomics/RE_pop_den.csv")
 
 ## pop_den (global)
 
@@ -10842,6 +10843,7 @@ Glob_pop_den <- data.frame(pop_den = c(min(dat3$pop_den), max(dat3$pop_den)),
 
 Glob_pop_den$pred <- as.vector(predict(m1,newdata=Glob_pop_den, type="response",re.form=NA))
 
+write.csv(Glob_pop_den, file="Results/Socioeconomics/Glob_pop_den.csv")
 
 ## mean_elev (RE)
 
@@ -10863,6 +10865,7 @@ RE_mean_elev <- data.frame(mean_elev = c(min(dat3$mean_elev), max(dat3$mean_elev
 
 RE_mean_elev$pred <- as.vector(predict(m1,newdata=RE_mean_elev, type="response",re.form=~year|Province/Provcomm))
 
+write.csv(RE_mean_elev, file="Results/Socioeconomics/RE_mean_elev.csv")
 
 ## mean_elev (global)
 
@@ -10877,7 +10880,7 @@ glob_elev <- data.frame(mean_elev = c(min(dat3$mean_elev), max(dat3$mean_elev)),
 
 glob_elev$pred <- as.vector(predict(m1,newdata=glob_elev, type="response",re.form=NA))
 
-
+write.csv(glob_elev, file="Results/Socioeconomics/glob_elev.csv")
 
 ## dist_border (RE)
 
@@ -10899,6 +10902,7 @@ RE_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_bor
 
 RE_border$pred <- as.vector(predict(m1,newdata=RE_border, type="response",re.form=~year|Province/Provcomm))
 
+write.csv(RE_border, file="Results/Socioeconomics/RE_border.csv")
 
 ## dist_border (global)
 
@@ -10913,7 +10917,7 @@ glob_border <- data.frame(dist_border = c(min(dat3$dist_border), max(dat3$dist_b
 
 glob_border$pred <- as.vector(predict(m1,newdata=glob_border, type="response",re.form=NA))
 
-
+write.csv(glob_border, file="Results/Socioeconomics/glob_border.csv")
 
 
 
@@ -10937,6 +10941,7 @@ RE_capital <- data.frame(dist_provCap = c(min(dat3$dist_provCap), max(dat3$dist_
 
 RE_capital$pred <- as.vector(predict(m1,newdata=RE_capital, type="response",re.form=~year|Province/Provcomm))
 
+write.csv(RE_capital, file="Results/Socioeconomics/RE_capital.csv")
 
 ## dist_provCap (global)
 
@@ -10951,6 +10956,7 @@ glob_capital <- data.frame(dist_provCap = c(min(dat3$dist_provCap), max(dat3$dis
 
 glob_capital$pred <- as.vector(predict(m1,newdata=glob_capital, type="response",re.form=NA))
 
+write.csv(glob_capital, file="Results/Socioeconomics/glob_capital.csv")
 
 
 ### elc
@@ -10984,6 +10990,7 @@ RE_elc <- data.frame(elc = c("0","1","1","0"),
 RE_elc$pred <- as.vector(predict(m1,newdata=RE_elc, type="response",re.form=~year|Province/Provcomm))
 # Tiny changes
 
+write.csv(RE_elc, file="Results/Socioeconomics/RE_elc.csv")
 
 ## global elc
 
@@ -10996,6 +11003,9 @@ glob_elc <- data.frame(elc = c("0","1"),
                        areaKM = mean(dat3$areaKM))
 
 glob_elc$pred <- as.vector(predict(m1,newdata=glob_elc, type="response",re.form=NA))
+
+write.csv(glob_elc, file="Results/Socioeconomics/glob_elc.csv")
+
 
 
 ### PA
@@ -11033,6 +11043,7 @@ RE_PA <- data.frame(PA = c("0","1","0","1"),
 
 RE_PA$pred <- as.vector(predict(m1,newdata=RE_PA, type="response",re.form=~year|Province/Provcomm))
 
+write.csv(RE_PA, file="Results/Socioeconomics/RE_PA.csv")
 
 
 ## global PA
@@ -11046,6 +11057,9 @@ glob_PA <- data.frame(PA = c("0","1"),
                        areaKM = mean(dat3$areaKM))
 
 glob_PA$pred <- as.vector(predict(m1,newdata=glob_PA, type="response",re.form=NA))
+
+write.csv(glob_PA, file="Results/Socioeconomics/glob_PA.csv")
+
 
 #
         # All global prediction plots ####
