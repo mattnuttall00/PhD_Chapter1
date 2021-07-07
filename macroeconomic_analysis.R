@@ -613,7 +613,7 @@ gdp_plot <- ggplot(data=gdp.predict, aes(x=gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=gdp, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("Changes in GDP per capita (USD Billion) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -643,7 +643,7 @@ agr_gdp_plot <- ggplot(data=agr_gdp.predict, aes(x=agr_gdp, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=agr_gdp, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("Changes in Agricultural sector proprtion of GDP (%) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -674,7 +674,7 @@ dev_agri_plot <- ggplot(data=dev_agri.predict, aes(x=dev_agri, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=dev_agri, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("Development flows to Agricultural sector (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -705,7 +705,7 @@ fdi_plot <- ggplot(data=fdi.predict, aes(x=fdi, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=fdi, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("Foreign Direct Investment (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -736,7 +736,7 @@ dev_env_plot <- ggplot(data=dev_env.predict, aes(x=dev_env, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=dev_env, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("Development flows to the Environment sector (USD Millions) at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -767,7 +767,7 @@ gdP_gr_plot <- ggplot(data=gdp_gr.predict, aes(x=gdp_gr, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
   geom_point(data=dat_me1, aes(x=gdp_gr, y=for_cov))+
-  ylim(0,1500)+
+  ylim(0,1900)+
   xlab("% growth of GDP per capita at time t")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -875,7 +875,8 @@ gdp.lag1.predict <- cbind(gdp.lag1.predict, gdp.lag1.newdata)
 gdp.lag1_plot <- ggplot(data=gdp.lag1.predict, aes(x=gdp.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=gdp.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Changes in GDP per capita (USD Billions) at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -905,7 +906,8 @@ gdp_gr.lag1.predict <- cbind(gdp_gr.lag1.predict, gdp_gr.lag1.newdata)
 gdp_gr.lag1_plot <- ggplot(data=gdp_gr.lag1.predict, aes(x=gdp_gr.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=gdp_gr.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Changes in GDP growth (%) per capita at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -935,7 +937,8 @@ fdi.lag1.predict <- cbind(fdi.lag1.predict,fdi.lag1.newdata)
 fdi.lag1_plot <- ggplot(data=fdi.lag1.predict, aes(x=fdi.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=fdi.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Foreign Direct Investment (USD Millions) at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -965,7 +968,8 @@ agr_gdp.lag1.predict <- cbind(agr_gdp.lag1.predict,agr_gdp.lag1.newdata)
 agr_gdp.lag1_plot <- ggplot(data=agr_gdp.lag1.predict, aes(x=agr_gdp.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=agr_gdp.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Contribution of agricultural sector to GDP as proportion (%) at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -995,7 +999,8 @@ dev_agr.lag1.predict <- cbind(dev_agr.lag1.predict,dev_agr.lag1.newdata)
 dev_agr.lag1_plot <- ggplot(data=dev_agr.lag1.predict, aes(x=dev_agr.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=dev_agr.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Development flows to agricultural sector (USD Millions) at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1025,7 +1030,8 @@ dev_env.lag1.predict <- cbind(dev_env.lag1.predict,dev_env.lag1.newdata)
 dev_env.lag1_plot <- ggplot(data=dev_env.lag1.predict, aes(x=dev_env.lag1, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=dev_env.lag1, y=for_cov))+
+  ylim(0,1900)+
   xlab("Development flows to environment sector (USD Millions) at time t-1")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1107,7 +1113,8 @@ gdp.lag2.predict <- cbind(gdp.lag2.predict, gdp.lag2.newdata)
 gdp.lag2_plot <- ggplot(data=gdp.lag2.predict, aes(x=gdp.lag2, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=gdp.lag2, y=for_cov))+
+  ylim(0,1900)+
   xlab("Changes in GDP per capita (USD Billions) at time t-2")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1136,7 +1143,8 @@ fdi.lag2.predict <- cbind(fdi.lag2.predict,fdi.lag2.newdata)
 fdi.lag2_plot <- ggplot(data=fdi.lag2.predict, aes(x=fdi.lag2, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=fdi.lag2, y=for_cov))+
+  ylim(0,1900)+
   xlab("Foreign Direct Investment (USD Millions) at time t-2")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1165,7 +1173,8 @@ agr_gdp.lag2.predict <- cbind(agr_gdp.lag2.predict,agr_gdp.lag2.newdata)
 agr_gdp.lag2_plot <- ggplot(data=agr_gdp.lag2.predict, aes(x=agr_gdp.lag2, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=agr_gdp.lag2, y=for_cov))+
+  ylim(0,1900)+
   xlab("Contribution of agricultural sector to GDP as proportion (%) at time t-2")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1194,7 +1203,8 @@ dev_agr.lag2.predict <- cbind(dev_agr.lag2.predict,dev_agr.lag2.newdata)
 dev_agr.lag2_plot <- ggplot(data=dev_agr.lag2.predict, aes(x=dev_agr.lag2, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=dev_agr.lag2, y=for_cov))+
+  ylim(0,1900)+
   xlab("Development flows to agricultural sector (USD Millions) at time t-2")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1223,7 +1233,8 @@ dev_env.lag2.predict <- cbind(dev_env.lag2.predict,dev_env.lag2.newdata)
 dev_env.lag2_plot <- ggplot(data=dev_env.lag2.predict, aes(x=dev_env.lag2, y=fit))+
   geom_line(color="#339900", size=1)+
   geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-  ylim(0,1500)+
+  geom_point(data=dat_me_lag_sub, aes(x=dev_env.lag2, y=for_cov))+
+  ylim(0,1900)+
   xlab("Development flows to environment sector (USD Millions) at time t-2")+
   ylab("Amount of forest lost (ha) at time t")+
   theme(text = element_text(size=15))+
@@ -1276,15 +1287,14 @@ pop_den.lag2_plot + gdp.lag2_plot + agr_gdp.lag2_plot + dev_agr.lag2_plot + fdi.
 
 
 # all plots together, with one row for each variable
-me_plot_all <- pop_den_plot+pop_den.lag1_plot+pop_den.lag2_plot+
-               gdp_plot+gdp.lag1_plot+gdp.lag2_plot+
+me_plot_all <- gdp_plot+gdp.lag1_plot+gdp.lag2_plot+
                agr_gdp_plot+agr_gdp.lag1_plot+agr_gdp.lag2_plot+
                dev_agri_plot+dev_agr.lag1_plot+dev_agr.lag2_plot+
                dev_env_plot+dev_env.lag1_plot+dev_env.lag2_plot+
                fdi_plot+fdi.lag1_plot+fdi.lag2_plot+
                 plot_layout(ncol=3)
 
-# remove y-axis labels for all plots except plots 1, 4, 7, 10, 13, 16, and change those to letters
+# remove y-axis labels for all plots except plots 1, 4, 7, 10, 13, and change those to letters
 me_plot_all[[1]] <- me_plot_all[[1]] + ylab("a") + 
                     theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
                                                       size=20))
@@ -1310,11 +1320,7 @@ me_plot_all[[13]] <- me_plot_all[[13]] + ylab("e") +
                                                        size=20))
 me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.title.y = element_blank())
 me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.title.y = element_blank())
-me_plot_all[[16]] <- me_plot_all[[16]] + ylab("f") + 
-                     theme(axis.title.y = element_text(margin=unit(c(0,7,0,0),"mm"), angle=0, vjust = 0.5,
-                                                       size=20))
-me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.title.y = element_blank())
-me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.title.y = element_blank())
+
 
 # remove x axis labels for all plots
 me_plot_all[[1]] <- me_plot_all[[1]] + theme(axis.title.x = element_blank())
@@ -1332,11 +1338,9 @@ me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.title.x = element_blank())
 me_plot_all[[13]] <- me_plot_all[[13]] + theme(axis.title.x = element_blank())
 me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.title.x = element_blank())
 me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.title.x = element_blank())
-me_plot_all[[16]] <- me_plot_all[[16]] + theme(axis.title.x = element_blank())
-me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.title.x = element_blank())
-me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.title.x = element_blank())
 
-# remove y-axis ticks from all plots except 1, 4, 7, 10, 13, 16
+
+# remove y-axis ticks from all plots except 1, 4, 7, 10, 13,
 me_plot_all[[2]] <- me_plot_all[[2]] + theme(axis.text.y = element_blank())
 me_plot_all[[3]] <- me_plot_all[[3]] + theme(axis.text.y = element_blank())
 me_plot_all[[5]] <- me_plot_all[[5]] + theme(axis.text.y = element_blank())
@@ -1347,8 +1351,7 @@ me_plot_all[[11]] <- me_plot_all[[11]] + theme(axis.text.y = element_blank())
 me_plot_all[[12]] <- me_plot_all[[12]] + theme(axis.text.y = element_blank())
 me_plot_all[[14]] <- me_plot_all[[14]] + theme(axis.text.y = element_blank())
 me_plot_all[[15]] <- me_plot_all[[15]] + theme(axis.text.y = element_blank())
-me_plot_all[[17]] <- me_plot_all[[17]] + theme(axis.text.y = element_blank())
-me_plot_all[[18]] <- me_plot_all[[18]] + theme(axis.text.y = element_blank())
+
 
 # add titles for plots 1, 2, 3 to show the lags
 me_plot_all[[1]] <- me_plot_all[[1]] + ggtitle ("Time t") + theme(plot.title = element_text(hjust=0.5))
@@ -1428,7 +1431,8 @@ cpi.predict <- cbind(cpi.predict, cpi.newdata)
 cpi_plot <- ggplot(data=cpi.predict, aes(x=cpi, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=cpi,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Crop Production Index at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1457,7 +1461,8 @@ nfi.predict <- cbind(nfi.predict, nfi.newdata)
 nfi_plot <- ggplot(data=nfi.predict, aes(x=nfi, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=nfi,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Non-food Production Index at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1486,7 +1491,8 @@ rice_med.predict <- cbind(rice_med.predict, rice_med.newdata)
 rice_med_plot <- ggplot(data=rice_med.predict, aes(x=rice_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=rice_med,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median price of rice at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1515,7 +1521,8 @@ rub_med.predict <- cbind(rub_med.predict, rub_med.newdata)
 rub_med_plot <- ggplot(data=rub_med.predict, aes(x=rub_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=rub_med,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median price of rubber at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1545,7 +1552,8 @@ corn_med.predict <- cbind(corn_med.predict, corn_med.newdata)
 corn_med_plot <- ggplot(data=corn_med.predict, aes(x=corn_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=corn_med,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median price of corn at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1574,7 +1582,8 @@ sug_med.predict <- cbind(sug_med.predict, sug_med.newdata)
 sug_med_plot <- ggplot(data=sug_med.predict, aes(x=sug_med, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=sug_med,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median price of sugar at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1603,7 +1612,8 @@ for_prod.predict <- cbind(for_prod.predict, for_prod.newdata)
 for_prod_plot <- ggplot(data=for_prod.predict, aes(x=for_prod, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com, aes(x=for_prod,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Total timber production (m3) at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1820,7 +1830,8 @@ cpi.predict.lag1 <- cbind(cpi.predict.lag1, cpi.newdata.lag1)
 cpi_plot.lag1 <- ggplot(data=cpi.predict.lag1, aes(x=cpi.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=cpi.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Crop Production Index at time t-1")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1851,7 +1862,8 @@ nfi.predict.lag1 <- cbind(nfi.predict.lag1, nfi.newdata.lag1)
 nfi_plot.lag1 <- ggplot(data=nfi.predict.lag1, aes(x=nfi.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=nfi.lag1,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Non-food Production Index at time t-1")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1883,7 +1895,8 @@ rice_med.predict.lag1 <- cbind(rice_med.predict.lag1, rice_med.newdata.lag1)
 rice_med_plot.lag1 <- ggplot(data=rice_med.predict.lag1, aes(x=rice_med.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=rice_med.lag1,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Median price of rice at time t-1")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1916,7 +1929,8 @@ rub_med.predict.lag1 <- cbind(rub_med.predict.lag1, rub_med.newdata.lag1)
 rub_med_plot.lag1 <- ggplot(data=rub_med.predict.lag1, aes(x=rub_med.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=rub_med.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median price of rubber at time t-1")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1949,7 +1963,8 @@ corn_med.predict.lag1 <- cbind(corn_med.predict.lag1, corn_med.newdata.lag1)
 corn_med_plot.lag1 <- ggplot(data=corn_med.predict.lag1, aes(x=corn_med.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=corn_med.lag1,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Median price of corn at time t-1")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -1982,7 +1997,8 @@ sug_med.predict.lag1 <- cbind(sug_med.predict.lag1, sug_med.newdata.lag1)
 sug_med_plot.lag1 <- ggplot(data=sug_med.predict.lag1, aes(x=sug_med.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=sug_med.lag1,y=for_cov))+
+              ylim(0,1900)+
            #   xlab("Median price of sugar at time t-1")+
            #   ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2015,7 +2031,8 @@ for_prod.predict.lag1 <- cbind(for_prod.predict.lag1, for_prod.newdata.lag1)
 for_prod_plot.lag1 <- ggplot(data=for_prod.predict.lag1, aes(x=for_prod.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag1, aes(x=for_prod.lag1,y=for_cov))+
+              ylim(0,1900)+
             #  xlab("Total timber production (m3) at time t-1")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2215,7 +2232,8 @@ cpi.predict.lag2 <- cbind(cpi.predict.lag2, cpi.newdata.lag2)
 cpi_plot.lag2 <- ggplot(data=cpi.predict.lag2, aes(x=cpi.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=cpi.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Crop Production Index at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2247,7 +2265,8 @@ nfi.predict.lag2 <- cbind(nfi.predict.lag2, nfi.newdata.lag2)
 nfi_plot.lag2 <- ggplot(data=nfi.predict.lag2, aes(x=nfi.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=nfi.lag2,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Non-food Production Index at time t-2")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2280,7 +2299,8 @@ rice_med.predict.lag2 <- cbind(rice_med.predict.lag2, rice_med.newdata.lag2)
 rice_med_plot.lag2 <- ggplot(data=rice_med.predict.lag2, aes(x=rice_med.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=rice_med.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median rice price at time t-2")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2313,7 +2333,8 @@ rub_med.predict.lag2 <- cbind(rub_med.predict.lag2, rub_med.newdata.lag2)
 rub_med_plot.lag2 <- ggplot(data=rub_med.predict.lag2, aes(x=rub_med.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=rub_med.lag2,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Median rubber price at time t-2")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2346,7 +2367,8 @@ corn_med.predict.lag2 <- cbind(corn_med.predict.lag2, corn_med.newdata.lag2)
 corn_med_plot.lag2 <- ggplot(data=corn_med.predict.lag2, aes(x=corn_med.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=corn_med.lag2,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Median corn price at time t-2")+
             #  ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2379,7 +2401,8 @@ sug_med.predict.lag2 <- cbind(sug_med.predict.lag2, sug_med.newdata.lag2)
 sug_med_plot.lag2 <- ggplot(data=sug_med.predict.lag2, aes(x=sug_med.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=sug_med.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Median sugar price at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2412,7 +2435,8 @@ for_prod.predict.lag2 <- cbind(for_prod.predict.lag2, for_prod.newdata.lag2)
 for_prod_plot.lag2 <- ggplot(data=for_prod.predict.lag2, aes(x=for_prod.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_com_lag2, aes(x=for_prod.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Forest production (m3) at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2553,7 +2577,7 @@ summary(prod.mod.gaus.1)
 
 # dredge
 prod.dredge.gaus.1 <- dredge(prod.mod.gaus.1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gaus.1, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.1.csv")
+#write.csv(prod.dredge.gaus.1, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.1.csv")
 
 
 ## saturated model with gamma distribution for unlagged predictors
@@ -2595,7 +2619,8 @@ prod_rub.predict <- cbind(prod_rub.predict, prod_rub.newdata)
 prod_rub_plot <- ggplot(data=prod_rub.predict, aes(x=prod_rub, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod, aes(x=prod_rub, y=for_cov))+
+              ylim(0,1900)+
               #xlab("Rubber producer price at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2624,7 +2649,8 @@ prod_cass.predict <- cbind(prod_cass.predict, prod_cass.newdata)
 prod_cass_plot <- ggplot(data=prod_cass.predict, aes(x=prod_cass, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod, aes(x=prod_cass, y=for_cov))+
+              ylim(0,1900)+
               #xlab("Cassava producer price at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2653,7 +2679,8 @@ prod_corn.predict <- cbind(prod_corn.predict, prod_corn.newdata)
 prod_corn_plot <- ggplot(data=prod_corn.predict, aes(x=prod_corn, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod, aes(x=prod_corn, y=for_cov))+
+              ylim(0,1900)+
               #xlab("Corn producer price at time t")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2683,7 +2710,8 @@ prod_sug.predict <- cbind(prod_sug.predict, prod_sug.newdata)
 prod_sug_plot <- ggplot(data=prod_sug.predict, aes(x=prod_sug, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod, aes(x=prod_sug, y=for_cov))+
+              ylim(0,1900)+
               #xlab("Sugar producer price at time t")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2724,7 +2752,7 @@ summary(prod.mod.gaus.lag1)
 
 # dredge
 prod.dredge.gaus.lag1 <- dredge(prod.mod.gaus.lag1, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gaus.lag1, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.lag1.csv")
+#write.csv(prod.dredge.gaus.lag1, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.lag1.csv")
 
 
 ## saturated model with gamma distribution for 1 year lagged predictors
@@ -2767,7 +2795,8 @@ prod_rub.predict.lag1 <- cbind(prod_rub.predict.lag1, prod_rub.newdata.lag1)
 prod_rub_plot.lag1 <- ggplot(data=prod_rub.predict.lag1, aes(x=prod_rub.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag1, aes(x=prod_rub.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of rubber at time t-1")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2797,7 +2826,8 @@ prod_cass.predict.lag1 <- cbind(prod_cass.predict.lag1, prod_cass.newdata.lag1)
 prod_cass_plot.lag1 <- ggplot(data=prod_cass.predict.lag1, aes(x=prod_cass.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag1, aes(x=prod_cass.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of cassava at time t-1")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2827,7 +2857,8 @@ prod_corn.predict.lag1 <- cbind(prod_corn.predict.lag1, prod_corn.newdata.lag1)
 prod_corn_plot.lag1 <- ggplot(data=prod_corn.predict.lag1, aes(x=prod_corn.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag1, aes(x=prod_corn.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of corn at time t-1")+
              # ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2858,7 +2889,8 @@ prod_sug.predict.lag1 <- cbind(prod_sug.predict.lag1, prod_sug.newdata.lag1)
 prod_sug_plot.lag1 <- ggplot(data=prod_sug.predict.lag1, aes(x=prod_sug.lag1, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag1, aes(x=prod_sug.lag1,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of sugar at time t-1")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2879,7 +2911,7 @@ summary(prod.mod.gaus.lag2)
 
 # dredge
 prod.dredge.gaus.lag2 <- dredge(prod.mod.gaus.lag2, beta = "none", evaluate = TRUE, rank = AICc)
-write.csv(prod.dredge.gaus.lag2, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.lag2.csv")
+#write.csv(prod.dredge.gaus.lag2, file="Results/Macroeconomics/Dredge/prod.dredge.gaus.lag2.csv")
 
 
 ## saturated model with gamma distribution for 1 year lagged predictors
@@ -2922,7 +2954,8 @@ prod_rub.predict.lag2 <- cbind(prod_rub.predict.lag2, prod_rub.newdata.lag2)
 prod_rub_plot.lag2 <- ggplot(data=prod_rub.predict.lag2, aes(x=prod_rub.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag2, aes(x=prod_rub.lag2,y=for_cov))+
+              ylim(0,1900)+
              # xlab("Producer price of rubber at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2951,7 +2984,8 @@ prod_cass.predict.lag2 <- cbind(prod_cass.predict.lag2, prod_cass.newdata.lag2)
 prod_cass_plot.lag2 <- ggplot(data=prod_cass.predict.lag2, aes(x=prod_cass.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag2, aes(x=prod_cass.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of cassava at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -2980,7 +3014,8 @@ prod_corn.predict.lag2 <- cbind(prod_corn.predict.lag2, prod_corn.newdata.lag2)
 prod_corn_plot.lag2 <- ggplot(data=prod_corn.predict.lag2, aes(x=prod_corn.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag2, aes(x=prod_corn.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of corn at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
@@ -3010,7 +3045,8 @@ prod_sug.predict.lag2 <- cbind(prod_sug.predict.lag2, prod_sug.newdata.lag2)
 prod_sug_plot.lag2 <- ggplot(data=prod_sug.predict.lag2, aes(x=prod_sug.lag2, y=fit))+
               geom_line(color="#339900", size=1)+
               geom_ribbon(aes(ymin=lwr, ymax=upr), alpha = 0.4, fill="#339900")+
-              ylim(0,1500)+
+              geom_point(data=dat_prod_lag2, aes(x=prod_sug.lag2,y=for_cov))+
+              ylim(0,1900)+
               #xlab("Producer price of sugar at time t-2")+
               #ylab("Amount of forest lost (ha) at time t")+
               theme(text = element_text(size=15))+
