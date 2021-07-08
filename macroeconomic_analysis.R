@@ -3474,7 +3474,7 @@ p.econ.all.2[[3]][[1]] <- p.econ.all.2[[3]][[1]] + ggtitle("")
 
 
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts_grd.png",p.econ.all.2,
-       width = 30, height = 20, units="cm", dpi=300)
+       width = 30, height = 30, units="cm", dpi=300)
 
 
 
@@ -3535,6 +3535,15 @@ ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts.png",p.econ.all,
 
 
 #
+    # point estimates for results section ####
+
+# Just used the prediction dataframes in the above sections
+
+
+
+
+
+
   ## Commodity / production set ####
     # no lag ####
 
@@ -3715,16 +3724,18 @@ p.corn + p.rice + p.rubber + p.sug + p.nfi
 
 # seems to massivley overpredict at higher values of corn_med. I want to try and remove rows 16 and 18 (based on the diagnostic plots from the model). If I had more data I would also remove 17
 
+# new newdata
+dat_sub <- dat[-c(16,18),]
+
 # new model with rows 16,18 removed
 m.comm.topa <- glm(elc ~ corn_med + nfi + rice_med + rub_med + sug_med + for_rem + time,
-                   family=poisson, data=dat[-c(16,18),])
+                   family=poisson, data=dat_sub)
 
 summary(m.comm.topa)
 plot(m.comm.topa)
 
-# new newdata
-dat_sub <- dat[-c(16,18),]
 
+# newdata
 m.comm.corn.a <- data.frame(corn_med = seq(min(dat_sub$corn_med), max(dat_sub$corn_med), length.out=100),
                             rice_med = mean(dat_sub$rice_med),
                             rub_med = mean(dat_sub$rub_med),
@@ -4148,7 +4159,7 @@ p.comm.all[[4]][[1]] <- p.comm.all[[4]][[1]] + ggtitle("")
 
 
 ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_all_Pts_grd.png",p.comm.all,
-       width = 30, height = 20, units="cm", dpi=300)
+       width = 30, height = 30, units="cm", dpi=300)
 
 
 
@@ -4522,7 +4533,7 @@ p.prod.all[[3]][[2]] <- p.prod.all[[3]][[2]] + theme(axis.title.y = element_blan
 
 
 ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_Pts_grd.png",p.prod.all,
-       width = 30, height = 20, units="cm", dpi=300)
+       width = 30, height = 30, units="cm", dpi=300)
 
 
 
