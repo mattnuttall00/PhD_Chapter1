@@ -852,7 +852,7 @@ me.modAv.aicc6.lag1 <- model.avg(me.dredge.gaus.lag.1, subset = delta < 6, fit =
 summary(me.modAv.aicc6.lag1)
 
 
-# Predict with the AICc<6 set
+ # Predict with the AICc<6 set
 
 # gdp.lag1
 gdp.lag1.newdata <- expand.grid(gdp.lag1 = seq(min(dat_me_lag_sub$gdp.lag1), 
@@ -3156,7 +3156,7 @@ m.econ <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
 
 m.econ.d <- dredge(m.econ, beta = "none", evaluate = TRUE, rank = AICc)
 
-# The only models that are dAIC < 6 from the top model are models that have 1 extra parameter compared with the top model (i.e. slightly ore complex versions). Therefore the extra parameters are likely redundant. Therefore I will just select the top model for inference.
+# The only models that are dAIC < 6 from the top model are models that have 1 extra parameter compared with the top model (i.e. slightly more complex versions). Therefore the extra parameters are likely redundant. Therefore I will just select the top model for inference.
 
 m.econ.top <- glm(elc ~ agr_gdp + dev_env + for_rem + pop_den + time, family=poisson, data=dat)
 summary(m.econ.top)
@@ -3197,12 +3197,10 @@ m.econ.popden <- data.frame(pop_den = seq(min(dat$pop_den), max(dat$pop_den), le
                             time = mean(dat$time))
 
 # predict
-m.econ.agrgdp.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.agrgdp, type="response", se=TRUE))
 m.econ.agrgdp.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.agrgdp, type="link", se=TRUE))
 m.econ.devenv.pred <- as.data.frame(predict(m.econ.top, newdata = m.econ.devenv, type="link", se=TRUE))
 
 # attach predictions to dataframe
-m.econ.agrgdp$pred <- m.econ.agrgdp.pred$fit
 m.econ.agrgdp$pred <- exp(m.econ.agrgdp.pred$fit)
 m.econ.devenv$pred <- exp(m.econ.devenv.pred$fit)
 
@@ -3213,9 +3211,6 @@ m.econ.devenv$lcl <- exp(m.econ.devenv.pred$fit-1.96*m.econ.devenv.pred$se.fit)
 m.econ.devenv$ucl <- exp(m.econ.devenv.pred$fit+1.96*m.econ.devenv.pred$se.fit)
 
 
-# m.econ.popden$pred <- predict(m.econ.top, newdata = m.econ.popden, type="response")
-
-
 # plots
 agrgdp.plot <- ggplot()+
                 geom_line(data=m.econ.agrgdp, aes(x=agr_gdp, y=pred))+
@@ -3223,6 +3218,7 @@ agrgdp.plot <- ggplot()+
                 geom_point(data=dat, aes(x=agr_gdp, y=elc))+
                 xlab("Change in agricultural proportion of GDP")+
                 ylab("Number of ELC allocations")+
+                theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                 ggtitle("No time lag")+
                 theme_classic()
 
@@ -3232,6 +3228,7 @@ devenv.plot <- ggplot()+
                 geom_point(data=dat, aes(x=dev_env, y=elc))+
                 xlab("Change in development flows to environment sector")+
                 ylab("")+
+                theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                 ggtitle("No time lag")+
                 theme_classic()
 
@@ -3317,21 +3314,21 @@ m.econ.lag1.gdp <- data.frame(gdp = seq(min(dat$gdp), max(dat$gdp), length.out=1
 
 # predict
 agr_gdp_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.agrgdp, type="link", se=TRUE))
-fdi_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.fdi, type="link", se=TRUE))
-gdp_pred <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.gdp, type="link", se=TRUE))
+fdi_pred     <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.fdi, type="link", se=TRUE))
+gdp_pred     <- as.data.frame(predict(m.econ.lag1.top, newdata=m.econ.lag1.gdp, type="link", se=TRUE))
 
 # add fit to dataframes
 m.econ.lag1.agrgdp$pred <- exp(agr_gdp_pred$fit)
-m.econ.lag1.fdi$pred <- exp(fdi_pred$fit)
-m.econ.lag1.gdp$pred <- exp(gdp_pred$fit)
+m.econ.lag1.fdi$pred    <- exp(fdi_pred$fit)
+m.econ.lag1.gdp$pred    <- exp(gdp_pred$fit)
 
 # add CIs to dataframes
 m.econ.lag1.agrgdp$lcl <- exp(agr_gdp_pred$fit - 1.96*agr_gdp_pred$se.fit)
 m.econ.lag1.agrgdp$ucl <- exp(agr_gdp_pred$fit + 1.96*agr_gdp_pred$se.fit)
-m.econ.lag1.fdi$lcl <- exp(fdi_pred$fit - 1.96*fdi_pred$se.fit)
-m.econ.lag1.fdi$ucl <- exp(fdi_pred$fit + 1.96*fdi_pred$se.fit)
-m.econ.lag1.gdp$lcl <- exp(gdp_pred$fit - 1.96*gdp_pred$se.fit)
-m.econ.lag1.gdp$ucl <- exp(gdp_pred$fit + 1.96*gdp_pred$se.fit)
+m.econ.lag1.fdi$lcl    <- exp(fdi_pred$fit - 1.96*fdi_pred$se.fit)
+m.econ.lag1.fdi$ucl    <- exp(fdi_pred$fit + 1.96*fdi_pred$se.fit)
+m.econ.lag1.gdp$lcl    <- exp(gdp_pred$fit - 1.96*gdp_pred$se.fit)
+m.econ.lag1.gdp$ucl    <- exp(gdp_pred$fit + 1.96*gdp_pred$se.fit)
 
 
 
@@ -3344,6 +3341,7 @@ agrgdp.L1.plot <- ggplot()+
                   geom_point(data=dat, aes(x=agr_gdp, y=elc))+
                   ylab("Number of ELC allocations")+
                   xlab("Change in agricultural proportion of GDP")+
+                  theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                   ggtitle("1 year lag")+
                   theme_classic()
 
@@ -3354,6 +3352,7 @@ fdi.L1.plot <- ggplot()+
                 geom_point(data=dat, aes(x=fdi, y=elc))+
                 ylab("")+
                 xlab("Change in foreign direct investment (USD Millions)")+
+                theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                 ggtitle("1 year lag")+
                 theme_classic()
 
@@ -3364,6 +3363,7 @@ gdp.L1.plot <- ggplot()+
                 geom_point(data=dat, aes(x=gdp, y=elc))+
                 ylab("")+
                 xlab("Change in per capita GDP")+
+                theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                 ggtitle("1 year lag")+
                 theme_classic()
 
@@ -3442,6 +3442,7 @@ gdp.L2.plot <- ggplot()+
                 geom_point(data=dat, aes(x=gdp, y=elc))+
                 ylab("Number of ELC allocations")+
                 xlab("Change in per capita GDP")+
+                theme(axis.title = element_text(size=12), axis.text = element_text(size=12))+
                 ggtitle("2 year lag")+
                 theme_classic()
 
@@ -3450,6 +3451,38 @@ gdp.L2.plot <- ggplot()+
 
     # plot all econ ####
 
+## below is old code for removing point from plots and saving individual plots from the different time lags. For the chapter results section though, I am keeping the points on, and plotting as a grid (i.e. all plots have the same plot space rather than being stretched)
+
+
+# Axis titles and text are already size 12
+
+p.econ.all.2 <- (agrgdp.plot + devenv.plot + textGrob("")) / (agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot) / 
+                (gdp.L2.plot + textGrob("") + textGrob(""))
+
+# remove y axis ticks
+p.econ.all.2[[1]][[2]] <- p.econ.all.2[[1]][[2]] + theme(axis.text.y = element_blank())
+p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(axis.text.y = element_blank())
+p.econ.all.2[[2]][[3]] <- p.econ.all.2[[2]][[3]] + theme(axis.text.y = element_blank())
+
+# decided to remove titles. Making the plots too crowded
+p.econ.all.2[[1]][[1]] <- p.econ.all.2[[1]][[1]] + ggtitle("") 
+p.econ.all.2[[1]][[2]] <- p.econ.all.2[[1]][[2]] + ggtitle("")
+p.econ.all.2[[2]][[1]] <- p.econ.all.2[[2]][[1]] + ggtitle("")
+p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + ggtitle("")
+p.econ.all.2[[2]][[3]] <- p.econ.all.2[[2]][[3]] + ggtitle("")
+p.econ.all.2[[3]][[1]] <- p.econ.all.2[[3]][[1]] + ggtitle("")
+
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts_grd.png",p.econ.all.2,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+
+
+
+
+### old code
+
 # no lag
 
 # remove points
@@ -3457,14 +3490,6 @@ agrgdp.plot$layers[[3]] <- NULL
 devenv.plot$layers[[3]] <- NULL
 
 p.econ.nolag <- agrgdp.plot + devenv.plot
-
-# axis titles
-p.econ.nolag[[1]] <- p.econ.nolag[[1]] + theme(axis.title = element_text(size=12))
-p.econ.nolag[[2]] <- p.econ.nolag[[2]] + theme(axis.title = element_text(size=12))
-
-# axis text
-p.econ.nolag[[1]] <- p.econ.nolag[[1]] + theme(axis.text = element_text(size=12))
-p.econ.nolag[[2]] <- p.econ.nolag[[2]] + theme(axis.text = element_text(size=12))
 
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_nolag_noPts.png",p.econ.nolag,
        width = 30, height = 20, units="cm", dpi=300)
@@ -3479,15 +3504,6 @@ gdp.L1.plot$layers[[3]]    <- NULL
 
 p.econ.L1 <- agrgdp.L1.plot + fdi.L1.plot + gdp.L1.plot
 
-# axis titles
-p.econ.L1[[1]] <- p.econ.L1[[1]] + theme(axis.title = element_text(size=12))
-p.econ.L1[[2]] <- p.econ.L1[[2]] + theme(axis.title = element_text(size=12))
-p.econ.L1[[3]] <- p.econ.L1[[3]] + theme(axis.title = element_text(size=12))
-
-# axis text
-p.econ.L1[[1]] <- p.econ.L1[[1]] + theme(axis.text = element_text(size=12))
-p.econ.L1[[2]] <- p.econ.L1[[2]] + theme(axis.text = element_text(size=12))
-p.econ.L1[[3]] <- p.econ.L1[[3]] + theme(axis.text = element_text(size=12))
 
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag1_noPts.png",p.econ.L1,
        width = 40, height = 20, units="cm", dpi=300)
@@ -3497,20 +3513,26 @@ ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag1_noPts.png",p.econ.L1,
 # remove points
 gdp.L2.plot$layers[[3]] <- NULL
 
-# axis title
-gdp.L2.plot <- gdp.L2.plot + theme(axis.title = element_text(size=12),
-                                   axis.text = element_text(size=12))
 
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_lag2_noPts.png",gdp.L2.plot,
        width = 30, height = 20, units="cm", dpi=300)
 
 
 
-# plot all together
+## plot all together
+
+# spread out within the plot space
 p.econ.all <- p.econ.nolag / p.econ.L1 / (gdp.L2.plot + textGrob(""))
 
-ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_noPts.png",p.econ.all,
+
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts.png",p.econ.all,
        width = 30, height = 20, units="cm", dpi=300)
+
+
+
+
+
+
 
 #
   ## Commodity / production set ####
@@ -3684,6 +3706,8 @@ p.nfi <- ggplot()+
             ggtitle("No time lag")+
             theme_classic()
 
+p.corn + p.rice + p.rubber + p.sug + p.nfi
+
       # remove outliers ####
 
 # according to the model diagnostics there are some points that are having disproportionate influence. I am very reluctant to remove data, as I only have 21 data points. But I will see
@@ -3748,6 +3772,7 @@ rice_pred.a   <- as.data.frame(predict(m.comm.topa, newdata = m.comm.rice.a, typ
 rub_pred.a <- as.data.frame(predict(m.comm.topa, newdata = m.comm.rub.a, type="link", se=TRUE))
 sug_pred.a  <- as.data.frame(predict(m.comm.topa, newdata = m.comm.sug.a, type="link", se=TRUE))
 nfi_pred.a    <- as.data.frame(predict(m.comm.topa, newdata = m.comm.nfi.a, type="link", se=TRUE))
+
 
 # exponentiate the fit onto the dataframes
 m.comm.corn.a$pred <- exp(corn_pred.a$fit)
@@ -3822,7 +3847,7 @@ p.nfi.a <- ggplot()+
 (p.rubber + p.rub.a)/
 (p.sug + p.sug.a)/
 (p.nfi + p.nfi.a)
-# I mean, they all look pretty rubbish, I would not say that any of these models are particulalry good at predicting. I guess sugar and corn are not too bad. Overall, I think the models with the outliers removed are slightly better, so I will go with them. 
+ 
 
 
     # 1 year lag ####
@@ -4086,6 +4111,50 @@ p.sug_l2a <- ggplot()+
 
     # Plot all commodity ####
 
+## below is old code for removing point from plots and saving individual plots from the different time lags. For the chapter results section though, I am keeping the points on, and plotting as a grid (i.e. all plots have the same plot space rather than being stretched)
+
+p.corn.a 
+p.rice.a 
+p.rub.a 
+p.sug.a 
+p.nfi.a 
+p.nfi.lag1
+p.sug.lag1 
+p.sug_l2a 
+
+p.comm.all <- (p.corn.a + p.rice.a + p.rub.a)/
+              (p.sug.a + p.nfi.a + textGrob(""))/
+              (p.nfi.lag1 + p.sug.lag1 + textGrob(""))/
+              (p.sug_l2a + textGrob("") + textGrob(""))
+
+# remove y axis labels
+p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + theme(axis.title.y = element_blank())
+p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + theme(axis.title.y = element_blank())
+p.comm.all[[2]][[2]] <- p.comm.all[[2]][[2]] + theme(axis.title.y = element_blank())
+p.comm.all[[3]][[2]] <- p.comm.all[[3]][[2]] + theme(axis.title.y = element_blank())
+
+# increase axis text size
+p.comm.all <- p.comm.all + theme(axis.text = element_text(size=12))
+
+# remove titles
+p.comm.all[[1]][[1]] <- p.comm.all[[1]][[1]] + ggtitle("")
+p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + ggtitle("")
+p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + ggtitle("")
+p.comm.all[[2]][[1]] <- p.comm.all[[2]][[1]] + ggtitle("")
+p.comm.all[[2]][[2]] <- p.comm.all[[2]][[2]] + ggtitle("")
+p.comm.all[[3]][[1]] <- p.comm.all[[3]][[1]] + ggtitle("")
+p.comm.all[[3]][[2]] <- p.comm.all[[3]][[2]] + ggtitle("")
+p.comm.all[[4]][[1]] <- p.comm.all[[4]][[1]] + ggtitle("")
+
+
+ggsave("Results/Macroeconomics/Plots/ELCs/comm_elc_all_Pts_grd.png",p.comm.all,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+
+
+### old code
+
 # no lag
 p.corn.a + p.rice.a + p.rub.a + p.sug.a + p.nfi.a 
 
@@ -4269,7 +4338,9 @@ p.rice.prod <- ggplot()+
                theme_classic()+
                ylab("Number of ELC allocations")+
                xlab("Change in mean producer price of rice (USD/ton)")+
-               ggtitle("No time lag")
+               theme(axis.title = element_text(size=12),
+                     axis.text = element_text(size=12))
+              
 
 p.rub.prod <- ggplot()+
               geom_line(data=prod_rub_nd, aes(x=prod_rub, y=pred))+
@@ -4278,7 +4349,8 @@ p.rub.prod <- ggplot()+
               theme_classic()+
               ylab("Number of ELC allocations")+
               xlab("Change in mean producer price of rubber (USD/ton)")+
-              ggtitle("No time lag")
+              theme(axis.title = element_text(size=12),
+                    axis.text = element_text(size=12))
 
     # 1 year lag ####
 
@@ -4337,12 +4409,14 @@ prod_corn_nd_L1$ucl <- exp(prod_corn_pred_L1$fit + 1.96*prod_corn_pred_L1$se.fit
 # plots
 p.corn_prod.L1 <- ggplot()+
                   geom_line(data=prod_corn_nd_L1, aes(x=prod_corn, y=pred))+
-                  geom_ribbon(data=prod_corn_nd_L1, aes(x=prod_corn, ymin=lcl, ymax=ucl), alpha=0.3, fill="royalblue4")+
+                  geom_ribbon(data=prod_corn_nd_L1, aes(x=prod_corn, ymin=lcl, ymax=ucl), 
+                              alpha=0.3, fill="royalblue4")+
                   geom_point(data=dat, aes(x=prod_corn, y=elc))+
                   theme_classic()+
                   ylab("Number of ELC allocations")+
                   xlab("Change in mean producer price of corn (USD/ton)")+
-                  ggtitle("1 year lag")
+                  theme(axis.title = element_text(size=12),
+                        axis.text = element_text(size=12))
 
     # 2 year lag ####
 
@@ -4413,23 +4487,48 @@ prod_rice_nd_L2$ucl <- exp(prod_rice_pred_L2$fit + 1.96*prod_rice_pred_L2$se.fit
 # plots
 p.cass_prod.L2 <- ggplot()+
                   geom_line(data=prod_cass_nd_L2, aes(x=prod_cass, y=pred))+
-                  geom_ribbon(data=prod_cass_nd_L2, aes(x=prod_cass, ymin=lcl, ymax=ucl), alpha=0.3, fill="royalblue4")+
+                  geom_ribbon(data=prod_cass_nd_L2, aes(x=prod_cass, ymin=lcl, ymax=ucl), 
+                              alpha=0.3, fill="royalblue4")+
                   geom_point(data=dat, aes(x=prod_cass, y=elc))+
                   theme_classic()+
                   ylab("Number of ELC allocations")+
                   xlab("Change in mean producer price of cassava (USD/ton)")+
-                  ggtitle("2 year lag")
+                  theme(axis.title = element_text(size=12),
+                        axis.text = element_text(size=12))
 
 p.rice_prod.L2 <- ggplot()+
                   geom_line(data=prod_rice_nd_L2, aes(x=prod_rice, y=pred))+
-                  geom_ribbon(data=prod_rice_nd_L2, aes(x=prod_rice, ymin=lcl, ymax=ucl), alpha=0.3, fill="royalblue4")+
+                  geom_ribbon(data=prod_rice_nd_L2, aes(x=prod_rice, ymin=lcl, ymax=ucl), 
+                              alpha=0.3, fill="royalblue4")+
                   geom_point(data=dat, aes(x=prod_rice, y=elc))+
                   theme_classic()+
                   ylab("Number of ELC allocations")+
                   xlab("Change in mean producer price of rice (USD/ton)")+
-                  ggtitle("2 year lag")
+                  theme(axis.title = element_text(size=12),
+                        axis.text = element_text(size=12))
 
     # plot all producer ####
+
+p.prod.all <- (p.rice.prod + p.rub.prod) /
+              (p.corn_prod.L1 + textGrob("")) /
+              (p.cass_prod.L2 + p.rice_prod.L2)
+
+
+# titles already removed and axis text already size 12
+
+# remove y axis labels 
+p.prod.all[[1]][[2]] <- p.prod.all[[1]][[2]] + theme(axis.title.y = element_blank())
+p.prod.all[[3]][[2]] <- p.prod.all[[3]][[2]] + theme(axis.title.y = element_blank())
+
+
+ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_Pts_grd.png",p.prod.all,
+       width = 30, height = 20, units="cm", dpi=300)
+
+
+
+
+
+### old code
 
 # no lag
 
