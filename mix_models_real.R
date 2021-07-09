@@ -10514,6 +10514,8 @@ r.squaredGLMM(sat9c)
 
 plot(sat9c)
 
+r.squaredGLMM(m1)
+
 
       # global predictions ####
 
@@ -10534,7 +10536,7 @@ pop_den_newdat <- data.frame(pop_den = seq(min(dat1$pop_den), max(dat1$pop_den),
                              elc = "0",
                              PA = "0",
                              areaKM = median(dat1$areaKM))
-pop_den_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=pop_den_newdat, re.form=NA))
+pop_den_newdat$pred <- as.vector(predict(m1, type="response", newdata=pop_den_newdat, re.form=NA))
 popden_SE <- 1.127
 pop_den_newdat$U_SE <- pop_den_newdat$pred + (2*popden_SE)
 pop_den_newdat$L_SE <- pop_den_newdat$pred - (2*popden_SE)
@@ -10595,7 +10597,7 @@ mean_elev_newdat <- data.frame(mean_elev = seq(min(dat1$mean_elev), max(dat1$mea
                              elc = "0",
                              PA = "0",
                              areaKM = mean(dat1$areaKM))
-mean_elev_newdat$pred <- as.vector(predict(sat9c, type="response", newdata=mean_elev_newdat, re.form=NA))
+mean_elev_newdat$pred <- as.vector(predict(m1, type="response", newdata=mean_elev_newdat, re.form=NA))
 
 
 # plot
