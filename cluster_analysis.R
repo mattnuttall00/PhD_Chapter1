@@ -1112,12 +1112,14 @@ cols <- c("tomato3","skyblue2","deepskyblue4","goldenrod","darkolivegreen3")
 
 upgma.map <- ggplot(prov.shp,aes(group=agglo_clus, fill=agglo_clus))+
   geom_sf()+
+  geom_sf_label(aes(label = KHETTRN))+
   scale_fill_manual(values = cols)+
   theme(panel.background = element_blank(),
         legend.key.size = unit(1,'cm'),
         legend.title = element_text(size=15),
         legend.text = element_text(size = 15))+
   labs(fill = "UPGMA Clusters")
+  
 
 ggsave("Results/Cluster_analysis/final_UPGMA_plots/UPGMA_map.png", upgma.map, height = 20, width = 20, units = "cm",
        dpi=300)
@@ -2136,48 +2138,69 @@ forpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=For.area, color=agglo.clus))+
             scale_color_manual(values=cols)+
             geom_boxplot(size=1)+
             xlab("")+
-            ylab("Mean forested area (km2)")+
+            ylab("")+
             theme_classic()+
-            theme(legend.position = "none")
+            theme(legend.position = "none",
+                  axis.title = element_text(size=15),
+                  axis.text = element_text(size=12))+
+            labs(tag="a", size=15)
 
 area.p <- ggplot(env.dat, aes(x=agglo.clus, y=areaKM, color=agglo.clus))+
           scale_color_manual(values=cols)+
           geom_boxplot(size=1)+
           xlab("")+
-          ylab("Mean size of province (km2)")+
+          ylab("")+
           theme_classic()+
-          theme(legend.position = "none")
+          theme(legend.position = "none",
+                axis.title = element_text(size=15),
+                axis.text = element_text(size=12))+
+          labs(tag = "b")
 
 difpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=diffPix, color=agglo.clus))+
             scale_color_manual(values=cols)+
             geom_boxplot(size=1)+
             xlab("")+
-            ylab("Change in forest cover between 2007 - 2012")+
+            ylab("")+
             theme_classic()+
-            theme(legend.position = "none")
+            theme(legend.position = "none",
+                  axis.title = element_text(size=15),
+                  axis.text = element_text(size=12))+
+            labs(tag= "c")
 
 elev.p <- ggplot(env.dat, aes(x=agglo.clus, y=mean_elev, color=agglo.clus))+
           scale_color_manual(values=cols)+
           geom_boxplot(size=1)+
           xlab("Cluster")+
-          ylab("Mean elevation (masl)")+
+          ylab("")+
           theme_classic()+
-          theme(legend.position = "none")
+          theme(legend.position = "none",
+                axis.title = element_text(size=15),
+                axis.text = element_text(size=12))+
+          labs(tag = "d")
 
 distBord.p <- ggplot(env.dat, aes(x=agglo.clus, y=dist_border, color=agglo.clus))+
               scale_color_manual(values=cols)+
               geom_boxplot(size=1)+
               xlab("Cluster")+
-              ylab("Mean distance to international border (KM)")+
+              ylab("")+
               theme_classic()+
-              theme(legend.position = "none")
+              theme(legend.position = "none",
+                    axis.title = element_text(size=15),
+                    axis.text = element_text(size=12))+
+              labs(tag = "e")
 
 distCap.p <- ggplot(env.dat, aes(x=agglo.clus, y=dist_provCap, color=agglo.clus))+
               scale_color_manual(values=cols)+
               geom_boxplot(size=1)+
               xlab("Cluster")+
-              ylab("Mean distance to provincial capital (KM)")+
+              ylab("")+
               theme_classic()+
-              theme(legend.position = "none")
+              theme(legend.position = "none",
+                    axis.title = element_text(size=15),
+                    axis.text = element_text(size=12))+
+              labs(tag = "f")
 
-forpix.p + area.p + difpix.p + elev.p + distBord.p + distCap.p + plot_layout(ncol=3)
+cluster_comparison_plot <- forpix.p + area.p + difpix.p + elev.p + distBord.p + distCap.p + plot_layout(ncol=3)
+
+ggsave("Results/Cluster_analysis/final_UPGMA_plots/env_vars_vs_cluster.png", cluster_comparison_plot,
+       dpi=300, width = 30, height=20, unit="cm")
