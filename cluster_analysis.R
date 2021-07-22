@@ -22,6 +22,7 @@ library(sf)
 library(viridis)
 library(patchwork)
 library(reshape2)
+library(ggrepel)
 
 # Function to compute a binary dissimilarity matrix from clusters (from book)
 grpdist <- function(X) {
@@ -1110,19 +1111,32 @@ ggsave("Results/Cluster_analysis/k_means/kmean_map.png", kmean.map, height = 20,
 # plot map based on UPGMA cluster
 cols <- c("tomato3","skyblue2","deepskyblue4","goldenrod","darkolivegreen3")
 
+# extract centre coords for labels
+prov.shp <- prov.shp %>% mutate(lon=map_dbl(geometry, ~st_centroid(.x)[[1]]),
+                                lat=map_dbl(geometry, ~st_centroid(.x)[[2]]))
+
+# rename column
+prov.shp <- prov.shp %>% rename(Name = KHETTRN)
+
+
+# plot map
 upgma.map <- ggplot(prov.shp,aes(group=agglo_clus, fill=agglo_clus))+
-  geom_sf()+
-  geom_sf_label(aes(label = KHETTRN))+
-  scale_fill_manual(values = cols)+
-  theme(panel.background = element_blank(),
-        legend.key.size = unit(1,'cm'),
-        legend.title = element_text(size=15),
-        legend.text = element_text(size = 15))+
-  labs(fill = "UPGMA Clusters")
+            geom_sf()+
+            #geom_label_repel(aes(x=lon,y=lat, label = Name), show.legend = F)+
+            geom_sf_label(aes(label = Name), show.legend = F)+
+            scale_fill_manual(values = cols)+
+            theme(panel.background = element_blank(),
+                  legend.key.size = unit(1,'cm'),
+                  legend.title = element_text(size=15),
+                  legend.text = element_text(size = 15))+
+            labs(fill = "UPGMA Clusters")+
+            xlab("")+
+            ylab("")
+            
   
 
-ggsave("Results/Cluster_analysis/final_UPGMA_plots/UPGMA_map.png", upgma.map, height = 20, width = 20, units = "cm",
-       dpi=300)
+ggsave("Results/Cluster_analysis/final_UPGMA_plots/UPGMA_map.png", upgma.map, height = 30,
+       width = 30, units = "cm",dpi=300)
 
 
       # add k-means and UPGMA clusters to shapefile (don't repeat) ####
