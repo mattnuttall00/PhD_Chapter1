@@ -13278,9 +13278,14 @@ model.sel(popden.mcat,socjus.mcat,mig.mcat,edu.mcat,emp.mcat,econ.mcat,acc.mcat,
 summary(m8)
 
 
+### m8 diagnostics
 
+print(VarCorr(m8),comp="Variance") 
+vars <- data.frame(term = c("Province", "year/Prov"),
+                   variance = c(1.1761849,0.0058457))
+vars$relative.contrib <- vars$variance/sum(vars$variance)
 
-
+r.squaredGLMM(m8)
 
 
 
