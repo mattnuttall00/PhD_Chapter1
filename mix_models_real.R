@@ -13296,10 +13296,13 @@ r.squaredGLMM(m8)
 #
       # plot categorical ####
 
-# Based on IT model selection, m8 is the top model. Below is some old code that plots the predictions from all of the indiviudal models above. can ignore
+# Based on IT model selection, m8 is the top model. 
 
 M6_24_sch.cat + dist_sch.cat + Elevation + Distance_border+Distance_capital
 +Economic_concession + PAs
+
+
+### Predict at the province level using random effects
 
 # create new data
 m8_newdat <- expand.grid(School_attendance=c("high","low"),
@@ -13377,6 +13380,62 @@ p2 <- ggplot(p2.dat, aes(x=Distance_school, y=Forest_cover_km))+
 ggsave("Results/Socioeconomics/Plots/Province_level/dist_sch_facet_prov.png", p2,
        height=30, width=30, unit="cm", dpi=300)
 
+
+
+### Global predictions from m8. This is for the results section where I am saying "For example, the difference in the predicted number of forest pixels between a province with a low proportion of males in school and a province with a high proportion (with all other variables set to low), is XX."
+m8_newdat2 <- expand.grid(School_attendance=c("high","low"),
+                         Distance_school=c("high","low"),
+                         Elevation=c("high","low"),
+                         Distance_border=c("high","low"),
+                         Distance_capital=c("high","low"),
+                         Economic_concession=c("1","0"),
+                         PAs=c("1","0"),
+                         #Province=levels(dat_cat$Province),
+                         areaKM=mean(dat_cat$areaKM),
+                         year=mean(dat_cat$year))
+
+m8_pred <- as.vector(predict(m8, newdata=m8_newdat, type="response", re.form=NA))
+
+
+m8_newdat2$pred <- m8_pred
+
+
+edu.dat <- m8_newdat2 %>% filter(Distance_school=="low",
+                               Elevation=="low",
+                               Distance_border=="low",
+                               Distance_capital=="low",
+                               Economic_concession=="1",
+                               PAs=="1")
+# high school attendance = 39062.20, low school attendence = 39262.38. That makes a difference of 200 pixels, or 18km2. This is larger than I thought. But given that the range of forest pixels in the country is 54 - 147,000, this is still quite small. See plot below
+
+ggplot(edu.dat, aes(x=School_attendance, y=pred))+
+  geom_point()+
+  ylim(0,147000)
+
+
+## dist_sch
+school.dat <- m8_newdat2 %>% filter(School_attendance=="low",
+                                 Elevation=="low",
+                                 Distance_border=="low",
+                                 Distance_capital=="low",
+                                 Economic_concession=="1",
+                                 PAs=="1")
+# high dist_sch = 39951, low dist_sch = 39262
+
+
+ggplot(school.dat, aes(x=Distance_school, y=pred))+
+  geom_point()+
+  ylim(0,147000)
+
+
+### PAs
+PA.dat <- m8_newdat2 %>% filter(School_attendance=="low",
+                                Distance_school == "low",
+                                    Elevation=="low",
+                                    Distance_border=="low",
+                                    Distance_capital=="low",
+                                    Economic_concession=="1")
+# PA = 1 = 39,262. PA = 0 = 2372
 
 
 
