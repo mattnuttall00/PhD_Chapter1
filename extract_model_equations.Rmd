@@ -13,8 +13,8 @@ library('equatiomatic')
 library('tidyverse')
 
 # load data
-elc <- read.csv("PhD_chapter1/elc_years.csv", header = T)
-dat <- read.csv("PhD_chapter1/dat_work.csv", header = T)
+elc <- read.csv("elc_years.csv", header = T)
+dat <- read.csv("dat_work.csv", header = T)
 ```
 
 ```{r, include=FALSE}
@@ -32,8 +32,12 @@ dat$elc <- elc$count
 # model with 1 year time lag
 m.econ.lag1 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
                 na.action = "na.fail", family = poisson, data=dat)
+
+m.econ.lag1_1 <- glm(elc ~  gdp+fdi+agr_gdp+dev_agri+dev_env+pop_den+time+for_rem,
+                na.action = "na.fail", family = gaussian, data=dat)
 ```
 
 ```{r }
 extract_eq(m.econ.lag1)
+extract_eq(m.econ.lag1_1)
 ```
