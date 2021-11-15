@@ -13389,7 +13389,7 @@ p1.dat <- m8_newdat %>% filter(Distance_school=="low",
 # convert predictions to KM
 p1.dat$Forest_cover_km <- p1.dat$pred*0.09
 
-p1 <- ggplot(p1.dat, aes(x=School_attendance, y=Forest_cover_km))+
+p1 <- ggplot(p1.dat, aes(x=School_attendance, y=pred))+
         geom_point(size=5)+
         #geom_point(data=dat_cat, aes(x=School_attendance, y=ForPix))+
         facet_wrap(~Province,labeller = label_both)+
@@ -13403,6 +13403,29 @@ p1 <- ggplot(p1.dat, aes(x=School_attendance, y=Forest_cover_km))+
 
 ggsave("Results/Socioeconomics/Plots/Province_level/School_atten_facet_prov.png", p1,
        height=30, width=30, unit="cm", dpi=300)
+
+
+
+# calculate 2*SE
+se <- 2*0.001880
+p1.dat$UCL <- p1.dat$pred + se
+p1.dat$LCL <- p1.dat$pred - se
+
+## bar plot with SEs (Fig 4 in chapter 2)
+p1 <- ggplot(p1.dat, aes(x=School_attendance, y=pred))+
+      geom_bar(stat="identity", color= "deepskyblue4", fill="deepskyblue4")+
+      geom_errorbar(aes(ymin=LCL, ymax=UCL))+
+      facet_wrap(~Province)+
+      theme_classic()+
+      xlab("School attendance (males aged 6-24)")+
+      ylab("Predicted forest pixels")+
+      theme(axis.title = element_text(size=20),
+            axis.text = element_text(size=15),
+            strip.text = element_text(size=13))
+      
+ggsave("C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter2/Write_up/Figures/Fig4.png", p1,
+       height=30, width=30, unit="cm", dpi=300)
+
 
 # dist_sch (all others set to reference - low, and ELC/PA set to 1)
 p2.dat <- m8_newdat %>% filter(School_attendance=="low",
@@ -13431,6 +13454,27 @@ p2 <- ggplot(p2.dat, aes(x=Distance_school, y=Forest_cover_km))+
 ggsave("Results/Socioeconomics/Plots/Province_level/dist_sch_facet_prov.png", p2,
        height=30, width=30, unit="cm", dpi=300)
 
+
+
+# calculate 2*SE
+se <- 2*0.002233
+p2.dat$UCL <- p2.dat$pred + se
+p2.dat$LCL <- p2.dat$pred - se
+
+## bar plot with SEs (Fig 5 in chapter 2)
+p2 <- ggplot(p2.dat, aes(x=Distance_school, y=pred))+
+      geom_bar(stat="identity", color= "deepskyblue4", fill="deepskyblue4")+
+      geom_errorbar(aes(ymin=LCL, ymax=UCL))+
+      facet_wrap(~Province)+
+      theme_classic()+
+      xlab("Distance to nearest school (Km)")+
+      ylab("Predicted forest pixels")+
+      theme(axis.title = element_text(size=20),
+            axis.text = element_text(size=15),
+            strip.text = element_text(size=13))
+
+ggsave("C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter2/Write_up/Figures/Fig5.png", p2,
+       height=30, width=30, unit="cm", dpi=300)
 
 
 ### Global predictions from m8. This is for the results section where I am saying "For example, the difference in the predicted number of forest pixels between a province with a low proportion of males in school and a province with a high proportion (with all other variables set to low), is XX."
