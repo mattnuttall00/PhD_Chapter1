@@ -2110,13 +2110,13 @@ upgma.heatmap.cat <- ggplot(dat_prov.ql, aes(x=agglo.clus, y=variable))+
                       scale_fill_manual(values = cols)+
                       xlab("Cluster (UPGMA)")+
                       ylab("Variable")+
-                      theme(axis.text = element_text(size=15),
-                            axis.title = element_text(size=18),
-                            legend.text = element_text(size=18),
-                            legend.title = element_text(size=17),
+                      theme(axis.text = element_text(size=18),
+                            axis.title = element_text(size=22),
+                            legend.text = element_text(size=19),
+                            legend.title = element_blank(),
                             legend.key.size = unit(2,'cm'))
 
-ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_heatmap_cat_NEW.png", upgma.heatmap.cat, 
+ggsave("C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter2/Write_up/Figures/fig7.png", upgma.heatmap.cat, 
        width = 30, height = 30, units = "cm", dpi=300)
 
       # Plots of clusters versus environmental vars ####
@@ -2128,7 +2128,7 @@ ggsave("Results/Cluster_analysis/Average_agglo/UPGMA_heatmap_cat_NEW.png", upgma
 # summarise variables for all years - take the mean for each variable for each province across all years. 
 env.dat <- dat_prov %>% group_by(Province) %>% summarise_all(mean) 
 
-# pull uot envrion vars
+# pull out envrion vars
 env.dat <- env.dat %>% select(Province,areaKM,ForPix,diffPix,mean_elev,dist_border,dist_provCap)
 
 # add clusters
@@ -2143,6 +2143,9 @@ env.dat <- env.dat %>% filter(Province != "Phnom Penh")
 
 # convert ForPix to km2
 env.dat$For.area <- env.dat$ForPix * 0.09
+
+# convert diffPix to km2
+env.dat$diffPix.area <- env.dat$diffPix * 0.09
 
 # colors to match the map
 cols <- c("tomato3","skyblue2","deepskyblue4","goldenrod","darkolivegreen3")
@@ -2170,11 +2173,12 @@ area.p <- ggplot(env.dat, aes(x=agglo.clus, y=areaKM, color=agglo.clus))+
                 axis.text = element_text(size=12))+
           labs(tag = "b")
 
-difpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=diffPix, color=agglo.clus))+
+difpix.p <- ggplot(env.dat, aes(x=agglo.clus, y=diffPix.area, color=agglo.clus))+
             scale_color_manual(values=cols)+
             geom_boxplot(size=1)+
             xlab("")+
             ylab("")+
+            ylim(-75,0)+
             theme_classic()+
             theme(legend.position = "none",
                   axis.title = element_text(size=15),
@@ -2216,5 +2220,13 @@ distCap.p <- ggplot(env.dat, aes(x=agglo.clus, y=dist_provCap, color=agglo.clus)
 
 cluster_comparison_plot <- forpix.p + area.p + difpix.p + elev.p + distBord.p + distCap.p + plot_layout(ncol=3)
 
-ggsave("Results/Cluster_analysis/final_UPGMA_plots/env_vars_vs_cluster.png", cluster_comparison_plot,
+# adjust text size
+cluster_comparison_plot[[1]] <- cluster_comparison_plot[[1]] + theme(axis.text = element_text(size=15))
+cluster_comparison_plot[[2]] <- cluster_comparison_plot[[2]] + theme(axis.text = element_text(size=15))
+cluster_comparison_plot[[3]] <- cluster_comparison_plot[[3]] + theme(axis.text = element_text(size=15))
+cluster_comparison_plot[[4]] <- cluster_comparison_plot[[4]] + theme(axis.text = element_text(size=15))
+cluster_comparison_plot[[5]] <- cluster_comparison_plot[[5]] + theme(axis.text = element_text(size=15))
+cluster_comparison_plot[[6]] <- cluster_comparison_plot[[6]] + theme(axis.text = element_text(size=15))
+
+ggsave("C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter2/Write_up/Figures/fig8.png", cluster_comparison_plot,
        dpi=300, width = 30, height=20, unit="cm")
