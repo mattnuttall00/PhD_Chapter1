@@ -3472,6 +3472,24 @@ p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + ggtitle("")
 p.econ.all.2[[2]][[3]] <- p.econ.all.2[[2]][[3]] + ggtitle("")
 p.econ.all.2[[3]][[1]] <- p.econ.all.2[[3]][[1]] + ggtitle("")
 
+# increase font sizes
+p.econ.all.2[[1]][[1]] <- p.econ.all.2[[1]][[1]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+p.econ.all.2[[1]][[2]] <- p.econ.all.2[[1]][[2]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+p.econ.all.2[[2]][[1]] <- p.econ.all.2[[2]][[1]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+p.econ.all.2[[2]][[3]] <- p.econ.all.2[[2]][[3]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+p.econ.all.2[[3]][[1]] <- p.econ.all.2[[3]][[1]] + theme(axis.title = element_text(size=15), axis.text = element_text(size=13))
+
+# increase space between plots by changing individual plot margins
+p.econ.all.2[[1]][[1]] <- p.econ.all.2[[1]][[1]] + theme(plot.margin = margin(r=60))
+p.econ.all.2[[1]][[2]] <- p.econ.all.2[[1]][[2]] + theme(plot.margin = margin(l=60))
+#p.econ.all.2[[2]][[1]] <- p.econ.all.2[[2]][[1]] + theme(plot.margin = margin(r=50))
+#p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(plot.margin = margin(r=50))
+
+# remove y axis label from plot 2,2
+p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(axis.title.y = element_blank())
+
+
 
 ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts_grd.png",p.econ.all.2,
        width = 30, height = 30, units="cm", dpi=300)
@@ -4144,8 +4162,42 @@ p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + theme(axis.title.y = element_blan
 p.comm.all[[2]][[2]] <- p.comm.all[[2]][[2]] + theme(axis.title.y = element_blank())
 p.comm.all[[3]][[2]] <- p.comm.all[[3]][[2]] + theme(axis.title.y = element_blank())
 
-# increase axis text size
-p.comm.all <- p.comm.all + theme(axis.text = element_text(size=12))
+
+# increase axis text amd title size
+p.comm.all[[1]][[1]] <- p.comm.all[[1]][[1]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[2]][[1]] <- p.comm.all[[2]][[1]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[2]][[2]] <- p.comm.all[[2]][[2]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[3]][[1]] <- p.comm.all[[3]][[1]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[3]][[2]] <- p.comm.all[[3]][[2]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+p.comm.all[[4]][[1]] <- p.comm.all[[4]][[1]] + theme(axis.text = element_text(size=13),
+                                                     axis.title = element_text(size=15))
+
+# change axis title text
+p.comm.all[[1]][[1]] <- p.comm.all[[1]][[1]] + xlab("Change in median price of corn")
+p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + xlab("Change in median price of rice")
+p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + xlab("Change in median price of rubber")
+p.comm.all[[2]][[1]] <- p.comm.all[[2]][[1]] + xlab("Change in median price of sugar")
+p.comm.all[[2]][[2]] <- p.comm.all[[2]][[2]] + xlab("Change in non-food production index")
+p.comm.all[[3]][[1]] <- p.comm.all[[3]][[1]] + xlab("Change in non-food production index")
+p.comm.all[[3]][[2]] <- p.comm.all[[3]][[2]] + xlab("Change in median price of sugar")
+p.comm.all[[4]][[1]] <- p.comm.all[[4]][[1]] + xlab("Change in median price of sugar")
+
+# change margins
+p.comm.all[[1]][[1]] <- p.comm.all[[1]][[1]] + theme(plot.margin = margin(r=55))
+p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + theme(plot.margin = margin(r=55))
+#p.comm.all[[1]][[2]] <- p.comm.all[[1]][[2]] + theme(plot.margin = margin(l=50))
+#p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + theme(plot.margin = margin(l=60))
+p.comm.all[[1]][[3]] <- p.comm.all[[1]][[3]] + theme(plot.margin = margin(r=55))
+p.comm.all[[3]][[1]] <- p.comm.all[[3]][[1]] + theme(plot.margin = margin(r=55))
 
 # remove titles
 p.comm.all[[1]][[1]] <- p.comm.all[[1]][[1]] + ggtitle("")
@@ -4531,6 +4583,24 @@ p.prod.all <- (p.rice.prod + p.rub.prod) /
 p.prod.all[[1]][[2]] <- p.prod.all[[1]][[2]] + theme(axis.title.y = element_blank())
 p.prod.all[[3]][[2]] <- p.prod.all[[3]][[2]] + theme(axis.title.y = element_blank())
 
+# change axis text and title size
+p.prod.all[[1]][[1]] <- p.prod.all[[1]][[1]] + theme(axis.title = element_text(size=15),
+                                                     axis.text = element_text(size=13))
+p.prod.all[[1]][[2]] <- p.prod.all[[1]][[2]] + theme(axis.title = element_text(size=15),
+                                                     axis.text = element_text(size=13))
+p.prod.all[[2]][[1]] <- p.prod.all[[2]][[1]] + theme(axis.title = element_text(size=15),
+                                                     axis.text = element_text(size=13))
+p.prod.all[[3]][[1]] <- p.prod.all[[3]][[1]] + theme(axis.title = element_text(size=15),
+                                                     axis.text = element_text(size=13))
+p.prod.all[[3]][[2]] <- p.prod.all[[3]][[2]] + theme(axis.title = element_text(size=15),
+                                                     axis.text = element_text(size=13))
+
+# remove units in x axis titles
+p.prod.all[[1]][[1]] <- p.prod.all[[1]][[1]] + xlab("Change in mean producer price of rice")
+p.prod.all[[1]][[2]] <- p.prod.all[[1]][[2]] + xlab("Change in mean producer price of rubber")
+p.prod.all[[2]][[1]] <- p.prod.all[[2]][[1]] + xlab("Change in mean producer price of corn")
+p.prod.all[[3]][[1]] <- p.prod.all[[3]][[1]] + xlab("Change in mean producer price of cassava")
+p.prod.all[[3]][[2]] <- p.prod.all[[3]][[2]] + xlab("Change in mean producer price of rice")
 
 ggsave("Results/Macroeconomics/Plots/ELCs/prod_elc_all_Pts_grd.png",p.prod.all,
        width = 30, height = 30, units="cm", dpi=300)
