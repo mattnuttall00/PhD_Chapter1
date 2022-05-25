@@ -3451,7 +3451,7 @@ gdp.L2.plot <- ggplot()+
 
     # plot all econ ####
 
-## below is old code for removing point from plots and saving individual plots from the different time lags. For the chapter results section though, I am keeping the points on, and plotting as a grid (i.e. all plots have the same plot space rather than being stretched)
+## At the bottom of this section is old code for removing point from plots and saving individual plots from the different time lags. For the chapter results section though, I am keeping the points on, and plotting as a grid (i.e. all plots have the same plot space rather than being stretched)
 
 
 # Axis titles and text are already size 12
@@ -3483,20 +3483,24 @@ p.econ.all.2[[3]][[1]] <- p.econ.all.2[[3]][[1]] + theme(axis.title = element_te
 # increase space between plots by changing individual plot margins
 p.econ.all.2[[1]][[1]] <- p.econ.all.2[[1]][[1]] + theme(plot.margin = margin(r=60))
 p.econ.all.2[[1]][[2]] <- p.econ.all.2[[1]][[2]] + theme(plot.margin = margin(l=60))
-#p.econ.all.2[[2]][[1]] <- p.econ.all.2[[2]][[1]] + theme(plot.margin = margin(r=50))
-#p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(plot.margin = margin(r=50))
+p.econ.all.2[[2]][[1]] <- p.econ.all.2[[2]][[1]] + theme(plot.margin = margin(r=50))
+p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(plot.margin = margin(r=50))
 
 # remove y axis label from plot 2,2
 p.econ.all.2[[2]][[2]] <- p.econ.all.2[[2]][[2]] + theme(axis.title.y = element_blank())
 
 
 
-ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts_grd.png",p.econ.all.2,
+ggsave("Results/Macroeconomics/Plots/ELCs/econ_elc_all_Pts_grd_new.png",p.econ.all.2,
        width = 30, height = 30, units="cm", dpi=300)
 
 
+### Editing individual plot for FDI lag1, as in my thesis this plot somehow didn't make it into the final plot grid. So I am saving this individual plot to be able to show what the plot should have been
+fdi.L1.plot <- fdi.L1.plot + theme(axis.title.x = element_text(size = 16),
+                                   axis.text = element_text(size = 15)) 
 
-
+ggsave("Results/Macroeconomics/Plots/ELCs/FDI_lag1.png",fdi.L1.plot,
+       width = 20, height = 20, units="cm", dpi=300)
 
 
 ### old code
