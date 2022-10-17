@@ -633,47 +633,200 @@ write.csv(PA_results, file="C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter1/COR
     ## Plotting ####
 
 
-plot.fun <- function(results, rawdat, points, x, xlab){
-  
-      ggplot(results, aes(x=x, y=fit))+
-        geom_point(data=rawdat, aes(x=x, y=forest_prop))+
-        geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
-        geom_line(size=2, color="red")+
-        theme(panel.background = element_blank(),
-              axis.line = element_line(colour = "grey20"),
-              axis.title = element_text(size=17),
-              axis.text = element_text(size=15))+
-        ylab(xlab)+
-        xlab("Predicted proportion forest cover")
-}
+pop_den_results <- read.csv("CORRECTIONS/Results/pop_den_results.csv", header = TRUE, stringsAsFactors = TRUE)
+M6_24_sch_results <- read.csv("CORRECTIONS/Results/M6_24_sch_results.csv", header = TRUE, stringsAsFactors = TRUE)
+propPrimSec_results <- read.csv("CORRECTIONS/Results/propPrimSec_results.csv", header = TRUE, stringsAsFactors = TRUE)
+pig_fam_results <- read.csv("CORRECTIONS/Results/pig_fam_results.csv", header = TRUE, stringsAsFactors = TRUE)
+dist_sch_results <- read.csv("CORRECTIONS/Results/dist_sch_results.csv", header = TRUE, stringsAsFactors = TRUE)
+garbage_results <- read.csv("CORRECTIONS/Results/garbage_results.csv", header = TRUE, stringsAsFactors = TRUE)
+crim_case_results <- read.csv("CORRECTIONS/Results/crim_case_results.csv", header = TRUE, stringsAsFactors = TRUE)
+Pax_migt_out_results <- read.csv("CORRECTIONS/Results/Pax_migt_out_results.csv", header = TRUE, stringsAsFactors = TRUE)
+mean_elev_results <- read.csv("CORRECTIONS/Results/mean_elev_results.csv", header = TRUE, stringsAsFactors = TRUE)
+dist_border_results <- read.csv("CORRECTIONS/Results/dist_border_results.csv", header = TRUE, stringsAsFactors = TRUE)
+dist_provCap_results <- read.csv("CORRECTIONS/Results/dist_provCap_results.csv", header = TRUE, stringsAsFactors = TRUE)
+elc_results <- read.csv("CORRECTIONS/Results/elc_results.csv", header = TRUE, stringsAsFactors = TRUE)
+PA_results <- read.csv("CORRECTIONS/Results/PA_results.csv", header = TRUE, stringsAsFactors = TRUE)
 
 
-plot.fun(pop_den_results, dat, dat$pop_den, pop_den_results$pop_den, "Population density (scaled")
-plot.fun(M6_24_sch_results, dat, M6_24_sch, "Proportion males in school")
 
 
-ggplot(pop_den_results, aes(x=pop_den, y=fit))+
-  geom_point(data=dat, aes(x=pop_den, y=forest_prop))+
-  geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
-  geom_line(size=2, color="red")+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted proportion of forest cover")+
-  xlab("Population density (scaled)")
+## pop_den
+pop_den_plot <- ggplot(pop_den_results, aes(x=pop_den, y=fit))+
+                geom_point(data=dat, aes(x=pop_den, y=forest_prop))+
+                geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                geom_line(size=2, color="red")+
+                theme(panel.background = element_blank(),
+                      axis.line = element_line(colour = "grey20"),
+                      axis.title = element_text(size=17),
+                      axis.text = element_text(size=15))+
+                ylab("Predicted proportion of forest cover")+
+                xlab("Population density")
 
-ggplot(M6_24_sch_results, aes(x=M6_24_sch, y=fit))+
-  geom_point(data=dat, aes(x=M6_24_sch, y=forest_prop))+
-  geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
-  geom_line(size=2, color="red")+
-  theme(panel.background = element_blank(),
-        axis.line = element_line(colour = "grey20"),
-        axis.title = element_text(size=17),
-        axis.text = element_text(size=15))+
-  ylab("Predicted proportion of forest cover")+
-  xlab("Proportion males in school")
+## M6_24_sch_results
+M6_24_sch_plot <- ggplot(M6_24_sch_results, aes(x=M6_24_sch, y=fit))+
+                  geom_point(data=dat, aes(x=M6_24_sch, y=forest_prop))+
+                  geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                  geom_line(size=2, color="red")+
+                  theme(panel.background = element_blank(),
+                        axis.line = element_line(colour = "grey20"),
+                        axis.title = element_text(size=17),
+                        axis.text = element_text(size=15))+
+                  ylab("Predicted proportion of forest cover")+
+                  xlab("Proportion males in school")
  
+## propPrimSec
+propPrimSec_plot <- ggplot(propPrimSec_results, aes(x=propPrimSec, y=fit))+
+                    geom_point(data=dat, aes(x=propPrimSec, y=forest_prop))+
+                    geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                    geom_line(size=2, color="red")+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=15))+
+                    ylab("Predicted proportion of forest cover")+
+                    xlab("Proportion adults in the primary sector")
+
+
+## pig_fam
+pig_fam_plot <- ggplot(pig_fam_results, aes(x=pig_fam, y=fit))+
+                geom_point(data=dat, aes(x=pig_fam, y=forest_prop))+
+                geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                geom_line(size=2, color="red")+
+                theme(panel.background = element_blank(),
+                      axis.line = element_line(colour = "grey20"),
+                      axis.title = element_text(size=17),
+                      axis.text = element_text(size=15))+
+                ylab("Predicted proportion of forest cover")+
+                xlab("Proportion families with pigs")
+
+
+## dist_sch
+dist_sch_plot <- ggplot(dist_sch_results, aes(x=dist_sch, y=fit))+
+                geom_point(data=dat, aes(x=dist_sch, y=forest_prop))+
+                geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                geom_line(size=2, color="red")+
+                theme(panel.background = element_blank(),
+                      axis.line = element_line(colour = "grey20"),
+                      axis.title = element_text(size=17),
+                      axis.text = element_text(size=15))+
+                ylab("Predicted proportion of forest cover")+
+                xlab("Median distance to nearest school (km)")
+
+
+## garbage
+garbage_plot <- ggplot(garbage_results, aes(x=garbage, y=fit))+
+                geom_point(data=dat, aes(x=garbage, y=forest_prop))+
+                geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                geom_line(size=2, color="red")+
+                theme(panel.background = element_blank(),
+                      axis.line = element_line(colour = "grey20"),
+                      axis.title = element_text(size=17),
+                      axis.text = element_text(size=15))+
+                ylab("Predicted proportion of forest cover")+
+                xlab("Proportion families with access to waste removal")
+
+
+
+## crim_case
+crim_case_plot <- ggplot(crim_case_results, aes(x=crim_case, y=fit))+
+                  geom_point(data=dat, aes(x=crim_case, y=forest_prop))+
+                  geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                  geom_line(size=2, color="red")+
+                  theme(panel.background = element_blank(),
+                        axis.line = element_line(colour = "grey20"),
+                        axis.title = element_text(size=17),
+                        axis.text = element_text(size=15))+
+                  ylab("Predicted proportion of forest cover")+
+                  xlab("Number of criminal cases")
+
+
+
+## Pax_migt_out
+Pax_migt_out_plot <- ggplot(Pax_migt_out_results, aes(x=Pax_migt_out, y=fit))+
+                      geom_point(data=dat, aes(x=Pax_migt_out, y=forest_prop))+
+                      geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                      geom_line(size=2, color="red")+
+                      theme(panel.background = element_blank(),
+                            axis.line = element_line(colour = "grey20"),
+                            axis.title = element_text(size=17),
+                            axis.text = element_text(size=15))+
+                      ylab("Predicted proportion of forest cover")+
+                      xlab("Number of out-migrants")
+
+
+## mean_elev
+mean_elev_plot <- ggplot(mean_elev_results, aes(x=mean_elev, y=fit))+
+                  geom_point(data=dat, aes(x=mean_elev, y=forest_prop))+
+                  geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                  geom_line(size=2, color="red")+
+                  theme(panel.background = element_blank(),
+                        axis.line = element_line(colour = "grey20"),
+                        axis.title = element_text(size=17),
+                        axis.text = element_text(size=15))+
+                  ylab("Predicted proportion of forest cover")+
+                  xlab("Mean elevation (masl)")
+
+
+
+## dist_border
+dist_border_plot <- ggplot(dist_border_results, aes(x=dist_border, y=fit))+
+                    geom_point(data=dat, aes(x=dist_border, y=forest_prop))+
+                    geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                    geom_line(size=2, color="red")+
+                    theme(panel.background = element_blank(),
+                          axis.line = element_line(colour = "grey20"),
+                          axis.title = element_text(size=17),
+                          axis.text = element_text(size=15))+
+                    ylab("Predicted proportion of forest cover")+
+                    xlab("Median distance to nearest international border (km)")
+
+
+
+## dist_provCap
+dist_provCap_plot <- ggplot(dist_provCap_results, aes(x=dist_provCap, y=fit))+
+                      geom_point(data=dat, aes(x=dist_provCap, y=forest_prop))+
+                      geom_ribbon(aes(ymin=L_SE, ymax=U_SE), alpha=0.3)+
+                      geom_line(size=2, color="red")+
+                      theme(panel.background = element_blank(),
+                            axis.line = element_line(colour = "grey20"),
+                            axis.title = element_text(size=17),
+                            axis.text = element_text(size=15))+
+                      ylab("Predicted proportion of forest cover")+
+                      xlab("Median distance to nearest provincial capital (km)")
+
+
+
+## elc
+elc_results$elc <- as.factor(elc_results$elc) 
+
+elc_plot <- ggplot(elc_results, aes(x=elc, y=fit))+
+            geom_bar(stat = "identity", fill="deepskyblue4")+
+            geom_errorbar(aes(ymin=L_SE, ymax=U_SE), width=0.5)+
+            theme(panel.background = element_blank(),
+                  axis.line = element_line(colour = "grey20"),
+                  axis.title = element_text(size=17),
+                  axis.text = element_text(size=15))+
+            ylim(0,0.085)+
+            ylab("Predicted proportion of forest cover")+
+            xlab("Presence of Economic Land Concessions")
+
+
+## PA
+PA_results$PA <- as.factor(PA_results$PA) 
+
+PA_plot <- ggplot(PA_results, aes(x=PA, y=fit))+
+            geom_bar(stat = "identity", fill="deepskyblue4")+
+            geom_errorbar(aes(ymin=L_SE, ymax=U_SE), width=0.5)+
+            theme(panel.background = element_blank(),
+                  axis.line = element_line(colour = "grey20"),
+                  axis.title = element_text(size=17),
+                  axis.text = element_text(size=15))+
+            ylim(0,0.07)+
+            ylab("Predicted proportion of forest cover")+
+            xlab("Presence of Protected Areas")
+
+
+
 
 
 
