@@ -9,6 +9,8 @@ library(MuMIn)
 library(cAIC4)
 library(sjPlot)
 library(ggeffects)
+library(patchwork)
+library(reshape2)
 
 # I can use Data/commune/dat1.csv for this analyis. This is the master dataset that I used for the mixed models. This data set has the area of each commune, plus the total number of forested pixels. Therefore, I can easily calculate the proportion of forest per commune. 
 
@@ -231,6 +233,32 @@ plotResiduals(simulationOutput, dat$pig_fam)
 plotResiduals(simulationOutput, dat$crim_case)
 plotResiduals(simulationOutput, dat$dist_sch)
 ## I think that most of these are good, except garbage, which looks a bit odd. 
+
+
+## Manual diagnostics
+
+# copy data
+m0.diag.dat <- dat
+
+### Make "fitted" predictions, i.e. fully conditional:
+m0.diag.dat$pred <- predict(m0, type = "response")
+
+### Plot predicted against observed:
+plot(m0.diag.dat$forest_prop, m0.diag.dat$pred, ylab = "Predicted forest_prop", xlab = "Observed forest_prop")
+### Nice!
+
+### Extract model residuals:
+m0.diag.dat$resid <- resid(m0)
+
+### Plot residuals against fitted values:
+plot(m0.diag.dat$pred, m0.diag.dat$resid, xlab="Predicted values", ylab="Model residuals")
+# lots of heterogeneity at lower predicted values of ForPix
+
+## QQ plot of random effects (using sjPlot)
+plot_model(m0,type="diag")
+
+
+
 
 
 m1 <- glmmTMB(forest_prop ~ pop_den+mean_elev+dist_border+dist_provCap+elc+PA+offset(log(areaKM)) + (year|Province/Provcomm),
@@ -630,6 +658,56 @@ write.csv(PA_results, file="C:/Users/Matt Nuttall/Documents/PhD/PhD_Chapter1/COR
 
 
 
+
+## Predictions for the results text
+
+# elevation
+elev_dat <- expand.grid(mean_elev = c(min(dat$mean_elev), max(dat$mean_elev)),
+                        pop_den = mean(dat$pop_den),
+                        M6_24_sch = mean(dat$M6_24_sch),
+                        propPrimSec = mean(dat$propPrimSec),
+                        pig_fam = mean(dat$pig_fam),
+                        dist_sch = mean(dat$dist_sch),
+                        garbage = mean(dat$garbage),
+                        crim_case = mean(dat$crim_case),
+                        Pax_migt_out = mean(dat$Pax_migt_out),
+                        dist_border = mean(dat$dist_border),
+                        dist_provCap = mean(dat$dist_provCap),
+                        elc = as.factor(0),
+                        PA = as.factor(0),
+                        areaKM = median(dat$areaKM),
+                        year=NA,
+                        Province=NA,
+                        Provcomm=NA)
+
+elev_dat$pred <- as.vector(predict(m.avg.commune, newdata = elev_dat, type = "response", se.fit = F, re.form=NA, full = TRUE))
+
+
+
+# population density
+popden_dat <- data.frame(pop_den = c(min(dat$pop_den), max(dat$pop_den)),
+                         M6_24_sch = mean(dat$M6_24_sch),
+                         propPrimSec = mean(dat$propPrimSec),
+                         pig_fam = mean(dat$pig_fam),
+                         dist_sch = mean(dat$dist_sch),
+                         garbage = mean(dat$garbage),
+                         crim_case = mean(dat$crim_case),
+                         Pax_migt_out = mean(dat$Pax_migt_out),
+                         mean_elev = mean(dat$mean_elev),
+                         dist_border = mean(dat$dist_border),
+                         dist_provCap = mean(dat$dist_provCap),
+                         elc = as.factor(0),
+                         PA = as.factor(0),
+                         areaKM = median(dat$areaKM),
+                         year=NA,
+                         Province=NA,
+                         Provcomm=NA)
+
+popden_dat$pred <- as.vector(predict(m.avg.commune, newdata = popden_dat, type = "response", se.fit = F, re.form=NA, full = TRUE))
+
+
+
+
     ## Plotting ####
 
 
@@ -828,7 +906,235 @@ PA_plot <- ggplot(PA_results, aes(x=PA, y=fit))+
 
 
 
+### All plots
 
+var_plot <- pop_den_plot + M6_24_sch_plot + propPrimSec_plot + pig_fam_plot + dist_sch_plot + garbage_plot + 
+  crim_case_plot + Pax_migt_out_plot 
+
+
+# Remove y axis
+var_plot[[1]] <- var_plot[[1]] + theme(axis.title.y = element_blank())
+var_plot[[2]] <- var_plot[[2]] + theme(axis.title.y = element_blank())
+var_plot[[3]] <- var_plot[[3]] + theme(axis.title.y = element_blank())
+var_plot[[5]] <- var_plot[[5]] + theme(axis.title.y = element_blank())
+var_plot[[6]] <- var_plot[[6]] + theme(axis.title.y = element_blank())
+var_plot[[7]] <- var_plot[[7]] + theme(axis.title.y = element_blank())
+var_plot[[8]] <- var_plot[[8]] + theme(axis.title.y = element_blank())
+
+
+
+ggsave(filename = "CORRECTIONS/Plots/Results/Commune/var_plot.png", var_plot,
+       width = 30, height = 25, unit="cm", dpi=300)
+
+
+
+
+control_plot <- mean_elev_plot + dist_border_plot + dist_provCap_plot + elc_plot + PA_plot
+
+
+
+
+all_plot <- pop_den_plot + M6_24_sch_plot + propPrimSec_plot + pig_fam_plot + dist_sch_plot + garbage_plot + 
+  crim_case_plot + Pax_migt_out_plot + mean_elev_plot + dist_border_plot + dist_provCap_plot + elc_plot + PA_plot
+
+
+all_plot[[1]] <- all_plot[[1]] + theme(axis.title = element_blank()) + ggtitle("a")
+all_plot[[2]] <- all_plot[[2]] + theme(axis.title = element_blank())+ ggtitle("b")
+all_plot[[3]] <- all_plot[[3]] + theme(axis.title = element_blank())+ ggtitle("c")
+all_plot[[4]] <- all_plot[[4]] + theme(axis.title = element_blank())+ ggtitle("d")
+all_plot[[5]] <- all_plot[[5]] + theme(axis.title = element_blank())+ ggtitle("e")
+all_plot[[6]] <- all_plot[[6]] + theme(axis.title = element_blank())+ ggtitle("f")
+all_plot[[7]] <- all_plot[[7]] + theme(axis.title = element_blank())+ ggtitle("g")
+all_plot[[8]] <- all_plot[[8]] + theme(axis.title = element_blank())+ ggtitle("h")
+all_plot[[9]] <- all_plot[[9]] + theme(axis.title = element_blank())+ ggtitle("i")
+all_plot[[10]] <- all_plot[[10]] + theme(axis.title = element_blank())+ ggtitle("j")
+all_plot[[11]] <- all_plot[[11]] + theme(axis.title = element_blank())+ ggtitle("k")
+all_plot[[12]] <- all_plot[[12]] + theme(axis.title = element_blank())+ ggtitle("l")
+all_plot[[13]] <- all_plot[[13]] + theme(axis.title = element_blank())+ ggtitle("m")
+
+
+
+
+ggsave(filename = "CORRECTIONS/Plots/Results/Commune/all_plot.png", all_plot,
+       width = 30, height = 25, unit="cm", dpi=300)
+
+
+
+    ## Provincial means ####
+
+
+# Function for commune-level predictions plus provincial mean
+
+ProvMeanLine.popden  <- function(dat, province, model){
+  
+  # extract list of communes 
+  communes <- unique(dat$Provcomm[dat$Province==province])
+  
+  # Initialise empty dataframe
+  compred <- data.frame(pop_den = NULL,
+                        pred = NULL,
+                        commune = NULL,
+                        province = NULL)
+  
+  # loop through list of communes and predict for each one, and attach results into dataframe
+  for(i in 1:length(communes)){
+    newdat <- data.frame(pop_den = seq(min(dat$pop_den[dat$Province==province]),
+                                       max(dat$pop_den[dat$Province==province]), length.out = 100), # range in province
+                         M6_24_sch = mean(dat$M6_24_sch),
+                         propPrimSec = mean(dat$propPrimSec),
+                         pig_fam = mean(dat$pig_fam),
+                         dist_sch = mean(dat$dist_sch),
+                         garbage = mean(dat$garbage),
+                         crim_case = mean(dat$crim_case),
+                         Pax_migt_out = mean(dat$Pax_migt_out),
+                         mean_elev = mean(dat$mean_elev[dat$Province==province]),
+                         dist_border = mean(dat$dist_border[dat$Province==province]),
+                         dist_provCap = mean(dat$dist_provCap[dat$Province==province]),
+                         elc = "0",
+                         PA = "0",
+                         areaKM = dat$areaKM[dat$Provcomm==communes[i]][1],
+                         year = mean(dat$year[dat$Province==province]),
+                         Province = province,
+                         Provcomm = communes[i])
+    newdat$pred <- as.vector(predict(model, type="response",newdata=newdat, re.form=NULL))
+    
+    
+    
+    
+    # pull out values of pop_den and the predictions, and attach commune and province name. 
+    df <- newdat[ ,c("pop_den","pred")]
+    split <- colsplit(newdat$Provcomm, pattern="_", names=c("Province", "Commune"))
+    comname <- split[1,2]
+    provname <- split[1,1]
+    df$commune <- comname 
+    df$province <- provname
+    compred <- rbind(compred,df)
+    
+    
+    
+  }
+  
+  # get the mean prediction for the province (i.e. mean of all communes for a given value of pop_den)  
+  mean.df <- compred %>% group_by(pop_den) %>% summarise_at(vars(pred),mean) %>% 
+    mutate(commune = "mean")  %>% mutate(province = province) 
+  
+  # attach mean to commune df
+  compred <- rbind(compred,mean.df)
+  
+  return(compred)
+}
+
+
+RunFun <- function(dat,fun,model){
+  
+  
+  # create list of province names
+  provs <- c("Stung Treng","Svay Rieng","Takeo","Otdar Meanchey","Kep","Pailin")
+  
+  # initialise list
+  output.list <- list()
+  
+  # loop through list of provinces, applying the function to each one
+  for(i in seq_along(provs)){
+    
+    df <- fun(dat, province=provs[i], model=model)
+    output.list[[i]] <- df
+  }
+  
+  # name list elements
+  provname <- sub(" ","_", provs)
+  names(output.list) <- provname
+  
+  # extract list elements
+  list2env(output.list, envir = environment())
+  
+  
+  # rbind
+  output.df <- rbind(Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin)
+  
+  return(output.df)
+  
+}
+
+
+# running in batches as taking too long donig all provinces together
+set1 <- RunFun(dat=dat, ProvMeanLine.popden, m.avg.commune)
+
+set2_3 <- RunFun(dat=dat, ProvMeanLine.popden, m.avg.commune)
+
+set4 <- RunFun(dat=dat, ProvMeanLine.popden, m.avg.commune)
+
+# 1 Banteay_Meanchey,Battambang,Kampong_Cham,Kampong_Chhnang,Kampong_Speu,Kampong_Thom,
+# 2 Kampot,Kandal,Koh_Kong,Kracheh,Mondul_Kiri,Phnom_Penh,
+# 3 Preah_Vihear,Prey_Veng,Pursat,Ratanak_Kiri,Siem_Reap,Preah_Sihanouk,
+# 4 Stung_Treng,Svay_Rieng,Takeo,Otdar_Meanchey,Kep,Pailin
+
+# merge datasets
+prov_means <- rbind(set1, set2_3, set4)
+write.csv(prov_means, file="CORRECTIONS/results/prov_means.csv")
+
+
+# get provincial means
+
+# this has worked. 
+mean.df <- prov_means %>% group_by(province, pop_den) %>% summarise_at(vars(pred),mean) %>% 
+  mutate(commune = "mean")  %>% mutate(province = province) 
+
+
+# load saved data
+prov_means <- read.csv("CORRECTIONS/results/prov_means.csv", header = TRUE, stringsAsFactors = TRUE)
+
+load("CORRECTIONS/m.avg.commune.rda")
+
+pop_den_prov_mean_plot <- ggplot(data=NULL,aes(x=pop_den, y=pred, group=commune))+
+                            geom_line(data=prov_means,col="grey", size=0.5)+
+                            geom_line(data=mean.df,col="black",size=1)+
+                            theme(panel.background = element_blank(),
+                                  axis.line = element_line(colour = "grey20"),
+                                  axis.title = element_text(size=22),
+                                  axis.text.y = element_text(size=15),
+                                  axis.text.x = element_text(size=14),
+                                  strip.text = element_text(size=16, color="white"),
+                                  strip.background = element_rect(color="black", fill="steelblue"))+
+                            facet_wrap(~province, nrow=6, scales = "free")+
+                            #ylim(0,26000)+
+                            xlab("Population density (Centerd and scaled)")+
+                            ylab("Predicted proportion of forest cover")
+
+ggsave("CORRECTIONS/Plots/Results/Commune/pop_den_prov_mean.png", pop_den_prov_mean_plot, 
+       height = 30, width = 40, units = "cm", dpi=300)
+
+
+## Just want to double check the predictions
+
+# I will randomly select a commune. I will select Srae Preah in Mondul Kiri
+
+# first create new data
+newdat_test <- data.frame(pop_den = seq(min(dat$pop_den[dat$Province=="Mondul Kiri"]),
+                                   max(dat$pop_den[dat$Province=="Mondul Kiri"]), length.out = 100), # range in province
+                     M6_24_sch = mean(dat$M6_24_sch),
+                     propPrimSec = mean(dat$propPrimSec),
+                     pig_fam = mean(dat$pig_fam),
+                     dist_sch = mean(dat$dist_sch),
+                     garbage = mean(dat$garbage),
+                     crim_case = mean(dat$crim_case),
+                     Pax_migt_out = mean(dat$Pax_migt_out),
+                     mean_elev = mean(dat$mean_elev[dat$Province=="Mondul Kiri"]),
+                     dist_border = mean(dat$dist_border[dat$Province=="Mondul Kiri"]),
+                     dist_provCap = mean(dat$dist_provCap[dat$Province=="Mondul Kiri"]),
+                     elc = "0",
+                     PA = "0",
+                     areaKM = dat$areaKM[dat$Provcomm=="Mondul Kiri_Srae Preah"][1],
+                     year = mean(dat$year[dat$Province=="Mondul Kiri"]),
+                     Province = "Mondul Kiri",
+                     Provcomm = "Mondul Kiri_Srae Preah")
+
+newdat_test$pred <- as.vector(predict(m.avg.commune, type="response",newdata=newdat_test, re.form=NULL))
+
+test_compare <- data.frame(fun = prov_means$pred[prov_means$province=="Mondul Kiri" & prov_means$commune=="Srae Preah"],
+                           test = newdat_test$pred)
+
+## they're the same
 
 
 #### PROVINCE LEVEL MODELS ####
@@ -899,7 +1205,7 @@ m2 <- glmmTMB(forest_prop ~ School_attendance + Elevation + Distance_border+Dist
 
 m3 <- glmmTMB(forest_prop ~ Primary_sec + Elevation + Distance_border+Distance_capital+Economic_concession+PAs + 
                 offset(log(areaKM)) + (year|Province),
-              data=dat_cat, ziformula = ~1, family = beta_family())
+                data=dat_cat, ziformula = ~1, family = beta_family())
 
 
 m4 <- glmmTMB(forest_prop ~ Owns_pigs + Elevation + Distance_border+Distance_capital+Economic_concession+PAs +  
@@ -1011,4 +1317,196 @@ modSel.prov.sub <- modSel.prov[modSel.prov$delta<4]
 m.avg.prov <- model.avg(modSel.prov.sub, fit = TRUE)
 
 summary(m.avg.prov)
+
+save(m.avg.prov, file = "CORRECTIONS/m.avg.prov.rda")
+
+
+  ### Predictions ####
+
+
+### Predict at the province level using random effects
+
+
+## School attendance
+# create new data
+school_newdat <- expand.grid(School_attendance=c("high","low"),
+                         Distance_school="low",
+                         Primary_sec="low",
+                         Elevation="low",
+                         Distance_border="low",
+                         Distance_capital="low",
+                         Economic_concession="1",
+                         PAs="1",
+                         Province=levels(dat_cat$Province),
+                         areaKM=mean(dat_cat$areaKM),
+                         year=mean(dat_cat$year))
+
+# predict 
+school_pred <- data.frame(predict(m.avg.prov, newdata=school_newdat, type="response", se.fit=TRUE, re.form=~0))
+
+# merge
+school_pred <- cbind(school_newdat,school_pred)
+school_pred$UCL <- school_pred$fit + (school_pred$se.fit*2)
+school_pred$LCL <- school_pred$fit - (school_pred$se.fit*2)
+
+
+
+## distance to school 
+# create new data
+Distschool_newdat <- expand.grid(Distance_school=c("high","low"),
+                             School_attendance="low",
+                             Primary_sec="low",
+                             Elevation="low",
+                             Distance_border="low",
+                             Distance_capital="low",
+                             Economic_concession="1",
+                             PAs="1",
+                             Province=levels(dat_cat$Province),
+                             areaKM=mean(dat_cat$areaKM),
+                             year=mean(dat_cat$year))
+
+# predict 
+Distschool_pred <- data.frame(predict(m.avg.prov, newdata=Distschool_newdat, type="response", se.fit=TRUE, re.form=~0))
+
+# merge
+Distschool_pred <- cbind(Distschool_newdat,Distschool_pred)
+Distschool_pred$UCL <- Distschool_pred$fit + (Distschool_pred$se.fit*2)
+Distschool_pred$LCL <- Distschool_pred$fit - (Distschool_pred$se.fit*2)
+
+
+
+## prop primary sector 
+# create new data
+Primsec_newdat <- expand.grid(Primary_sec=c("high","low"),
+                                 School_attendance="low",
+                                 Distance_school="low",
+                                 Elevation="low",
+                                 Distance_border="low",
+                                 Distance_capital="low",
+                                 Economic_concession="1",
+                                 PAs="1",
+                                 Province=levels(dat_cat$Province),
+                                 areaKM=mean(dat_cat$areaKM),
+                                 year=mean(dat_cat$year))
+
+# predict 
+Primsec_pred <- data.frame(predict(m.avg.prov, newdata=Primsec_newdat, type="response", se.fit=TRUE, re.form=~0))
+
+# merge
+Primsec_pred <- cbind(Primsec_newdat,Primsec_pred)
+Primsec_pred$UCL <- Primsec_pred$fit + (Primsec_pred$se.fit*2)
+Primsec_pred$LCL <- Primsec_pred$fit - (Primsec_pred$se.fit*2)
+
+
+
+
+## predict for results text
+
+# males in school
+males_dat <- expand.grid(School_attendance=c("high","low"),
+                                          Distance_school="low",
+                                          Primary_sec="low",
+                                          Elevation="low",
+                                          Distance_border="low",
+                                          Distance_capital="low",
+                                          Economic_concession="1",
+                                          PAs="1",
+                                          Province=NA,
+                                          areaKM=mean(dat_cat$areaKM),
+                                          year=NA)
+
+# predict 
+males_dat$pred <- predict(m.avg.prov, newdata=males_dat, type="response", se.fit=F, re.form=NA)
+
+
+
+
+# dist_sch
+sch_dat <- expand.grid(Distance_school=c("high","low"),
+                                        School_attendance="low",
+                                          Primary_sec="low",
+                                          Elevation="low",
+                                          Distance_border="low",
+                                          Distance_capital="low",
+                                          Economic_concession="1",
+                                          PAs="1",
+                                          Province=NA,
+                                          areaKM=mean(dat_cat$areaKM),
+                                          year=NA)
+
+# predict 
+sch_dat$pred <- predict(m.avg.prov, newdata=sch_dat, type="response", se.fit=F, re.form=NA)
+
+
+
+# PA
+PA_prov <-expand.grid(PAs=c("0","1"),
+                      School_attendance="low",
+                      Primary_sec="low",
+                      Elevation="low",
+                      Distance_border="low",
+                      Distance_capital="low",
+                      Economic_concession="1",
+                      Distance_school="low",
+                      Province=NA,
+                      areaKM=mean(dat_cat$areaKM),
+                      year=NA)
+
+
+# predict 
+PA_prov$pred <- predict(m.avg.prov, newdata=PA_prov, type="response", se.fit=F, re.form=NA)
+
+
+
+  ## Plots ####
+
+
+# school attendence
+sch_att_p <- ggplot(school_pred, aes(x=School_attendance, y=fit))+
+              geom_bar(stat="identity", color= "deepskyblue4", fill="deepskyblue4")+
+              geom_errorbar(aes(ymin=LCL, ymax=UCL))+
+              facet_wrap(~Province)+
+              theme_classic()+
+              xlab("School attendance (males aged 6-24)")+
+              ylab("Predicted proportion of forest cover")+
+              theme(axis.title = element_text(size=20),
+                    axis.text = element_text(size=15),
+                    strip.text = element_text(size=13))
+
+ggsave("CORRECTIONS/Plots/Results/Province/sch_attendence.png",
+       height=30, width=30, unit="cm", dpi=300)
+
+
+# distance to school
+dist_sch_p <- ggplot(Distschool_pred, aes(x=Distance_school, y=fit))+
+              geom_bar(stat="identity", color= "deepskyblue4", fill="deepskyblue4")+
+              geom_errorbar(aes(ymin=LCL, ymax=UCL))+
+              facet_wrap(~Province)+
+              theme_classic()+
+              xlab("Distance to nearest school (KM)")+
+              ylab("Predicted proportion of forest cover")+
+              theme(axis.title = element_text(size=20),
+                    axis.text = element_text(size=15),
+                    strip.text = element_text(size=13))
+
+ggsave("CORRECTIONS/Plots/Results/Province/dist_sch_p.png",
+       height=30, width=30, unit="cm", dpi=300)
+
+
+
+# proportion primary sector
+Primsec_p <- ggplot(Primsec_pred, aes(x=Primary_sec, y=fit))+
+              geom_bar(stat="identity", color= "deepskyblue4", fill="deepskyblue4")+
+              geom_errorbar(aes(ymin=LCL, ymax=UCL))+
+              facet_wrap(~Province)+
+              theme_classic()+
+              xlab("Proportion of adults in the primary sector")+
+              ylab("Predicted proportion of forest cover")+
+              theme(axis.title = element_text(size=20),
+                    axis.text = element_text(size=15),
+                    strip.text = element_text(size=13))
+
+ggsave("CORRECTIONS/Plots/Results/Province/Primsec_p.png",
+       height=30, width=30, unit="cm", dpi=300)
+
 
